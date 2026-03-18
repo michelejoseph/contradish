@@ -2,7 +2,7 @@
 
 **Reasoning stability testing for LLM applications.**
 
-Contradish tells you whether your LLM gives consistent answers when the same question is asked differently. It catches contradictions, measures reasoning stability, and flags regressions before they reach production.
+Contradish tells you whether your LLM gives consistent answers when the same question is asked differently. It catches contradictions, measures reasoning stability, and flags regressions before they reach production. Contradish catches consistency bugs.
 
 ```bash
 pip install contradish
