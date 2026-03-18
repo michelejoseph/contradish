@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "contradish"
+version = "0.1.0"
+description = "Reasoning stability testing for LLM applications — detect contradictions, measure consistency, catch regressions before they ship."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+keywords = ["llm", "testing", "evaluation", "reasoning", "consistency", "ai", "agents", "rag"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+]
+
+# No hard dependencies — users bring their own SDK (anthropic or openai)
+dependencies = []
+
+[project.optional-dependencies]
+anthropic = ["anthropic>=0.25.0"]
+openai    = ["openai>=1.0.0"]
+all       = ["anthropic>=0.25.0", "openai>=1.0.0"]
+dev       = ["anthropic>=0.25.0", "openai>=1.0.0", "pytest>=7.0", "pytest-mock"]
+
+[project.urls]
+Homepage    = "https://contradish.com"
+Repository  = "https://github.com/yourusername/contradish"
+Issues      = "https://github.com/yourusername/contradish/issues"
+
+[project.scripts]
+contradish = "contradish.cli:main"

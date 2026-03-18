@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>contradish — reasoning stability testing for LLM apps</title>
+<meta name="description" content="Detect contradictions. Measure consistency. Catch regressions before they ship. pip install contradish">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0a0a0a;
+    --bg2:       #111111;
+    --bg3:       #181818;
+    --border:    #222222;
+    --border2:   #2e2e2e;
+    --text:      #e8e8e8;
+    --muted:     #666666;
+    --muted2:    #444444;
+    --accent:    #e8ff47;
+    --accent2:   #47ffe8;
+    --red:       #ff4757;
+    --green:     #47ff8a;
+    --yellow:    #ffcc47;
+    --mono:      'JetBrains Mono', monospace;
+    --sans:      'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.7;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
+
+  /* Scanline */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  /* ── Layout ── */
+  .container { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── Nav ── */
+  nav {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 0;
+    position: sticky;
+    top: 0;
+    background: rgba(10,10,10,0.95);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+  }
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+    text-decoration: none;
+  }
+  .logo span { color: var(--muted); font-weight: 400; }
+  nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    transition: color 0.15s;
+  }
+  nav a:hover { color: var(--text); }
+  .nav-links { display: flex; gap: 28px; align-items: center; }
+  .nav-pip {
+    background: var(--accent);
+    color: var(--bg);
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--mono);
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .nav-pip:hover { background: var(--accent2); color: var(--bg); }
+
+  /* ── Hero ── */
+  .hero {
+    padding: 96px 0 72px;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.5s ease 0.1s forwards;
+  }
+  .hero h1 {
+    font-family: var(--sans);
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    color: var(--text);
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: fadeUp 0.5s ease 0.2s forwards;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+    position: relative;
+  }
+  .hero-sub {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 520px;
+    line-height: 1.8;
+    margin-bottom: 44px;
+    opacity: 0;
+    animation: fadeUp 0.5s ease 0.3s forwards;
+  }
+  .hero-sub strong { color: var(--text); font-weight: 500; }
+
+  .install-block {
+    opacity: 0;
+    animation: fadeUp 0.5s ease 0.4s forwards;
+  }
+  .install-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--muted2);
+    margin-bottom: 8px;
+  }
+  .install-cmd {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    padding: 14px 20px;
+    font-family: var(--mono);
+    font-size: 15px;
+  }
+  .install-cmd .prompt { color: var(--accent); user-select: none; }
+  .install-cmd .cmd    { color: var(--text); }
+  .install-cmd .cmd span { color: var(--accent2); }
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { border-color: var(--green); color: var(--green); }
+
+  /* ── Terminal demo ── */
+  .demo-section {
+    padding: 80px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted2);
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .terminal {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    overflow: hidden;
+  }
+  .terminal-bar {
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ff5f56; }
+  .dot-y { background: #ffbd2e; }
+  .dot-g { background: #27c93f; }
+  .terminal-title {
+    flex: 1;
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted2);
+    letter-spacing: 0.05em;
+  }
+  .terminal-body {
+    padding: 24px;
+    font-size: 12.5px;
+    line-height: 1.8;
+    overflow-x: auto;
+  }
+  .t-cmd   { color: var(--accent2); }
+  .t-muted { color: var(--muted); }
+  .t-arrow { color: var(--muted2); }
+  .t-head  { color: var(--accent); font-weight: 700; }
+  .t-pass  { color: var(--green); }
+  .t-fail  { color: var(--red); }
+  .t-warn  { color: var(--yellow); }
+  .t-info  { color: var(--accent2); }
+  .t-dim   { color: var(--muted2); }
+  .t-bar-g { color: var(--green); }
+  .t-bar-r { color: var(--red); }
+  .t-bar-y { color: var(--yellow); }
+  .terminal-body pre { white-space: pre-wrap; }
+
+  /* ── Code snippet ── */
+  .code-block {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    padding: 24px;
+    margin: 24px 0;
+    overflow-x: auto;
+    position: relative;
+  }
+  .code-block pre {
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.8;
+    white-space: pre;
+  }
+  .c-kw   { color: #c678dd; }
+  .c-fn   { color: #61afef; }
+  .c-str  { color: #98c379; }
+  .c-cmt  { color: var(--muted2); font-style: italic; }
+  .c-cls  { color: var(--yellow); }
+  .c-num  { color: #d19a66; }
+
+  /* ── How it works ── */
+  .how-section {
+    padding: 80px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-top: 40px;
+  }
+  .step {
+    background: var(--bg);
+    padding: 32px;
+    position: relative;
+  }
+  .step-num {
+    font-family: var(--sans);
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--border2);
+    line-height: 1;
+    margin-bottom: 16px;
+    display: block;
+  }
+  .step h3 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 17px;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+  .step p { color: var(--muted); font-size: 13px; line-height: 1.7; }
+  .step .step-accent { color: var(--accent); }
+
+  /* ── What it checks ── */
+  .checks-section {
+    padding: 80px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .checks-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-top: 40px;
+  }
+  .check-card {
+    background: var(--bg);
+    padding: 28px 32px;
+    transition: background 0.2s;
+  }
+  .check-card:hover { background: var(--bg2); }
+  .check-tag {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    display: inline-block;
+    margin-bottom: 14px;
+  }
+  .check-card h3 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  .check-card p { font-size: 13px; color: var(--muted); line-height: 1.65; }
+  .check-card.coming .check-tag { color: var(--muted2); border-color: var(--border); }
+  .check-card.coming h3 { color: var(--muted2); }
+  .check-card.coming p  { color: var(--muted2); }
+
+  /* ── Who it's for ── */
+  .who-section { padding: 80px 0; border-bottom: 1px solid var(--border); }
+  .who-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-top: 40px;
+  }
+  .who-card {
+    background: var(--bg);
+    padding: 28px;
+  }
+  .who-icon { font-size: 22px; margin-bottom: 14px; display: block; }
+  .who-card h3 { font-family: var(--sans); font-weight: 700; font-size: 15px; margin-bottom: 8px; }
+  .who-card p { font-size: 12px; color: var(--muted); line-height: 1.65; }
+
+  /* ── CTA ── */
+  .cta-section {
+    padding: 96px 0;
+    text-align: center;
+  }
+  .cta-section h2 {
+    font-family: var(--sans);
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    margin-bottom: 20px;
+  }
+  .cta-section p { color: var(--muted); margin-bottom: 40px; font-size: 15px; }
+  .cta-install {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--accent);
+    color: var(--bg);
+    padding: 16px 28px;
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .cta-install:hover { background: var(--accent2); }
+
+  /* ── Footer ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 0;
+    color: var(--muted2);
+    font-size: 12px;
+  }
+  footer .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 24px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  footer a { color: var(--muted2); text-decoration: none; }
+  footer a:hover { color: var(--muted); }
+  footer .links { display: flex; gap: 24px; }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
+  }
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--accent);
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+    margin-left: 2px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .steps, .checks-grid { grid-template-columns: 1fr; }
+    .who-grid { grid-template-columns: 1fr; }
+    .hero { padding: 64px 0 48px; }
+    .nav-links a:not(.nav-pip) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="inner">
+    <a href="/" class="logo">contra<span>dish</span></a>
+    <div class="nav-links">
+      <a href="#how">how it works</a>
+      <a href="#checks">checks</a>
+      <a href="https://github.com/yourusername/contradish">github</a>
+      <a href="#install" class="nav-pip">pip install</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <p class="hero-eyebrow">// reasoning stability testing for LLM apps</p>
+    <h1>Your LLM gives<br><em>different answers</em><br>to the same question.</h1>
+    <p class="hero-sub">
+      Contradish generates semantic variants of your inputs, runs them through your app,
+      and detects when the <strong>reasoning breaks</strong> — before your users find out.
+    </p>
+    <div class="install-block" id="install">
+      <p class="install-label">// get started</p>
+      <div class="install-cmd">
+        <span class="prompt">$</span>
+        <span class="cmd">pip install <span>contradish</span></span>
+        <button class="copy-btn" onclick="copyInstall(this)">copy</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Demo terminal -->
+<section class="demo-section">
+  <div class="container">
+    <p class="section-label">// what it looks like</p>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); border:1px solid var(--border); margin-bottom:24px;">
+      <div class="code-block" style="border:none; margin:0;">
+        <p style="font-size:11px; color:var(--muted2); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:16px;">your code</p>
+        <pre><span class="c-kw">from</span> <span class="c-fn">contradish</span> <span class="c-kw">import</span> Suite, TestCase
+
+<span class="c-cmt"># your app — any str → str function</span>
+<span class="c-kw">def</span> <span class="c-fn">my_app</span>(question: str) -> str:
+    <span class="c-kw">return</span> your_llm(question)
+
+suite = <span class="c-cls">Suite</span>(app=my_app)
+
+suite.add(<span class="c-cls">TestCase</span>(
+    name=<span class="c-str">"refund policy"</span>,
+    input=<span class="c-str">"Can I get a refund after 45 days?"</span>,
+))
+
+suite.add(<span class="c-cls">TestCase</span>(
+    name=<span class="c-str">"return window"</span>,
+    input=<span class="c-str">"How long to return an item?"</span>,
+))
+
+suite.run()</pre>
+      </div>
+
+      <div class="terminal" style="border:none;">
+        <div class="terminal-bar">
+          <div class="dot dot-r"></div>
+          <div class="dot dot-y"></div>
+          <div class="dot dot-g"></div>
+          <span class="terminal-title">terminal</span>
+        </div>
+        <div class="terminal-body">
+<pre><span class="t-muted">  [1/2]</span> <b>refund policy</b>  <span class="t-muted">running...</span>
+  <span class="t-arrow">→</span> <span class="t-dim">generating 5 paraphrases</span>
+  <span class="t-arrow">→</span> <span class="t-dim">calling your app 6× across variants</span>
+  <span class="t-arrow">→</span> <span class="t-dim">evaluating consistency</span>
+  <span class="t-arrow">→</span> <span class="t-dim">detecting contradictions</span>
+  <span class="t-arrow">→</span> <span class="t-dim">diagnosing failure patterns</span>
+<span class="t-muted">  [2/2]</span> <b>return window</b>  <span class="t-muted">running...</span>
+  <span class="t-arrow">→</span> <span class="t-dim">...</span>
+
+<span class="t-head">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  contradish  ·  reasoning stability report
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+
+  Tests: 2   <span class="t-pass">1 passed</span>   <span class="t-fail">1 failed</span>
+
+  Aggregate
+    consistency   <span class="t-bar-y">████████████░░░░░░░░</span>  0.71
+    contradiction <span class="t-bar-r">████████░░░░░░░░░░░░</span>  0.24
+
+  <span class="t-pass">✓</span>  <b>return window</b>  <span class="t-dim">[risk: low]</span>
+       consistency   <span class="t-bar-g">████████████████░░░░</span>  0.88
+
+  <span class="t-fail">✗</span>  <b>refund policy</b>  <span class="t-dim">[risk: high]</span>
+       consistency   <span class="t-bar-r">████████░░░░░░░░░░░░</span>  0.54
+       contradiction <span class="t-bar-r">████████████████░░░░</span>  0.40
+
+       <span class="t-fail">Contradictions detected (2)</span>
+       <span class="t-dim">┌ [policy]</span> Model claims refunds ok after 60 days
+       <span class="t-dim">│ A:</span> No, refunds only within 30 days.
+       <span class="t-dim">│ B:</span> Yes, refunds up to 60 days after purchase.
+       <span class="t-dim">└</span>
+
+       <span class="t-warn">⚠</span>  Date-specific phrasings trigger policy hallucination
+       <span class="t-warn">⚠</span>  Model overgeneralizes when duration stated explicitly
+
+       <span class="t-info">→ Fix:</span> Constrain policy window in system prompt.
+         Never state a different number than 30 days.
+
+<span class="t-dim">──────────────────────────────────────────────</span>
+  <span class="t-fail">1 test failed.</span>  Reasoning instability detected.
+<span class="t-dim">──────────────────────────────────────────────</span></pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="how-section" id="how">
+  <div class="container">
+    <p class="section-label">// how it works</p>
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <h3>You define test cases</h3>
+        <p>A test case is a question your app should answer consistently. Takes 30 seconds to write.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">02</span>
+        <h3>Contradish paraphrases them</h3>
+        <p>5 semantically equivalent variants are generated per input. Same meaning, different wording — the way real users ask.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">03</span>
+        <h3>Your app runs on all variants</h3>
+        <p>6 calls per test case by default. Your app doesn't need to change at all — just pass the function.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">04</span>
+        <h3>The judge finds instability</h3>
+        <p>Contradictions are detected, consistency is scored, and <span class="step-accent">failure patterns are diagnosed</span> — not just flagged.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- What it checks -->
+<section class="checks-section" id="checks">
+  <div class="container">
+    <p class="section-label">// what it checks</p>
+    <div class="checks-grid">
+      <div class="check-card">
+        <span class="check-tag">v0.1 · live</span>
+        <h3>Consistency scoring</h3>
+        <p>Measures whether outputs for semantically equivalent inputs agree with each other. 0–1 score with breakdown.</p>
+      </div>
+      <div class="check-card">
+        <span class="check-tag">v0.1 · live</span>
+        <h3>Contradiction detection</h3>
+        <p>Finds pairs of outputs that make incompatible claims. Shows you exactly which outputs conflict and why.</p>
+      </div>
+      <div class="check-card coming">
+        <span class="check-tag">coming soon</span>
+        <h3>Grounding / hallucination</h3>
+        <p>Checks whether answers are supported by retrieved context, or if the model is inventing facts.</p>
+      </div>
+      <div class="check-card coming">
+        <span class="check-tag">coming soon</span>
+        <h3>Regression testing</h3>
+        <p>Compare baseline vs candidate. Use as a CI gate to prevent prompt or model changes from degrading reliability.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Who it's for -->
+<section class="who-section">
+  <div class="container">
+    <p class="section-label">// who it's for</p>
+    <div class="who-grid">
+      <div class="who-card">
+        <span class="who-icon">⚙️</span>
+        <h3>LLM app engineers</h3>
+        <p>Know whether your prompt change actually broke something before you ship it.</p>
+      </div>
+      <div class="who-card">
+        <span class="who-icon">🔍</span>
+        <h3>RAG pipeline teams</h3>
+        <p>Detect when retrieval changes cause inconsistent or hallucinated answers.</p>
+      </div>
+      <div class="who-card">
+        <span class="who-icon">🛡️</span>
+        <h3>High-stakes AI apps</h3>
+        <p>Legal, finance, healthcare — anywhere inconsistency creates liability. Consistency is the floor.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <h2>Stop shipping reasoning bugs.</h2>
+    <p>Two minutes to first result. Works with Anthropic or OpenAI.</p>
+    <div class="install-cmd" style="display:inline-flex; margin-bottom:20px;">
+      <span class="prompt">$</span>
+      <span class="cmd">pip install <span>contradish</span></span>
+      <button class="copy-btn" onclick="copyInstall(this)">copy</button>
+    </div>
+    <br>
+    <p style="font-size:12px; color:var(--muted2); margin-top:16px;">
+      Then set <code style="color:var(--accent);">ANTHROPIC_API_KEY</code> or <code style="color:var(--accent);">OPENAI_API_KEY</code> and you're running.
+    </p>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="inner">
+    <span>contradish · MIT license</span>
+    <div class="links">
+      <a href="https://github.com/yourusername/contradish">github</a>
+      <a href="https://pypi.org/project/contradish">pypi</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+function copyInstall(btn) {
+  navigator.clipboard.writeText('pip install contradish').then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>

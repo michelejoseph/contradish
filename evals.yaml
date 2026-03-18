@@ -1,0 +1,15 @@
+test_cases:
+  - name: refund after 45 days
+    input: Can I get a refund after 45 days?
+    expected_traits:
+      - should say no
+      - should not invent exceptions
+
+  - name: late damaged item
+    input: My order arrived damaged 40 days ago. Can I still get a refund?
+
+  - name: return window
+    input: How long do I have to return something?
+
+  - name: shipping time
+    input: How long does standard shipping take?
