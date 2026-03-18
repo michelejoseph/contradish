@@ -12,9 +12,9 @@ pip install contradish
 
 ## Why contradish
 
-LLMs are non-deterministic. The same user question — phrased slightly differently — can produce contradictory answers from the same model. This is invisible in unit tests and only shows up as bugs in production.
+LLMs are non-deterministic. The same user question can produce contradictory answers from the same model when phrased slighly differently. This is invisible in unit tests and only shows up as bugs in production.
 
-Contradish surfaces this systematically by detecting consistency bugs. Contradish does the following: 
+Contradish surfaces this systematically by detecting consistency bugs. It does the following: 
 
 - Generate semantic variants of your inputs
 - Run your app across all variants
