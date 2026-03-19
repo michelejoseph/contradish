@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "contradish"
-version = "0.1.0"
-description = "Reasoning stability testing for LLM applications — detect contradictions, measure consistency, catch regressions before they ship."
+version = "0.2.1"
+description = "Contradish is an open-source reasoning stability testing library for LLM applications. It detects contradictions, measures consistency, and catches regressions before they ship."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
@@ -23,7 +23,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 
-# No hard dependencies — users bring their own SDK (anthropic or openai)
+# No hard dependencies. Users bring their own SDK (anthropic or openai)
 dependencies = []
 
 [project.optional-dependencies]
