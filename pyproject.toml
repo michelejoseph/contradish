@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "contradish"
 <<<<<<< HEAD
-version = "0.2.1"
+version = "0.2.2"
 description = "Contradish is an open-source reasoning stability testing library for LLM applications. It detects contradictions, measures consistency, and catches regressions before they ship."
 =======
 version = "0.1.1"

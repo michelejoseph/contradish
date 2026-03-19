@@ -1,5 +1,6 @@
 """
-Terminal output — clean, readable, bug-first.
+Terminal output — zero interpretation required.
+Every line should be immediately understood by any developer.
 Colors in TTY, plain text in CI. Auto-detected.
 """
 
@@ -27,12 +28,10 @@ _CYAN   = "\033[96m" if USE_COLOR else ""
 _GRAY   = "\033[90m" if USE_COLOR else ""
 
 
-def _wrap(text: str, width: int = 68, indent: str = "             ") -> str:
-    return textwrap.fill(
-        text, width=width,
-        initial_indent=indent,
-        subsequent_indent=indent,
-    ).lstrip()
+def _wrap(text: str, width: int = 70, indent: str = "") -> str:
+    return textwrap.fill(text.strip(), width=width,
+                         initial_indent=indent,
+                         subsequent_indent=indent)
 
 
 def print_progress(msg: str):
@@ -40,116 +39,108 @@ def print_progress(msg: str):
 
 
 def print_step(step: str, test_name: str, current: int, total: int):
-    print(f"\n{_BOLD}[{current}/{total}] {test_name}{_RESET}  {_GRAY}{step}{_RESET}")
+    print(f"\n{_BOLD}[{current}/{total}]{_RESET} {_GRAY}{test_name}{_RESET}")
 
 
 def print_report(report) -> None:
-    """
-    Output priority:
-      1. What broke — the actual contradiction in plain English
-      2. Why — which input pattern caused it
-      3. Fix — what to change
-      4. Scores — last, for reference only
-    """
     total  = len(report.results)
     passed = len(report.passed)
     failed = len(report.failed)
 
     print()
-    print(f"{_BOLD}contradish{_RESET}  {_GRAY}reasoning stability report{_RESET}")
-    print(f"{_GRAY}{'─' * 60}{_RESET}")
+
+    # ── Opening line — immediately tells them if they have a problem ──
+    if failed == 0:
+        print(f"{_GREEN}{_BOLD}contradish found no bugs.{_RESET}  "
+              f"{_GRAY}All {total} rules tested clean.{_RESET}")
+        print()
+        for result in report.results:
+            print(f"  {_GREEN}✓{_RESET}  {result.test_case.name}  "
+                  f"{_GRAY}consistent across all phrasings{_RESET}")
+        print()
+        return
+
+    bug_word = "bug" if failed == 1 else "bugs"
+    print(f"{_RED}{_BOLD}contradish found {failed} {bug_word} in your app.{_RESET}")
     print()
 
+    # ── Each failing result ────────────────────────────────────────────
     for result in report.results:
         tc = result.test_case
         ok = result.passed(report.thresholds)
 
-        # ── Passing test: one clean line ───────────────────────────
         if ok:
-            c = result.consistency_score
-            sc = (_GREEN if c >= 0.80 else (_YELLOW if c >= 0.60 else _RED)) if c is not None else _GRAY
-            score_str = f"{sc}{c:.0%}{_RESET}" if c is not None else ""
-            print(f"  {_GREEN}PASS{_RESET}  {_BOLD}{tc.name}{_RESET}")
-            print(f"        {_GRAY}consistent across all paraphrases  {score_str}{_RESET}")
+            print(f"  {_GREEN}✓{_RESET}  {_GRAY}{tc.name} — clean{_RESET}")
             print()
             continue
 
-        # ── Failing test: lead with the bug ────────────────────────
-        risk = result.risk.value
-        rc = _RED if risk == "high" else (_YELLOW if risk == "medium" else _GRAY)
-        print(f"  {_RED}FAIL{_RESET}  {_BOLD}{tc.name}{_RESET}  "
-              f"{_GRAY}[{rc}{risk} risk{_RESET}{_GRAY}]{_RESET}")
+        # Header
+        print(f"{_RED}{_BOLD}YOUR APP CONTRADICTS ITSELF ON:{_RESET}")
+        print(f'{_BOLD}"{tc.name}"{_RESET}')
         print()
 
-        # 1. The contradiction — show it as a real example, not a score
+        # Show the contradiction as a user scenario
         if result.contradictions:
-            n = len(result.contradictions)
-            noun = "contradiction" if n == 1 else "contradictions"
-            print(f"  {_RED}Your app gave {n} contradictory {noun}:{_RESET}")
+            pair = result.contradictions[0]
+
+            q_a = pair.input_a.strip()
+            a_a = pair.output_a.strip()
+            q_b = pair.input_b.strip()
+            a_b = pair.output_b.strip()
+
+            # Wrap long outputs
+            if len(a_a) > 100:
+                a_a = a_a[:97] + "..."
+            if len(a_b) > 100:
+                a_b = a_b[:97] + "..."
+
+            print(f"  {_GRAY}A user asked:{_RESET}   \"{q_a}\"")
+            print(f"  {_GRAY}Your app said:{_RESET}  \"{a_a}\"")
+            print()
+            print(f"  {_GRAY}Same user, different wording:{_RESET}  \"{q_b}\"")
+            print(f"  {_GRAY}Your app said:{_RESET}  \"{a_b}\"")
             print()
 
-            for i, pair in enumerate(result.contradictions[:2], 1):
-                q_a = pair.input_a.strip()[:80]
-                q_b = pair.input_b.strip()[:80]
-                a_a = pair.output_a.strip()[:120]
-                a_b = pair.output_b.strip()[:120]
-
-                print(f"  {_GRAY}Question:{_RESET}  {q_a}")
-                print(f"  {_GRAY}Answer:  {_RESET}  {a_a}")
-                print()
-                print(f"  {_GRAY}Question:{_RESET}  {q_b}")
-                print(f"  {_GRAY}Answer:  {_RESET}  {a_b}")
-                print()
-
-                if pair.explanation and pair.explanation.lower() not in ("none", ""):
-                    expl = _wrap(pair.explanation, indent="             ")
-                    print(f"  {_YELLOW}Conflict:{_RESET}  {expl}")
-                    print()
-
-                if i < min(n, 2):
-                    print(f"  {_GRAY}{'- ' * 22}{_RESET}")
-                    print()
-
-        elif result.unstable_patterns or result.consistency_score is not None:
-            # No hard contradictions but still failing — show inconsistency
-            print(f"  {_YELLOW}Your app gave inconsistent answers across paraphrases.{_RESET}")
+            print(f"{_YELLOW}{_BOLD}These answers cannot both be right."
+                  f" One will reach a real user.{_RESET}")
             print()
 
-        # 2. Pattern — what input phrasing caused it
+            # More contradictions if present
+            if len(result.contradictions) > 1:
+                extra = len(result.contradictions) - 1
+                print(f"  {_GRAY}+ {extra} more contradiction{'s' if extra > 1 else ''} "
+                      f"detected on this rule.{_RESET}")
+                print()
+
+        elif result.unstable_patterns:
+            print(f"{_YELLOW}{_BOLD}Your app gives inconsistent answers "
+                  f"to the same question.{_RESET}")
+            print()
+
+        # Pattern
         if result.unstable_patterns:
-            for pat in result.unstable_patterns[:1]:
-                wrapped = _wrap(pat, indent="             ")
-                print(f"  {_YELLOW}Pattern: {_RESET}  {wrapped}")
+            pat = result.unstable_patterns[0]
+            print(f"  {_YELLOW}WHY:{_RESET}  {_wrap(pat, width=66, indent='        ').lstrip()}")
             print()
 
-        # 3. Fix — one concrete action
+        # Fix — the most important part
         if result.suggestion:
-            wrapped = _wrap(result.suggestion, indent="             ")
-            print(f"  {_CYAN}Fix:     {_RESET}  {wrapped}")
-            print()
-
-        # 4. Scores — reference only, not the headline
-        scores = []
-        if result.consistency_score is not None:
-            c = result.consistency_score
-            sc = _GREEN if c >= 0.80 else (_YELLOW if c >= 0.60 else _RED)
-            scores.append(f"consistency {sc}{c:.0%}{_RESET}")
-        if result.contradiction_score is not None:
-            c = result.contradiction_score
-            sc = _GREEN if c <= 0.10 else (_YELLOW if c <= 0.30 else _RED)
-            scores.append(f"contradiction rate {sc}{c:.0%}{_RESET}")
-        if scores:
-            print(f"  {_GRAY}Scores:  {'   '.join(scores)}{_RESET}")
+            print(f"  {_CYAN}{_BOLD}THE FIX:{_RESET}")
+            lines = _wrap(result.suggestion, width=66, indent="  ").split("\n")
+            for line in lines:
+                print(f"  {_CYAN}{line.strip()}{_RESET}")
             print()
 
         print(f"{_GRAY}{'─' * 60}{_RESET}")
         print()
 
-    # ── Summary ────────────────────────────────────────────────────
-    if failed == 0:
-        print(f"  {_GREEN}{_BOLD}All {total} tests passed.{_RESET}  "
-              f"{_GRAY}No contradictions detected.{_RESET}")
-    else:
-        print(f"  {_RED}{_BOLD}{failed} of {total} tests failed.{_RESET}  "
-              f"{_GRAY}{passed} passed.{_RESET}")
+    # ── Summary ───────────────────────────────────────────────────────
+    clean_list = [r for r in report.results if r.passed(report.thresholds)]
+    if clean_list:
+        for r in clean_list:
+            print(f"  {_GREEN}✓{_RESET}  {_GRAY}{r.test_case.name} — clean{_RESET}")
+        print()
+
+    print(f"{_RED}{_BOLD}{failed} bug{'s' if failed > 1 else ''} found.{_RESET}  "
+          f"{_GRAY}{passed} rule{'s' if passed != 1 else ''} clean.{_RESET}")
     print()
