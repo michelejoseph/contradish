@@ -2,7 +2,7 @@
 
 **Reasoning stability testing for LLM applications.**
 
-Contradish tells you whether your LLM gives consistent answers when the same question is asked differently. It catches contradictions, measures reasoning stability, and flags regressions before they reach production.
+Contradish tells you whether your LLM gives consistent answers when the same question is asked differently. It catches contradictions, measures reasoning stability, and flags regressions before they reach production. Contradish catches consistency bugs.
 
 ```bash
 pip install contradish
@@ -12,9 +12,9 @@ pip install contradish
 
 ## Why contradish
 
-LLMs are non-deterministic. The same user question — phrased slightly differently — can produce contradictory answers from the same model. This is invisible in unit tests and only shows up as bugs in production.
+LLMs are non-deterministic. The same user question can produce contradictory answers from the same model when phrased slighly differently. This is invisible in unit tests and only shows up as bugs in production.
 
-Contradish surfaces this systematically:
+Contradish surfaces this systematically by detecting consistency bugs. It does the following: 
 
 - Generate semantic variants of your inputs
 - Run your app across all variants

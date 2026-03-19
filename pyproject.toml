@@ -4,8 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "contradish"
+<<<<<<< HEAD
 version = "0.2.1"
 description = "Contradish is an open-source reasoning stability testing library for LLM applications. It detects contradictions, measures consistency, and catches regressions before they ship."
+=======
+version = "0.1.1"
+description = "Contradish is a reasoning stability testing library for LLM applications. It detects contradictions, measures consistency, and catches regressions before they ship."
+>>>>>>> 5b106d657e73b37e0f5681ecb1fff0944aa35e68
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
