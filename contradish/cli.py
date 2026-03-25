@@ -72,6 +72,15 @@ def _output_json(report) -> None:
     print(json.dumps(report.to_dict(), indent=2))
 
 
+def _save_report(report, path: str, policy_name: str = None) -> None:
+    """Save a shareable HTML report to disk."""
+    from contradish.reporter import to_html
+    html = to_html(report, policy_name=policy_name)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(html)
+    print(f"\n  report saved: {path}\n")
+
+
 def _make_demo_app(system_prompt: str):
     """Return a demo app callable that uses the configured LLM with the given system prompt."""
     from contradish.llm import LLMClient
@@ -150,6 +159,10 @@ def cmd_policy(args):
     else:
         print_next_steps(report)
 
+    report_path = getattr(args, "report", None)
+    if report_path:
+        _save_report(report, report_path, policy_name=policy_name)
+
     sys.exit(1 if report.failed else 0)
 
 
@@ -199,6 +212,10 @@ def cmd_from_prompt(args):
     else:
         print_next_steps(report)
 
+    report_path = getattr(args, "report", None)
+    if report_path:
+        _save_report(report, report_path)
+
     sys.exit(1 if report.failed else 0)
 
 
@@ -219,6 +236,9 @@ def cmd_run(args):
         _output_json(report)
     else:
         print_next_steps(report)
+    report_path = getattr(args, "report", None)
+    if report_path:
+        _save_report(report, report_path)
     sys.exit(1 if report.failed else 0)
 
 
@@ -265,9 +285,13 @@ def main():
 examples:
   # run a prebuilt policy pack — no system prompt needed
   contradish --policy ecommerce --app mymodule:my_app
-  contradish --policy hr --app mymodule:my_app
+  contradish --policy hr --app mymodule:my_app --report
   contradish --policy healthcare
   contradish --policy legal
+
+  # save a shareable HTML report
+  contradish --policy ecommerce --app mymodule:my_app --report
+  contradish --policy ecommerce --app mymodule:my_app --report my-report.html
 
   # test your system prompt directly (demo mode — uses your API key as the app)
   contradish "You are a support agent. Refunds within 30 days only."
@@ -327,6 +351,16 @@ examples:
         default=False,
         help="Output report as JSON instead of terminal format. Includes cai_score at report and rule level.",
     )
+    parser.add_argument(
+        "--report",
+        nargs="?",
+        const="contradish-report.html",
+        metavar="FILE",
+        help=(
+            "Save a shareable HTML report. "
+            "Defaults to contradish-report.html if no filename given."
+        ),
+    )
 
     # contradish run evals.yaml --app module:fn
     run_p = sub.add_parser("run", help="Run manual test cases from a YAML/JSON file")
@@ -335,6 +369,8 @@ examples:
     run_p.add_argument("--paraphrases", type=int, default=5, metavar="N")
     run_p.add_argument("--json", action="store_true", default=False,
                        help="Output report as JSON")
+    run_p.add_argument("--report", nargs="?", const="contradish-report.html",
+                       metavar="FILE", help="Save a shareable HTML report")
 
     # contradish compare evals.yaml --baseline mod:fn --candidate mod:fn
     cmp_p = sub.add_parser(

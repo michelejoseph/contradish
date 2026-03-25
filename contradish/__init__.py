@@ -41,7 +41,7 @@ from .models     import (
 )
 from .policies   import load_policy, list_policies, PolicyPack
 
-__version__ = "0.4.2"
+__version__ = "0.4.3"
 __all__ = [
     "Suite",
     "RegressionSuite",
