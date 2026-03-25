@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "contradish"
-version = "0.3.0"
-description = "CAI testing for LLM apps. Detects CAI failures — when your app gives contradictory answers to semantically equivalent inputs. Returns a CAI score per rule."
+version = "0.4.0"
+description = "CAI testing for LLM apps. Detects CAI failures, gates CI/CD on consistency regressions, and blocks live contradictions with the Firewall."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-keywords = ["llm", "testing", "evaluation", "cai", "compression-aware-intelligence", "reasoning", "consistency", "ai", "agents", "rag"]
+keywords = ["llm", "testing", "evaluation", "cai", "compression-aware-intelligence", "reasoning", "consistency", "ai", "agents", "rag", "regression", "firewall", "prompt-engineering"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",

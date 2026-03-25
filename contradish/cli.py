@@ -152,6 +152,40 @@ def cmd_run(args):
     sys.exit(1 if report.failed else 0)
 
 
+def cmd_compare(args):
+    """Compare baseline vs candidate app for CAI regression."""
+    from contradish import RegressionSuite
+
+    _check_api_key()
+    use_json = getattr(args, "json", False)
+
+    baseline_app  = _load_callable(args.baseline_app)
+    candidate_app = _load_callable(args.candidate_app)
+
+    suite = RegressionSuite.load(args.eval_file)
+    result = suite.compare(
+        baseline_app=baseline_app,
+        candidate_app=candidate_app,
+        baseline_label=args.baseline_label,
+        candidate_label=args.candidate_label,
+        paraphrases=args.paraphrases,
+        verbose=not use_json,
+    )
+
+    if use_json:
+        print(json.dumps(result.to_dict(), indent=2))
+    else:
+        print(result)
+
+    try:
+        result.fail_if_below(consistency=args.threshold)
+    except AssertionError as e:
+        print(f"\n  FAIL: {e}\n")
+        sys.exit(1)
+
+    sys.exit(0)
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="contradish",
@@ -170,6 +204,10 @@ examples:
 
   # run manual test cases from a YAML file
   contradish run evals.yaml --app mymodule:my_app_function
+
+  # regression: compare baseline vs candidate (CI/CD gate)
+  contradish compare evals.yaml --baseline mymodule:old_app --candidate mymodule:new_app
+  contradish compare evals.yaml --baseline mymodule:old_app --candidate mymodule:new_app --threshold 0.80
         """,
     )
 
@@ -214,10 +252,46 @@ examples:
     run_p.add_argument("--json", action="store_true", default=False,
                        help="Output report as JSON")
 
+    # contradish compare evals.yaml --baseline mod:fn --candidate mod:fn
+    cmp_p = sub.add_parser(
+        "compare",
+        help="Compare baseline vs candidate for CAI regression (CI/CD gate)",
+    )
+    cmp_p.add_argument("eval_file",
+                       help="YAML or JSON file with test cases")
+    cmp_p.add_argument("--baseline",
+                       dest="baseline_app",
+                       required=True,
+                       metavar="MODULE:FUNCTION",
+                       help="Baseline (current production) app callable")
+    cmp_p.add_argument("--candidate",
+                       dest="candidate_app",
+                       required=True,
+                       metavar="MODULE:FUNCTION",
+                       help="Candidate (new version) app callable")
+    cmp_p.add_argument("--baseline-label",
+                       default="baseline",
+                       metavar="LABEL",
+                       help="Human-readable label for baseline (default: baseline)")
+    cmp_p.add_argument("--candidate-label",
+                       default="candidate",
+                       metavar="LABEL",
+                       help="Human-readable label for candidate (default: candidate)")
+    cmp_p.add_argument("--threshold",
+                       type=float,
+                       default=0.75,
+                       metavar="FLOAT",
+                       help="Min CAI score for candidate to pass (default: 0.75)")
+    cmp_p.add_argument("--paraphrases", type=int, default=5, metavar="N")
+    cmp_p.add_argument("--json", action="store_true", default=False,
+                       help="Output report as JSON")
+
     args = parser.parse_args()
 
     if args.command == "run":
         cmd_run(args)
+    elif args.command == "compare":
+        cmd_compare(args)
     elif args.system_prompt or args.prompt_file:
         cmd_from_prompt(args)
     else:

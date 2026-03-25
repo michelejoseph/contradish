@@ -1,50 +1,62 @@
 """
-RegressionSuite — compare baseline vs candidate for CI/CD regression detection.
+RegressionSuite — compare baseline vs candidate for CI/CD gate.
+
+Detects CAI regressions when you update a prompt, swap models, or refactor
+your LLM pipeline. Drop .fail_if_below() into GitHub Actions to block merges
+that degrade consistency.
+
+Example:
+    from contradish import RegressionSuite, TestCase
+
+    suite = RegressionSuite(
+        test_cases=[
+            TestCase(input="Can I get a refund after 45 days?"),
+            TestCase(input="What is your return policy?"),
+        ]
+    )
+
+    result = suite.compare(
+        baseline_app=old_app,
+        candidate_app=new_app,
+        baseline_label="prod-v12",
+        candidate_label="branch-refactor",
+    )
+
+    print(result)
+    result.fail_if_below(consistency=0.80)  # raises AssertionError in CI if score drops
 """
 
 import json
 import os
 from typing import Callable, Optional
 
-from .models import TestCase, Report, RegressionResult
+from .models import TestCase, RegressionResult
 from .suite import Suite
 
 
 class RegressionSuite:
     """
-    Compare two versions of your LLM app to detect regressions.
+    Compare two versions of your LLM app to catch CAI regressions before deploy.
 
-    Example:
-        from contradish import RegressionSuite, TestCase
+    Usage in CI (GitHub Actions):
+        result = suite.compare(baseline_app, candidate_app)
+        result.fail_if_below(consistency=0.80)
 
-        suite = RegressionSuite(
-            api_key="sk-ant-...",
-            test_cases=[
-                TestCase(input="Can I get a refund after 45 days?"),
-                TestCase(input="What is your return policy?"),
-            ]
-        )
-
-        result = suite.compare(
-            baseline_app=old_app,
-            baseline_label="prod-v12",
-            candidate_app=new_app,
-            candidate_label="branch-refactor",
-        )
-
-        print(result)
-        result.fail_if_below(consistency=0.85)  # raises AssertionError in CI if regressed
+    Usage for manual comparison:
+        result = suite.compare(old_app, new_app)
+        print(result)           # CAI delta + pass/fail
+        print(result.to_dict()) # JSON for dashboards
     """
 
     def __init__(
         self,
-        api_key: str,
         test_cases: list[TestCase],
-        judge_model: str = "claude-sonnet-4-20250514",
+        api_key: Optional[str] = None,
+        provider: Optional[str] = None,
     ):
-        self.api_key = api_key
         self.test_cases = test_cases
-        self.judge_model = judge_model
+        self.api_key    = api_key
+        self.provider   = provider
 
     @classmethod
     def load(cls, path: str, api_key: Optional[str] = None) -> "RegressionSuite":
@@ -55,17 +67,14 @@ class RegressionSuite:
             test_cases:
               - input: "Can I get a refund after 45 days?"
                 name: "refund policy"
-                context: "Refunds allowed within 30 days."
 
         JSON format:
-            [{"input": "...", "name": "...", "context": "..."}]
+            [{"input": "...", "name": "..."}]
         """
-        resolved_key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
-
         with open(path) as f:
             content = f.read()
 
-        if path.endswith(".yaml") or path.endswith(".yml"):
+        if path.endswith((".yaml", ".yml")):
             try:
                 import yaml
                 data = yaml.safe_load(content)
@@ -81,56 +90,49 @@ class RegressionSuite:
             TestCase(
                 input=tc["input"],
                 name=tc.get("name"),
-                context=tc.get("context"),
                 expected_traits=tc.get("expected_traits", []),
             )
             for tc in raw_cases
         ]
-        return cls(api_key=resolved_key, test_cases=test_cases)
+        return cls(test_cases=test_cases, api_key=api_key)
 
     def compare(
         self,
-        baseline_app: Callable[[str], str],
-        candidate_app: Callable[[str], str],
-        baseline_label: str = "baseline",
+        baseline_app:    Callable[[str], str],
+        candidate_app:   Callable[[str], str],
+        baseline_label:  str = "baseline",
         candidate_label: str = "candidate",
-        paraphrases: int = 5,
-        verbose: bool = True,
+        paraphrases:     int = 5,
+        verbose:         bool = True,
     ) -> RegressionResult:
         """
-        Run both apps against the same test cases and return a RegressionResult.
+        Run both apps against all test cases and return a RegressionResult.
 
         Args:
-            baseline_app: The current production app callable.
-            candidate_app: The new candidate app callable.
-            baseline_label: Human-readable label for baseline (e.g. "prod-v12").
-            candidate_label: Human-readable label for candidate (e.g. "branch-refactor").
-            paraphrases: Number of paraphrases per test case.
-            verbose: Print progress.
+            baseline_app:    The current production app callable.
+            candidate_app:   The new version to test.
+            baseline_label:  Human-readable label (e.g. "prod-v12").
+            candidate_label: Human-readable label (e.g. "pr-456").
+            paraphrases:     Adversarial variants per test case.
+            verbose:         Print progress.
 
         Returns:
-            RegressionResult with delta scores and pass/fail helpers.
+            RegressionResult with CAI delta and .fail_if_below() helper.
         """
         if verbose:
             print(f"\nRunning baseline ({baseline_label})...")
-        baseline_suite = Suite(
-            api_key=self.api_key,
-            app=baseline_app,
-            judge_model=self.judge_model,
-        )
+
+        baseline_suite = Suite(app=baseline_app, api_key=self.api_key, provider=self.provider)
         for tc in self.test_cases:
-            baseline_suite.add_test(tc)
+            baseline_suite.add(tc)
         baseline_report = baseline_suite.run(paraphrases=paraphrases, verbose=verbose)
 
         if verbose:
             print(f"\nRunning candidate ({candidate_label})...")
-        candidate_suite = Suite(
-            api_key=self.api_key,
-            app=candidate_app,
-            judge_model=self.judge_model,
-        )
+
+        candidate_suite = Suite(app=candidate_app, api_key=self.api_key, provider=self.provider)
         for tc in self.test_cases:
-            candidate_suite.add_test(tc)
+            candidate_suite.add(tc)
         candidate_report = candidate_suite.run(paraphrases=paraphrases, verbose=verbose)
 
         return RegressionResult(

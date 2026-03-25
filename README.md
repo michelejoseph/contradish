@@ -1,22 +1,24 @@
 # contradish
 
-**CAI testing for LLM apps.**
+CAI testing for LLM applications.
 
-Your LLM gives different answers to the same question depending on how it's phrased. Contradish finds those contradictions, scores them, and tells you what to fix.
+A CAI failure is when your app says "refunds within 30 days" to one phrasing and "we can work something out" to a slightly different one. Same policy, same session, opposite answers. Contradish finds these, scores them, and gives you the tools to fix them before users do.
 
-```bash
+```
 pip install contradish
 ```
 
 ---
 
-## The problem
+## What it does
 
-LLMs don't fail uniformly. They fail at the edges — when a user phrases something slightly differently, when a date is implied instead of stated, when the emotional tone shifts. Standard unit tests don't catch this. It only shows up in production.
+**Offline testing** — run before deploy. Contradish generates adversarial paraphrases of your test inputs, sends them all to your app, and scores consistency across responses.
 
-This class of failure has a name: **CAI failure** (compression-aware intelligence failure). It happens when a model can't maintain consistent reasoning across semantically equivalent inputs.
+**Regression gating** — compare baseline vs candidate on the same test suite. Block merges if the CAI score drops below your threshold.
 
-Contradish detects it.
+**Production monitoring** — wrap your live app with the Firewall. It checks each response against recent ones and flags (or blocks) contradictions in real time.
+
+**Prompt repair** — failing tests? Contradish generates 3 improved prompt variants, tests each one, and ranks them by CAI score so you know exactly which fix worked.
 
 ---
 
@@ -25,185 +27,298 @@ Contradish detects it.
 ```python
 from contradish import Suite, TestCase
 
-# Your LLM app — any callable that takes a str and returns a str
-def my_app(question: str) -> str:
-    return your_llm_or_agent(question)
+suite = Suite(app=my_llm_function)
+suite.add(TestCase(input="Can I get a refund after 45 days?", name="refund policy"))
+report = suite.run()
 
-suite = Suite(app=my_app)
-
-suite.add(TestCase(
-    name="refund policy",
-    input="Can I get a refund after 45 days?",
-))
-
-suite.run()
+print(report.cai_score)           # 0.0-1.0, higher = more consistent
+for r in report.results:
+    print(r.test_case.name, r.cai_score)
 ```
 
-That's it. Contradish reads `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` from your environment.
-
----
-
-## What the output looks like
-
-```
-contradish found 1 CAI failure.
-
-CAI FAILURE: "refund policy"
-CAI score: 0.54  (unstable)
-
-  A user asked:   "Can I get a refund after 45 days?"
-  Your app said:  "Sorry, refunds are only allowed within 30 days of purchase."
-
-  Same user, different wording:  "I bought this 6 weeks ago, can I return it?"
-  Your app said:  "Of course! Let me help you with that return."
-
-These answers cannot both be right. One will reach a real user.
-
-  WHY:  Casual phrasing bypasses the 30-day rule. The model prioritizes
-        helpfulness over policy when no date is stated explicitly.
-
-  THE FIX:
-  Add to your system prompt: "Never process returns beyond 30 days
-  regardless of how the request is phrased."
-
-────────────────────────────────────────────────────────────
-
-  ✓  return window  CAI score: 0.92  (stable)
-
-1 CAI failure found.  1 rule clean.
-```
-
----
-
-## TestCase options
+Or give it your system prompt and let it figure out the test cases:
 
 ```python
-TestCase(
-    input="Can I get a refund after 45 days?",   # required
-    name="refund policy",                          # optional label
-    expected_traits=[                              # hints for the judge
-        "should say no",
-        "should not invent exceptions",
-    ],
+suite = Suite.from_prompt(
+    system_prompt="You are a support agent. Refunds within 30 days only.",
+    app=my_llm_function,
 )
+report = suite.run()
 ```
 
----
+Or from the CLI:
 
-## Suite options
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
 
-```python
-suite = Suite(
-    app=my_app,
-    api_key="sk-ant-...",    # optional — reads from env if omitted
-    provider="anthropic",    # optional — auto-detected from key prefix
-)
+# test a system prompt directly (uses your LLM as the demo app)
+contradish "You are a support agent. Refunds within 30 days only."
 
-# Override pass/fail thresholds
-suite.thresholds(
-    consistency=0.80,
-    contradiction_max=0.20,
-)
+# test from a file
+contradish --prompt system_prompt.txt
 
-report = suite.run(
-    paraphrases=5,   # semantic variants per input (default: 5)
-    verbose=True,    # print progress + report (default: True)
-)
+# test your own app
+contradish --prompt system_prompt.txt --app mymodule:my_app_function
+
+# JSON output for CI pipelines
+contradish --prompt system_prompt.txt --json
 ```
 
 ---
 
 ## CAI score
 
-Every test case gets a **CAI score** between 0 and 1.
+A number from 0 to 1 measuring how consistently your app responds to semantically equivalent inputs.
 
-- **1.0** — fully stable. Same answer regardless of phrasing.
-- **0.80+** — stable. Acceptable for most production apps.
-- **0.60–0.79** — marginal. Worth investigating.
-- **< 0.60** — unstable. CAI failure. Fix before shipping.
+- `0.80+` — stable. Safe to ship.
+- `0.60-0.79` — marginal. Review the flagged rules.
+- `< 0.60` — unstable. CAI failures detected.
 
-The score is also accessible programmatically:
+```
+CAI FAILURE: "refund window"
+  input:      "Can I get a refund after 45 days?"
+  paraphrase: "I bought this 6 weeks ago, can I still return it?"
+  output_a:   "Refunds are only available within 30 days of purchase."
+  output_b:   "We can usually make exceptions for recent purchases."
+  CAI score:  0.54 (unstable)
 
-```python
-report = suite.run(verbose=False)
-
-for result in report.results:
-    print(f"{result.test_case.name}: CAI score = {result.cai_score:.2f}")
+1 CAI failure found. 2 rules clean.
 ```
 
 ---
 
-## Use in CI
+## Regression testing
+
+Compare two versions of your app before merging. CI fails automatically if the CAI score drops.
 
 ```python
-report = suite.run(paraphrases=5, verbose=False)
+from contradish import RegressionSuite, TestCase
 
-if report.failed:
-    print(f"{len(report.failed)} CAI failure(s) detected")
-    for r in report.failed:
-        print(f"  {r.test_case.name}: CAI score={r.cai_score:.2f}")
-    sys.exit(1)
+suite = RegressionSuite(
+    test_cases=[
+        TestCase(input="Can I get a refund after 45 days?"),
+        TestCase(input="Do you price match competitors?"),
+    ]
+)
+
+result = suite.compare(
+    baseline_app=production_app,
+    candidate_app=new_app,
+    baseline_label="prod-v12",
+    candidate_label="pr-456",
+)
+
+print(result)
+result.fail_if_below(consistency=0.80)  # raises AssertionError in CI if score drops
 ```
 
----
+Load test cases from a YAML file:
 
-## CLI
+```python
+suite = RegressionSuite.load("evals.yaml")
+```
+
+```yaml
+# evals.yaml
+test_cases:
+  - input: "Can I get a refund after 45 days?"
+    name: "refund policy"
+  - input: "Do you price match competitors?"
+    name: "price matching"
+```
+
+From the CLI:
 
 ```bash
-# Run from a YAML file
-contradish run evals.yaml --app mymodule:my_app_function
-
-# With custom paraphrase count
-contradish run evals.yaml --app mymodule:my_app --paraphrases 8
+contradish compare evals.yaml \
+  --baseline mymodule:production_app \
+  --candidate mymodule:new_app \
+  --threshold 0.80
 ```
 
-**evals.yaml:**
+### GitHub Actions
+
+Drop this in `.github/workflows/cai.yml` to gate every PR:
+
+```yaml
+name: CAI regression
+
+on: [pull_request]
+
+jobs:
+  cai:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install contradish anthropic
+      - name: Run CAI regression
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          contradish compare evals.yaml \
+            --baseline mymodule:baseline_app \
+            --candidate mymodule:candidate_app \
+            --threshold 0.80
+```
+
+---
+
+## Production Firewall
+
+Wrap your live app to catch contradictions in real traffic before users notice.
+
+```python
+from contradish import Firewall
+
+# Monitor mode: log contradictions, pass all responses through
+firewall = Firewall(app=my_llm_app, mode="monitor")
+
+result = firewall.check(user_query)
+print(result.response)
+
+if result.contradiction_detected:
+    # log it, alert your team, route to human review
+    print(f"Contradiction: {result.explanation}")
+    print(f"Contradicts: {result.cached_query}")
+```
+
+```python
+# Block mode: return a safe fallback when a contradiction is detected
+firewall = Firewall(
+    app=my_llm_app,
+    mode="block",
+    fallback_response="Let me get a team member to help with that.",
+)
+
+result = firewall.check(user_query)
+return result.response  # safe regardless of what the app said
+```
+
+Get a traffic summary:
+
+```python
+print(firewall.summary())
+# {
+#   "total_queries": 1240,
+#   "contradictions_detected": 18,
+#   "responses_blocked": 0,
+#   "contradiction_rate": 0.015
+# }
+```
+
+---
+
+## Prompt repair
+
+Found failures? Contradish generates improved prompt variants, tests each one, and returns them ranked by CAI score.
+
+```python
+import anthropic
+from contradish import Suite, PromptRepair
+
+client = anthropic.Anthropic()
+
+def make_app(system_prompt):
+    def app(question):
+        msg = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=256,
+            system=system_prompt,
+            messages=[{"role": "user", "content": question}],
+        )
+        return msg.content[0].text.strip()
+    return app
+
+# Step 1: find the failures
+suite = Suite.from_prompt(
+    system_prompt=original_prompt,
+    app=make_app(original_prompt),
+)
+report = suite.run()
+
+# Step 2: fix them
+repair = PromptRepair(n=3)
+results = repair.fix(
+    system_prompt=original_prompt,
+    report=report,
+    app_factory=make_app,
+)
+
+best = results[0]
+print(f"CAI: {best.original_cai_score:.2f} -> {best.improved_cai_score:.2f} (+{best.delta:.2f})")
+print(best.improved_prompt)
+```
+
+Output:
+
+```
+  Prompt repair results:
+  #1: CAI 0.54 -> 0.88 (+0.34)
+  #2: CAI 0.54 -> 0.81 (+0.27)
+  #3: CAI 0.54 -> 0.76 (+0.22)
+```
+
+---
+
+## JSON output
+
+Any command supports `--json` for machine-readable output:
+
+```bash
+contradish --prompt system_prompt.txt --json | jq '.cai_score'
+```
+
+```json
+{
+  "cai_score": 0.71,
+  "total": 4,
+  "passed": 3,
+  "failed": 1,
+  "results": [...]
+}
+```
+
+---
+
+## Test case format
+
+YAML (recommended):
+
 ```yaml
 test_cases:
-  - name: refund policy
-    input: Can I get a refund after 45 days?
-  - name: return window
-    input: How long do I have to return something?
+  - input: "Can I get a refund after 45 days?"
+    name: "refund window"
+  - input: "Do you match competitor prices?"
+    name: "price matching"
+    expected_traits:
+      - "should say no"
+      - "should not invent exceptions"
+```
+
+JSON also works:
+
+```json
+[
+  {"input": "Can I get a refund after 45 days?", "name": "refund window"},
+  {"input": "Do you match competitor prices?", "name": "price matching"}
+]
 ```
 
 ---
 
-## Provider support
+## The CAI benchmark
 
-Works with Anthropic and OpenAI. Auto-detects which one to use:
+Contradish ships with a 300-pair human-validated benchmark of adversarial question pairs across support, legal, finance, and policy domains. Used to produce the [CAI leaderboard](https://contradish.com/leaderboard.html).
 
-```bash
-export ANTHROPIC_API_KEY=sk-ant-...   # uses Anthropic
-export OPENAI_API_KEY=sk-...          # uses OpenAI
-# if both are set, Anthropic is used
-```
-
-Or pass explicitly:
-```python
-Suite(app=my_app, api_key="sk-ant-...", provider="anthropic")
-Suite(app=my_app, api_key="sk-...",     provider="openai")
-```
-
----
-
-## Install with your SDK
-
-```bash
-pip install "contradish[anthropic]"   # with Anthropic
-pip install "contradish[openai]"      # with OpenAI
-pip install "contradish[all]"         # both
-pip install contradish                # minimal, bring your own SDK
-```
-
----
-
-## Requirements
-
-- Python 3.9+
-- `anthropic>=0.25.0` or `openai>=1.0.0` (at least one)
+Current scores (higher = more consistent):
+- Intercom Fin: 0.84
+- ChatGPT (GPT-4o): 0.79
 
 ---
 
 ## License
 
-MIT — [contradish.com](https://contradish.com)
+MIT

@@ -2,8 +2,9 @@
 Core data models for contradish.
 """
 
+from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from enum import Enum
 
 
@@ -151,3 +152,112 @@ class Report:
                 for r in self.results
             ],
         }
+
+
+# ── Regression ─────────────────────────────────────────────────────────────────
+
+@dataclass
+class RegressionResult:
+    """
+    Compares baseline vs candidate app on the same test cases.
+    Use .fail_if_below() to gate CI/CD merges on CAI score.
+    """
+    baseline_label:   str
+    candidate_label:  str
+    baseline_report:  Report
+    candidate_report: Report
+
+    @property
+    def cai_delta(self) -> Optional[float]:
+        """Change in CAI score. Positive = improvement. Negative = regression."""
+        b = self.baseline_report.cai_score
+        c = self.candidate_report.cai_score
+        if b is None or c is None:
+            return None
+        return round(c - b, 3)
+
+    @property
+    def regressed(self) -> bool:
+        """True if candidate CAI score dropped vs baseline."""
+        delta = self.cai_delta
+        return delta is not None and delta < 0
+
+    def fail_if_below(self, consistency: float = 0.75) -> None:
+        """
+        Raise AssertionError if candidate CAI score falls below threshold.
+        Drop this in a GitHub Actions step to block merges on regressions.
+
+        Args:
+            consistency: Minimum acceptable CAI score (default 0.75).
+
+        Raises:
+            AssertionError: If candidate CAI score < consistency threshold.
+
+        Example:
+            result = suite.compare(baseline_app, candidate_app)
+            result.fail_if_below(consistency=0.80)  # CI fails if score drops below 0.80
+        """
+        score = self.candidate_report.cai_score
+        if score is not None and score < consistency:
+            raise AssertionError(
+                f"CAI regression: {self.candidate_label} scored {score:.3f} "
+                f"(min: {consistency}). "
+                f"Baseline ({self.baseline_label}): {self.baseline_report.cai_score:.3f}. "
+                f"Delta: {self.cai_delta:+.3f}"
+            )
+
+    def to_dict(self) -> dict:
+        return {
+            "baseline_label":  self.baseline_label,
+            "candidate_label": self.candidate_label,
+            "baseline_cai":    self.baseline_report.cai_score,
+            "candidate_cai":   self.candidate_report.cai_score,
+            "cai_delta":       self.cai_delta,
+            "regressed":       self.regressed,
+            "baseline":        self.baseline_report.to_dict(),
+            "candidate":       self.candidate_report.to_dict(),
+        }
+
+    def __str__(self) -> str:
+        delta = self.cai_delta
+        status = "REGRESSION" if self.regressed else "PASS"
+        arrow = f"{delta:+.3f}" if delta is not None else "N/A"
+        return (
+            f"\nCAI Regression: {status}\n"
+            f"  {self.baseline_label}:  {self.baseline_report.cai_score:.3f}\n"
+            f"  {self.candidate_label}: {self.candidate_report.cai_score:.3f}\n"
+            f"  delta: {arrow}\n"
+        )
+
+
+# ── Firewall ────────────────────────────────────────────────────────────────────
+
+@dataclass
+class FirewallResult:
+    """
+    Result from a single Firewall.check() call.
+
+    If blocked=True, response contains the safe fallback (not the original).
+    If contradiction_detected=True, the contradicting cached entry is in cached_*.
+    """
+    query:                  str
+    response:               str
+    blocked:                bool
+    contradiction_detected: bool
+    cached_query:           Optional[str] = None
+    cached_response:        Optional[str] = None
+    explanation:            Optional[str] = None
+
+
+# ── PromptRepair ───────────────────────────────────────────────────────────────
+
+@dataclass
+class RepairResult:
+    """One improved prompt variant from PromptRepair.fix()."""
+    original_prompt:    str
+    improved_prompt:    str
+    original_cai_score: float
+    improved_cai_score: float
+    delta:              float
+    report:             Report
+    rank:               int  # 1 = best
