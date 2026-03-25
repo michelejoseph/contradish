@@ -75,6 +75,7 @@ def _output_json(report) -> None:
 def cmd_from_prompt(args):
     """Run from a system prompt — the zero-config path."""
     from contradish import Suite
+    from contradish.printer import print_start, print_next_steps
 
     _check_api_key()
 
@@ -91,6 +92,8 @@ def cmd_from_prompt(args):
         print("     or: contradish --prompt system_prompt.txt\n")
         sys.exit(1)
 
+    use_json = getattr(args, "json", False)
+
     # Load app if provided, otherwise use a passthrough demo app
     if args.app:
         app = _load_callable(args.app)
@@ -99,6 +102,11 @@ def cmd_from_prompt(args):
         # so developers can test contradish without wiring up their own app
         from contradish.llm import LLMClient
         llm = LLMClient()
+
+        if not use_json:
+            print_start(system_prompt)
+            print("  demo mode: testing your prompt against itself")
+            print("  add --app mymodule:fn to test your actual app\n")
 
         def demo_app(question: str) -> str:
             """Uses the configured LLM with the provided system prompt."""
@@ -123,21 +131,28 @@ def cmd_from_prompt(args):
 
         app = demo_app
 
-    use_json = getattr(args, "json", False)
+    elif not use_json:
+        print_start(system_prompt)
+
     suite = Suite.from_prompt(
         system_prompt=system_prompt,
         app=app,
         verbose=not use_json,
     )
     report = suite.run(paraphrases=args.paraphrases, verbose=not use_json)
+
     if use_json:
         _output_json(report)
+    else:
+        print_next_steps(report)
+
     sys.exit(1 if report.failed else 0)
 
 
 def cmd_run(args):
     """Run manual test cases from a YAML or JSON file."""
     from contradish import Suite
+    from contradish.printer import print_next_steps
 
     _check_api_key()
     use_json = getattr(args, "json", False)
@@ -149,6 +164,8 @@ def cmd_run(args):
     report = suite.run(paraphrases=args.paraphrases, verbose=not use_json)
     if use_json:
         _output_json(report)
+    else:
+        print_next_steps(report)
     sys.exit(1 if report.failed else 0)
 
 

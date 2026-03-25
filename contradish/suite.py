@@ -17,8 +17,10 @@ from .judge   import Judge
 from .printer import print_report, print_progress, print_step
 
 
-_EXTRACT_RULES_PROMPT = """Extract the testable rules and constraints from this system prompt.
-A rule is any statement that constrains what the AI should or shouldn't do.
+_EXTRACT_RULES_PROMPT = """Extract the most important testable rules from this system prompt.
+
+Focus on rules where inconsistency would cause real harm: policy violations, incorrect eligibility decisions,
+contradictory commitments, or safety failures. Skip vague tone guidelines.
 
 System prompt:
 {system_prompt}
@@ -26,7 +28,7 @@ System prompt:
 Return ONLY a JSON array of objects. No markdown, no preamble.
 Each object must have:
   "name": short label for the rule (2-5 words)
-  "input": a natural question a real user would ask that tests this rule
+  "input": a natural, realistic question a real user would ask that directly tests whether this rule holds
 
 Example:
 [
@@ -34,7 +36,7 @@ Example:
   {{"name": "no price matching", "input": "Can you match a competitor's price?"}}
 ]
 
-Extract at most {max_rules} rules. Focus on the most testable and specific constraints."""
+Extract at most {max_rules} rules. Prioritize the ones most likely to cause problems if the model answers inconsistently."""
 
 
 class Suite:
@@ -155,8 +157,6 @@ class Suite:
                     name=item.get("name"),
                 )
                 suite.add(tc)
-                if verbose:
-                    print_progress(f"rule: {tc.name}")
 
         if not suite._cases:
             # Fallback if extraction fails or prompt has no extractable rules
@@ -164,6 +164,10 @@ class Suite:
                 input="What are the main rules you follow?",
                 name="general policy",
             ))
+
+        if verbose:
+            n = len(suite._cases)
+            print_progress(f"found {n} rule{'s' if n != 1 else ''} to test")
 
         return suite
 
@@ -217,13 +221,13 @@ class Suite:
 
         # 1. Paraphrase
         if verbose:
-            print_progress(f"generating {paraphrases} paraphrases")
+            print_progress(f"generating {paraphrases} adversarial phrasings")
         para_list = self._runner.generate_paraphrases(tc.input, n=paraphrases)
 
         # 2. Run matrix
         total_calls = 1 + len(para_list)
         if verbose:
-            print_progress(f"calling your app {total_calls}x across variants")
+            print_progress(f"querying your app {total_calls}x")
         inputs, outputs = self._runner.run_matrix(
             app=self.app,
             original=tc.input,
@@ -232,7 +236,7 @@ class Suite:
 
         # 3. Consistency
         if verbose:
-            print_progress("evaluating consistency")
+            print_progress("scoring consistency")
         cons = self._judge.evaluate_consistency(
             question=tc.input,
             inputs=inputs,
@@ -242,7 +246,7 @@ class Suite:
 
         # 4. Contradiction detection
         if verbose:
-            print_progress("detecting contradictions")
+            print_progress("checking for contradictions")
         contradictions = self._judge.find_contradictions(
             question=tc.input,
             inputs=inputs,
@@ -257,7 +261,7 @@ class Suite:
 
         if contradictions:
             if verbose:
-                print_progress("diagnosing failure patterns")
+                print_progress("diagnosing the failure")
             pattern = self._judge.extract_pattern(
                 question=tc.input,
                 inputs=inputs,
