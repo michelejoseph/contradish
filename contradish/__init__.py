@@ -1,7 +1,8 @@
 """
-contradish — reasoning stability testing for LLM applications.
+contradish — CAI testing for LLM applications.
 
-Detect contradictions. Measure consistency. Catch regressions.
+Detects CAI failures: when your app gives contradictory answers to semantically
+equivalent inputs. Returns a CAI score per rule.
 
 Quickstart:
     pip install contradish
@@ -10,7 +11,12 @@ Quickstart:
 
     suite = Suite(app=my_llm_function)
     suite.add(TestCase(input="Can I get a refund after 45 days?"))
-    suite.run()
+    report = suite.run()
+
+    # Access CAI scores programmatically
+    print(report.cai_score)           # aggregate score
+    for r in report.results:
+        print(r.test_case.name, r.cai_score)
 
 Full docs: https://contradish.com
 """
@@ -18,5 +24,5 @@ Full docs: https://contradish.com
 from .suite  import Suite
 from .models import TestCase, Report, TestResult, RiskLevel
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"
 __all__ = ["Suite", "TestCase", "Report", "TestResult", "RiskLevel"]

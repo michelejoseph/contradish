@@ -67,6 +67,11 @@ def _check_api_key():
         sys.exit(1)
 
 
+def _output_json(report) -> None:
+    """Print the report as JSON to stdout."""
+    print(json.dumps(report.to_dict(), indent=2))
+
+
 def cmd_from_prompt(args):
     """Run from a system prompt — the zero-config path."""
     from contradish import Suite
@@ -118,12 +123,15 @@ def cmd_from_prompt(args):
 
         app = demo_app
 
+    use_json = getattr(args, "json", False)
     suite = Suite.from_prompt(
         system_prompt=system_prompt,
         app=app,
-        verbose=True,
+        verbose=not use_json,
     )
-    report = suite.run(paraphrases=args.paraphrases)
+    report = suite.run(paraphrases=args.paraphrases, verbose=not use_json)
+    if use_json:
+        _output_json(report)
     sys.exit(1 if report.failed else 0)
 
 
@@ -132,19 +140,22 @@ def cmd_run(args):
     from contradish import Suite
 
     _check_api_key()
-    app    = _load_callable(args.app)
-    cases  = _load_cases(args.eval_file)
-    suite  = Suite(app=app)
+    use_json = getattr(args, "json", False)
+    app      = _load_callable(args.app)
+    cases    = _load_cases(args.eval_file)
+    suite    = Suite(app=app)
     for tc in cases:
         suite.add(tc)
-    report = suite.run(paraphrases=args.paraphrases)
+    report = suite.run(paraphrases=args.paraphrases, verbose=not use_json)
+    if use_json:
+        _output_json(report)
     sys.exit(1 if report.failed else 0)
 
 
 def main():
     parser = argparse.ArgumentParser(
         prog="contradish",
-        description="Reasoning stability testing for LLM applications.",
+        description="CAI testing for LLM applications. Detects CAI failures and returns a CAI score per rule.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 examples:
@@ -188,12 +199,20 @@ examples:
         metavar="N",
         help="Number of paraphrases per test case (default: 5)",
     )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        default=False,
+        help="Output report as JSON instead of terminal format. Includes cai_score at report and rule level.",
+    )
 
     # contradish run evals.yaml --app module:fn
     run_p = sub.add_parser("run", help="Run manual test cases from a YAML/JSON file")
     run_p.add_argument("eval_file", help="Path to YAML or JSON eval file")
     run_p.add_argument("--app", required=True, metavar="MODULE:FUNCTION")
     run_p.add_argument("--paraphrases", type=int, default=5, metavar="N")
+    run_p.add_argument("--json", action="store_true", default=False,
+                       help="Output report as JSON")
 
     args = parser.parse_args()
 

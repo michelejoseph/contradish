@@ -64,6 +64,16 @@ class TestResult:
     unstable_patterns:   list[str] = field(default_factory=list)   # human-readable diagnoses
     suggestion:          Optional[str] = None
 
+    @property
+    def cai_score(self) -> Optional[float]:
+        """
+        CAI (Compression-Aware Intelligence) score for this test case.
+        Measures how consistently the app reasons across semantically
+        equivalent inputs. 0 = maximally inconsistent. 1 = fully stable.
+        Alias for consistency_score.
+        """
+        return self.consistency_score
+
     def passed(self, thresholds: Optional[dict] = None) -> bool:
         t = {"consistency": 0.75, "contradiction": 0.30, **(thresholds or {})}
         if self.consistency_score   is not None and self.consistency_score   < t["consistency"]:
@@ -88,11 +98,56 @@ class Report:
         return [r for r in self.results if not r.passed(self.thresholds)]
 
     @property
-    def avg_consistency(self) -> Optional[float]:
-        s = [r.consistency_score for r in self.results if r.consistency_score is not None]
+    def cai_score(self) -> Optional[float]:
+        """
+        Aggregate CAI score across all test cases.
+        Average of individual CAI scores. 0 = maximally inconsistent. 1 = fully stable.
+        """
+        s = [r.cai_score for r in self.results if r.cai_score is not None]
         return round(sum(s) / len(s), 3) if s else None
+
+    @property
+    def avg_consistency(self) -> Optional[float]:
+        """Alias for cai_score. Use cai_score in new code."""
+        return self.cai_score
 
     @property
     def avg_contradiction(self) -> Optional[float]:
         s = [r.contradiction_score for r in self.results if r.contradiction_score is not None]
         return round(sum(s) / len(s), 3) if s else None
+
+    def to_dict(self) -> dict:
+        """
+        Serialize the report to a dict suitable for JSON output.
+        CAI scores are included at both the report and test-case level.
+        """
+        return {
+            "cai_score":   self.cai_score,
+            "total":       len(self.results),
+            "passed":      len(self.passed),
+            "failed":      len(self.failed),
+            "results": [
+                {
+                    "name":               r.test_case.name,
+                    "input":              r.test_case.input,
+                    "cai_score":          r.cai_score,
+                    "contradiction_score": r.contradiction_score,
+                    "risk":               r.risk.value,
+                    "passed":             r.passed(self.thresholds),
+                    "contradictions": [
+                        {
+                            "input_a":     c.input_a,
+                            "output_a":    c.output_a,
+                            "input_b":     c.input_b,
+                            "output_b":    c.output_b,
+                            "explanation": c.explanation,
+                            "severity":    c.severity,
+                        }
+                        for c in r.contradictions
+                    ],
+                    "unstable_patterns": r.unstable_patterns,
+                    "suggestion":        r.suggestion,
+                }
+                for r in self.results
+            ],
+        }

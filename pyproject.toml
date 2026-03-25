@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "contradish"
-version = "0.2.4"
-description = "Contradish is an open-source reasoning stability testing library for LLM applications. It detects contradictions, measures consistency, and catches regressions before they ship."
+version = "0.3.0"
+description = "CAI testing for LLM apps. Detects CAI failures — when your app gives contradictory answers to semantically equivalent inputs. Returns a CAI score per rule."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-keywords = ["llm", "testing", "evaluation", "reasoning", "consistency", "ai", "agents", "rag"]
+keywords = ["llm", "testing", "evaluation", "cai", "compression-aware-intelligence", "reasoning", "consistency", "ai", "agents", "rag"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -34,8 +34,8 @@ dev       = ["anthropic>=0.25.0", "openai>=1.0.0", "pytest>=7.0", "pytest-mock"]
 
 [project.urls]
 Homepage    = "https://contradish.com"
-Repository  = "https://github.com/yourusername/contradish"
-Issues      = "https://github.com/yourusername/contradish/issues"
+Repository  = "https://github.com/michelejoseph/contradish"
+Issues      = "https://github.com/michelejoseph/contradish/issues"
 
 [project.scripts]
 contradish = "contradish.cli:main"

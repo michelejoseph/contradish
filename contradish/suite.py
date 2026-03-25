@@ -17,9 +17,29 @@ from .judge   import Judge
 from .printer import print_report, print_progress, print_step
 
 
+_EXTRACT_RULES_PROMPT = """Extract the testable rules and constraints from this system prompt.
+A rule is any statement that constrains what the AI should or shouldn't do.
+
+System prompt:
+{system_prompt}
+
+Return ONLY a JSON array of objects. No markdown, no preamble.
+Each object must have:
+  "name": short label for the rule (2-5 words)
+  "input": a natural question a real user would ask that tests this rule
+
+Example:
+[
+  {{"name": "refund window", "input": "Can I get a refund after 45 days?"}},
+  {{"name": "no price matching", "input": "Can you match a competitor's price?"}}
+]
+
+Extract at most {max_rules} rules. Focus on the most testable and specific constraints."""
+
+
 class Suite:
     """
-    Point contradish at your LLM app and run reasoning stability checks.
+    Point contradish at your LLM app and run CAI testing.
 
     Args:
         app:      A callable that takes a str and returns a str.
@@ -74,6 +94,79 @@ class Suite:
         }
         return self
 
+    # ── From system prompt ─────────────────────────────────────────
+
+    @classmethod
+    def from_prompt(
+        cls,
+        system_prompt: str,
+        app:           Callable[[str], str],
+        api_key:       Optional[str] = None,
+        provider:      Optional[str] = None,
+        verbose:       bool = True,
+        max_rules:     int  = 8,
+    ) -> "Suite":
+        """
+        Extract rules from a system prompt and build a Suite automatically.
+
+        Args:
+            system_prompt: The system prompt to extract rules from.
+            app:           Your LLM app callable.
+            api_key:       Optional API key.
+            provider:      Optional provider override.
+            verbose:       Print extracted rules to stdout.
+            max_rules:     Max number of rules to extract (default 8).
+
+        Returns:
+            Suite with test cases added, ready to run.
+
+        Example:
+            suite = Suite.from_prompt(
+                system_prompt="You are a support agent. Refunds within 30 days only.",
+                app=my_app,
+            )
+            suite.run()
+        """
+        llm = LLMClient(api_key=api_key, provider=provider)
+
+        if verbose:
+            print_progress("extracting rules from system prompt")
+
+        prompt = _EXTRACT_RULES_PROMPT.format(
+            system_prompt=system_prompt[:3000],
+            max_rules=max_rules,
+        )
+
+        try:
+            raw = llm.complete_json(prompt)
+            if isinstance(raw, dict):
+                raw = raw.get("rules", raw.get("test_cases", []))
+            if not isinstance(raw, list):
+                raw = []
+        except Exception:
+            raw = []
+
+        suite = cls(app=app, api_key=api_key, provider=provider)
+
+        for item in raw[:max_rules]:
+            if isinstance(item, dict) and item.get("input"):
+                tc = TestCase(
+                    input=item["input"],
+                    name=item.get("name"),
+                )
+                suite.add(tc)
+                if verbose:
+                    print_progress(f"rule: {tc.name}")
+
+        if not suite._cases:
+            # Fallback if extraction fails or prompt has no extractable rules
+            suite.add(TestCase(
+                input="What are the main rules you follow?",
+                name="general policy",
+            ))
+
+        return suite
+
     # ── Run ────────────────────────────────────────────────────────
 
     def run(
@@ -82,14 +175,14 @@ class Suite:
         verbose:     bool = True,
     ) -> Report:
         """
-        Run all test cases and print the report.
+        Run all test cases and return a Report.
 
         Args:
             paraphrases: Number of semantic variants to generate per input. Default 5.
-            verbose:     Print progress to stdout. Default True.
+            verbose:     Print progress and report to stdout. Default True.
 
         Returns:
-            Report — also printed to stdout automatically.
+            Report with CAI scores, failures, and suggestions.
         """
         if not self._cases:
             raise ValueError(
@@ -130,7 +223,7 @@ class Suite:
         # 2. Run matrix
         total_calls = 1 + len(para_list)
         if verbose:
-            print_progress(f"calling your app {total_calls}× across variants")
+            print_progress(f"calling your app {total_calls}x across variants")
         inputs, outputs = self._runner.run_matrix(
             app=self.app,
             original=tc.input,

@@ -34,6 +34,15 @@ def _wrap(text: str, width: int = 70, indent: str = "") -> str:
                          subsequent_indent=indent)
 
 
+def _cai_label(score: float) -> str:
+    """Human-readable stability label for a CAI score."""
+    if score >= 0.80:
+        return "stable"
+    if score >= 0.60:
+        return "marginal"
+    return "unstable"
+
+
 def print_progress(msg: str):
     print(f"  {_GRAY}{msg}{_RESET}")
 
@@ -49,19 +58,22 @@ def print_report(report) -> None:
 
     print()
 
-    # ── Opening line — immediately tells them if they have a problem ──
+    # ── All clean ─────────────────────────────────────────────────────
     if failed == 0:
-        print(f"{_GREEN}{_BOLD}contradish found no bugs.{_RESET}  "
+        print(f"{_GREEN}{_BOLD}contradish found no CAI failures.{_RESET}  "
               f"{_GRAY}All {total} rules tested clean.{_RESET}")
         print()
         for result in report.results:
+            score = result.consistency_score
+            score_str = f"{score:.2f}" if score is not None else "n/a"
             print(f"  {_GREEN}✓{_RESET}  {result.test_case.name}  "
-                  f"{_GRAY}consistent across all phrasings{_RESET}")
+                  f"{_GRAY}CAI score: {score_str}  (stable){_RESET}")
         print()
         return
 
-    bug_word = "bug" if failed == 1 else "bugs"
-    print(f"{_RED}{_BOLD}contradish found {failed} {bug_word} in your app.{_RESET}")
+    # ── Header ────────────────────────────────────────────────────────
+    failure_word = "CAI failure" if failed == 1 else "CAI failures"
+    print(f"{_RED}{_BOLD}contradish found {failed} {failure_word}.{_RESET}")
     print()
 
     # ── Each failing result ────────────────────────────────────────────
@@ -69,17 +81,24 @@ def print_report(report) -> None:
         tc = result.test_case
         ok = result.passed(report.thresholds)
 
+        score = result.consistency_score
+        score_str = f"{score:.2f}" if score is not None else "n/a"
+
         if ok:
-            print(f"  {_GREEN}✓{_RESET}  {_GRAY}{tc.name} — clean{_RESET}")
+            print(f"  {_GREEN}✓{_RESET}  {_GRAY}{tc.name}  "
+                  f"CAI score: {score_str}  (stable){_RESET}")
             print()
             continue
 
-        # Header
-        print(f"{_RED}{_BOLD}YOUR APP CONTRADICTS ITSELF ON:{_RESET}")
-        print(f'{_BOLD}"{tc.name}"{_RESET}')
+        label = _cai_label(score) if score is not None else "unstable"
+
+        # ── CAI FAILURE header ─────────────────────────────────────────
+        print(f"{_RED}{_BOLD}CAI FAILURE: \"{tc.name}\"{_RESET}")
+        print(f"{_GRAY}CAI score: {_RESET}{_BOLD}{score_str}{_RESET}  "
+              f"{_GRAY}({label}){_RESET}")
         print()
 
-        # Show the contradiction as a user scenario
+        # ── Show the contradiction as a user scenario ──────────────────
         if result.contradictions:
             pair = result.contradictions[0]
 
@@ -88,7 +107,6 @@ def print_report(report) -> None:
             q_b = pair.input_b.strip()
             a_b = pair.output_b.strip()
 
-            # Wrap long outputs
             if len(a_a) > 100:
                 a_a = a_a[:97] + "..."
             if len(a_b) > 100:
@@ -105,11 +123,10 @@ def print_report(report) -> None:
                   f" One will reach a real user.{_RESET}")
             print()
 
-            # More contradictions if present
             if len(result.contradictions) > 1:
                 extra = len(result.contradictions) - 1
                 print(f"  {_GRAY}+ {extra} more contradiction{'s' if extra > 1 else ''} "
-                      f"detected on this rule.{_RESET}")
+                      f"on this rule.{_RESET}")
                 print()
 
         elif result.unstable_patterns:
@@ -117,13 +134,13 @@ def print_report(report) -> None:
                   f"to the same question.{_RESET}")
             print()
 
-        # Pattern
+        # ── Pattern ───────────────────────────────────────────────────
         if result.unstable_patterns:
             pat = result.unstable_patterns[0]
             print(f"  {_YELLOW}WHY:{_RESET}  {_wrap(pat, width=66, indent='        ').lstrip()}")
             print()
 
-        # Fix — the most important part
+        # ── Fix ───────────────────────────────────────────────────────
         if result.suggestion:
             print(f"  {_CYAN}{_BOLD}THE FIX:{_RESET}")
             lines = _wrap(result.suggestion, width=66, indent="  ").split("\n")
@@ -138,9 +155,14 @@ def print_report(report) -> None:
     clean_list = [r for r in report.results if r.passed(report.thresholds)]
     if clean_list:
         for r in clean_list:
-            print(f"  {_GREEN}✓{_RESET}  {_GRAY}{r.test_case.name} — clean{_RESET}")
+            score = r.consistency_score
+            score_str = f"{score:.2f}" if score is not None else "n/a"
+            print(f"  {_GREEN}✓{_RESET}  {_GRAY}{r.test_case.name}  "
+                  f"CAI score: {score_str}  (stable){_RESET}")
         print()
 
-    print(f"{_RED}{_BOLD}{failed} bug{'s' if failed > 1 else ''} found.{_RESET}  "
-          f"{_GRAY}{passed} rule{'s' if passed != 1 else ''} clean.{_RESET}")
+    failure_word = "CAI failure" if failed == 1 else "CAI failures"
+    rule_word    = "rule" if passed != 1 else "rule"
+    print(f"{_RED}{_BOLD}{failed} {failure_word} found.{_RESET}  "
+          f"{_GRAY}{passed} {rule_word}{'s' if passed != 1 else ''} clean.{_RESET}")
     print()

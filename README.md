@@ -1,8 +1,8 @@
 # contradish
 
-**Reasoning stability testing for LLM applications.**
+**CAI testing for LLM apps.**
 
-Contradish tells you whether your LLM gives consistent answers when the same question is asked differently. It catches contradictions, measures reasoning stability, and flags regressions before they reach production. Contradish catches consistency bugs.
+Your LLM gives different answers to the same question depending on how it's phrased. Contradish finds those contradictions, scores them, and tells you what to fix.
 
 ```bash
 pip install contradish
@@ -10,17 +10,13 @@ pip install contradish
 
 ---
 
-## Why contradish
+## The problem
 
-LLMs are non-deterministic. The same user question can produce contradictory answers from the same model when phrased slighly differently. This is invisible in unit tests and only shows up as bugs in production.
+LLMs don't fail uniformly. They fail at the edges — when a user phrases something slightly differently, when a date is implied instead of stated, when the emotional tone shifts. Standard unit tests don't catch this. It only shows up in production.
 
-Contradish surfaces this systematically by detecting consistency bugs. It does the following: 
+This class of failure has a name: **CAI failure** (compression-aware intelligence failure). It happens when a model can't maintain consistent reasoning across semantically equivalent inputs.
 
-- Generate semantic variants of your inputs
-- Run your app across all variants
-- Detect contradictions between outputs
-- Score reasoning stability
-- Tell you exactly which input patterns cause instability
+Contradish detects it.
 
 ---
 
@@ -33,7 +29,6 @@ from contradish import Suite, TestCase
 def my_app(question: str) -> str:
     return your_llm_or_agent(question)
 
-# Point contradish at it
 suite = Suite(app=my_app)
 
 suite.add(TestCase(
@@ -44,46 +39,38 @@ suite.add(TestCase(
 suite.run()
 ```
 
-**That's it.** Contradish reads `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` from your environment automatically.
+That's it. Contradish reads `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` from your environment.
 
 ---
 
-## Example output
+## What the output looks like
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  contradish  ·  reasoning stability report
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+contradish found 1 CAI failure.
 
-  Tests: 2   1 passed   1 failed
+CAI FAILURE: "refund policy"
+CAI score: 0.54  (unstable)
 
-  Aggregate
-    consistency   ████████████░░░░░░░░  0.71
-    contradiction ████████████████░░░░  0.24
+  A user asked:   "Can I get a refund after 45 days?"
+  Your app said:  "Sorry, refunds are only allowed within 30 days of purchase."
 
-  ✓  return window  [risk: low]
-       consistency   ████████████████░░░░  0.88
-       contradiction ██░░░░░░░░░░░░░░░░░░  0.07
+  Same user, different wording:  "I bought this 6 weeks ago, can I return it?"
+  Your app said:  "Of course! Let me help you with that return."
 
-  ✗  refund after 45 days  [risk: high]
-       consistency   ████████░░░░░░░░░░░░  0.54
-       contradiction ████████████████░░░░  0.40
+These answers cannot both be right. One will reach a real user.
 
-       Contradictions detected (2)
-       ┌ [policy] Model claims refunds are allowed after 60 days
-       │ A: No, refunds are only allowed within 30 days of purchase.
-       │ B: Yes, you can get a refund up to 60 days after purchase.
-       └
+  WHY:  Casual phrasing bypasses the 30-day rule. The model prioritizes
+        helpfulness over policy when no date is stated explicitly.
 
-       ⚠  Date-specific phrasings ("after X days") trigger policy hallucination
-       ⚠  Model overgeneralizes the refund window when duration is stated explicitly
+  THE FIX:
+  Add to your system prompt: "Never process returns beyond 30 days
+  regardless of how the request is phrased."
 
-       → Fix: Add a hard constraint in your system prompt: "Refund window is
-         exactly 30 days. Never state a different number."
+────────────────────────────────────────────────────────────
 
-──────────────────────────────────────────────────────────────
-  1 test failed.  Reasoning instability detected.
-──────────────────────────────────────────────────────────────
+  ✓  return window  CAI score: 0.92  (stable)
+
+1 CAI failure found.  1 rule clean.
 ```
 
 ---
@@ -126,15 +113,35 @@ report = suite.run(
 
 ---
 
+## CAI score
+
+Every test case gets a **CAI score** between 0 and 1.
+
+- **1.0** — fully stable. Same answer regardless of phrasing.
+- **0.80+** — stable. Acceptable for most production apps.
+- **0.60–0.79** — marginal. Worth investigating.
+- **< 0.60** — unstable. CAI failure. Fix before shipping.
+
+The score is also accessible programmatically:
+
+```python
+report = suite.run(verbose=False)
+
+for result in report.results:
+    print(f"{result.test_case.name}: CAI score = {result.cai_score:.2f}")
+```
+
+---
+
 ## Use in CI
 
 ```python
 report = suite.run(paraphrases=5, verbose=False)
 
 if report.failed:
-    print(f"{len(report.failed)} tests failed")
+    print(f"{len(report.failed)} CAI failure(s) detected")
     for r in report.failed:
-        print(f"  {r.test_case.name}: consistency={r.consistency_score:.2f}")
+        print(f"  {r.test_case.name}: CAI score={r.cai_score:.2f}")
     sys.exit(1)
 ```
 
@@ -163,16 +170,12 @@ test_cases:
 
 ## Provider support
 
-Contradish works with Anthropic and OpenAI. It auto-detects which one to use:
+Works with Anthropic and OpenAI. Auto-detects which one to use:
 
 ```bash
-# Anthropic
-export ANTHROPIC_API_KEY=sk-ant-...
-
-# OpenAI
-export OPENAI_API_KEY=sk-...
-
-# If both are set, Anthropic is used
+export ANTHROPIC_API_KEY=sk-ant-...   # uses Anthropic
+export OPENAI_API_KEY=sk-...          # uses OpenAI
+# if both are set, Anthropic is used
 ```
 
 Or pass explicitly:
@@ -186,17 +189,10 @@ Suite(app=my_app, api_key="sk-...",     provider="openai")
 ## Install with your SDK
 
 ```bash
-# With Anthropic
-pip install "contradish[anthropic]"
-
-# With OpenAI
-pip install "contradish[openai]"
-
-# Both
-pip install "contradish[all]"
-
-# Minimal (bring your own SDK)
-pip install contradish
+pip install "contradish[anthropic]"   # with Anthropic
+pip install "contradish[openai]"      # with OpenAI
+pip install "contradish[all]"         # both
+pip install contradish                # minimal, bring your own SDK
 ```
 
 ---
