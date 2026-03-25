@@ -39,8 +39,9 @@ from .models     import (
     FirewallResult,
     RepairResult,
 )
+from .policies   import load_policy, list_policies, PolicyPack
 
-__version__ = "0.4.1"
+__version__ = "0.4.2"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -53,4 +54,7 @@ __all__ = [
     "RegressionResult",
     "FirewallResult",
     "RepairResult",
+    "load_policy",
+    "list_policies",
+    "PolicyPack",
 ]

@@ -66,6 +66,66 @@ contradish --prompt system_prompt.txt --json
 
 ---
 
+## Policy packs (new in v0.4.2)
+
+No system prompt? No test cases? Start here.
+
+Contradish ships with prebuilt domain packs that let you get real CAI results in under 2 minutes.
+
+```bash
+# No --app needed. Runs in demo mode against the raw LLM.
+contradish --policy ecommerce
+
+# Test your actual app against the pack.
+contradish --policy ecommerce --app mymodule:my_support_bot
+contradish --policy hr --app mymodule:my_hr_assistant
+contradish --policy healthcare --app mymodule:my_benefits_bot
+contradish --policy legal --app mymodule:my_legal_tool
+```
+
+From Python:
+
+```python
+from contradish import Suite
+
+# Loads 12 e-commerce test cases. No test case writing required.
+suite = Suite.from_policy("ecommerce", app=my_app)
+report = suite.run()
+```
+
+Or load the pack directly to inspect or extend it:
+
+```python
+from contradish import load_policy, list_policies
+
+print(list_policies())     # ['ecommerce', 'hr', 'healthcare', 'legal']
+
+pack = load_policy("ecommerce")
+print(pack.display_name)   # "E-Commerce Support"
+print(len(pack))           # 12
+
+# Add a custom case to the prebuilt pack
+from contradish import Suite
+suite = Suite(app=my_app)
+for tc in pack.cases:
+    suite.add(tc)
+suite.add(TestCase(name="custom", input="My own test question"))
+suite.run()
+```
+
+**Available packs:**
+
+| Pack | Cases | Covers |
+|---|---|---|
+| `ecommerce` | 12 | Refunds, returns, price matching, shipping, warranties |
+| `hr` | 12 | PTO, benefits, parental leave, termination, overtime |
+| `healthcare` | 12 | Coverage, referrals, deductibles, prior auth, eligibility |
+| `legal` | 12 | Disclaimers, liability, advice boundaries, data privacy |
+
+Each case targets a real inconsistency vector — the places where LLM support bots most often give different answers to the same underlying question.
+
+---
+
 ## CAI score
 
 A number from 0 to 1 measuring how consistently your app responds to semantically equivalent inputs.

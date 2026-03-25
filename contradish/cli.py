@@ -72,6 +72,87 @@ def _output_json(report) -> None:
     print(json.dumps(report.to_dict(), indent=2))
 
 
+def _make_demo_app(system_prompt: str):
+    """Return a demo app callable that uses the configured LLM with the given system prompt."""
+    from contradish.llm import LLMClient
+    llm = LLMClient()
+
+    def demo_app(question: str) -> str:
+        if llm.provider == "anthropic":
+            msg = llm._client.messages.create(
+                model=llm.fast_model,
+                max_tokens=256,
+                system=system_prompt,
+                messages=[{"role": "user", "content": question}],
+            )
+            return msg.content[0].text.strip()
+        else:
+            resp = llm._client.chat.completions.create(
+                model=llm.fast_model,
+                max_tokens=256,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": question},
+                ],
+            )
+            return resp.choices[0].message.content.strip()
+
+    return demo_app, llm.provider
+
+
+def cmd_policy(args):
+    """Run a prebuilt domain policy pack — no system prompt required."""
+    from contradish import Suite
+    from contradish.policies import load_policy, list_policies
+    from contradish.printer import print_next_steps
+
+    _check_api_key()
+
+    policy_name = args.policy
+    use_json    = getattr(args, "json", False)
+
+    # Validate policy name early for a good error message
+    try:
+        pack = load_policy(policy_name)
+    except ValueError as e:
+        print(f"\n  {e}\n")
+        print(f"  Available: {', '.join(list_policies())}\n")
+        sys.exit(1)
+
+    if not use_json:
+        print(f"\n  {pack.display_name} policy pack  "
+              f"({len(pack.cases)} test cases)\n")
+        print(f"  {pack.description}\n")
+
+    if args.app:
+        app = _load_callable(args.app)
+    else:
+        # Demo mode: create a generic assistant that answers the test questions
+        # without a real system prompt — surfaces what the model does by default
+        demo_system = (
+            f"You are a helpful assistant for a {pack.display_name.lower()} context. "
+            f"Answer user questions clearly and accurately."
+        )
+        if not use_json:
+            print("  demo mode: no --app provided, testing default LLM behavior")
+            print("  add --app mymodule:fn to test your actual app\n")
+        app, _ = _make_demo_app(demo_system)
+
+    suite = Suite.from_policy(
+        policy=policy_name,
+        app=app,
+        verbose=not use_json,
+    )
+    report = suite.run(paraphrases=args.paraphrases, verbose=not use_json)
+
+    if use_json:
+        _output_json(report)
+    else:
+        print_next_steps(report)
+
+    sys.exit(1 if report.failed else 0)
+
+
 def cmd_from_prompt(args):
     """Run from a system prompt — the zero-config path."""
     from contradish import Suite
@@ -97,42 +178,14 @@ def cmd_from_prompt(args):
     # Load app if provided, otherwise use a passthrough demo app
     if args.app:
         app = _load_callable(args.app)
+        if not use_json:
+            print_start(system_prompt)
     else:
-        # Demo mode: use the judge LLM as the app itself
-        # so developers can test contradish without wiring up their own app
-        from contradish.llm import LLMClient
-        llm = LLMClient()
-
         if not use_json:
             print_start(system_prompt)
             print("  demo mode: testing your prompt against itself")
             print("  add --app mymodule:fn to test your actual app\n")
-
-        def demo_app(question: str) -> str:
-            """Uses the configured LLM with the provided system prompt."""
-            if llm.provider == "anthropic":
-                msg = llm._client.messages.create(
-                    model=llm.fast_model,
-                    max_tokens=256,
-                    system=system_prompt,
-                    messages=[{"role": "user", "content": question}],
-                )
-                return msg.content[0].text.strip()
-            else:
-                resp = llm._client.chat.completions.create(
-                    model=llm.fast_model,
-                    max_tokens=256,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": question},
-                    ],
-                )
-                return resp.choices[0].message.content.strip()
-
-        app = demo_app
-
-    elif not use_json:
-        print_start(system_prompt)
+        app, _ = _make_demo_app(system_prompt)
 
     suite = Suite.from_prompt(
         system_prompt=system_prompt,
@@ -210,6 +263,12 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 examples:
+  # run a prebuilt policy pack — no system prompt needed
+  contradish --policy ecommerce --app mymodule:my_app
+  contradish --policy hr --app mymodule:my_app
+  contradish --policy healthcare
+  contradish --policy legal
+
   # test your system prompt directly (demo mode — uses your API key as the app)
   contradish "You are a support agent. Refunds within 30 days only."
 
@@ -241,6 +300,14 @@ examples:
         dest="prompt_file",
         metavar="FILE",
         help="Path to a file containing your system prompt",
+    )
+    parser.add_argument(
+        "--policy",
+        metavar="PACK",
+        help=(
+            "Prebuilt domain test suite. No system prompt needed. "
+            "Options: ecommerce, hr, healthcare, legal"
+        ),
     )
     parser.add_argument(
         "--app",
@@ -309,6 +376,8 @@ examples:
         cmd_run(args)
     elif args.command == "compare":
         cmd_compare(args)
+    elif getattr(args, "policy", None):
+        cmd_policy(args)
     elif args.system_prompt or args.prompt_file:
         cmd_from_prompt(args)
     else:

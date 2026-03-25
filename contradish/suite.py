@@ -96,6 +96,59 @@ class Suite:
         }
         return self
 
+    # ── From policy pack ───────────────────────────────────────────
+
+    @classmethod
+    def from_policy(
+        cls,
+        policy:   str,
+        app:      Callable[[str], str],
+        api_key:  Optional[str] = None,
+        provider: Optional[str] = None,
+        verbose:  bool = True,
+    ) -> "Suite":
+        """
+        Load a prebuilt domain policy pack and build a Suite automatically.
+
+        No system prompt required. Ideal for first runs on support bots,
+        HR assistants, healthcare portals, or legal tools.
+
+        Args:
+            policy:   Policy pack name: 'ecommerce', 'hr', 'healthcare', or 'legal'.
+            app:      Your LLM app callable.
+            api_key:  Optional API key.
+            provider: Optional provider override.
+            verbose:  Print progress to stdout.
+
+        Returns:
+            Suite with test cases loaded, ready to run.
+
+        Example:
+            suite = Suite.from_policy("ecommerce", app=my_support_bot)
+            report = suite.run()
+
+        Available packs:
+            ecommerce  — refunds, pricing, shipping, returns, warranties (12 cases)
+            hr         — PTO, benefits, termination, leave (12 cases)
+            healthcare — coverage, referrals, deductibles, eligibility (12 cases)
+            legal      — disclaimers, liability, advice boundaries (12 cases)
+        """
+        from .policies import load_policy
+
+        pack = load_policy(policy)
+
+        suite = cls(app=app, api_key=api_key, provider=provider)
+        for tc in pack.cases:
+            suite.add(tc)
+
+        if verbose:
+            print_progress(
+                f"loaded {pack.display_name} policy pack  "
+                f"({len(pack.cases)} test cases)"
+            )
+
+        return suite
+
     # ── From system prompt ─────────────────────────────────────────
 
     @classmethod
