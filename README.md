@@ -12,13 +12,19 @@ pip install contradish
 
 ## What it does
 
-**Offline testing** — run before deploy. Contradish generates adversarial paraphrases of your test inputs, sends them all to your app, and scores consistency across responses.
+**Offline testing.** Run before deploy. Contradish generates adversarial paraphrases of your test inputs, sends them all to your app, and scores consistency across responses.
 
-**Regression gating** — compare baseline vs candidate on the same test suite. Block merges if the CAI score drops below your threshold.
+**Regression gating.** Compare baseline vs candidate on the same test suite. Block merges if the CAI score drops below your threshold.
 
-**Production monitoring** — wrap your live app with the Firewall. It checks each response against recent ones and flags (or blocks) contradictions in real time.
+**Production monitoring.** Wrap your live app with the Firewall. It checks each response against recent ones and flags (or blocks) contradictions in real time.
 
-**Prompt repair** — failing tests? Contradish generates 3 improved prompt variants, tests each one, and ranks them by CAI score so you know exactly which fix worked.
+**Prompt repair.** Failing tests? Contradish generates 3 improved prompt variants, tests each one, and ranks them by CAI score.
+
+**Failure fingerprinting.** Groups CAI failures by pattern type so you can see what keeps breaking and why. Fix root causes, not symptoms.
+
+**Integration exporters.** Push results directly into Langfuse or Arize Phoenix. Feeds your stack rather than replacing it.
+
+**Audit export.** Timestamped compliance artifacts with NIST AI RMF and EU AI Act alignment. One function call.
 
 ---
 
@@ -36,7 +42,7 @@ for r in report.results:
     print(r.test_case.name, r.cai_score)
 ```
 
-Or give it your system prompt and let it figure out the test cases:
+From a system prompt:
 
 ```python
 suite = Suite.from_prompt(
@@ -46,41 +52,35 @@ suite = Suite.from_prompt(
 report = suite.run()
 ```
 
-Or from the CLI:
+CLI:
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
 
-# test a system prompt directly (uses your LLM as the demo app)
+# test a system prompt directly
 contradish "You are a support agent. Refunds within 30 days only."
 
 # test from a file
-contradish --prompt system_prompt.txt
-
-# test your own app
 contradish --prompt system_prompt.txt --app mymodule:my_app_function
 
-# JSON output for CI pipelines
-contradish --prompt system_prompt.txt --json
+# save a shareable HTML report
+contradish --policy ecommerce --app mymodule:my_app --report
 ```
 
 ---
 
 ## Policy packs (new in v0.4.2)
 
-No system prompt? No test cases? Start here.
-
-Contradish ships with prebuilt domain packs that let you get real CAI results in under 2 minutes.
+No system prompt. No test cases. 48 prebuilt cases across 4 domains. Real CAI results in under 2 minutes.
 
 ```bash
-# No --app needed. Runs in demo mode against the raw LLM.
-contradish --policy ecommerce
-
-# Test your actual app against the pack.
 contradish --policy ecommerce --app mymodule:my_support_bot
 contradish --policy hr --app mymodule:my_hr_assistant
 contradish --policy healthcare --app mymodule:my_benefits_bot
 contradish --policy legal --app mymodule:my_legal_tool
+
+# no --app runs in demo mode against the raw LLM
+contradish --policy ecommerce
 ```
 
 From Python:
@@ -88,12 +88,11 @@ From Python:
 ```python
 from contradish import Suite
 
-# Loads 12 e-commerce test cases. No test case writing required.
 suite = Suite.from_policy("ecommerce", app=my_app)
 report = suite.run()
 ```
 
-Or load the pack directly to inspect or extend it:
+Inspect or extend a pack:
 
 ```python
 from contradish import load_policy, list_policies
@@ -104,16 +103,12 @@ pack = load_policy("ecommerce")
 print(pack.display_name)   # "E-Commerce Support"
 print(len(pack))           # 12
 
-# Add a custom case to the prebuilt pack
-from contradish import Suite
 suite = Suite(app=my_app)
 for tc in pack.cases:
     suite.add(tc)
 suite.add(TestCase(name="custom", input="My own test question"))
 suite.run()
 ```
-
-**Available packs:**
 
 | Pack | Cases | Covers |
 |---|---|---|
@@ -122,17 +117,37 @@ suite.run()
 | `healthcare` | 12 | Coverage, referrals, deductibles, prior auth, eligibility |
 | `legal` | 12 | Disclaimers, liability, advice boundaries, data privacy |
 
-Each case targets a real inconsistency vector — the places where LLM support bots most often give different answers to the same underlying question.
+Each case targets an inconsistency vector where LLM support bots most often contradict themselves.
+
+---
+
+## Shareable HTML reports (new in v0.4.3)
+
+Run with `--report` and get a self-contained HTML file you can paste into a PR, send to your team, or post.
+
+```bash
+contradish --policy ecommerce --app mymodule:my_app --report
+contradish --policy ecommerce --app mymodule:my_app --report ecommerce.html
+```
+
+From Python:
+
+```python
+from contradish.reporter import to_html
+
+html = to_html(report)
+open("report.html", "w").write(html)
+```
 
 ---
 
 ## CAI score
 
-A number from 0 to 1 measuring how consistently your app responds to semantically equivalent inputs.
+0 to 1. Higher is more consistent.
 
-- `0.80+` — stable. Safe to ship.
-- `0.60-0.79` — marginal. Review the flagged rules.
-- `< 0.60` — unstable. CAI failures detected.
+- `0.80+` stable. Safe to ship.
+- `0.60-0.79` marginal. Review the flagged rules.
+- `< 0.60` unstable. CAI failures detected.
 
 ```
 CAI FAILURE: "refund window"
@@ -149,7 +164,7 @@ CAI FAILURE: "refund window"
 
 ## Regression testing
 
-Compare two versions of your app before merging. CI fails automatically if the CAI score drops.
+Compare two versions of your app before merging. CI fails if the CAI score drops.
 
 ```python
 from contradish import RegressionSuite, TestCase
@@ -172,7 +187,7 @@ print(result)
 result.fail_if_below(consistency=0.80)  # raises AssertionError in CI if score drops
 ```
 
-Load test cases from a YAML file:
+Load from a YAML file:
 
 ```python
 suite = RegressionSuite.load("evals.yaml")
@@ -187,7 +202,7 @@ test_cases:
     name: "price matching"
 ```
 
-From the CLI:
+CLI:
 
 ```bash
 contradish compare evals.yaml \
@@ -198,7 +213,7 @@ contradish compare evals.yaml \
 
 ### GitHub Actions
 
-Drop this in `.github/workflows/cai.yml` to gate every PR:
+Drop this in `.github/workflows/cai.yml`:
 
 ```yaml
 name: CAI regression
@@ -228,25 +243,24 @@ jobs:
 
 ## Production Firewall
 
-Wrap your live app to catch contradictions in real traffic before users notice.
+Wrap your live app. Checks each response against recent ones. Flags or blocks contradictions before they reach users.
 
 ```python
 from contradish import Firewall
 
-# Monitor mode: log contradictions, pass all responses through
+# monitor mode: log contradictions, pass all responses through
 firewall = Firewall(app=my_llm_app, mode="monitor")
 
 result = firewall.check(user_query)
 print(result.response)
 
 if result.contradiction_detected:
-    # log it, alert your team, route to human review
     print(f"Contradiction: {result.explanation}")
     print(f"Contradicts: {result.cached_query}")
 ```
 
 ```python
-# Block mode: return a safe fallback when a contradiction is detected
+# block mode: return a safe fallback when a contradiction is detected
 firewall = Firewall(
     app=my_llm_app,
     mode="block",
@@ -256,8 +270,6 @@ firewall = Firewall(
 result = firewall.check(user_query)
 return result.response  # safe regardless of what the app said
 ```
-
-Get a traffic summary:
 
 ```python
 print(firewall.summary())
@@ -271,9 +283,102 @@ print(firewall.summary())
 
 ---
 
+## Failure fingerprinting (new in v0.5.0)
+
+Not just "3 failures" — which category of failure, and what's driving it.
+
+```python
+from contradish import Suite
+from contradish.fingerprint import fingerprint
+
+report = suite.run()
+clusters = fingerprint(report)
+
+for cluster in clusters:
+    print(cluster)
+```
+
+```
+[policy_contradiction]  3 rules
+  rules:   refund window, return eligibility, price matching
+  fix:     Explicitly state the policy boundary in your system prompt and prohibit exceptions.
+
+[numeric_drift]  1 rule
+  rules:   warranty period
+  fix:     Anchor specific numbers directly in the prompt (e.g. "exactly 12 months, no exceptions").
+```
+
+Clusters by pattern type: `policy_contradiction`, `exception_invention`, `numeric_drift`, `eligibility_flip`, `deadline_drift`, `hedge_inconsistency`, `legal_boundary_blur`, `coverage_inconsistency`.
+
+```python
+# Access cluster data directly
+for cluster in clusters:
+    print(cluster.pattern_type)    # "policy_contradiction"
+    print(cluster.frequency)       # 3
+    print(cluster.affected_rules)  # ["refund window", ...]
+    print(cluster.suggested_fix)   # "Explicitly state..."
+    print(cluster.to_dict())       # JSON-serializable
+```
+
+---
+
+## Integration exporters (new in v0.5.0)
+
+contradish feeds your existing observability stack. Not a platform. A consistency layer.
+
+**Langfuse:**
+
+```python
+from langfuse import Langfuse
+from contradish.exporters import to_langfuse
+
+report = suite.run()
+client = Langfuse()
+
+result = to_langfuse(report, client, dataset_name="cai-ecommerce-v2")
+print(result)
+# {"dataset_name": "cai-ecommerce-v2", "items_created": 8, "failures_exported": 5, "passing_exported": 3}
+```
+
+**Arize Phoenix:**
+
+```python
+import phoenix as px
+from contradish.exporters import to_phoenix
+
+result = to_phoenix(report, dataset_name="cai-ecommerce")
+```
+
+Each exported item includes the contradiction pair, CAI score, severity, unstable patterns, and suggested fix. Passing rules are exported too so you have a full regression baseline.
+
+---
+
+## Audit export (new in v0.5.0)
+
+Timestamped compliance artifact. Send to your legal team, drop in a PR, attach to a NIST AI RMF review.
+
+```python
+from contradish.audit import to_audit_html
+
+html = to_audit_html(
+    report,
+    app_version="prod-v12",
+    system_prompt="You are a support agent. Refunds within 30 days only.",
+    evaluator_id="ci-run-456",
+)
+with open("cai-audit-2026-03-25.html", "w") as f:
+    f.write(html)
+```
+
+Includes: evaluation config, risk assessment, all CAI failures with contradiction pairs, full test case results, NIST AI RMF and EU AI Act alignment section, and optional system prompt appendix.
+
+Aligns with NIST AI RMF MAP 1.6, MEASURE 2.5, MANAGE 1.3. EU AI Act Articles 9 and 72. ISO/IEC 42001.
+
+---
+
 ## Prompt repair
 
-Found failures? Contradish generates improved prompt variants, tests each one, and returns them ranked by CAI score.
+Found failures? Generate improved prompt variants, test each one, get them ranked by CAI score.
 
 ```python
 import anthropic
@@ -292,14 +397,14 @@ def make_app(system_prompt):
         return msg.content[0].text.strip()
     return app
 
-# Step 1: find the failures
+# find the failures
 suite = Suite.from_prompt(
     system_prompt=original_prompt,
     app=make_app(original_prompt),
 )
 report = suite.run()
 
-# Step 2: fix them
+# fix them
 repair = PromptRepair(n=3)
 results = repair.fix(
     system_prompt=original_prompt,
@@ -312,8 +417,6 @@ print(f"CAI: {best.original_cai_score:.2f} -> {best.improved_cai_score:.2f} (+{b
 print(best.improved_prompt)
 ```
 
-Output:
-
 ```
   Prompt repair results:
   #1: CAI 0.54 -> 0.88 (+0.34)
@@ -325,7 +428,7 @@ Output:
 
 ## JSON output
 
-Any command supports `--json` for machine-readable output:
+Any command supports `--json`:
 
 ```bash
 contradish --prompt system_prompt.txt --json | jq '.cai_score'
@@ -344,8 +447,6 @@ contradish --prompt system_prompt.txt --json | jq '.cai_score'
 ---
 
 ## Test case format
-
-YAML (recommended):
 
 ```yaml
 test_cases:
@@ -371,7 +472,7 @@ JSON also works:
 
 ## The CAI benchmark
 
-Contradish ships with a 300-pair human-validated benchmark of adversarial question pairs across support, legal, finance, and policy domains. Used to produce the [CAI leaderboard](https://contradish.com/leaderboard.html).
+300-pair human-validated benchmark of adversarial question pairs across support, legal, finance, and policy domains. Used to produce the [CAI leaderboard](https://contradish.com/leaderboard.html).
 
 Current scores (higher = more consistent):
 - Intercom Fin: 0.84

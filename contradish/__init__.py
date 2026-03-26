@@ -26,11 +26,11 @@ Quickstart:
 Full docs: https://contradish.com
 """
 
-from .suite      import Suite
-from .regression import RegressionSuite
-from .firewall   import Firewall
-from .repair     import PromptRepair
-from .models     import (
+from .suite        import Suite
+from .regression   import RegressionSuite
+from .firewall     import Firewall
+from .repair       import PromptRepair
+from .models       import (
     TestCase,
     Report,
     TestResult,
@@ -39,9 +39,12 @@ from .models     import (
     FirewallResult,
     RepairResult,
 )
-from .policies   import load_policy, list_policies, PolicyPack
+from .policies     import load_policy, list_policies, PolicyPack
+from .fingerprint  import fingerprint, FailureCluster
+from .exporters    import to_langfuse, to_phoenix
+from .audit        import to_audit_html
 
-__version__ = "0.4.3"
+__version__ = "0.5.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -57,4 +60,9 @@ __all__ = [
     "load_policy",
     "list_policies",
     "PolicyPack",
+    "fingerprint",
+    "FailureCluster",
+    "to_langfuse",
+    "to_phoenix",
+    "to_audit_html",
 ]
