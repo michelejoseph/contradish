@@ -79,7 +79,7 @@ def _output_sarif(report, output_path: str = "contradish.sarif") -> None:
         msg = f"CAI failure: {r.test_case.name} (score {r.cai_score:.2f})"
         if r.contradictions:
             c = r.contradictions[0]
-            msg += f" — {c.response_a!r} vs {c.response_b!r}"
+            msg += f" — {c.output_a!r} vs {c.output_b!r}"
         results.append({
             "ruleId": "CAI001",
             "level": "error",

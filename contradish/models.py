@@ -117,6 +117,35 @@ class Report:
         s = [r.contradiction_score for r in self.results if r.contradiction_score is not None]
         return round(sum(s) / len(s), 3) if s else None
 
+    @property
+    def failure_count(self) -> int:
+        """Number of test cases that did not pass."""
+        return len(self.failed)
+
+    def summary(self) -> str:
+        """One-line summary of the report."""
+        score = self.cai_score
+        score_str = f"{score:.3f}" if score is not None else "n/a"
+        return (
+            f"CAI score: {score_str} | "
+            f"{len(self.passed)}/{len(self.results)} passed | "
+            f"{self.failure_count} failure(s)"
+        )
+
+    def failures_summary(self) -> str:
+        """Human-readable summary of all failures, suitable for assert messages."""
+        if not self.failed:
+            return "No failures."
+        lines = [f"{self.failure_count} CAI failure(s):"]
+        for r in self.failed:
+            score_str = f"{r.cai_score:.2f}" if r.cai_score is not None else "n/a"
+            lines.append(f"  - {r.test_case.name} (score {score_str})")
+            for c in r.contradictions[:1]:
+                lines.append(f"    asked: {c.input_a!r}")
+                lines.append(f"    got:   {c.output_a!r[:120]}")
+                lines.append(f"    vs:    {c.output_b!r[:120]}")
+        return "\n".join(lines)
+
     def to_dict(self) -> dict:
         """
         Serialize the report to a dict suitable for JSON output.

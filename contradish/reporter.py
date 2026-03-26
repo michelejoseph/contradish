@@ -155,7 +155,7 @@ def to_html(
     report,
     title:       Optional[str] = None,
     policy_name: Optional[str] = None,
-    version:     str           = "0.4.3",
+    version:     str           = "0.6.0",
 ) -> str:
     """
     Generate a self-contained HTML report from a Report object.
