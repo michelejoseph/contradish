@@ -1,0 +1,66 @@
+# CAI consistency check — contradish
+#
+# Runs on every push and PR. Fails the build if CAI score drops below
+# threshold or any CAI failure is detected.
+#
+# Required secrets:
+#   ANTHROPIC_API_KEY  — set in repo Settings > Secrets > Actions
+#   (or OPENAI_API_KEY if using OpenAI)
+#
+# Usage:
+#   Copy this file to .github/workflows/cai.yml in your repo.
+#   Edit the policy, app, and threshold below.
+
+name: CAI consistency check
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  cai:
+    name: CAI score
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install contradish
+        run: pip install "contradish[anthropic]"
+
+      # Option A: policy pack (no app required — tests default LLM behavior)
+      - name: Run CAI check (policy pack)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          contradish --policy ecommerce \
+            --threshold 0.80 \
+            --format sarif \
+            --output contradish.sarif
+
+      # Option B: test your actual app (uncomment and edit)
+      # - name: Install app dependencies
+      #   run: pip install -r requirements.txt
+      #
+      # - name: Run CAI check (your app)
+      #   env:
+      #     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      #   run: |
+      #     contradish --policy ecommerce \
+      #       --app mymodule:my_app \
+      #       --threshold 0.80 \
+      #       --format sarif \
+      #       --output contradish.sarif
+
+      # Upload SARIF so failures show as annotations on the PR diff
+      - name: Upload SARIF results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: contradish.sarif
+        continue-on-error: true  # don't fail if SARIF upload isn't available

@@ -72,6 +72,121 @@ def _output_json(report) -> None:
     print(json.dumps(report.to_dict(), indent=2))
 
 
+def _output_sarif(report, output_path: str = "contradish.sarif") -> None:
+    """Write a SARIF 2.1 file. GitHub reads this for PR annotations."""
+    results = []
+    for r in report.failed:
+        msg = f"CAI failure: {r.test_case.name} (score {r.cai_score:.2f})"
+        if r.contradictions:
+            c = r.contradictions[0]
+            msg += f" — {c.response_a!r} vs {c.response_b!r}"
+        results.append({
+            "ruleId": "CAI001",
+            "level": "error",
+            "message": {"text": msg},
+            "locations": [{"physicalLocation": {"artifactLocation": {"uri": "system_prompt"}}}],
+        })
+
+    sarif = {
+        "version": "2.1.0",
+        "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+        "runs": [{
+            "tool": {
+                "driver": {
+                    "name": "contradish",
+                    "version": "0.6.0",
+                    "rules": [{
+                        "id": "CAI001",
+                        "name": "CAIConsistencyFailure",
+                        "shortDescription": {"text": "Model gives inconsistent answers to semantically equivalent inputs."},
+                        "helpUri": "https://contradish.com",
+                    }],
+                }
+            },
+            "results": results,
+            "properties": {
+                "cai_score": report.cai_score,
+                "failure_count": report.failure_count,
+            },
+        }],
+    }
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(sarif, f, indent=2)
+    print(f"\n  SARIF written: {output_path}\n")
+
+
+def cmd_init(args):
+    """Interactive setup — writes .contradish.yaml."""
+    import shutil
+
+    config_path = ".contradish.yaml"
+
+    if os.path.exists(config_path) and not getattr(args, "force", False):
+        print(f"\n  {config_path} already exists. Use --force to overwrite.\n")
+        return
+
+    print("\n  contradish init\n")
+
+    # Detect available policies
+    try:
+        from contradish.policies import list_policies
+        policies = list_policies()
+    except Exception:
+        policies = ["ecommerce", "hr", "healthcare", "legal"]
+
+    # Policy
+    print(f"  Available policy packs: {', '.join(policies)}")
+    policy = input("  Policy pack (or leave blank to skip): ").strip()
+    if policy and policy not in policies:
+        print(f"  Unknown policy '{policy}'. Options: {', '.join(policies)}")
+        policy = ""
+
+    # App
+    app = input("  App callable (module:function, or leave blank for demo mode): ").strip()
+
+    # Threshold
+    threshold_raw = input("  Minimum CAI score to pass CI [0.80]: ").strip()
+    try:
+        threshold = float(threshold_raw) if threshold_raw else 0.80
+    except ValueError:
+        threshold = 0.80
+
+    # Paraphrases
+    paraphrases_raw = input("  Paraphrases per test case [5]: ").strip()
+    try:
+        paraphrases = int(paraphrases_raw) if paraphrases_raw else 5
+    except ValueError:
+        paraphrases = 5
+
+    lines = ["# contradish configuration\n# https://contradish.com\n"]
+    if policy:
+        lines.append(f"policy: {policy}")
+    if app:
+        lines.append(f"app: {app}")
+    lines.append(f"threshold: {threshold}")
+    lines.append(f"paraphrases: {paraphrases}")
+
+    with open(config_path, "w") as f:
+        f.write("\n".join(lines) + "\n")
+
+    print(f"\n  Wrote {config_path}")
+
+    # Offer to copy the GitHub Actions workflow
+    gha_dest = ".github/workflows/cai.yml"
+    gha_template = os.path.join(
+        os.path.dirname(__file__), "..", ".github", "workflows", "cai.yml"
+    )
+    if os.path.exists(gha_template) and not os.path.exists(gha_dest):
+        copy_gha = input("\n  Copy GitHub Actions workflow to .github/workflows/cai.yml? [Y/n]: ").strip().lower()
+        if copy_gha in ("", "y", "yes"):
+            os.makedirs(".github/workflows", exist_ok=True)
+            shutil.copy(gha_template, gha_dest)
+            print(f"  Wrote {gha_dest}")
+            print("  Add ANTHROPIC_API_KEY to repo Settings > Secrets > Actions.\n")
+
+    print(f"\n  Run:  contradish --policy {policy or 'ecommerce'}\n")
+
+
 def _save_report(report, path: str, policy_name: str = None) -> None:
     """Save a shareable HTML report to disk."""
     from contradish.reporter import to_html
@@ -154,14 +269,23 @@ def cmd_policy(args):
     )
     report = suite.run(paraphrases=args.paraphrases, verbose=not use_json)
 
-    if use_json:
+    fmt = getattr(args, "format", None)
+    if fmt == "json" or use_json:
         _output_json(report)
+    elif fmt == "sarif":
+        output = getattr(args, "output", "contradish.sarif")
+        _output_sarif(report, output_path=output or "contradish.sarif")
     else:
         print_next_steps(report)
 
     report_path = getattr(args, "report", None)
     if report_path:
         _save_report(report, report_path, policy_name=policy_name)
+
+    threshold = getattr(args, "threshold", None)
+    if threshold is not None and report.cai_score < threshold:
+        print(f"\n  FAIL: CAI score {report.cai_score:.2f} below threshold {threshold}\n")
+        sys.exit(1)
 
     sys.exit(1 if report.failed else 0)
 
@@ -207,8 +331,12 @@ def cmd_from_prompt(args):
     )
     report = suite.run(paraphrases=args.paraphrases, verbose=not use_json)
 
-    if use_json:
+    fmt = getattr(args, "format", None)
+    if fmt == "json" or use_json:
         _output_json(report)
+    elif fmt == "sarif":
+        output = getattr(args, "output", "contradish.sarif")
+        _output_sarif(report, output_path=output or "contradish.sarif")
     else:
         print_next_steps(report)
 
@@ -349,7 +477,27 @@ examples:
         "--json",
         action="store_true",
         default=False,
-        help="Output report as JSON instead of terminal format. Includes cai_score at report and rule level.",
+        help="Output report as JSON (shorthand for --format json).",
+    )
+    parser.add_argument(
+        "--format",
+        choices=["terminal", "json", "sarif"],
+        default="terminal",
+        metavar="FORMAT",
+        help="Output format: terminal (default), json, sarif. SARIF is read by GitHub for PR annotations.",
+    )
+    parser.add_argument(
+        "--output",
+        metavar="FILE",
+        default=None,
+        help="Output file path for --format sarif (default: contradish.sarif).",
+    )
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=None,
+        metavar="FLOAT",
+        help="Fail with exit code 1 if CAI score is below this value (e.g. 0.80).",
     )
     parser.add_argument(
         "--report",
@@ -361,6 +509,10 @@ examples:
             "Defaults to contradish-report.html if no filename given."
         ),
     )
+
+    # contradish init
+    init_p = sub.add_parser("init", help="Interactive setup — writes .contradish.yaml and optional GitHub Actions workflow")
+    init_p.add_argument("--force", action="store_true", help="Overwrite existing .contradish.yaml")
 
     # contradish run evals.yaml --app module:fn
     run_p = sub.add_parser("run", help="Run manual test cases from a YAML/JSON file")
@@ -408,7 +560,9 @@ examples:
 
     args = parser.parse_args()
 
-    if args.command == "run":
+    if args.command == "init":
+        cmd_init(args)
+    elif args.command == "run":
         cmd_run(args)
     elif args.command == "compare":
         cmd_compare(args)

@@ -26,6 +26,12 @@ pip install contradish
 
 **Audit export.** Timestamped compliance document. NIST AI RMF and EU AI Act aligned. One function call.
 
+**pytest plugin.** Use contradish assertions directly in your test suite. No separate step.
+
+**GitHub Actions.** SARIF output + one workflow file. Failures show as inline PR annotations.
+
+**`contradish init`.** Three questions, writes `.contradish.yaml` and optionally the GitHub Actions workflow. Setup in under a minute.
+
 ---
 
 ## Quickstart
@@ -118,6 +124,90 @@ suite.run()
 | `legal` | 12 | Disclaimers, liability, advice boundaries, data privacy |
 
 Each case targets the areas where LLM support bots most often contradict themselves.
+
+---
+
+## pytest plugin (new in v0.6)
+
+No separate step. CAI assertions live in your test file alongside everything else.
+
+```python
+# test_myapp.py
+def test_cai_consistency(cai_report, cai_threshold):
+    assert cai_report.cai_score >= cai_threshold
+
+def test_no_cai_failures(cai_report):
+    assert cai_report.failure_count == 0, cai_report.failures_summary()
+```
+
+Configure in `.contradish.yaml` (run `contradish init` to generate it):
+
+```yaml
+policy: ecommerce
+app: mymodule:my_app
+threshold: 0.80
+paraphrases: 5
+```
+
+Or override per-test in `conftest.py`:
+
+```python
+import pytest
+
+@pytest.fixture(scope="session")
+def contradish_config():
+    return {"policy": "ecommerce", "app": "mymodule:my_app", "threshold": 0.80}
+```
+
+Run with `pytest` as usual. No extra commands.
+
+---
+
+## GitHub Actions (new in v0.6)
+
+Run `contradish init` and answer yes to copy the workflow file, or add this to `.github/workflows/cai.yml`:
+
+```yaml
+- name: Install contradish
+  run: pip install "contradish[anthropic]"
+
+- name: Run CAI check
+  env:
+    ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  run: |
+    contradish --policy ecommerce \
+      --threshold 0.80 \
+      --format sarif \
+      --output contradish.sarif
+
+- uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: contradish.sarif
+```
+
+Failures appear as inline annotations on the PR diff. Add `ANTHROPIC_API_KEY` to repo Settings > Secrets > Actions.
+
+---
+
+## Setup in one command (new in v0.6)
+
+```bash
+contradish init
+```
+
+Three questions: policy, app, threshold. Writes `.contradish.yaml` and optionally the GitHub Actions workflow.
+
+---
+
+## SARIF output (new in v0.6)
+
+```bash
+# write SARIF for GitHub annotations
+contradish --policy ecommerce --format sarif --output contradish.sarif
+
+# pipe JSON into other tools
+contradish --policy ecommerce --format json | jq '.failures[].pattern_type'
+```
 
 ---
 
