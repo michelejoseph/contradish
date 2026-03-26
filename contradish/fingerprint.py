@@ -1,23 +1,16 @@
 """
 Failure fingerprinting for contradish.
 
-Groups CAI failures by pattern type so you can see which categories of
-inconsistency keep recurring — and fix the root cause, not just the symptom.
+Groups CAI failures by pattern type. "3 failures" tells you something broke.
+Fingerprinting tells you it's numeric_drift across 3 policy rules and you need
+to anchor your numbers.
 
 Usage:
     from contradish.fingerprint import fingerprint
 
-    report = suite.run()
     clusters = fingerprint(report)
-
     for cluster in clusters:
-        print(cluster.pattern_type, cluster.frequency, cluster.example_rule)
-
-Or from a Report directly:
-    from contradish.fingerprint import fingerprint
-    clusters = fingerprint(report)
-    for c in clusters:
-        print(c)
+        print(cluster.pattern_type, cluster.frequency)
 """
 
 from __future__ import annotations

@@ -1,36 +1,20 @@
 """
 Integration exporters for contradish.
 
-Push CAI failures and results directly into your existing observability stack.
-contradish feeds these tools rather than replacing them.
-
-Supported targets:
-    - Langfuse  (langfuse.com)
-    - Phoenix   (arize.com/phoenix)
+Push CAI results into Langfuse or Arize Phoenix. Feeds your stack, doesn't replace it.
 
 Usage:
     from contradish.exporters import to_langfuse, to_phoenix
 
-    report = suite.run()
-
     # Langfuse
     from langfuse import Langfuse
-    client = Langfuse()
-    to_langfuse(report, client, dataset_name="cai-ecommerce")
+    to_langfuse(report, Langfuse(), dataset_name="cai-ecommerce")
 
     # Phoenix
-    import phoenix as px
     to_phoenix(report, dataset_name="cai-ecommerce")
 
-Each exporter sends one dataset item per CAI failure containing:
-    - The original input and paraphrase
-    - Both outputs
-    - The contradiction explanation
-    - The CAI score
-    - Metadata: rule name, severity, unstable_patterns, suggested_fix
-
-Passing results are also exported (with a passing=True tag) so you have a
-complete baseline to diff against on future runs.
+Each item carries the contradiction pair, CAI score, severity, unstable patterns,
+and suggested fix. Passing results go too so you have a regression baseline.
 """
 
 from __future__ import annotations
@@ -51,8 +35,8 @@ def to_langfuse(
     """
     Push a contradish Report into a Langfuse dataset.
 
-    Each CAI failure becomes one dataset item. Passing results are included
-    by default so you have a full baseline for future regression comparisons.
+    Failures become dataset items. Passing results included by default
+    for regression baseline.
 
     Args:
         report:          A contradish Report (from suite.run()).
@@ -169,10 +153,7 @@ def to_phoenix(
     """
     Push a contradish Report into an Arize Phoenix dataset.
 
-    Requires arize-phoenix >= 4.0 (pip install arize-phoenix).
-
-    Each CAI failure becomes one dataset example. Passing results are included
-    by default.
+    Requires arize-phoenix >= 4.0.
 
     Args:
         report:          A contradish Report (from suite.run()).

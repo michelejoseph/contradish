@@ -1,13 +1,10 @@
 """
 Audit export for contradish.
 
-Produces a timestamped, versioned compliance artifact from a Report.
-Designed for teams that need to demonstrate AI evaluation practices to
-auditors, legal teams, or compliance reviewers.
+One function call. Timestamped compliance document you can hand to legal,
+attach to a PR, or drop in a NIST AI RMF review.
 
-Aligns with:
-    - NIST AI RMF (MAP 1.6, MEASURE 2.5, MANAGE 1.3)
-    - EU AI Act Article 9 (risk management) and Article 72 (technical documentation)
+Covers NIST AI RMF MAP 1.6, MEASURE 2.5, MANAGE 1.3. EU AI Act Arts 9 and 72. ISO/IEC 42001.
 
 Usage:
     from contradish.audit import to_audit_html
@@ -20,9 +17,6 @@ Usage:
     )
     with open("cai-audit-2026-03-25.html", "w") as f:
         f.write(html)
-
-Or from the CLI:
-    contradish --policy ecommerce --app mymodule:my_app --audit
 """
 
 from __future__ import annotations
@@ -68,13 +62,8 @@ def to_audit_html(
     """
     Generate a timestamped compliance audit document from a Report.
 
-    The document includes:
-        - Evaluation configuration (version, timestamp, evaluator)
-        - Summary: CAI score, pass/fail counts, risk assessment
-        - All CAI failures with contradiction pairs and suggested fixes
-        - Full test case list with per-case scores
-        - NIST AI RMF alignment section
-        - Appendix: full system prompt if provided
+    Includes evaluation config, risk assessment, all CAI failures with contradiction
+    pairs, full test case results, NIST AI RMF alignment, and optional system prompt appendix.
 
     Args:
         report:        A contradish Report (from suite.run()).

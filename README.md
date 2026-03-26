@@ -20,11 +20,11 @@ pip install contradish
 
 **Prompt repair.** Failing tests? Contradish generates 3 improved prompt variants, tests each one, and ranks them by CAI score.
 
-**Failure fingerprinting.** Groups CAI failures by pattern type so you can see what keeps breaking and why. Fix root causes, not symptoms.
+**Failure fingerprinting.** Groups failures by root cause. Tells you it's numeric drift, not just "3 failures."
 
-**Integration exporters.** Push results directly into Langfuse or Arize Phoenix. Feeds your stack rather than replacing it.
+**Integration exporters.** Push results into Langfuse or Phoenix. Feeds your stack, doesn't replace it.
 
-**Audit export.** Timestamped compliance artifacts with NIST AI RMF and EU AI Act alignment. One function call.
+**Audit export.** Timestamped compliance document. NIST AI RMF and EU AI Act aligned. One function call.
 
 ---
 
@@ -283,79 +283,66 @@ print(firewall.summary())
 
 ---
 
-## Failure fingerprinting (new in v0.5.0)
+## Failure fingerprinting
 
-Not just "3 failures" — which category of failure, and what's driving it.
+"3 failures" tells you nothing. Fingerprinting groups them by what's actually broken.
 
 ```python
-from contradish import Suite
 from contradish.fingerprint import fingerprint
 
-report = suite.run()
 clusters = fingerprint(report)
-
 for cluster in clusters:
     print(cluster)
 ```
 
 ```
-[policy_contradiction]  3 rules
-  rules:   refund window, return eligibility, price matching
-  fix:     Explicitly state the policy boundary in your system prompt and prohibit exceptions.
+[Policy contradiction]  2 rules
+  rules:   refund window, return eligibility
+  fix:     State the boundary explicitly. No exception language.
 
 [numeric_drift]  1 rule
   rules:   warranty period
-  fix:     Anchor specific numbers directly in the prompt (e.g. "exactly 12 months, no exceptions").
+  fix:     Anchor the number directly in the prompt. "12 months, no exceptions."
 ```
 
-Clusters by pattern type: `policy_contradiction`, `exception_invention`, `numeric_drift`, `eligibility_flip`, `deadline_drift`, `hedge_inconsistency`, `legal_boundary_blur`, `coverage_inconsistency`.
+Pattern types: `policy_contradiction`, `numeric_drift`, `exception_invention`, `eligibility_flip`, `deadline_drift`, `hedge_inconsistency`, `legal_boundary_blur`, `coverage_inconsistency`.
 
 ```python
-# Access cluster data directly
-for cluster in clusters:
-    print(cluster.pattern_type)    # "policy_contradiction"
-    print(cluster.frequency)       # 3
-    print(cluster.affected_rules)  # ["refund window", ...]
-    print(cluster.suggested_fix)   # "Explicitly state..."
-    print(cluster.to_dict())       # JSON-serializable
+cluster.pattern_type    # "numeric_drift"
+cluster.frequency       # 3
+cluster.affected_rules  # ["warranty period", ...]
+cluster.suggested_fix   # "Anchor the number..."
+cluster.to_dict()       # JSON-serializable
 ```
 
 ---
 
-## Integration exporters (new in v0.5.0)
+## Integration exporters
 
-contradish feeds your existing observability stack. Not a platform. A consistency layer.
-
-**Langfuse:**
+Feeds your existing stack. Doesn't replace it.
 
 ```python
 from langfuse import Langfuse
 from contradish.exporters import to_langfuse
 
-report = suite.run()
 client = Langfuse()
-
-result = to_langfuse(report, client, dataset_name="cai-ecommerce-v2")
-print(result)
-# {"dataset_name": "cai-ecommerce-v2", "items_created": 8, "failures_exported": 5, "passing_exported": 3}
+to_langfuse(report, client, dataset_name="cai-ecommerce")
+# {"items_created": 8, "failures_exported": 5, "passing_exported": 3}
 ```
-
-**Arize Phoenix:**
 
 ```python
-import phoenix as px
 from contradish.exporters import to_phoenix
 
-result = to_phoenix(report, dataset_name="cai-ecommerce")
+to_phoenix(report, dataset_name="cai-ecommerce")
 ```
 
-Each exported item includes the contradiction pair, CAI score, severity, unstable patterns, and suggested fix. Passing rules are exported too so you have a full regression baseline.
+Each item carries the contradiction pair, CAI score, severity, and suggested fix. Passing results go too, so you have a baseline for next run.
 
 ---
 
-## Audit export (new in v0.5.0)
+## Audit export
 
-Timestamped compliance artifact. Send to your legal team, drop in a PR, attach to a NIST AI RMF review.
+One function call. Timestamped compliance document you can hand to legal, attach to a PR, or drop in a NIST AI RMF review.
 
 ```python
 from contradish.audit import to_audit_html
@@ -370,9 +357,7 @@ with open("cai-audit-2026-03-25.html", "w") as f:
     f.write(html)
 ```
 
-Includes: evaluation config, risk assessment, all CAI failures with contradiction pairs, full test case results, NIST AI RMF and EU AI Act alignment section, and optional system prompt appendix.
-
-Aligns with NIST AI RMF MAP 1.6, MEASURE 2.5, MANAGE 1.3. EU AI Act Articles 9 and 72. ISO/IEC 42001.
+Covers NIST AI RMF MAP 1.6, MEASURE 2.5, MANAGE 1.3. EU AI Act Articles 9 and 72. ISO/IEC 42001.
 
 ---
 
