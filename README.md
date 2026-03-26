@@ -2,7 +2,7 @@
 
 CAI testing for LLM applications.
 
-A CAI failure is when your app says "refunds within 30 days" to one phrasing and "we can work something out" to a slightly different one. Same policy, same session, opposite answers. Contradish finds these, scores them, and gives you the tools to fix them before users do.
+A CAI failure is when your app says "refunds within 30 days" to one phrasing and "we can work something out" to a slightly different one. Same policy, same session, opposite answers. Contradish finds these before users do.
 
 ```
 pip install contradish
@@ -12,7 +12,7 @@ pip install contradish
 
 ## What it does
 
-**Offline testing.** Run before deploy. Contradish generates adversarial paraphrases of your test inputs, sends them all to your app, and scores consistency across responses.
+**Offline testing.** Run before deploy. Contradish generates adversarial paraphrases, sends them to your app, and scores consistency.
 
 **Regression gating.** Compare baseline vs candidate on the same test suite. Block merges if the CAI score drops below your threshold.
 
@@ -117,7 +117,7 @@ suite.run()
 | `healthcare` | 12 | Coverage, referrals, deductibles, prior auth, eligibility |
 | `legal` | 12 | Disclaimers, liability, advice boundaries, data privacy |
 
-Each case targets an inconsistency vector where LLM support bots most often contradict themselves.
+Each case targets the areas where LLM support bots most often contradict themselves.
 
 ---
 
@@ -336,7 +336,7 @@ from contradish.exporters import to_phoenix
 to_phoenix(report, dataset_name="cai-ecommerce")
 ```
 
-Each item carries the contradiction pair, CAI score, severity, and suggested fix. Passing results go too, so you have a baseline for next run.
+Each item carries the contradiction pair, CAI score, severity, and suggested fix. Passing results go too so you have a baseline for next run.
 
 ---
 
