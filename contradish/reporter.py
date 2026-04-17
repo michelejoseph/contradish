@@ -2,7 +2,7 @@
 HTML report generator for contradish.
 
 Produces a self-contained, shareable HTML file from a Report.
-No external dependencies at render time — everything is inlined.
+No external dependencies at render time. Everything is inlined.
 
 Usage:
     from contradish.reporter import to_html
@@ -155,7 +155,7 @@ def to_html(
     report,
     title:       Optional[str] = None,
     policy_name: Optional[str] = None,
-    version:     str           = "0.6.0",
+    version:     str           = "0.7.0",
 ) -> str:
     """
     Generate a self-contained HTML report from a Report object.
@@ -192,7 +192,7 @@ def to_html(
         pass_word = "rule" if passed == 1 else "rules"
         summary_html = f'<p class="summary-line fail-summary">{failed} CAI {fail_word} found &middot; {passed} {pass_word} clean</p>'
 
-    # Rule cards — failures first, then passes
+    # Rule cards: failures first, then passes
     failing_cards = "".join(_failing_card(r) for r in report.results if not r.passed(report.thresholds))
     passing_cards = "".join(_passing_card(r) for r in report.results if r.passed(report.thresholds))
 

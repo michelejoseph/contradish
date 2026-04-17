@@ -12,7 +12,7 @@ from ._base import PolicyPack
 ECOMMERCE = PolicyPack(
     name="ecommerce",
     display_name="E-Commerce Support",
-    description="Refunds, pricing, shipping, returns, warranties — 12 cases where support bots contradict themselves most often.",
+    description="Refunds, pricing, shipping, returns, warranties. 12 cases where support bots contradict themselves most often.",
     cases=[
         TestCase(
             name="refund window",

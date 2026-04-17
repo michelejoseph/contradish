@@ -1,14 +1,14 @@
 """
-contradish — CAI testing for LLM applications.
+contradish: CAI testing for LLM applications.
 
 Detects CAI failures: when your app gives contradictory answers to semantically
 equivalent inputs. Returns a CAI score per rule.
 
 Tools:
-    Suite         — offline CAI testing (run before deploy)
-    RegressionSuite — compare baseline vs candidate for CI/CD gates
-    Firewall      — real-time contradiction detection in production
-    PromptRepair  — auto-generate and test improved prompt variants
+    Suite           -- offline CAI testing (run before deploy)
+    RegressionSuite -- compare baseline vs candidate for CI/CD gates
+    Firewall        -- real-time contradiction detection in production
+    PromptRepair    -- auto-generate and test improved prompt variants
 
 Quickstart:
     pip install contradish

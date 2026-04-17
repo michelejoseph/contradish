@@ -79,7 +79,7 @@ def _output_sarif(report, output_path: str = "contradish.sarif") -> None:
         msg = f"CAI failure: {r.test_case.name} (score {r.cai_score:.2f})"
         if r.contradictions:
             c = r.contradictions[0]
-            msg += f" — {c.output_a!r} vs {c.output_b!r}"
+            msg += f": {c.output_a[:80]!r} vs {c.output_b[:80]!r}"
         results.append({
             "ruleId": "CAI001",
             "level": "error",
@@ -94,7 +94,7 @@ def _output_sarif(report, output_path: str = "contradish.sarif") -> None:
             "tool": {
                 "driver": {
                     "name": "contradish",
-                    "version": "0.6.0",
+                    "version": "0.7.0",
                     "rules": [{
                         "id": "CAI001",
                         "name": "CAIConsistencyFailure",
@@ -116,7 +116,7 @@ def _output_sarif(report, output_path: str = "contradish.sarif") -> None:
 
 
 def cmd_init(args):
-    """Interactive setup — writes .contradish.yaml."""
+    """Interactive setup. Writes .contradish.yaml."""
     import shutil
 
     config_path = ".contradish.yaml"
@@ -225,7 +225,7 @@ def _make_demo_app(system_prompt: str):
 
 
 def cmd_policy(args):
-    """Run a prebuilt domain policy pack — no system prompt required."""
+    """Run a prebuilt domain policy pack. No system prompt required."""
     from contradish import Suite
     from contradish.policies import load_policy, list_policies
     from contradish.printer import print_next_steps
@@ -252,7 +252,7 @@ def cmd_policy(args):
         app = _load_callable(args.app)
     else:
         # Demo mode: create a generic assistant that answers the test questions
-        # without a real system prompt — surfaces what the model does by default
+        # without a real system prompt. surfaces what the model does by default
         demo_system = (
             f"You are a helpful assistant for a {pack.display_name.lower()} context. "
             f"Answer user questions clearly and accurately."
@@ -291,7 +291,7 @@ def cmd_policy(args):
 
 
 def cmd_from_prompt(args):
-    """Run from a system prompt — the zero-config path."""
+    """Run from a system prompt. Zero-config path."""
     from contradish import Suite
     from contradish.printer import print_start, print_next_steps
 
@@ -411,7 +411,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 examples:
-  # run a prebuilt policy pack — no system prompt needed
+  # run a prebuilt policy pack, no system prompt needed
   contradish --policy ecommerce --app mymodule:my_app
   contradish --policy hr --app mymodule:my_app --report
   contradish --policy healthcare
@@ -421,7 +421,7 @@ examples:
   contradish --policy ecommerce --app mymodule:my_app --report
   contradish --policy ecommerce --app mymodule:my_app --report my-report.html
 
-  # test your system prompt directly (demo mode — uses your API key as the app)
+  # test your system prompt directly (demo mode, uses your API key as the app)
   contradish "You are a support agent. Refunds within 30 days only."
 
   # test from a prompt file
@@ -511,7 +511,7 @@ examples:
     )
 
     # contradish init
-    init_p = sub.add_parser("init", help="Interactive setup — writes .contradish.yaml and optional GitHub Actions workflow")
+    init_p = sub.add_parser("init", help="Interactive setup. Writes .contradish.yaml and optional GitHub Actions workflow.")
     init_p.add_argument("--force", action="store_true", help="Overwrite existing .contradish.yaml")
 
     # contradish run evals.yaml --app module:fn

@@ -1,11 +1,11 @@
 """
-Firewall — real-time contradiction detection for production LLM apps.
+Firewall: real-time contradiction detection for production LLM apps.
 
 Wraps your existing LLM app and intercepts responses that contradict
 something the app said previously. Two modes:
 
-  "monitor" — pass everything through, flag contradictions in the result.
-  "block"   — return a safe fallback whenever a contradiction is detected.
+  "monitor" -- pass everything through, flag contradictions in the result.
+  "block"   -- return a safe fallback whenever a contradiction is detected.
 
 This is the production counterpart to contradish's offline CAI testing.
 Use testing (Suite) to catch failures before deploy.
@@ -41,7 +41,7 @@ Recent responses from the same app:
 
 Does the new response contradict any recent response on a shared topic or policy?
 A contradiction means the app gives meaningfully different answers to questions that should have the same answer.
-Ignore differences in phrasing or tone — only flag logical/policy contradictions.
+Ignore differences in phrasing or tone. Only flag logical/policy contradictions.
 
 Return JSON only, no markdown:
 {{"contradiction": true/false, "matched_query": "the exact query it contradicts, or null", "explanation": "one sentence description of the contradiction, or null"}}"""
@@ -67,13 +67,13 @@ class Firewall:
         fallback_response: Custom message to return when blocking. Uses a
                            safe default if omitted.
 
-    Example (monitor mode — log but don't block):
+    Example (monitor mode, log but don't block):
         firewall = Firewall(app=my_app, mode="monitor")
         result = firewall.check(user_query)
         if result.contradiction_detected:
             alert_team(result)
 
-    Example (block mode — prevent contradictory responses):
+    Example (block mode, prevent contradictory responses):
         firewall = Firewall(app=my_app, mode="block",
                             fallback_response="Let me get a team member to help.")
         result = firewall.check(user_query)

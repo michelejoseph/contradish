@@ -1,5 +1,5 @@
 """
-PromptRepair — automatically generates and tests improved prompt variants.
+PromptRepair: automatically generates and tests improved prompt variants.
 
 Takes a system prompt with known CAI failures and returns up to N improved
 versions, each tested and ranked by their CAI score. Shows exactly how much
@@ -134,7 +134,7 @@ class PromptRepair:
 
         if not improved_prompts:
             if verbose:
-                print_progress("variant generation failed — returning empty results")
+                print_progress("variant generation failed. returning empty results")
             return []
 
         results = []

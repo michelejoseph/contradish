@@ -1,5 +1,5 @@
 """
-contradish policy packs — prebuilt domain-specific test suites.
+contradish policy packs: prebuilt domain-specific test suites.
 
 Lets a developer get meaningful CAI results in under 2 minutes
 without writing a single test case.
@@ -19,10 +19,10 @@ Usage:
     # contradish --policy ecommerce --app mymodule:my_app
 
 Available packs:
-    ecommerce   — refunds, pricing, shipping, returns, warranties
-    hr          — PTO, benefits, termination, leave
-    healthcare  — coverage, referrals, deductibles, eligibility
-    legal       — disclaimers, liability, professional advice boundaries
+    ecommerce   -- refunds, pricing, shipping, returns, warranties
+    hr          -- PTO, benefits, termination, leave
+    healthcare  -- coverage, referrals, deductibles, eligibility
+    legal       -- disclaimers, liability, professional advice boundaries
 """
 
 from ._base import PolicyPack

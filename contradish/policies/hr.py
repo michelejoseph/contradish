@@ -12,7 +12,7 @@ from ._base import PolicyPack
 HR = PolicyPack(
     name="hr",
     display_name="HR Policy",
-    description="PTO, benefits, termination, leave — 12 cases where HR bots create legal and trust liability through inconsistent answers.",
+    description="PTO, benefits, termination, leave. 12 cases where HR bots create legal and trust liability through inconsistent answers.",
     cases=[
         TestCase(
             name="pto accrual rate",

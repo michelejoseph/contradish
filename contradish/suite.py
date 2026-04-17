@@ -1,5 +1,5 @@
 """
-Suite — the single entry point for contradish.
+Suite: the single entry point for contradish.
 
 Minimal usage:
     from contradish import Suite, TestCase
@@ -128,10 +128,10 @@ class Suite:
             report = suite.run()
 
         Available packs:
-            ecommerce  — refunds, pricing, shipping, returns, warranties (12 cases)
-            hr         — PTO, benefits, termination, leave (12 cases)
-            healthcare — coverage, referrals, deductibles, eligibility (12 cases)
-            legal      — disclaimers, liability, advice boundaries (12 cases)
+            ecommerce  -- refunds, pricing, shipping, returns, warranties (12 cases)
+            hr         -- PTO, benefits, termination, leave (12 cases)
+            healthcare -- coverage, referrals, deductibles, eligibility (12 cases)
+            legal      -- disclaimers, liability, advice boundaries (12 cases)
         """
         from .policies import load_policy
 
@@ -275,7 +275,9 @@ class Suite:
         # 1. Paraphrase
         if verbose:
             print_progress(f"generating {paraphrases} adversarial phrasings")
-        para_list = self._runner.generate_paraphrases(tc.input, n=paraphrases)
+        para_list = self._runner.generate_paraphrases(
+            tc.input, n=paraphrases, rule=tc.name or ""
+        )
 
         # 2. Run matrix
         total_calls = 1 + len(para_list)
@@ -297,14 +299,17 @@ class Suite:
         )
         consistency_score = cons["consistency_score"]
 
-        # 4. Contradiction detection
-        if verbose:
-            print_progress("checking for contradictions")
-        contradictions = self._judge.find_contradictions(
-            question=tc.input,
-            inputs=inputs,
-            outputs=outputs,
-        )
+        # 4. Contradiction detection (skip when score is very high: too expensive to check)
+        if consistency_score >= 0.90:
+            contradictions: list = []
+        else:
+            if verbose:
+                print_progress("checking for contradictions")
+            contradictions = self._judge.find_contradictions(
+                question=tc.input,
+                inputs=inputs,
+                outputs=outputs,
+            )
         contradiction_score = len(contradictions) / max(len(outputs) - 1, 1)
         contradiction_score = min(contradiction_score, 1.0)
 

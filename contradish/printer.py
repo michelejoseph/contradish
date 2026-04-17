@@ -1,5 +1,5 @@
 """
-Terminal output — zero interpretation required.
+Terminal output. Zero interpretation required.
 Every line should be immediately understood by any developer.
 Colors in TTY, plain text in CI. Auto-detected.
 """
@@ -106,8 +106,16 @@ def print_report(report) -> None:
         label = _cai_label(score) if score is not None else "unstable"
 
         # ── Failure header ─────────────────────────────────────────────
-        print(f"{_RED}{_BOLD}CAI FAILURE: \"{tc.name}\"{_RESET}  "
-              f"{_GRAY}CAI score: {score_str} ({label}){_RESET}")
+        sev_badge = ""
+        if result.contradictions:
+            sev = result.contradictions[0].severity
+            if sev and sev != "unknown" and sev != "none":
+                sev_badge = f"  {_GRAY}[{sev}]{_RESET}"
+
+        print(f"{_RED}{_BOLD}CAI FAILURE{_RESET}  "
+              f"\"{tc.name}\"  "
+              f"{_GRAY}score {score_str}{_RESET}"
+              f"{sev_badge}")
         print()
 
         # ── Show the exact contradiction ───────────────────────────────
@@ -124,38 +132,48 @@ def print_report(report) -> None:
             if len(a_b) > 110:
                 a_b = a_b[:107] + "..."
 
-            print(f"  {_GRAY}user asked:{_RESET}    \"{q_a}\"")
-            print(f"  {_GRAY}app said:{_RESET}      \"{a_a}\"")
+            print(f"  {_GRAY}asked:{_RESET}  \"{q_a}\"")
+            print(f"  {_GRAY}said: {_RESET}  \"{a_a}\"")
             print()
-            print(f"  {_GRAY}same intent, different phrasing:{_RESET}  \"{q_b}\"")
-            print(f"  {_GRAY}app said:{_RESET}      \"{a_b}\"")
+            print(f"  {_GRAY}asked:{_RESET}  \"{q_b}\"")
+            print(f"  {_GRAY}said: {_RESET}  \"{a_b}\"")
             print()
 
-            print(f"{_YELLOW}{_BOLD}Both answers reached real users. They can't both be right.{_RESET}")
-            print()
+            if pair.explanation and pair.explanation.lower() != "none":
+                expl = pair.explanation.strip()
+                wrapped_expl = _wrap(expl, width=70, indent="  ")
+                print(f"{_YELLOW}{wrapped_expl}{_RESET}")
+                print()
 
             if len(result.contradictions) > 1:
                 extra = len(result.contradictions) - 1
-                print(f"  {_GRAY}+ {extra} more contradiction{'s' if extra > 1 else ''} on this rule.{_RESET}")
+                print(f"  {_GRAY}+{extra} more contradiction{'s' if extra > 1 else ''} on this rule.{_RESET}")
                 print()
 
         elif result.unstable_patterns:
-            print(f"{_YELLOW}{_BOLD}Inconsistent answers to the same question.{_RESET}")
+            print(f"{_YELLOW}Inconsistent answers to the same question.{_RESET}")
             print()
 
-        # ── Why ────────────────────────────────────────────────────────
-        if result.unstable_patterns:
-            pat = result.unstable_patterns[0]
+        # ── Pattern / Root cause / Fix ─────────────────────────────────
+        patterns = result.unstable_patterns
+        if len(patterns) >= 2:
+            # patterns[0] = trigger pattern, patterns[1] = root cause
+            print(f"  {_YELLOW}PATTERN{_RESET}  "
+                  f"{_wrap(patterns[0], width=62, indent='           ').lstrip()}")
+            print()
+            print(f"  {_YELLOW}WHY    {_RESET}  "
+                  f"{_wrap(patterns[1], width=62, indent='           ').lstrip()}")
+            print()
+        elif len(patterns) == 1:
             print(f"  {_YELLOW}WHY{_RESET}  "
-                  f"{_wrap(pat, width=64, indent='       ').lstrip()}")
+                  f"{_wrap(patterns[0], width=64, indent='       ').lstrip()}")
             print()
 
         # ── Fix ────────────────────────────────────────────────────────
         if result.suggestion:
             print(f"  {_CYAN}{_BOLD}FIX{_RESET}  "
-                  f"{_GRAY}add this line to your system prompt:{_RESET}")
+                  f"{_GRAY}add to your system prompt:{_RESET}")
             print()
-            # Wrap to 64 chars so it looks copy-pasteable
             wrapped = _wrap(result.suggestion, width=64, indent="  ")
             for line in wrapped.split("\n"):
                 print(f"  {_CYAN}\"{line.strip()}\"{_RESET}")

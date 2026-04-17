@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "contradish"
-version = "0.6.0"
+version = "0.7.0"
 description = "CAI testing for LLM apps. Consistency scoring, failure fingerprinting, pytest plugin, GitHub Actions, SARIF output, integration exporters (Langfuse, Phoenix), audit export, regression gating, and prompt repair."
 readme = "README.md"
 requires-python = ">=3.9"

@@ -1,5 +1,5 @@
 """
-Unified LLM client — works with OpenAI or Anthropic.
+Unified LLM client. Works with OpenAI or Anthropic.
 Auto-detects from environment variables if no key/provider is specified.
 """
 
@@ -20,7 +20,7 @@ class LLMClient:
         3. OPENAI_API_KEY    in environment  →  uses OpenAI
     """
 
-    ANTHROPIC_JUDGE_MODEL  = "claude-sonnet-4-20250514"
+    ANTHROPIC_JUDGE_MODEL  = "claude-sonnet-4-6"
     ANTHROPIC_FAST_MODEL   = "claude-haiku-4-5-20251001"
     OPENAI_JUDGE_MODEL     = "gpt-4o"
     OPENAI_FAST_MODEL      = "gpt-4o-mini"
@@ -74,7 +74,7 @@ class LLMClient:
                 return "anthropic", api_key
             return "openai", api_key
 
-        # No explicit key — check environment
+        # No explicit key: check environment
         anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
         openai_key    = os.environ.get("OPENAI_API_KEY",    "").strip()
 

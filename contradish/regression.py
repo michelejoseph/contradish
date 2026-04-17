@@ -1,5 +1,5 @@
 """
-RegressionSuite — compare baseline vs candidate for CI/CD gate.
+RegressionSuite: compare baseline vs candidate for CI/CD gate.
 
 Detects CAI regressions when you update a prompt, swap models, or refactor
 your LLM pipeline. Drop .fail_if_below() into GitHub Actions to block merges

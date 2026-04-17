@@ -1,5 +1,5 @@
 """
-PolicyPack — a named, domain-specific bundle of TestCases.
+PolicyPack: a named, domain-specific bundle of TestCases.
 """
 
 from __future__ import annotations

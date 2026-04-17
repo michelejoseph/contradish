@@ -12,7 +12,7 @@ from ._base import PolicyPack
 HEALTHCARE = PolicyPack(
     name="healthcare",
     display_name="Healthcare Benefits",
-    description="Coverage, referrals, deductibles, eligibility — 12 cases where incorrect or inconsistent answers create real patient harm.",
+    description="Coverage, referrals, deductibles, eligibility. 12 cases where incorrect or inconsistent answers create real patient harm.",
     cases=[
         TestCase(
             name="prior authorization",

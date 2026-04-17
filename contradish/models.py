@@ -142,8 +142,8 @@ class Report:
             lines.append(f"  - {r.test_case.name} (score {score_str})")
             for c in r.contradictions[:1]:
                 lines.append(f"    asked: {c.input_a!r}")
-                lines.append(f"    got:   {c.output_a!r[:120]}")
-                lines.append(f"    vs:    {c.output_b!r[:120]}")
+                lines.append(f"    got:   {c.output_a[:120]!r}")
+                lines.append(f"    vs:    {c.output_b[:120]!r}")
         return "\n".join(lines)
 
     def to_dict(self) -> dict:

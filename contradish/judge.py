@@ -1,5 +1,5 @@
 """
-Judge — uses an LLM to evaluate consistency and detect contradictions.
+Judge: uses an LLM to evaluate consistency and detect contradictions.
 """
 
 from typing import Optional
@@ -66,8 +66,8 @@ Diagnose what is happening and give the developer a specific fix.
 
 Respond ONLY with JSON (no markdown, no preamble):
 {{
-  "pattern": "<what input pattern triggers the instability — be specific, e.g. 'casual phrasing without explicit dates', 'emotional framing', 'presupposing a yes'>",
-  "root_cause": "<one sentence on why the model fails — e.g. 'the model prioritizes helpfulness over policy when no time constraint is mentioned explicitly'>",
+  "pattern": "<what input pattern triggers the instability, e.g. 'casual phrasing without explicit dates', 'emotional framing', 'presupposing a yes'>",
+  "root_cause": "<one sentence on why the model fails, e.g. 'the model prioritizes helpfulness over policy when no time constraint is mentioned explicitly'>",
   "suggestion": "<a single sentence to add verbatim to the system prompt that would prevent this contradiction. Start with an imperative verb. Be specific to this rule, not generic. Example: 'Always state the 30-day refund limit explicitly in every response, regardless of how the request is phrased or what emotional context the user provides.'>"
 }}"""
 
