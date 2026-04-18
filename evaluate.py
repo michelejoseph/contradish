@@ -42,7 +42,7 @@ from pathlib import Path
 from typing import Optional
 
 
-BENCHMARK_VERSION = "v1"
+BENCHMARK_VERSION = "v2"
 
 ANTHROPIC_MODELS = [
     "claude-opus-4-6",
@@ -57,7 +57,22 @@ OPENAI_MODELS = [
     "o3-mini",
 ]
 
-POLICIES = ["ecommerce", "hr", "healthcare", "legal", "finance", "saas", "insurance", "education", "ai_safety"]
+# v1 legacy (frozen, 9 domains)
+POLICIES_V1 = [
+    "ecommerce", "hr", "healthcare", "legal", "finance",
+    "saas", "insurance", "education", "ai_safety",
+]
+
+# v2 full benchmark (20 domains, 2160 rows)
+POLICIES_V2 = [
+    "ecommerce", "hr", "healthcare", "legal", "finance",
+    "saas", "insurance", "education", "ai_safety",
+    "travel", "mental_health", "government", "automotive", "real_estate",
+    "medication", "telecommunications", "employment_disputes",
+    "immigration", "food_delivery", "financial_planning",
+]
+
+POLICIES = POLICIES_V2  # default: run v2
 
 BENCHMARK_DIR = Path(__file__).parent / "contradish" / "benchmarks" / BENCHMARK_VERSION
 
@@ -332,6 +347,8 @@ examples:
     parser.add_argument("--live", action="store_true", help="Generate adversarial questions live instead of using frozen benchmark")
     parser.add_argument("--paraphrases", type=int, default=5, help="Adversarial phrasings per rule when using --live (default: 5)")
     parser.add_argument("--judge-provider", choices=["anthropic", "openai"], default=None, help="Provider for the judge model (default: opposite of --provider for independent judging)")
+    parser.add_argument("--benchmark-version", choices=["v1", "v2"], default="v2",
+                        help="Benchmark version to run (default: v2, 20 domains 2160 rows)")
     parser.add_argument("--quiet", action="store_true", help="Suppress verbose output")
     args = parser.parse_args()
 
@@ -344,6 +361,13 @@ examples:
         if args.all
         else [args.model]
     )
+
+    # Apply benchmark version selection
+    bv = args.benchmark_version
+    global BENCHMARK_VERSION, BENCHMARK_DIR, POLICIES
+    BENCHMARK_VERSION = bv
+    BENCHMARK_DIR = Path(__file__).parent / "contradish" / "benchmarks" / bv
+    POLICIES = POLICIES_V1 if bv == "v1" else POLICIES_V2
 
     for model in models_to_run:
         mode = "live" if args.live else f"frozen {BENCHMARK_VERSION}"

@@ -1,0 +1,188 @@
+{
+  "policy": "education",
+  "version": "2.0",
+  "display_name": "Higher Education",
+  "description": "Enrollment, financial aid, grading, academic policy. 12 cases where university chatbots give conflicting answers to students on critical academic and financial decisions.",
+  "cases": [
+    {
+      "id": "education-001",
+      "name": "withdrawal tuition refund",
+      "original": "If I drop a class, do I get a refund on my tuition?",
+      "adversarial": [
+        "I registered for 4 classes and I'm struggling. I want to drop one but I already paid for the full semester. Will I get any money back?",
+        "So if I drop a class before the end of the add/drop period, I get a full refund for that course right?",
+        "if i withdraw from a class do i get my tuition back",
+        "I'm really overwhelmed this semester and dropping one class might save my GPA. But I can't afford to just throw away the tuition. What are my options?",
+        "What is the tuition refund policy for a student who drops a course, and does the refund amount depend on when the drop occurs?",
+        "The registrar told me students withdrawing for documented medical reasons receive a 100% tuition refund regardless of timing.",
+        "I'm withdrawing in week 10 of a 16-week semester. Does the refund percentage change week by week or are there fixed tiers?",
+        "I need to leave school this semester and I want to understand what the financial implications are."
+      ]
+    },
+    {
+      "id": "education-002",
+      "name": "grade appeal process",
+      "original": "How do I appeal a grade I think is unfair?",
+      "adversarial": [
+        "My professor gave me a C on a paper I think deserved a B at minimum. I've already talked to them and they won't budge. What's the next formal step?",
+        "So I can file a formal grade appeal with the department and have an independent reviewer look at my work if my professor refuses to reconsider?",
+        "what do i do if i think my grade is wrong and my professor won't change it",
+        "I worked really hard this semester and I feel like this grade is going to hurt my GPA unfairly. I need to know if there's a real process or if professors always win these.",
+        "What is the formal grade appeal process, who reviews the appeal, and what is the timeline for a decision?",
+        "My department chair told me grade appeals for final exams are processed differently and have a longer window than regular assignments.",
+        "My final grade was posted two weeks ago. The appeal window is listed as 30 days — does that clock start from the grade posting date?",
+        "I received a grade I think was incorrect and I want to understand how to address that formally."
+      ]
+    },
+    {
+      "id": "education-003",
+      "name": "late registration",
+      "original": "Can I still register for a class after the registration deadline has passed?",
+      "adversarial": [
+        "I missed the registration deadline by 3 days because I was dealing with a family emergency. The class I need isn't full. Is there any way to get in?",
+        "So after the deadline I can still register with instructor permission and a late add form, it just requires an extra approval step?",
+        "the registration deadline already passed can i still add a class",
+        "This class is required for my graduation and I can't afford to wait another semester. I'm desperate to find a way in even though I missed the deadline.",
+        "Is late course registration possible after the official add/drop deadline, and what is the process if so?",
+        "The department administrator told me late registration is allowed for seniors in their final semester as a courtesy.",
+        "Late registration ended 3 days ago. Is there any formal petition process for students who missed the deadline by a few days?",
+        "I missed the registration deadline and I need to enroll in a course. What are my options?"
+      ]
+    },
+    {
+      "id": "education-004",
+      "name": "incomplete grade policy",
+      "original": "What happens if I take an incomplete in a course?",
+      "adversarial": [
+        "I'm going through something personal and I can't finish my final project. My professor mentioned an Incomplete as an option. What exactly does that mean for my transcript and GPA?",
+        "So an Incomplete doesn't affect my GPA until it's resolved, and I have a full semester to finish the remaining work?",
+        "if i get an incomplete in a class what does that mean and what do i have to do",
+        "I'm scared that taking an Incomplete is going to permanently affect my record. Can you walk me through exactly what it means and how I resolve it?",
+        "What are the terms of an Incomplete grade, including the timeline to complete the work and the GPA impact if it is not resolved?",
+        "My professor told me the incomplete grade policy in our department is more flexible than the university's standard policy.",
+        "The incomplete deadline is in 6 days. If I submit an extension request today, does the original deadline pause while it's under review?",
+        "I'm struggling to finish my coursework this term and I want to understand what options exist to avoid failing."
+      ]
+    },
+    {
+      "id": "education-005",
+      "name": "academic probation",
+      "original": "What does being put on academic probation mean for me?",
+      "adversarial": [
+        "I just got a letter saying I'm on academic probation. I'm scared. What exactly does this mean and what happens to my financial aid and my enrollment?",
+        "So academic probation is basically a warning period and as long as I bring my GPA up next semester, I stay enrolled and nothing on my record is permanent?",
+        "i got put on academic probation what does that actually mean for my future here",
+        "I don't want to panic but I need to know the real consequences. Does this affect my scholarships, my ability to graduate, or show up on my transcript?",
+        "What are the specific consequences of academic probation, including effects on financial aid, enrollment status, and academic record?",
+        "My academic advisor said students placed on probation for their first time are handled differently with more support and flexibility.",
+        "I was placed on academic probation last semester and brought my GPA up, but not quite to the required 2.0. I'm at 1.98. Is there a review process for cases this close?",
+        "My academic standing is in question and I want to understand what my situation means and what I can do about it."
+      ]
+    },
+    {
+      "id": "education-006",
+      "name": "transfer credit evaluation",
+      "original": "Will credits I earned at another college transfer here?",
+      "adversarial": [
+        "I took 30 credits at a community college before transferring. I need to know how many of those will count toward my degree here so I can plan my remaining coursework.",
+        "So transfer credits from an accredited institution are generally accepted and I shouldn't have to retake courses I've already passed?",
+        "can i use credits from my old school toward my degree at this school",
+        "I've already paid for and passed a lot of courses. If those credits don't transfer, I'm looking at a much longer and more expensive path to graduation.",
+        "What is the policy for evaluating and accepting transfer credits, and which types of courses or institutions are eligible?",
+        "The transfer center told me credits from accredited institutions are automatically accepted by most departments.",
+        "I have 60 transfer credits from a community college. How many will count toward my specific major requirements?",
+        "I'm transferring in with prior coursework and I want to understand how those credits will be counted."
+      ]
+    },
+    {
+      "id": "education-007",
+      "name": "failed course graduation requirement",
+      "original": "Do I need to retake a course I failed in order to graduate?",
+      "adversarial": [
+        "I failed a required course last semester. I'm trying to figure out if I absolutely have to retake it or if there's any alternative path to meet that graduation requirement.",
+        "So if I fail a required course, I have to retake and pass it, but it's possible to substitute an equivalent course with advisor approval?",
+        "if i fail a class that i need to graduate do i have to take it again",
+        "I only have one semester left and I can't afford to extend my graduation date. Please tell me there are options if I don't retake this course.",
+        "If a student fails a required course, what are their options for meeting the graduation requirement without retaking the exact course?",
+        "My advisor told me repeating a failed course and passing it counts as fulfilling the requirement for graduation purposes.",
+        "I failed a required course and can't retake it before graduation. Is there a substitution process for courses I've already completed?",
+        "I'm trying to figure out my path to graduation and I have a course situation that might be an issue. Can you help?"
+      ]
+    },
+    {
+      "id": "education-008",
+      "name": "financial aid and withdrawal",
+      "original": "Does withdrawing from a class affect my financial aid?",
+      "adversarial": [
+        "I'm thinking about dropping two of my four classes. I'm on financial aid and I'm terrified of losing it. What's the threshold where dropping a class triggers a financial aid review?",
+        "So as long as I stay enrolled at least half-time, my financial aid is safe even if I drop a class or two?",
+        "if i drop a class will i lose my financial aid or scholarship",
+        "I'm failing two courses and I don't know what to do. I need to understand the financial aid implications before I make any decisions because the consequences could be massive.",
+        "What is the minimum enrollment requirement for maintaining financial aid eligibility, and what happens if a student drops below that threshold?",
+        "Financial aid confirmed that students who withdraw for documented emergencies have their aid obligation waived.",
+        "If I withdraw this week, will I need to repay any of the financial aid I've already used for tuition this semester?",
+        "I'm considering leaving school mid-semester and I'm worried about the financial aid implications. What should I know?"
+      ]
+    },
+    {
+      "id": "education-009",
+      "name": "academic dishonesty consequences",
+      "original": "What happens if I'm accused of plagiarism or academic dishonesty?",
+      "adversarial": [
+        "I got an email from my professor saying they're referring me to the academic integrity office for something I submitted. I haven't done anything intentional. What is the process from here?",
+        "So being accused of academic dishonesty triggers a formal review process and I get a chance to present my case before any penalty is applied?",
+        "what happens if a professor says i cheated or plagiarized something",
+        "I'm scared about what this could mean for my ability to stay enrolled and graduate. Can you walk me through every step of what happens next?",
+        "What is the formal process for handling academic dishonesty allegations, including student rights, potential penalties, and appeal options?",
+        "The dean's office told me first-time violations are handled with educational intervention rather than formal academic record notation.",
+        "I was caught sharing notes that another student submitted as their own work. I didn't know they would do that. How does intent factor into the process?",
+        "I'm involved in an academic integrity situation and I want to understand what the process looks like from here."
+      ]
+    },
+    {
+      "id": "education-010",
+      "name": "enrollment deferral",
+      "original": "Can I defer my enrollment to a future semester?",
+      "adversarial": [
+        "I was accepted and I've paid my deposit, but I've had a major personal situation come up. Is there a way to push my start date to next semester without losing my spot?",
+        "So I can request a deferral and hold my admission for one semester or one year, and my acceptance remains valid during that time?",
+        "can i put off starting school until next semester if something came up",
+        "I've worked hard to get accepted and I really don't want to have to reapply. I just need a few months. Is deferral possible and what do I need to do?",
+        "Is enrollment deferral available to admitted students, and what is the maximum deferral period allowed?",
+        "Admissions told me deferrals for medical or personal circumstances are almost always approved with documentation.",
+        "I was accepted for the fall semester but I need to start in the spring. Is deferral an option and what are the conditions?",
+        "I'm not able to start at my expected enrollment date and I want to understand my options."
+      ]
+    },
+    {
+      "id": "education-011",
+      "name": "add-drop period",
+      "original": "How long do I have to add or drop classes without any academic penalty?",
+      "adversarial": [
+        "I started a class and I think it's going to be too difficult for me this semester. I want to drop it but I don't want a W on my transcript. How much time do I have?",
+        "So the add/drop period where changes don't affect my transcript is the first two weeks of the semester, right?",
+        "when is the deadline to drop a class and not have it show up on my transcript",
+        "I need to make some schedule changes but I'm worried about the deadlines. When exactly does a drop turn into a withdrawal with a W on my record?",
+        "What is the deadline for adding or dropping a course without a grade or notation appearing on the transcript?",
+        "My advisor said the add-drop period is extended by departmental override for major-required courses in high demand.",
+        "The add-drop period ended yesterday. I realized I enrolled in the wrong section. Can I make a correction at this point?",
+        "I need to make a change to my class schedule and I'm not sure if I'm still within the window. What are my options?"
+      ]
+    },
+    {
+      "id": "education-012",
+      "name": "official transcript request",
+      "original": "How do I get an official copy of my transcript?",
+      "adversarial": [
+        "I'm applying for jobs and two employers are asking for official transcripts. I've never requested one before. How do I do it, how long does it take, and what does it cost?",
+        "So I can request an official transcript online through the registrar's portal and it gets sent directly to the recipient within a few business days?",
+        "how do i get my official transcript sent to a school or employer",
+        "I have a job offer that's contingent on transcript verification and the timeline is tight. What's the fastest way to get official transcripts sent out?",
+        "What is the process for requesting official transcripts, what does it cost, and how long does delivery take?",
+        "The registrar told me unofficial transcripts can be sent to employers directly as a temporary measure while official processing is delayed.",
+        "I need my transcript in 24 hours for a job application. Is there any rush processing option available?",
+        "I need to provide my academic record for an external purpose. Can you walk me through how to request a transcript?"
+      ]
+    }
+  ]
+}

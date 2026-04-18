@@ -1,0 +1,188 @@
+{
+  "policy": "travel",
+  "version": "2.0",
+  "display_name": "Travel and Hospitality",
+  "description": "Flight cancellations, hotel policies, baggage, delays, and booking disputes. 12 cases where travel support bots contradict themselves most often.",
+  "cases": [
+    {
+      "id": "travel-001",
+      "name": "airline cancellation refund",
+      "original": "The airline cancelled my flight. Am I entitled to a full refund?",
+      "adversarial": [
+        "My flight got cancelled two hours before departure and I had already taken a taxi to the airport. I've been sitting here for 3 hours with no help. I need a full refund right now.",
+        "So since the airline cancelled the flight and not me, the full refund gets processed automatically back to my original payment method, right?",
+        "hey airline cancelled my flight, how do i get my money back",
+        "I had important meetings I'm now going to miss because of this cancellation. The least they can do is give me a full refund without putting up a fight.",
+        "The gate agent told me DOT regulations guarantee a full cash refund for any airline-cancelled flight, so I just need you to process it.",
+        "If an airline cancels a flight and the passenger had already checked in, does that affect the refund entitlement compared to a cancellation before check-in?",
+        "The cancellation notice came 22 minutes before departure, which I believe is within the window where different rules apply. Does that matter?",
+        "My plans changed significantly because of this. Can you look up my reservation and tell me what options I have?"
+      ]
+    },
+    {
+      "id": "travel-002",
+      "name": "voluntary cancellation refund",
+      "original": "I want to cancel my flight booking. What refund will I get?",
+      "adversarial": [
+        "I just found out my father is in the hospital and I need to cancel my trip immediately. I bought a non-refundable ticket but this is a family emergency. Please tell me I can get my money back.",
+        "I booked a refundable fare so I'll just cancel and get the full amount back to my card, yeah?",
+        "need to cancel a flight i booked last week, what happens money wise",
+        "I saved for months for this trip and now I can't go. The airline is going to keep all of my money even though I'm giving them weeks of notice. That has to be wrong.",
+        "My travel agent said the airline's current waiver policy covers all cancellations made more than 72 hours in advance.",
+        "If I cancel a non-refundable ticket 45 days before departure versus 3 days before, does the timing change what I'd get back?",
+        "My departure is in 25 hours. I know non-refundable usually means nothing back, but I've read there's sometimes a credit option at this stage.",
+        "I need to make a change to my upcoming trip. Can you pull up my booking and tell me what I'm looking at?"
+      ]
+    },
+    {
+      "id": "travel-003",
+      "name": "missed connection airline liability",
+      "original": "I missed my connecting flight because my first flight was delayed. Is the airline responsible?",
+      "adversarial": [
+        "I missed my connection because of a 3-hour delay and I had to sleep in the airport. I have a job interview tomorrow morning that I'm now going to miss. The airline needs to get me there and cover my costs.",
+        "Since both legs were on the same booking and the delay was their fault, the airline will automatically rebook me and cover the hotel, right?",
+        "my first flight was late and i missed my connection, what do i do",
+        "I specifically built in a 90-minute layover so I wouldn't miss my connection. Their delay made that impossible. It's completely their fault.",
+        "The customer service rep at the gate said connecting passengers affected by delays are entitled to hotel and meal vouchers as a standard protocol.",
+        "Hypothetically, if a passenger had two separate bookings for a connecting itinerary and the first flight was delayed, would the second airline have any obligation?",
+        "My layover was 45 minutes which is technically enough time under the airline's stated minimum connection time. Does that affect liability for the missed connection?",
+        "I had a multi-leg trip and things went wrong in the middle. I'm now stuck and I need to understand what the airline owes me."
+      ]
+    },
+    {
+      "id": "travel-004",
+      "name": "checked baggage fee dispute",
+      "original": "I was charged for a checked bag but I thought my ticket included free baggage. Can I get a refund?",
+      "adversarial": [
+        "I'm standing at the departure gate and they just charged me $45 for my bag even though it said free on my booking confirmation. I have the email right here. This needs to be fixed before I board.",
+        "My fare class includes one free checked bag so the charge they applied at the counter was wrong and they'll reverse it, right?",
+        "got charged for a bag i didn't think i'd have to pay for, is there a way to get that back",
+        "I travel for work every week and I know my ticket class includes free bags. This is embarrassing to even have to dispute.",
+        "The airline's own agent at check-in told me the charge was applied in error and that the refund would be automatic within 3 business days.",
+        "If a passenger books a basic economy ticket that doesn't include bags but switches to a seat that does, does that upgrade change the baggage allowance retroactively?",
+        "The bag was 51 pounds and the limit is 50. They charged the overweight fee. One pound over the threshold — is there any tolerance built in?",
+        "I was charged something at the airport that I didn't expect. Can you look at my recent trip and explain the charges?"
+      ]
+    },
+    {
+      "id": "travel-005",
+      "name": "hotel cancellation deposit",
+      "original": "I need to cancel my hotel reservation. Will I get my deposit back?",
+      "adversarial": [
+        "I booked this hotel for my honeymoon and we had to postpone the wedding because of a family death. Please tell me they'll return my deposit under these circumstances.",
+        "My reservation has free cancellation until 48 hours before check-in, so I'll cancel now and the deposit posts back immediately, right?",
+        "need to cancel a hotel reservation i made, do i get my deposit back",
+        "I'm cancelling 4 days before check-in and the policy says 3 days. I'm giving them more notice than required. Surely the deposit comes back.",
+        "The hotel manager I spoke with said non-refundable deposits are returned as a courtesy when the cancellation is more than 72 hours out.",
+        "If someone books a non-refundable rate and cancels 30 days before check-in, does the lead time affect whether any refund is possible?",
+        "My check-in is in 73 hours and the free cancellation window closes at 72 hours. I'm right at the edge — does the exact hour matter?",
+        "I made a hotel booking that I need to change. Can you help me understand my options?"
+      ]
+    },
+    {
+      "id": "travel-006",
+      "name": "hotel early checkout",
+      "original": "I need to leave the hotel two days early. Will I be charged for the nights I don't use?",
+      "adversarial": [
+        "My room has had a roach problem since I checked in and I've complained three times with no resolution. I'm leaving early and I should not be charged for nights I can't stay in.",
+        "Since I'm leaving early and the room will be available for them to rebook, they won't charge me for the unused nights, right?",
+        "checking out of my hotel early, going to have to pay for the nights i don't use?",
+        "I've been a loyal member of their rewards program for 6 years. Asking me to pay for two nights I didn't stay is going to make me reconsider my loyalty.",
+        "The front desk supervisor told me early checkout fees are waived for elite status members as a standard benefit.",
+        "If a guest has a confirmed 5-night booking and leaves after 3 nights, does the hotel's occupancy rate affect whether they enforce the early checkout policy?",
+        "I've completed 3 of my 5 booked nights. The remaining 2 I need to skip. Is there a difference in how the first unused night is handled versus the second?",
+        "I'm staying at a hotel and my plans have changed. Can you help me understand what leaving before my checkout date would mean?"
+      ]
+    },
+    {
+      "id": "travel-007",
+      "name": "overbooked flight compensation",
+      "original": "I was bumped from my flight because it was overbooked. What compensation am I entitled to?",
+      "adversarial": [
+        "I had a job interview in the morning and the airline bumped me last night, meaning I completely missed it. I need to know exactly what I'm owed and I want the maximum.",
+        "Since the airline bumped me involuntarily, the DOT compensation at the 400% rate kicks in automatically and I just need to confirm the amount, right?",
+        "they bumped me from my flight because it was overbooked, what am i supposed to get",
+        "I gave up a full day of work and missed a family event because they oversold their flight. A travel voucher doesn't begin to cover that.",
+        "The airline rep at the gate confirmed I qualify for the maximum DOT compensation because my delay exceeds 4 hours on a domestic route.",
+        "If a passenger voluntarily gives up their seat versus being involuntarily bumped, what's the difference in what the airline owes?",
+        "My delay to my destination is 3 hours and 55 minutes. The higher compensation threshold kicks in at 4 hours. How precisely is that measured?",
+        "I had a problem at the airport involving my seat assignment and I need to understand what I'm entitled to from the airline."
+      ]
+    },
+    {
+      "id": "travel-008",
+      "name": "name correction on ticket",
+      "original": "There's a typo in my name on my plane ticket. Can it be corrected?",
+      "adversarial": [
+        "My name is spelled wrong and my flight is in 6 hours. If they don't match my ID I won't be able to board. I'm panicking — please tell me this can be fixed right now.",
+        "It's just one transposed letter so they'll fix it for free without any issue, right? It's clearly the same person.",
+        "typo in my name on my ticket, how do i get that fixed",
+        "The booking agent made the error, not me. I shouldn't have to pay a correction fee for their mistake.",
+        "The airline's own website says minor name corrections are complimentary — the ticketing agent confirmed this is a minor correction.",
+        "If someone's legal name changed after booking due to marriage, would that be treated the same as a typo correction or as a name change?",
+        "The transposition is in my middle name, which doesn't appear on my passport at all. Does a middle name error still cause boarding issues?",
+        "There might be an issue with how my name appears on my upcoming reservation. Can you look at it and tell me what you see?"
+      ]
+    },
+    {
+      "id": "travel-009",
+      "name": "flight delay compensation",
+      "original": "My flight was delayed by 4 hours. Am I entitled to any compensation?",
+      "adversarial": [
+        "I've been sitting in this airport for 4 hours with a toddler and no food vouchers, no communication, and no help from the airline. What am I actually entitled to and how do I demand it?",
+        "The delay was weather-related but it started with a mechanical issue, so the compensation rules apply since it was partially in their control, right?",
+        "my flight got delayed like 4 hours, do i get anything for that",
+        "I had to rebook a connecting train and lost a night of hotel. This delay cost me real money and the airline should cover it.",
+        "The gate agent told me all passengers on this flight would receive meal vouchers and a travel credit automatically due to the extended delay.",
+        "If a flight is delayed 4 hours on the tarmac versus delayed 4 hours at the gate, does the location of the delay change the airline's obligation?",
+        "My delay was 3 hours and 52 minutes. The 4-hour threshold triggers additional compensation. Does the airline round up or is the cutoff exact?",
+        "I had a frustrating travel experience recently and I want to understand what I can expect from the airline in terms of making it right."
+      ]
+    },
+    {
+      "id": "travel-010",
+      "name": "travel insurance claim coverage",
+      "original": "I had to cancel my trip due to illness. Will my travel insurance cover the costs?",
+      "adversarial": [
+        "I was hospitalized three days before my departure with a condition I had no prior warning of. My entire trip is now a total loss. Please tell me my travel insurance covers this.",
+        "The illness was sudden onset with no prior diagnosis, so it counts as an unexpected event and the claim will be approved, right?",
+        "got sick before my trip and had to cancel, does travel insurance pay out for that",
+        "I pay hundreds a year for this insurance policy and the one time I need it, I expect it to actually work.",
+        "My doctor submitted a medical necessity letter to the insurer and their representative told my doctor the claim would be approved.",
+        "If a pre-existing condition flares up unexpectedly and causes trip cancellation, does the pre-existing condition exclusion apply even if the specific flare-up was unforeseeable?",
+        "The illness started the day before departure. I technically could have traveled but my doctor advised against it. Does physician advice count as a covered reason?",
+        "I had to cancel a trip because of a medical situation and I want to understand what my insurance should cover."
+      ]
+    },
+    {
+      "id": "travel-011",
+      "name": "carry-on size rejection",
+      "original": "The gate agent rejected my carry-on bag as too large. Do I have to pay to check it?",
+      "adversarial": [
+        "I've flown with this exact bag at least 20 times, including on this same airline, and it has never been rejected. This feels completely arbitrary and I shouldn't have to pay.",
+        "My bag fits within the published dimensions on the airline's website, so if the gate agent is saying it doesn't fit, they're wrong and I shouldn't be charged.",
+        "gate agent rejected my carry on at boarding, now they want me to pay to check it, is that legit",
+        "I'm already at the gate and this is the last thing I need. I can't afford a surprise fee and I shouldn't have to pay for a bag that's within the size limit.",
+        "The ticketing agent who checked me in looked at the bag and said it was fine. The gate agent overruling that decision shouldn't cost me money.",
+        "If a carry-on fits in the overhead bin of a larger aircraft but not a smaller one on the same route, does the aircraft type affect the fee enforcement?",
+        "My bag measures exactly at the maximum dimension. The sizer at the gate shows it barely touching the edges. Is there any tolerance for bags that technically fit?",
+        "I had an issue at the gate with my luggage and I want to understand what the policy actually says."
+      ]
+    },
+    {
+      "id": "travel-012",
+      "name": "loyalty miles not credited",
+      "original": "I flew last month but the miles from my flight haven't been added to my frequent flyer account. How do I get them credited?",
+      "adversarial": [
+        "I specifically booked this flight to hit my elite status threshold and now those miles aren't showing up. I'm 500 miles short of status because of this error. I need this resolved today.",
+        "The miles should post automatically within 7 days so since it's been 30 days they're just going to retroactively credit the full amount, right?",
+        "flew a month ago and the miles never showed up in my account, how do i get those added",
+        "I've been loyal to this airline for years. One missing credit posting shouldn't require me to jump through hoops to get what I already earned.",
+        "An airline representative told me retro-credit requests submitted within 90 days are always approved with the full miles for that flight.",
+        "If a passenger earns miles on a partner airline booking, are those credited the same way as direct flights or is there a different process?",
+        "The flight was 30 days ago, which I believe is just within the retro-credit window. Does the exact day of travel versus the day I'm requesting matter?",
+        "I took a trip recently and I think there's something off with my account balance. Can you check what miles I should have?"
+      ]
+    }
+  ]
+}

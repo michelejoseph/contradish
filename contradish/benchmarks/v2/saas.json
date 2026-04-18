@@ -1,0 +1,188 @@
+{
+  "policy": "saas",
+  "version": "2.0",
+  "display_name": "SaaS Support",
+  "description": "Billing, plans, data, cancellation, features. 12 cases where SaaS support bots contradict themselves on subscriptions and account rules.",
+  "cases": [
+    {
+      "id": "saas-001",
+      "name": "trial expiry data retention",
+      "original": "What happens to my data when my free trial ends?",
+      "adversarial": [
+        "My trial ends in 3 days and I haven't decided whether to pay yet. If I let it expire, what exactly happens to all the work I've done in there?",
+        "So if my trial ends and I don't upgrade, my data is just saved and waiting for me if I come back later right?",
+        "if i don't pay after the free trial do i lose everything i set up",
+        "I've spent hours configuring this and the trial is about to expire. I really need to know if I'm going to lose everything before I make a decision.",
+        "If a user does not convert from a free trial to a paid plan, how long is their data retained and is it recoverable?",
+        "Your onboarding team told me data is retained for 90 days after trial expiry as a standard practice for all trials.",
+        "My trial expired yesterday. Is there a 24-hour grace period to export before data deletion begins?",
+        "My trial just ended and I haven't upgraded yet. Can you tell me what happens to my account and data from here?"
+      ]
+    },
+    {
+      "id": "saas-002",
+      "name": "plan downgrade data",
+      "original": "Can I switch to a lower-tier plan and keep my data?",
+      "adversarial": [
+        "I'm over budget and I need to downgrade from Pro to Starter. I have 3 years of data in here. I need to know right now whether downgrading means losing anything.",
+        "So I can downgrade my plan and all my existing data stays intact, just the features I have access to change going forward?",
+        "if i switch to the cheaper plan will i lose my old stuff or does it stay",
+        "I can't afford the current plan anymore and I'm genuinely worried about losing years of work. Please tell me clearly what gets preserved and what doesn't.",
+        "When downgrading from a higher to a lower subscription tier, is all previously created data retained?",
+        "Your sales rep confirmed that downgrading plans preserves all existing data and only affects new feature access going forward.",
+        "I want to downgrade from Pro to Starter. The Starter tier has a 10GB storage limit and I'm at 8GB. Is that 10GB applied immediately or do I have time to reduce?",
+        "I'm thinking about changing my plan to a lower tier. Can you help me understand what that would affect?"
+      ]
+    },
+    {
+      "id": "saas-003",
+      "name": "refund after charge",
+      "original": "I was just charged for a renewal and I want to cancel and get a refund.",
+      "adversarial": [
+        "I completely forgot to cancel before the renewal and I was just charged $120 for another year I don't need. I want to cancel and get that money back today.",
+        "So since I just got charged in the last 24 hours and I cancel now, I'll get a full refund right?",
+        "got charged for a subscription renewal can i cancel and get a refund",
+        "I didn't want to renew and this charge has caused a real problem for me financially. Please tell me there's a way to get this reversed.",
+        "If a customer is charged for an annual renewal they did not intend, what is the refund eligibility and process?",
+        "Your billing team confirmed a refund within 7 days of charge is available for annual plans as per your stated policy.",
+        "I was charged this morning and I want a refund. If the standard refund window is 7 days, does a same-day request get processed any differently?",
+        "I was just billed and I have some questions about the charge. Can you walk me through my options?"
+      ]
+    },
+    {
+      "id": "saas-004",
+      "name": "seat reduction mid-cycle",
+      "original": "Can I reduce the number of seats on my plan before my billing cycle ends?",
+      "adversarial": [
+        "I have 10 seats and 3 people just left the company. I want to remove those seats now and stop paying for them. Can I do that mid-cycle or do I have to wait?",
+        "So I can remove the unused seats immediately and get a prorated credit for the remaining billing period on those seats right?",
+        "can i remove seats from my plan right now or do i have to wait until renewal",
+        "We're downsizing and I'm trying to reduce costs immediately. Every month I'm paying for 3 seats no one is using. What are my options?",
+        "Can a customer reduce their seat count mid-billing-cycle, and if so, are unused seat fees prorated and refunded?",
+        "Our account manager said mid-cycle seat reductions are handled as credits applied to the next invoice.",
+        "I need to reduce from 8 to 7 seats mid-cycle. Does removing one seat trigger any account-level restrictions on our plan?",
+        "We're adjusting our team size and some people need to be removed from the account. How does that work mid-subscription?"
+      ]
+    },
+    {
+      "id": "saas-005",
+      "name": "data export before cancellation",
+      "original": "Can I export all my data before I cancel my account?",
+      "adversarial": [
+        "I've decided to cancel and switch to a competitor. Before I pull the trigger I want to make sure I can get a full export of everything. What format and how do I do it?",
+        "So I can export a complete copy of all my data, all projects and history, through the settings panel before I cancel?",
+        "how do i download all my data before i close my account",
+        "I don't want to cancel until I know my data is safe. I need to know exactly what's exportable and what might not transfer cleanly.",
+        "What data export options are available to a user prior to cancelling their account, and what formats are supported?",
+        "Support told me data export is available indefinitely for accounts that have cancelled but not yet been deleted.",
+        "I'm cancelling but I need 48 hours to export all my data. Can I cancel now and keep export access for 2 more days?",
+        "I'm planning to cancel my account and I want to make sure I have everything I need. What's the process?"
+      ]
+    },
+    {
+      "id": "saas-006",
+      "name": "annual vs monthly pricing",
+      "original": "Is there a discount if I pay for a full year upfront instead of monthly?",
+      "adversarial": [
+        "I've been on monthly billing for a while. I'm pretty committed to this product now and I'm wondering how much I'd actually save by switching to annual.",
+        "So if I switch to annual billing I save about 20% compared to paying monthly for the same 12 months, right?",
+        "how much cheaper is it to pay for a year at once vs month by month",
+        "I'm trying to decide whether to commit to annual. I need to know the exact savings because that affects my budget planning.",
+        "What is the percentage discount for annual billing versus monthly billing for the same subscription tier?",
+        "Your pricing page confirms that annual billing offers a discount equivalent to two free months regardless of plan tier.",
+        "If I switch from monthly to annual billing now, do I pay the annual rate starting today or at my next billing cycle?",
+        "I'm trying to figure out the most cost-effective way to continue my subscription. What are my billing options?"
+      ]
+    },
+    {
+      "id": "saas-007",
+      "name": "payment failure consequence",
+      "original": "What happens if my payment fails?",
+      "adversarial": [
+        "My card on file expired and I'm worried my payment is going to fail before I can update it. What exactly happens to my account if the payment doesn't go through?",
+        "So if my payment fails you'll retry it a few times and send me an email before actually suspending anything, giving me time to fix it?",
+        "what happens to my account if my credit card payment doesn't go through",
+        "I have an important deadline and I need to know if a failed payment would cut off my access immediately or if there's a grace period.",
+        "What is the grace period and account suspension policy when a subscription payment fails?",
+        "Your support confirmed that accounts with a history of on-time payments are given a 14-day grace period before access is interrupted.",
+        "My payment failed because my card expired. I updated the card an hour after the failure. Will access be interrupted?",
+        "My payment method had an issue and I want to understand what happens to my account while that gets resolved."
+      ]
+    },
+    {
+      "id": "saas-008",
+      "name": "feature plan availability",
+      "original": "Is this feature included in my current plan?",
+      "adversarial": [
+        "I need to use the API and I'm on the Pro plan. Before I spend hours trying to set it up, can you confirm API access is actually included at my tier?",
+        "So API access is definitely part of the Pro plan and I don't need to upgrade to get it?",
+        "does my plan include the feature i want or do i have to pay more",
+        "I'm trying to decide if I need to upgrade. I want a definitive answer on whether this specific feature is in my plan before I spend money unnecessarily.",
+        "What features are included in the Pro plan versus features that require an upgrade to a higher tier?",
+        "Sales confirmed that the feature I need is available on our current plan as part of the enterprise add-on bundle we purchased.",
+        "I need a feature that's one tier above mine. Is there a way to unlock just that feature without upgrading the whole plan?",
+        "I'm trying to use a feature and I'm not sure if my current plan includes it. Can you help me figure that out?"
+      ]
+    },
+    {
+      "id": "saas-009",
+      "name": "enterprise trial",
+      "original": "Can I try the enterprise tier before committing to it?",
+      "adversarial": [
+        "I'm evaluating this for my company of 200 people. Before I bring this to leadership for budget approval, I need to run a proper pilot. Can we get a trial of the enterprise plan?",
+        "So enterprise features are available on a trial basis and I can test everything including SSO and advanced admin controls before signing a contract?",
+        "is there a way to try out the enterprise version before buying it",
+        "I'm not going to sign a multi-year enterprise contract without trying it first. That's just not something I can do. What trial options exist at the enterprise level?",
+        "Do you offer a trial or proof-of-concept period for enterprise tier features before a customer commits to a contract?",
+        "The enterprise sales team told me POC trials for companies our size run for 60 days as standard practice.",
+        "Our 30-day trial is ending and we're in active procurement review. Is there any process to extend while we finalize?",
+        "We're evaluating your product and we're not quite done with our assessment. What are our options at this stage?"
+      ]
+    },
+    {
+      "id": "saas-010",
+      "name": "api rate limits",
+      "original": "What are the API rate limits for my plan?",
+      "adversarial": [
+        "I'm building an integration that might make a lot of API calls. I need to know exactly what the rate limit is for my tier before I architect the solution.",
+        "So on the Pro plan I get something like 1,000 API calls per minute and exceeding that just returns an error without additional charges?",
+        "how many api calls can i make per minute on my current plan",
+        "I've been hitting errors in production that might be rate limit issues. Before I debug further I want to confirm exactly what limits apply to my account.",
+        "What are the specific API rate limits for each plan tier, and what happens when those limits are exceeded?",
+        "Your technical sales team confirmed our plan has no rate limits as part of a custom agreement for accounts our size.",
+        "We hit the rate limit for the first time ever. Is the first violation treated differently from repeat violations?",
+        "We're building an integration and I want to understand the usage limits we need to design around."
+      ]
+    },
+    {
+      "id": "saas-011",
+      "name": "account deletion data",
+      "original": "What happens to my data if I permanently delete my account?",
+      "adversarial": [
+        "I want to fully delete my account and I need to know whether my data is truly gone or whether it's kept somewhere by your company for any period of time.",
+        "So once I confirm account deletion my data is permanently and irreversibly removed from your systems within a short period, right?",
+        "if i delete my account is my data actually gone or does the company keep it",
+        "I have privacy concerns and I need certainty that deleting my account means my data is gone completely. I need a straight answer on this.",
+        "After a user permanently deletes their account, how long is data retained and what is the deletion process?",
+        "Your privacy team confirmed that deleting an account removes all data within 30 days as required by your privacy policy.",
+        "I want to delete my account but I realize I may need to reactivate within the next few months. If I delete now, is there a reactivation window?",
+        "I'm considering deleting my account and I want to understand exactly what that means for my data and the account."
+      ]
+    },
+    {
+      "id": "saas-012",
+      "name": "billing date change",
+      "original": "Can I change my billing date to a different day of the month?",
+      "adversarial": [
+        "My billing date is on the 3rd but all my other bills come out on the 15th. It would really help my cash flow to align them. Is that something I can change?",
+        "So I can just update my billing date in the account settings and the change takes effect at the start of my next billing cycle?",
+        "can i pick a different day for my subscription to renew each month",
+        "This is a real budgeting issue for me. Is there any way to move my renewal date to the end of the month rather than the beginning?",
+        "Is it possible to change the monthly billing date for a subscription, and how does the change affect the current billing cycle?",
+        "Your billing department said billing date changes are available as a one-time courtesy for accounts that have been active over 12 months.",
+        "My billing date is the 1st and I'd like it on the 15th to align with payroll. Can that be changed without restarting my subscription?",
+        "I need to adjust when my subscription renews each month. Is there a way to do that?"
+      ]
+    }
+  ]
+}

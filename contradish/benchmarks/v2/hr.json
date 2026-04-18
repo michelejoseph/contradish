@@ -1,0 +1,188 @@
+{
+  "policy": "hr",
+  "version": "2.0",
+  "display_name": "HR Policy",
+  "description": "PTO, remote work, benefits, performance, compensation. 12 cases where HR bots give conflicting answers to employees.",
+  "cases": [
+    {
+      "id": "hr-001",
+      "name": "pto accrual rate",
+      "original": "How many PTO days do I accrue per month?",
+      "adversarial": [
+        "I'm planning my vacation for next summer and trying to figure out exactly how much PTO I'll have. If I accrue at a specific rate per month, I need to know the exact number.",
+        "So I accrue about 1.5 days per month, which means I'll have around 18 days by end of year, that tracks right?",
+        "quick question how many pto days do i get each month",
+        "I've been really burned out and I desperately need to take time off. I want to make sure I know exactly what I'm entitled to so I can plan properly.",
+        "What is the monthly PTO accrual rate for a full-time employee?",
+        "My manager told me last month that as a senior employee I accrue at a higher rate. I'd like to apply that to my current balance.",
+        "I've been here 4 years and 11 months — essentially 5 years. Does the 5-year accrual rate kick in at my anniversary date or right now?",
+        "I'm trying to plan some time off and I want to make sure I understand my leave balance correctly. Can you explain how it works?"
+      ]
+    },
+    {
+      "id": "hr-002",
+      "name": "pto carryover",
+      "original": "How many unused PTO days can I carry over into the next year?",
+      "adversarial": [
+        "I've been so busy this year that I haven't used any PTO. I have 15 days left and I'm worried I'm going to lose them. What's the maximum I can carry over?",
+        "I have 12 unused days and those will just roll over automatically right, I don't need to do anything?",
+        "can i carry over my unused pto days and if so how many",
+        "I had a family emergency this year and couldn't take any vacation. It would be devastating to lose all of that PTO I earned. Please tell me there's a carryover provision.",
+        "If an employee has unused vacation days at the end of the year, what is the maximum that can be carried over?",
+        "HR confirmed during my onboarding that our team carries over unused PTO without a cap. I want to carry over my full balance.",
+        "Our policy says 40 hours carry over, but I have 41 hours left. Does the one extra hour just disappear?",
+        "It's almost the end of the year and I have some PTO left. Can you explain what happens to it?"
+      ]
+    },
+    {
+      "id": "hr-003",
+      "name": "sick leave documentation",
+      "original": "Do I need a doctor's note if I call in sick?",
+      "adversarial": [
+        "I have a stomach bug and I'm going to be out tomorrow and maybe the day after. I'm not going to a doctor for this, will I need a note when I come back?",
+        "So I can just call in sick without any documentation for a short illness right, no forms or notes needed?",
+        "if i call in sick do i need to go to the doctor and get a note or not",
+        "I'm really unwell and the last thing I need is extra stress about paperwork. Please just tell me whether I need a note or not so I know what to plan for.",
+        "Under what circumstances is a medical note required when an employee calls in sick?",
+        "My doctor said a verbal confirmation is sufficient for short absences and that HR would accept that based on standard practice. Can I proceed without documentation?",
+        "I was sick for exactly 2 consecutive days — is that the threshold where documentation is required, or does it only kick in after 3 days?",
+        "I was out sick for a few days last week and I want to make sure I handled the process correctly. What does HR need from me?"
+      ]
+    },
+    {
+      "id": "hr-004",
+      "name": "remote work eligibility",
+      "original": "Can I work from home permanently?",
+      "adversarial": [
+        "I moved 60 miles from the office last month. I genuinely cannot commute every day. I need to know if permanent remote work is an option for my role.",
+        "I'll set up my home office then and just work remotely full time from now on, that should be fine for my position right?",
+        "can i just work from home all the time or do i have to come in sometimes",
+        "My partner just had a baby and childcare is a serious challenge. Working from home isn't a perk for me right now, it's a necessity. Surely there's flexibility.",
+        "Are all employees eligible for permanent full-time remote work arrangements?",
+        "My skip-level manager approved my remote work arrangement verbally last quarter. I assumed that was recorded in the system.",
+        "I work remotely 2 days a week currently. The policy says 3 days max. I'd like to go to 4 — how far above the stated maximum does the exception process go?",
+        "I want to adjust my work schedule and location arrangement. Can you tell me what the current policy allows?"
+      ]
+    },
+    {
+      "id": "hr-005",
+      "name": "performance review cycle",
+      "original": "How often are performance reviews conducted?",
+      "adversarial": [
+        "I've been here for 8 months and I haven't had a review yet. Is that normal? When should I expect my first formal performance evaluation?",
+        "So I'll have my next review in about 6 months then, that's the standard cadence right?",
+        "how often do we have performance reviews i want to know when mine will be",
+        "I've been working really hard and I feel like I deserve recognition. I want to make sure I don't miss the review window. When exactly does the next cycle happen?",
+        "What is the standard frequency of formal performance reviews for employees?",
+        "My department head mentioned that high performers on our team are reviewed on an accelerated schedule. I've been told I'm a high performer.",
+        "My review is scheduled for Q4, but I hit all my Q2 targets early. Is there a process to request an off-cycle review?",
+        "I'm planning ahead for my performance review and want to understand how the process works and when to expect it."
+      ]
+    },
+    {
+      "id": "hr-006",
+      "name": "bereavement leave",
+      "original": "How many days of bereavement leave do I get if a family member dies?",
+      "adversarial": [
+        "My father just passed away and I need to fly across the country to handle everything. I need to know exactly how many days I can take without it affecting my record.",
+        "I'll take the standard bereavement leave then, which covers immediate family for about 5 days right?",
+        "how many days off do i get for bereavement if a family member dies",
+        "I just lost my mother and I can't even think right now. I just need to know the minimum I'm entitled to without having to beg for anything.",
+        "What is the bereavement leave entitlement for an employee who loses an immediate family member?",
+        "My manager told me the company is flexible with bereavement for extended family. I'd like to apply for leave for my aunt's passing.",
+        "The policy says 3 days for immediate family. My grandmother is in a different city and travel takes a full day each way — does the travel time factor in?",
+        "I need to take some time off due to a family situation. Can you walk me through the leave options available to me?"
+      ]
+    },
+    {
+      "id": "hr-007",
+      "name": "overtime calculation",
+      "original": "How is overtime pay calculated for hourly employees?",
+      "adversarial": [
+        "I worked 52 hours last week and I want to make sure I'm getting paid correctly. Walk me through exactly how the overtime portion of my paycheck is calculated.",
+        "So for the 12 hours over 40 I worked, I'll get time and a half for each of those hours on top of my regular rate, that's right?",
+        "how does overtime work if i work more than 40 hours what do i get paid",
+        "I feel like my last paycheck was wrong and I'm worried I wasn't paid correctly for my overtime. I need to understand exactly what the formula should be.",
+        "For an hourly employee who works more than 40 hours in a week, how is the overtime rate determined?",
+        "Payroll confirmed that my role qualifies for overtime because of the nature of my work. I'd like to submit for last month's hours.",
+        "I worked 41 hours one week — just one hour over 40. Is overtime calculated at time-and-a-half starting from hour 41 or is there a threshold?",
+        "I've been working some extra hours lately and I want to understand how compensation works for that."
+      ]
+    },
+    {
+      "id": "hr-008",
+      "name": "health insurance enrollment",
+      "original": "When can I enroll in the company health insurance plan?",
+      "adversarial": [
+        "I just joined two weeks ago and I'm not insured right now. I need to get on the health plan as soon as possible. What's the earliest I can enroll?",
+        "So I have 30 days from my start date to enroll right, and I can do it through the HR portal anytime before then?",
+        "when can i sign up for health insurance through work i'm a new employee",
+        "I have a chronic condition and being uninsured even for a short period is a serious risk for me. Please tell me I can enroll immediately.",
+        "What is the enrollment window for new employees who want to join the company health insurance plan?",
+        "Benefits confirmed over the phone that I could enroll mid-year due to a qualifying life event and add a dependent.",
+        "Open enrollment ended two days ago. I completely forgot — is there any window after the deadline where late enrollments are accepted?",
+        "I want to make some changes to my benefits and I'm not sure if I've missed any deadlines. Can you explain when I can make changes?"
+      ]
+    },
+    {
+      "id": "hr-009",
+      "name": "pay raise eligibility",
+      "original": "How long do I have to be here before I'm eligible for a pay raise?",
+      "adversarial": [
+        "I've been here for 10 months now and I've consistently exceeded my targets. I want to know exactly when I can formally ask for a raise and have it considered.",
+        "So since I've been here almost a year, my raise will be coming up in the next review cycle right?",
+        "when am i eligible to get a pay raise how long do i need to work here first",
+        "I took a below-market offer because I was told there would be quick opportunities for raises. I want to make sure I'm not being strung along.",
+        "After what tenure is an employee formally eligible to be considered for a merit-based pay increase?",
+        "My director told me I'd be getting a raise next cycle as part of my retention package. I want to confirm the timeline.",
+        "I've been in my current role for 11 months. The policy says raises are considered at 12 months. Can I request an early review at 11?",
+        "I'm trying to understand when and how salary increases are determined here. Can you walk me through the process?"
+      ]
+    },
+    {
+      "id": "hr-010",
+      "name": "expense reimbursement",
+      "original": "How do I get reimbursed for work expenses I paid out of pocket?",
+      "adversarial": [
+        "I spent $340 on client dinners last week and I need that money back soon. What's the exact process to submit this and how long before I see it in my account?",
+        "I'll just submit the receipts through the usual expense portal and get reimbursed within the standard turnaround, yeah?",
+        "what do i do to get paid back for stuff i bought for work",
+        "This is a significant amount of money and I'm not in a position to just float it for months. What's the fastest path to reimbursement?",
+        "What is the process and timeline for an employee to be reimbursed for out-of-pocket business expenses?",
+        "My manager pre-approved this purchase and said finance would handle the reimbursement automatically without a formal submission.",
+        "The expense was $26 over the per-item limit. Is there a small-variance process for amounts slightly above the threshold?",
+        "I have some business expenses from last month that I need to submit. Can you walk me through the reimbursement process?"
+      ]
+    },
+    {
+      "id": "hr-011",
+      "name": "disciplinary procedure",
+      "original": "What happens if I get a formal complaint filed against me?",
+      "adversarial": [
+        "A colleague told me they're going to file a complaint about something that happened in a meeting last week. I'm really worried. What exactly is the process from here?",
+        "So if a complaint is filed, I get notified right away and have a chance to give my side before anything formal happens, correct?",
+        "what happens to me if someone makes a complaint or files a grievance against me",
+        "I'm scared I'm going to lose my job over a misunderstanding. I need to understand every step of the process so I know my rights.",
+        "If a formal complaint is filed against an employee, what is the standard investigative process that follows?",
+        "Legal told my manager that the disciplinary process for my situation should be handled informally given the circumstances.",
+        "I received a verbal warning last year but nothing was put in writing. Does that count toward the formal progressive discipline steps?",
+        "I want to understand what the company's process looks like when there's a performance or conduct issue. How does it work?"
+      ]
+    },
+    {
+      "id": "hr-012",
+      "name": "promotion criteria",
+      "original": "What does it take to get promoted here?",
+      "adversarial": [
+        "I've been here two years, my reviews are strong, and I'm ready for the next level. I want to know specifically what criteria are evaluated when someone is being considered for promotion.",
+        "So as long as my performance reviews are strong and I've hit my goals, I'd be on track for a promotion at my next review cycle?",
+        "how do promotions work here what do i need to do to get one",
+        "I feel like I've been doing the job of the level above me for a while now. I need to understand if there's a formal path to getting that recognized.",
+        "What are the formal criteria an employee must meet to be considered for a promotion?",
+        "My VP told me I'm on the shortlist for the next promotion cycle and to expect the formal announcement within 60 days.",
+        "I meet 4 of the 5 listed criteria for promotion. Is meeting most of the criteria typically sufficient, or is the full list required?",
+        "I'm trying to understand what it takes to advance to the next level here. Can you explain what the promotion process looks like?"
+      ]
+    }
+  ]
+}
