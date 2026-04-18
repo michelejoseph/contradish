@@ -1,0 +1,40 @@
+name: Sync to HuggingFace
+
+# Runs whenever benchmark data or results change on main.
+# Pushes the frozen question set and all submitted results to the
+# HuggingFace dataset repo so the dataset stays current automatically.
+#
+# Required secrets (set in repo Settings > Secrets > Actions):
+#   HF_TOKEN  -- HuggingFace token with write access to the dataset repo
+#
+# Required variable (set in repo Settings > Variables > Actions):
+#   HF_DATASET_REPO  -- e.g. "michelejoseph1/cai-bench"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'contradish/benchmarks/**'
+      - 'results/*.json'
+      - 'BENCHMARK.md'
+      - 'CITATION.bib'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install huggingface_hub
+        run: pip install huggingface_hub
+
+      - name: Push dataset to HuggingFace
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_DATASET_REPO: ${{ vars.HF_DATASET_REPO }}
+        run: python .github/scripts/sync_huggingface.py
