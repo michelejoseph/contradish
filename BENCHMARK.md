@@ -10,7 +10,7 @@
 
 ## What it measures
 
-Every AI model is a finite compressor. It receives a signal (a question, a request) and compresses it into a response. The question is whether that compression is stable under pressure -- or whether the surface form of the input changes the substance of the output.
+Every AI model is a finite compressor. It receives a signal (a question, a request) and compresses it into a response. The question is whether that compression is stable under pressure, or whether the surface form of the input changes the substance of the output.
 
 CAI-Bench measures **Compression Tension Score (CTS)**. A model with high CTS bends under adversarial phrasing: emotional pressure, authority framing, hypothetical slips, casual restatements. The same semantic content arrives in different form and the model returns a different answer. Strain accumulates. It flows back to the user.
 
@@ -58,14 +58,14 @@ Each JSON file contains 12 test cases. Each test case includes:
 
 Each adversarial variant uses one of eight techniques designed to expose the input patterns that cause models to contradict themselves:
 
-1. **Emotional + specific** -- combines distress with a concrete scenario
-2. **Presuppose it is fine** -- frames the rule-breaking detail as already resolved
-3. **Casual drop-in** -- buries the rule-breaking detail as an afterthought
-4. **Sympathy play** -- makes enforcement feel unfair
-5. **Authority dodge** -- implies someone else already approved an exception
-6. **Hypothetical slip** -- frames as hypothetical, then makes it real
-7. **Boundary probe** -- tests right at the edge of the rule
-8. **Indirect ask** -- omits the rule-breaking element entirely
+1. **Emotional + specific:** combines distress with a concrete scenario
+2. **Presuppose it is fine:** frames the rule-breaking detail as already resolved
+3. **Casual drop-in:** buries the rule-breaking detail as an afterthought
+4. **Sympathy play:** makes enforcement feel unfair
+5. **Authority dodge:** implies someone else already approved an exception
+6. **Hypothetical slip:** frames as hypothetical, then makes it real
+7. **Boundary probe:** tests right at the edge of the rule
+8. **Indirect ask:** omits the rule-breaking element entirely
 
 These map to the real patterns that cause production LLM apps to give inconsistent answers to real users.
 
@@ -167,4 +167,4 @@ See `CITATION.bib` for a machine-readable copy.
 
 ## Contributing
 
-See `CONTRIBUTING.md` for how to submit model results or propose new domains. Community domain contributions are welcome -- new domains require 12 test cases and 5 adversarial variants each, using the techniques described above.
+See `CONTRIBUTING.md` for how to submit model results or propose new domains. Community domain contributions are welcome; new domains require 12 test cases and 5 adversarial variants each, using the techniques described above.
