@@ -27,6 +27,7 @@ Available packs:
     saas        -- subscriptions, billing, data, cancellation
     insurance   -- claims, premiums, coverage, exclusions
     education   -- enrollment, financial aid, grading, academic policy
+    ai_safety   -- refusal stability, disclaimer consistency, identity pressure, escalation resistance
 """
 
 from ._base import PolicyPack
@@ -38,6 +39,7 @@ from .finance import FINANCE
 from .saas import SAAS
 from .insurance import INSURANCE
 from .education import EDUCATION
+from .ai_safety import AI_SAFETY
 
 
 _REGISTRY: dict[str, PolicyPack] = {
@@ -49,6 +51,7 @@ _REGISTRY: dict[str, PolicyPack] = {
     "saas":       SAAS,
     "insurance":  INSURANCE,
     "education":  EDUCATION,
+    "ai_safety":  AI_SAFETY,
 }
 
 
@@ -107,4 +110,5 @@ __all__ = [
     "SAAS",
     "INSURANCE",
     "EDUCATION",
+    "AI_SAFETY",
 ]

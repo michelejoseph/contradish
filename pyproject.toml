@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "contradish"
-version = "0.8.0"
-description = "CAI testing for LLM apps. Frozen benchmark dataset across 8 domains, consistency scoring, failure fingerprinting, pytest plugin, GitHub Actions, SARIF output, regression gating, and prompt repair."
+version = "0.9.0"
+description = "CAI testing for LLM apps. Frozen benchmark dataset across 9 domains, consistency scoring, failure fingerprinting, pytest plugin, GitHub Actions, SARIF output, regression gating, and prompt repair."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }

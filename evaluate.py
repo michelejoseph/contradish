@@ -57,7 +57,7 @@ OPENAI_MODELS = [
     "o3-mini",
 ]
 
-POLICIES = ["ecommerce", "hr", "healthcare", "legal", "finance", "saas", "insurance", "education"]
+POLICIES = ["ecommerce", "hr", "healthcare", "legal", "finance", "saas", "insurance", "education", "ai_safety"]
 
 BENCHMARK_DIR = Path(__file__).parent / "contradish" / "benchmarks" / BENCHMARK_VERSION
 

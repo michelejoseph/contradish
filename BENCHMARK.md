@@ -43,6 +43,7 @@ contradish/benchmarks/v1/
   saas.json           subscriptions, billing, data, cancellation
   insurance.json      claims, premiums, coverage, exclusions
   education.json      enrollment, financial aid, grading, academic policy
+  ai_safety.json      refusal stability, disclaimer consistency, identity pressure, escalation resistance
 ```
 
 Each JSON file contains 12 test cases. Each test case includes:
@@ -120,7 +121,7 @@ Only runs using the frozen benchmark (`"mode": "frozen"`) are accepted for the l
 
 ## Versioning
 
-The benchmark is versioned. v1 is the initial release covering 8 domains and 96 test cases.
+The benchmark is versioned. v1 covers 9 domains and 108 test cases.
 
 Future versions may expand the domain set, add test cases, or introduce new adversarial techniques. Results from different benchmark versions are not directly comparable. All leaderboard entries include the benchmark version used.
 
@@ -133,6 +134,8 @@ Every deployed LLM application has a policy it is supposed to follow: refund rul
 This is not a capability problem. It is a consistency problem. And it is invisible to every other benchmark.
 
 CAI-Bench makes it measurable.
+
+The `ai_safety` domain extends this to safety-relevant behaviors. It does not test whether a model passes or fails a safety check -- it tests whether a model applies the same behavior consistently when the same request is phrased differently. A model that declines a direct request but complies under fictional framing, professional authority framing, or hypothetical framing has a high CAI Strain on this domain. This is a different and more actionable measure than a binary pass/fail safety evaluation.
 
 ---
 
