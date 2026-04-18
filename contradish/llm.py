@@ -18,6 +18,10 @@ class LLMClient:
         1. Explicit provider + api_key arguments
         2. ANTHROPIC_API_KEY in environment  →  uses Anthropic
         3. OPENAI_API_KEY    in environment  →  uses OpenAI
+
+    For benchmark judging, use make_judge_client() to get a cross-provider
+    judge (e.g. OpenAI judges Anthropic models, Anthropic judges OpenAI models).
+    This eliminates same-provider self-preference bias in consistency scoring.
     """
 
     ANTHROPIC_JUDGE_MODEL  = "claude-sonnet-4-6"
@@ -131,6 +135,58 @@ class LLMClient:
             messages=[{"role": "user", "content": prompt}],
         )
         return resp.choices[0].message.content.strip()
+
+    @classmethod
+    def make_judge_client(
+        cls,
+        model_provider: str,
+        judge_provider: Optional[str] = None,
+        judge_api_key:  Optional[str] = None,
+    ) -> "LLMClient":
+        """
+        Return an LLMClient for the judge, preferring cross-provider judging.
+
+        By default, if the model under test is from Anthropic, returns an
+        OpenAI judge (and vice versa). This eliminates same-provider
+        self-preference bias -- a common and valid criticism of LLM-as-judge
+        benchmarks.
+
+        Falls back to same provider if no cross-provider key is available,
+        and prints a warning.
+
+        Args:
+            model_provider: Provider of the model being evaluated ("anthropic" | "openai").
+            judge_provider: Explicit judge provider override.
+            judge_api_key:  Explicit judge API key override.
+
+        Returns:
+            LLMClient configured for the judge.
+        """
+        # Explicit override wins
+        if judge_provider and judge_api_key:
+            return cls(api_key=judge_api_key, provider=judge_provider)
+
+        # Default cross-provider logic
+        opposite = "openai" if model_provider == "anthropic" else "anthropic"
+        env_key_name = "OPENAI_API_KEY" if opposite == "openai" else "ANTHROPIC_API_KEY"
+        cross_key = os.environ.get(env_key_name, "").strip()
+
+        if cross_key:
+            return cls(api_key=cross_key, provider=opposite)
+
+        # Fall back to same provider with warning
+        same_key_name = "ANTHROPIC_API_KEY" if model_provider == "anthropic" else "OPENAI_API_KEY"
+        same_key = os.environ.get(same_key_name, "").strip()
+        if same_key:
+            print(
+                f"\n  [judge] WARNING: using same-provider judging ({model_provider}).\n"
+                f"  For independent results, set {env_key_name} to enable cross-provider judging.\n"
+            )
+            return cls(api_key=same_key, provider=model_provider)
+
+        raise EnvironmentError(
+            f"No API key found for judge. Set {env_key_name} (preferred) or {same_key_name}."
+        )
 
     @staticmethod
     def _parse_json(raw: str) -> dict:

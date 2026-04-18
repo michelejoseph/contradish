@@ -39,6 +39,7 @@ import sys
 import time
 from datetime import date
 from pathlib import Path
+from typing import Optional
 
 
 BENCHMARK_VERSION = "v1"
@@ -185,6 +186,7 @@ def run_benchmark(
     provider: str,
     use_frozen: bool = True,
     paraphrases: int = 5,
+    judge_provider: Optional[str] = None,
     verbose: bool = True,
 ) -> dict:
     api_key = (
@@ -202,11 +204,23 @@ def run_benchmark(
         app = make_openai_app(model, api_key)
 
     judge = None
+    judge_provider_used = None
+    judge_model_used = None
     if use_frozen:
         from contradish.judge import Judge
         from contradish.llm import LLMClient
-        llm = LLMClient(api_key=api_key, provider=provider)
-        judge = Judge(llm)
+        judge_key = os.environ.get(
+            "JUDGE_ANTHROPIC_API_KEY" if judge_provider == "anthropic" else "JUDGE_OPENAI_API_KEY",
+            ""
+        ).strip() or None
+        llm_judge = LLMClient.make_judge_client(
+            model_provider=provider,
+            judge_provider=judge_provider,
+            judge_api_key=judge_key,
+        )
+        judge = Judge(llm_judge)
+        judge_provider_used = llm_judge.provider
+        judge_model_used = llm_judge.judge_model
 
     results_by_policy = {}
     all_scores = []
@@ -234,17 +248,24 @@ def run_benchmark(
     avg_cai_score = round(sum(all_scores) / len(all_scores), 4) if all_scores else None
     avg_cai_strain = round(1 - avg_cai_score, 4) if avg_cai_score is not None else None
 
+    independent_judging = (
+        judge_provider_used is not None and judge_provider_used != provider
+    )
+
     return {
-        "model":             model,
-        "provider":          provider,
-        "date":              str(date.today()),
-        "benchmark_version": BENCHMARK_VERSION if use_frozen else "live",
-        "mode":              "frozen" if use_frozen else "live",
-        "policies_tested":   POLICIES,
-        "avg_cai_score":     avg_cai_score,
-        "avg_cai_strain":    avg_cai_strain,
-        "elapsed_seconds":   elapsed,
-        "results":           results_by_policy,
+        "model":               model,
+        "provider":            provider,
+        "date":                str(date.today()),
+        "benchmark_version":   BENCHMARK_VERSION if use_frozen else "live",
+        "mode":                "frozen" if use_frozen else "live",
+        "judge_provider":      judge_provider_used,
+        "judge_model":         judge_model_used,
+        "independent_judging": independent_judging,
+        "policies_tested":     POLICIES,
+        "avg_cai_score":       avg_cai_score,
+        "avg_cai_strain":      avg_cai_strain,
+        "elapsed_seconds":     elapsed,
+        "results":             results_by_policy,
     }
 
 
@@ -255,9 +276,15 @@ def print_summary(result: dict) -> None:
     mode = result.get("mode", "frozen")
     version = result.get("benchmark_version", BENCHMARK_VERSION)
 
+    judge_prov = result.get("judge_provider", "?")
+    judge_mod  = result.get("judge_model", "?")
+    independent = result.get("independent_judging", False)
+    judge_note = f"{judge_prov}/{judge_mod}" + (" [independent]" if independent else " [SAME PROVIDER]")
+
     print(f"\n{'=' * 60}")
     print(f"  model:      {model}")
     print(f"  benchmark:  CAI-Bench {version} ({mode})")
+    print(f"  judge:      {judge_note}")
     print(f"  CAI score:  {score:.4f}" if score else "  CAI score:  n/a")
     print(f"  CAI strain: {strain:.4f}" if strain else "  CAI strain: n/a")
     print(f"  elapsed:    {result['elapsed_seconds']}s")
@@ -304,6 +331,7 @@ examples:
     parser.add_argument("--all", action="store_true", help="Run all models for this provider")
     parser.add_argument("--live", action="store_true", help="Generate adversarial questions live instead of using frozen benchmark")
     parser.add_argument("--paraphrases", type=int, default=5, help="Adversarial phrasings per rule when using --live (default: 5)")
+    parser.add_argument("--judge-provider", choices=["anthropic", "openai"], default=None, help="Provider for the judge model (default: opposite of --provider for independent judging)")
     parser.add_argument("--quiet", action="store_true", help="Suppress verbose output")
     args = parser.parse_args()
 
@@ -325,6 +353,7 @@ examples:
             provider=args.provider,
             use_frozen=not args.live,
             paraphrases=args.paraphrases,
+            judge_provider=args.judge_provider,
             verbose=not args.quiet,
         )
         print_summary(result)

@@ -1,0 +1,20 @@
+name: Validate benchmark result
+
+on:
+  pull_request:
+    paths:
+      - 'results/**.json'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate result files
+        run: python .github/scripts/validate_result.py ${{ github.event.pull_request.head.sha }}

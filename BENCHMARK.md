@@ -133,3 +133,33 @@ Every deployed LLM application has a policy it is supposed to follow: refund rul
 This is not a capability problem. It is a consistency problem. And it is invisible to every other benchmark.
 
 CAI-Bench makes it measurable.
+
+---
+
+## Independent judging
+
+CAI-Bench requires cross-provider judging for leaderboard submissions. When evaluating an Anthropic model, the judge is an OpenAI model (and vice versa). This eliminates the self-preference bias that occurs when a model is judged by a system from the same provider, which tends to favor stylistically similar outputs.
+
+The `evaluate.py` script handles this automatically when both `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` are set. Every result JSON includes `judge_provider`, `judge_model`, and `independent_judging` fields for transparency.
+
+---
+
+## Citing this benchmark
+
+```bibtex
+@misc{contradish2025caibench,
+  title        = {CAI-Bench: A Benchmark for Consistency Under Adversarial Input in Large Language Models},
+  author       = {Joseph, Michele},
+  year         = {2025},
+  howpublished = {\url{https://contradish.com}},
+  note         = {CAI-Bench v1. https://github.com/michelejoseph1/contradish},
+}
+```
+
+See `CITATION.bib` for a machine-readable copy.
+
+---
+
+## Contributing
+
+See `CONTRIBUTING.md` for how to submit model results or propose new domains. Community domain contributions are welcome -- new domains require 12 test cases and 5 adversarial variants each, using the techniques described above.
