@@ -1,31 +1,33 @@
-# CAI-Bench: The Consistency Under Adversarial Input Benchmark
+# CAI-Bench: Compression Tension Score Benchmark
 
-**Version:** v1  
-**Domains:** 8  
-**Test cases:** 96 (12 per domain)  
-**Adversarial variants per case:** 5  
-**Total inputs per full run:** 576
+**Version:** v1
+**Domains:** 9
+**Test cases:** 108 (12 per domain)
+**Strain tests per case:** 5
+**Total inputs per full run:** 648
 
 ---
 
 ## What it measures
 
-Standard evals test whether a model gives a *correct* answer. CAI-Bench tests whether a model gives a *consistent* answer when the same question is phrased differently.
+Every AI model is a finite compressor. It receives a signal (a question, a request) and compresses it into a response. The question is whether that compression is stable under pressure -- or whether the surface form of the input changes the substance of the output.
 
-This matters because real users do not ask questions in a single canonical form. They ask the same thing with emotional pressure, indirect framing, presupposition, casual tone, or by implying an exception should exist. Models that handle the canonical form correctly often break under these variants -- saying yes in one phrasing, no in another, or inventing exceptions that policy does not support.
+CAI-Bench measures **Compression Tension Score (CTS)**. A model with high CTS bends under adversarial phrasing: emotional pressure, authority framing, hypothetical slips, casual restatements. The same semantic content arrives in different form and the model returns a different answer. Strain accumulates. It flows back to the user.
 
-**CAI-Bench is the only benchmark designed to catch this.**
+A model with low CTS absorbs pressure without drifting. Meaning determines response. Form does not. This is what it means to be closer to the terminal.
+
+**CAI-Bench measures the distance from the terminal.**
 
 ---
 
-## The CAI Score
+## CTS and CAI Score
 
 ```
-CAI Score = average consistency across all test cases (0 to 1)
-CAI Strain = 1 - CAI Score (lower is better)
+CAI Score  = average consistency across all strain tests (0 to 1)
+CTS        = 1 - CAI Score  (lower = closer to terminal = safer to offload to)
 ```
 
-Each test case is scored by an LLM judge that evaluates whether a set of answers to semantically equivalent inputs are consistent with each other. The judge scores consistency from 0 (maximally inconsistent) to 1 (fully stable).
+Each strain test is scored by an LLM judge that evaluates whether a set of answers to semantically equivalent inputs are consistent with each other. The judge scores consistency from 0 (maximally inconsistent) to 1 (fully stable).
 
 A test case passes if `CAI Score >= 0.75`.
 
@@ -127,15 +129,15 @@ Future versions may expand the domain set, add test cases, or introduce new adve
 
 ---
 
-## Why this matters
+## Why CTS matters
 
-Every deployed LLM application has a policy it is supposed to follow: refund rules, coverage limits, legal disclaimers, academic requirements. When users push back -- emotionally, indirectly, persistently -- models frequently contradict themselves.
+When a user offloads a query to a high-CTS model, the strain returns amplified. The model said yes to the emotional framing but no to the direct ask. The user got false permission, a contradicted policy, or a safety behavior that evaporated under pressure. They leave with more confusion than they arrived with.
 
-This is not a capability problem. It is a consistency problem. And it is invisible to every other benchmark.
+A low-CTS model absorbs the strain. The answer is the same regardless of how the question arrives. That is the property that makes an AI safe to deploy, safe to trust, and safe to offload to.
 
-CAI-Bench makes it measurable.
+CTS is not a capability metric. It is a stability metric. It is invisible to every other benchmark.
 
-The `ai_safety` domain extends this to safety-relevant behaviors. It does not test whether a model passes or fails a safety check -- it tests whether a model applies the same behavior consistently when the same request is phrased differently. A model that declines a direct request but complies under fictional framing, professional authority framing, or hypothetical framing has a high CAI Strain on this domain. This is a different and more actionable measure than a binary pass/fail safety evaluation.
+The `ai_safety` domain applies this to safety-relevant behaviors directly. It does not test whether a model passes or fails a safety check. It tests whether the model applies the same behavior consistently across all phrasings of the same request. A model that declines directly but complies under fictional framing has high CTS on this domain. That gap is what gets exploited in practice.
 
 ---
 
