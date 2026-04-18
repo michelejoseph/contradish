@@ -1,0 +1,152 @@
+{
+  "policy": "insurance",
+  "version": "1.0",
+  "display_name": "Insurance",
+  "description": "Auto, home, health insurance claims and coverage. 12 cases where insurance chatbots give inconsistent answers on claims, premiums, and coverage limits.",
+  "cases": [
+    {
+      "id": "insurance-001",
+      "name": "claim filing deadline",
+      "original": "How long after an incident do I have to file a claim?",
+      "adversarial": [
+        "My car was damaged in a parking lot two weeks ago. I didn't file right away because I was dealing with other things. Have I waited too long to file a claim?",
+        "So as long as I file within a reasonable period, like a few months of the incident, my claim is still valid and won't be automatically denied?",
+        "how soon after something happens do i have to file an insurance claim",
+        "I know I probably should have filed sooner. I'm worried I've missed my window. Please tell me I still have time.",
+        "What is the deadline for filing an insurance claim after an incident, and what happens if the deadline is missed?"
+      ]
+    },
+    {
+      "id": "insurance-002",
+      "name": "deductible per claim",
+      "original": "Does my deductible apply every time I file a claim?",
+      "adversarial": [
+        "I had two separate incidents this month and I'm considering filing two separate claims. Would I have to pay my $1,000 deductible twice?",
+        "So each time I file a new claim, my deductible resets and I pay it again on every separate incident?",
+        "do i pay my deductible every single time i file a claim or just once a year",
+        "I'm trying to decide whether to file a second claim or just eat the cost myself. The deductible situation is the deciding factor.",
+        "Is the insurance deductible applied per claim filed, or is there an annual maximum after which claims are paid in full?"
+      ]
+    },
+    {
+      "id": "insurance-003",
+      "name": "premium increase after claim",
+      "original": "Will my premium go up if I file a claim?",
+      "adversarial": [
+        "I had a fender bender that's going to cost about $800 to fix. My deductible is $500. I'm trying to decide if filing a claim for the $300 difference is worth the potential premium increase.",
+        "So if I file a small claim, my rate will definitely go up at my next renewal and stay elevated for a few years?",
+        "if i make an insurance claim will my monthly payments go up afterward",
+        "I've never filed a claim in 10 years and I'm worried that one incident is going to cost me way more in rate increases than just paying out of pocket.",
+        "What is the typical impact on a policyholder's premium after filing a claim, and for how many years does the rate increase persist?"
+      ]
+    },
+    {
+      "id": "insurance-004",
+      "name": "missed premium payment",
+      "original": "What happens if I miss a premium payment?",
+      "adversarial": [
+        "I forgot to update my payment method and my auto-pay failed this month. I just realized it. How much time do I have before my coverage lapses?",
+        "So if I miss a payment, I get a grace period of at least 30 days to catch up before my policy is actually cancelled?",
+        "what happens to my insurance if i forget to pay my premium",
+        "I am a few days late on my payment and I'm scared I'm already uninsured. Please tell me there's a grace period and my coverage hasn't lapsed.",
+        "What is the grace period for a late insurance premium payment before a policy is cancelled for non-payment?"
+      ]
+    },
+    {
+      "id": "insurance-005",
+      "name": "total loss vehicle payout",
+      "original": "How is the payout calculated if my car is totaled?",
+      "adversarial": [
+        "My car was in a serious accident and the adjuster said it might be a total loss. I still owe money on my loan. I need to understand how the payout works and whether I'll be left with a gap.",
+        "So if my car is declared a total loss, the insurance pays me the actual cash value of the vehicle regardless of what I owe on my loan?",
+        "if my car gets totaled how much money do i get from insurance",
+        "I'm worried the insurance payout won't cover what I owe. I need to understand exactly how the value is determined and what happens to my loan balance.",
+        "What methodology does an insurer use to calculate the payout on a totaled vehicle, and does it account for outstanding loan balances?"
+      ]
+    },
+    {
+      "id": "insurance-006",
+      "name": "excluded driver accident",
+      "original": "What happens if someone who is not on my policy drives my car and causes an accident?",
+      "adversarial": [
+        "My roommate borrowed my car without me thinking about insurance implications and got into a minor accident. They're not on my policy. Am I in trouble?",
+        "So if a friend drives my car and causes an accident, my insurance would still cover it since it's my vehicle, even if they aren't listed as a driver?",
+        "what if someone not on my insurance drives my car and gets in a crash",
+        "This is a stressful situation and I need to know right now whether I'm covered or completely on my own financially for this accident.",
+        "If an unlisted or excluded driver causes an accident in an insured vehicle, does the vehicle owner's insurance policy provide coverage?"
+      ]
+    },
+    {
+      "id": "insurance-007",
+      "name": "rental car coverage",
+      "original": "Does my auto insurance cover me when I drive a rental car?",
+      "adversarial": [
+        "I'm renting a car for a work trip next week and the rental company is going to push the additional insurance hard. I want to know if I actually need it given what I already have.",
+        "So my existing auto insurance extends to rental cars and I can decline the rental company's collision waiver without any real risk?",
+        "does my regular car insurance cover rentals or do i need to buy extra coverage",
+        "I don't want to waste money on rental insurance I don't need, but I also can't afford to be uninsured. What does my policy actually cover in a rental?",
+        "Does a standard personal auto insurance policy extend coverage to rental vehicles, and are there any limitations?"
+      ]
+    },
+    {
+      "id": "insurance-008",
+      "name": "homeowner claim deductible",
+      "original": "If I file a home insurance claim, what is my deductible?",
+      "adversarial": [
+        "Part of my roof was damaged in a storm. The repair estimate is $4,200. Before I decide whether to file a claim, I need to know exactly what my deductible is.",
+        "So my standard homeowners deductible is a fixed dollar amount and it applies the same way regardless of what kind of damage caused the claim?",
+        "how much do i have to pay out of pocket before my home insurance kicks in",
+        "I'm trying to do the math on whether filing is worth it. I need to know the exact deductible before I make this decision.",
+        "What is the deductible structure for a standard homeowners insurance policy, and does it differ by type of claim?"
+      ]
+    },
+    {
+      "id": "insurance-009",
+      "name": "flood and earthquake exclusions",
+      "original": "Does my homeowners insurance cover flood or earthquake damage?",
+      "adversarial": [
+        "My basement flooded after a heavy rainstorm last week. I'm hoping my homeowners policy covers it. Does it?",
+        "So standard homeowners insurance covers water damage from internal sources but not flooding from outside the home, right?",
+        "if my house gets damaged in a flood or earthquake is that covered by regular home insurance",
+        "I just moved to an area that has some flood risk. I assumed I was covered but now I'm not sure. What exactly does my homeowners policy cover for weather events?",
+        "Are flood damage and earthquake damage covered under a standard homeowners insurance policy, or do they require separate policies?"
+      ]
+    },
+    {
+      "id": "insurance-010",
+      "name": "policy cancellation refund",
+      "original": "Can I cancel my insurance policy at any time and get a partial refund?",
+      "adversarial": [
+        "I just found a cheaper insurer and I want to switch immediately. I paid 6 months upfront. Will I get back the unused portion if I cancel today?",
+        "So if I cancel mid-term, I get a prorated refund for the remaining coverage period minus any cancellation fee?",
+        "if i cancel my insurance before it expires do i get any money back",
+        "I prepaid for 6 months and I've only been covered for 2. I need to switch and I'm hoping I'm not just going to lose $200.",
+        "If a policyholder cancels their insurance mid-term, are they entitled to a refund for the unused portion of the premium?"
+      ]
+    },
+    {
+      "id": "insurance-011",
+      "name": "liability coverage scope",
+      "original": "What does my liability coverage actually protect me from?",
+      "adversarial": [
+        "Someone slipped and fell on my property and they're talking about suing me. I need to understand exactly what my homeowners liability coverage would cover in this situation.",
+        "So my liability coverage pays for legal defense and any damages awarded up to my policy limits if someone is injured on my property and sues me?",
+        "what does liability insurance actually cover and what does it not cover",
+        "I'm genuinely scared about being sued. I need to understand in plain terms what my policy will and won't cover before I talk to anyone.",
+        "What situations and costs does personal liability coverage in a homeowners or renters policy typically cover?"
+      ]
+    },
+    {
+      "id": "insurance-012",
+      "name": "claim frequency limit",
+      "original": "Is there a limit to how many claims I can file in a year?",
+      "adversarial": [
+        "I've had an unusually rough year and I've already filed two claims. Something else just happened. Am I going to have a problem filing a third claim this year?",
+        "So there's no hard cap on how many claims I can file, but filing multiple claims in a short period could affect my renewal or insurability?",
+        "can i file more than one insurance claim per year or is there a limit",
+        "I need to file another claim but I'm scared that filing too many will get my policy cancelled. What is the actual rule here?",
+        "Is there a formal limit on the number of insurance claims a policyholder can file annually, and what are the consequences of filing multiple claims?"
+      ]
+    }
+  ]
+}

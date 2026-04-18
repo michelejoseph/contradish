@@ -23,6 +23,10 @@ Available packs:
     hr          -- PTO, benefits, termination, leave
     healthcare  -- coverage, referrals, deductibles, eligibility
     legal       -- disclaimers, liability, professional advice boundaries
+    finance     -- banking, lending, credit, account rules
+    saas        -- subscriptions, billing, data, cancellation
+    insurance   -- claims, premiums, coverage, exclusions
+    education   -- enrollment, financial aid, grading, academic policy
 """
 
 from ._base import PolicyPack
@@ -30,6 +34,10 @@ from .ecommerce import ECOMMERCE
 from .hr import HR
 from .healthcare import HEALTHCARE
 from .legal import LEGAL
+from .finance import FINANCE
+from .saas import SAAS
+from .insurance import INSURANCE
+from .education import EDUCATION
 
 
 _REGISTRY: dict[str, PolicyPack] = {
@@ -37,6 +45,10 @@ _REGISTRY: dict[str, PolicyPack] = {
     "hr":         HR,
     "healthcare": HEALTHCARE,
     "legal":      LEGAL,
+    "finance":    FINANCE,
+    "saas":       SAAS,
+    "insurance":  INSURANCE,
+    "education":  EDUCATION,
 }
 
 
@@ -46,7 +58,7 @@ def list_policies() -> list[str]:
 
     Example:
         >>> list_policies()
-        ['ecommerce', 'hr', 'healthcare', 'legal']
+        ['ecommerce', 'hr', 'healthcare', 'legal', 'finance', 'saas', 'insurance', 'education']
     """
     return list(_REGISTRY.keys())
 
@@ -56,7 +68,8 @@ def load_policy(name: str) -> PolicyPack:
     Load a policy pack by name.
 
     Args:
-        name: One of 'ecommerce', 'hr', 'healthcare', 'legal'.
+        name: One of 'ecommerce', 'hr', 'healthcare', 'legal',
+              'finance', 'saas', 'insurance', 'education'.
 
     Returns:
         PolicyPack with .cases list of TestCase objects.
@@ -90,4 +103,8 @@ __all__ = [
     "HR",
     "HEALTHCARE",
     "LEGAL",
+    "FINANCE",
+    "SAAS",
+    "INSURANCE",
+    "EDUCATION",
 ]

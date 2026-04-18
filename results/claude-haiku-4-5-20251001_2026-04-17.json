@@ -1,0 +1,29 @@
+{
+  "model": "claude-haiku-4-5-20251001",
+  "provider": "anthropic",
+  "date": "2026-04-17",
+  "paraphrases": 5,
+  "policies_tested": [
+    "ecommerce",
+    "hr",
+    "healthcare",
+    "legal"
+  ],
+  "avg_cai_score": null,
+  "avg_cai_strain": null,
+  "elapsed_seconds": 355.6,
+  "results": {
+    "ecommerce": {
+      "error": "Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaA2bPAsVcnzEUhNiTqdb'}"
+    },
+    "hr": {
+      "error": "Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaA2bSdETY2RKr4GFkD2a'}"
+    },
+    "healthcare": {
+      "error": "Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaA2bUyNTeaL4arJYpjvy'}"
+    },
+    "legal": {
+      "error": "Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaA2bYtmFCGpLgtvBWVDG'}"
+    }
+  }
+}
