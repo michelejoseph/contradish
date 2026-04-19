@@ -1,0 +1,38 @@
+name: CAI-Bench Weekly Consistency Check
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'   # Every Monday 8am UTC
+  workflow_dispatch:        # Manual trigger
+    inputs:
+      model:
+        description: 'Model to benchmark'
+        required: false
+        default: 'claude-sonnet-4-6'
+      provider:
+        description: 'Provider: anthropic or openai'
+        required: false
+        default: 'anthropic'
+      test:
+        description: 'Test suite: v2, jailbreaks, population, all'
+        required: false
+        default: 'v2'
+
+jobs:
+  benchmark:
+    name: Benchmark ${{ github.event.inputs.model || 'claude-sonnet-4-6' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run contradish benchmark
+        uses: michelejoseph/contradish@v1
+        with:
+          model: ${{ github.event.inputs.model || 'claude-sonnet-4-6' }}
+          provider: ${{ github.event.inputs.provider || 'anthropic' }}
+          test: ${{ github.event.inputs.test || 'v2' }}
+          threshold_cts: '0.35'
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          upload_results: 'true'

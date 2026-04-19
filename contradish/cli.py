@@ -404,6 +404,246 @@ def cmd_compare(args):
     sys.exit(0)
 
 
+def cmd_benchmark(args):
+    """
+    Run the full CAI-Bench against any model — no app code needed.
+    This is the one-command path: contradish benchmark --model claude-sonnet-4-6
+    """
+    import sys
+    import os
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+    _check_api_key()
+
+    provider = args.provider
+    model = args.model
+    test = getattr(args, "test", "v2")
+    domain = getattr(args, "domain", None)
+    quiet = getattr(args, "quiet", False)
+    report_path = getattr(args, "report", None)
+
+    print(f"\n  contradish benchmark")
+    print(f"  model:    {model}")
+    print(f"  provider: {provider}")
+    print(f"  test:     {test}\n")
+
+    result = None
+
+    if test == "v2" or test == "full":
+        from evaluate import run_benchmark, print_summary, save_result
+        result = run_benchmark(
+            model=model,
+            provider=provider,
+            use_frozen=True,
+            judge_provider=args.judge_provider,
+            verbose=not quiet,
+        )
+        if not quiet:
+            print_summary(result)
+        path = save_result(result)
+        print(f"  result saved: {path}")
+
+    elif test == "jailbreaks" or test == "jrr":
+        from evaluate_jailbreaks import run_jrr_benchmark
+        jb_ids = args.jb.split(",") if getattr(args, "jb", None) else None
+        tq_ids = args.tq.split(",") if getattr(args, "tq", None) else None
+        result = run_jrr_benchmark(
+            model=model,
+            provider=provider,
+            jb_ids=jb_ids,
+            tq_ids=tq_ids,
+            judge_provider=args.judge_provider,
+            verbose=not quiet,
+        )
+
+    elif test == "population" or test == "pc":
+        from evaluate_pc import run_pc_benchmark, PC_DOMAINS
+        domains = [domain] if domain else PC_DOMAINS
+        result = run_pc_benchmark(
+            model=model,
+            provider=provider,
+            domains=domains,
+            profiles=["P1", "P2", "P3", "P4"],
+            judge_provider=args.judge_provider,
+            verbose=not quiet,
+        )
+
+    elif test == "multilang" or test == "cl":
+        from evaluate_cl import run_cl_benchmark, CL_DOMAINS, CL_LANGUAGES
+        domains = [domain] if domain else CL_DOMAINS
+        langs = args.lang.split(",") if getattr(args, "lang", None) else CL_LANGUAGES
+        result = run_cl_benchmark(
+            model=model,
+            provider=provider,
+            domains=domains,
+            languages=langs,
+            judge_provider=args.judge_provider,
+            verbose=not quiet,
+        )
+
+    elif test == "multiturn" or test == "mt":
+        from evaluate_mt import run_mt_benchmark, MT_DOMAINS
+        domains = [domain] if domain else MT_DOMAINS
+        result = run_mt_benchmark(
+            model=model,
+            provider=provider,
+            domains=domains,
+            judge_provider=args.judge_provider,
+            verbose=not quiet,
+        )
+
+    elif test == "compound" or test == "cat":
+        from evaluate_cat import run_cat_benchmark, CAT_DOMAINS
+        domains = [domain] if domain else CAT_DOMAINS
+        result = run_cat_benchmark(
+            model=model,
+            provider=provider,
+            domains=domains,
+            attack_ids=["CA1", "CA2", "CA3", "CA4", "CA5"],
+            judge_provider=args.judge_provider,
+            verbose=not quiet,
+        )
+
+    elif test == "anchoring" or test == "spa":
+        from evaluate_spa import run_spa_benchmark, DOMAINS
+        domains = [domain] if domain else DOMAINS
+        result = run_spa_benchmark(
+            model=model,
+            provider=provider,
+            domains=domains,
+            sp_ids=["SP1", "SP2", "SP3", "SP4"],
+            judge_provider=args.judge_provider,
+            verbose=not quiet,
+        )
+
+    elif test == "all":
+        # Run everything and aggregate
+        tests = ["v2", "jailbreaks", "population", "multilang", "multiturn"]
+        print(f"  running all test suites: {', '.join(tests)}\n")
+        for t in tests:
+            fake_args = type("Args", (), {
+                "provider": provider,
+                "model": model,
+                "test": t,
+                "domain": domain,
+                "quiet": True,
+                "report": None,
+                "judge_provider": args.judge_provider,
+                "jb": None,
+                "tq": None,
+                "lang": None,
+            })()
+            try:
+                cmd_benchmark(fake_args)
+            except Exception as e:
+                print(f"  {t} failed: {e}")
+        return
+
+    else:
+        print(f"\n  Unknown test suite: {test!r}")
+        print("  Options: v2, jailbreaks, population, multilang, multiturn, compound, anchoring, all\n")
+        sys.exit(1)
+
+    # Generate HTML report if requested
+    if report_path and result:
+        try:
+            _generate_benchmark_report(result, report_path, model, test)
+            print(f"  HTML report saved: {report_path}")
+        except Exception as e:
+            print(f"  (report generation skipped: {e})")
+
+    print(f"\n  submit to leaderboard: github.com/michelejoseph/contradish\n")
+
+
+def _generate_benchmark_report(result: dict, path: str, model: str, test_type: str) -> None:
+    """Generate a self-contained shareable HTML report from a benchmark result."""
+    import json
+    from datetime import date as _date
+
+    cts = result.get("avg_cai_strain") or result.get("avg_cl_cts") or result.get("avg_cat_cts") or result.get("avg_pc_cts") or result.get("jrr")
+    score_label = {
+        "v2": "CTS", "jailbreaks": "JRR", "population": "PC-CTS",
+        "multilang": "CL-CTS", "multiturn": "MT-CTS",
+        "compound": "CAT-CTS", "anchoring": "SPA-Delta",
+    }.get(test_type, "Score")
+
+    color = "#16a34a" if (cts or 0) < 0.25 else ("#d97706" if (cts or 0) < 0.50 else "#dc2626")
+    score_str = f"{cts:.4f}" if cts is not None else "n/a"
+
+    # Build per-domain rows
+    results_section = result.get("results", {})
+    rows = ""
+    for domain, res in results_section.items():
+        if "error" in res:
+            rows += f"<tr><td>{domain}</td><td colspan='3' style='color:#dc2626'>ERROR</td></tr>\n"
+            continue
+        d_cts = res.get("cai_strain") or res.get("avg_cl_cts") or res.get("avg_cat_cts") or res.get("avg_pc_cts") or ""
+        d_sw  = res.get("severity_weighted_cts", "")
+        f, t  = res.get("failed", ""), res.get("total", "")
+        d_color = "#16a34a" if isinstance(d_cts, float) and d_cts < 0.25 else ("#d97706" if isinstance(d_cts, float) and d_cts < 0.50 else "#dc2626")
+        d_str = f"{d_cts:.3f}" if isinstance(d_cts, float) else "—"
+        sw_str = f"{d_sw:.3f}" if isinstance(d_sw, float) else "—"
+        rows += f"<tr><td>{domain}</td><td style='color:{d_color};font-weight:600'>{d_str}</td><td>{sw_str}</td><td>{f}/{t}</td></tr>\n"
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>contradish — {model} — {score_label} report</title>
+<style>
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;color:#111;font-size:15px;line-height:1.6;padding:40px 24px;max-width:820px;margin:0 auto}}
+h1{{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin-bottom:4px}}
+.sub{{color:#666;font-size:14px;margin-bottom:40px}}
+.score-box{{border:1px solid #e5e5e5;border-radius:10px;padding:28px 32px;display:inline-flex;align-items:center;gap:28px;margin-bottom:40px}}
+.score-num{{font-size:52px;font-weight:700;font-family:monospace;color:{color};letter-spacing:-2px}}
+.score-meta{{display:flex;flex-direction:column;gap:4px}}
+.score-label{{font-size:13px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#666}}
+.score-note{{font-size:13px;color:#999}}
+table{{width:100%;border-collapse:collapse;font-size:14px;border:1px solid #e5e5e5;border-radius:8px;overflow:hidden}}
+thead{{background:#f5f5f5}}
+th{{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#666}}
+tbody tr{{border-top:1px solid #e5e5e5}}
+tbody tr:hover{{background:#fafafa}}
+td{{padding:13px 14px}}
+.footer{{margin-top:40px;padding-top:20px;border-top:1px solid #e5e5e5;font-size:13px;color:#999;display:flex;justify-content:space-between}}
+.footer a{{color:#666;text-decoration:none}}
+</style>
+</head>
+<body>
+<h1>contradish benchmark report</h1>
+<p class="sub">model: <strong>{model}</strong> &nbsp;·&nbsp; test: <strong>{test_type}</strong> &nbsp;·&nbsp; date: {_date.today()} &nbsp;·&nbsp; judge: {result.get('judge_provider','?')}/{result.get('judge_model','?')}{'&nbsp;<span style="font-size:11px;background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;font-weight:600">independent</span>' if result.get('independent_judging') else ''}</p>
+
+<div class="score-box">
+  <div class="score-num">{score_str}</div>
+  <div class="score-meta">
+    <span class="score-label">{score_label}</span>
+    <span class="score-note">lower is better · 0.00 = perfectly consistent</span>
+    <span class="score-note">elapsed: {result.get('elapsed_seconds','?')}s</span>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr><th>Domain</th><th>{score_label}</th><th>SW-CTS</th><th>Fail/Total</th></tr>
+  </thead>
+  <tbody>
+    {rows}
+  </tbody>
+</table>
+
+<div class="footer">
+  <span>Generated by <a href="https://github.com/michelejoseph/contradish">contradish</a></span>
+  <span>Submit to leaderboard: github.com/michelejoseph/contradish</span>
+</div>
+</body>
+</html>"""
+
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(html)
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="contradish",
@@ -510,6 +750,48 @@ examples:
         ),
     )
 
+    # contradish benchmark --model claude-sonnet-4-6
+    bench_p = sub.add_parser(
+        "benchmark",
+        help="Run CAI-Bench against any model. No app code needed.",
+        description=(
+            "Run the full CAI-Bench against any model.\n\n"
+            "  contradish benchmark --model claude-sonnet-4-6\n"
+            "  contradish benchmark --model gpt-4o --provider openai\n"
+            "  contradish benchmark --model claude-sonnet-4-6 --test jailbreaks\n"
+            "  contradish benchmark --model claude-sonnet-4-6 --test all\n"
+        ),
+    )
+    bench_p.add_argument("--provider", choices=["anthropic", "openai"], default="anthropic",
+                         help="Model provider (default: anthropic)")
+    bench_p.add_argument("--model", required=True, help="Model name to benchmark")
+    bench_p.add_argument(
+        "--test",
+        default="v2",
+        choices=["v2", "jailbreaks", "jrr", "population", "pc", "multilang", "cl",
+                 "multiturn", "mt", "compound", "cat", "anchoring", "spa", "all", "full"],
+        help=(
+            "Test suite to run (default: v2). Options:\n"
+            "  v2          Full CAI-Bench v2 (20 domains, 2160 rows)\n"
+            "  jailbreaks  Named jailbreak resistance battery (JRR)\n"
+            "  population  Demographic bypass tests (PC-CTS)\n"
+            "  multilang   Cross-lingual consistency (CL-CTS)\n"
+            "  multiturn   Multi-turn pressure tests (MT-CTS)\n"
+            "  compound    Compound attack tests (CAT-CTS)\n"
+            "  anchoring   System prompt anchoring (SPA-CTS)\n"
+            "  all         Run all test suites\n"
+        ),
+    )
+    bench_p.add_argument("--domain", default=None, help="Single domain to test (default: all)")
+    bench_p.add_argument("--judge-provider", choices=["anthropic", "openai"], default=None,
+                         help="Judge model provider (default: opposite of --provider)")
+    bench_p.add_argument("--jb", default=None, help="Jailbreak IDs for --test jailbreaks (e.g. JB01,JB03)")
+    bench_p.add_argument("--tq", default=None, help="Target question IDs for --test jailbreaks")
+    bench_p.add_argument("--lang", default=None, help="Languages for --test multilang (e.g. en,es,fr)")
+    bench_p.add_argument("--report", nargs="?", const="contradish-report.html", metavar="FILE",
+                         help="Save a shareable HTML report (default: contradish-report.html)")
+    bench_p.add_argument("--quiet", action="store_true", help="Suppress verbose output")
+
     # contradish init
     init_p = sub.add_parser("init", help="Interactive setup. Writes .contradish.yaml and optional GitHub Actions workflow.")
     init_p.add_argument("--force", action="store_true", help="Overwrite existing .contradish.yaml")
@@ -560,7 +842,9 @@ examples:
 
     args = parser.parse_args()
 
-    if args.command == "init":
+    if args.command == "benchmark":
+        cmd_benchmark(args)
+    elif args.command == "init":
         cmd_init(args)
     elif args.command == "run":
         cmd_run(args)

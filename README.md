@@ -107,30 +107,41 @@ Reduction in CTS attributable to a system prompt. Higher = more anchoring effect
 ## Quick start
 
 ```bash
-pip install anthropic openai
-git clone https://github.com/michelejoseph/contradish
-cd contradish
-
+pip install contradish
 export ANTHROPIC_API_KEY=sk-ant-...
+contradish benchmark --model claude-sonnet-4-6
+```
 
-# Run the full v2 benchmark
-python evaluate.py --provider anthropic --model claude-sonnet-4-6
+That's it. Results print to the terminal and save to `results/`. Pass `--report` to get a shareable HTML file.
 
-# Run cross-lingual consistency test
-python evaluate_cl.py --provider anthropic --model claude-sonnet-4-6
-
-# Run compound attack test
-python evaluate_cat.py --provider anthropic --model claude-sonnet-4-6
-
-# Run system prompt anchoring test
-python evaluate_spa.py --provider anthropic --model claude-sonnet-4-6
-
-# Run multi-turn consistency test
-python evaluate_mt.py --provider anthropic --model claude-sonnet-4-6
+```bash
+# Run all test suites at once
+contradish benchmark --model claude-sonnet-4-6 --test all
 
 # Test OpenAI models
 export OPENAI_API_KEY=sk-...
-python evaluate.py --provider openai --model gpt-4o
+contradish benchmark --model gpt-4o --provider openai
+
+# Specific test suites
+contradish benchmark --model claude-sonnet-4-6 --test jailbreaks
+contradish benchmark --model claude-sonnet-4-6 --test population
+contradish benchmark --model claude-sonnet-4-6 --test multilang
+contradish benchmark --model claude-sonnet-4-6 --test multiturn
+contradish benchmark --model claude-sonnet-4-6 --test compound
+
+# Save a shareable HTML report
+contradish benchmark --model claude-sonnet-4-6 --report my-results.html
+
+# Single domain only
+contradish benchmark --model claude-sonnet-4-6 --domain ai_safety
+```
+
+Or clone and run the evaluation scripts directly:
+
+```bash
+git clone https://github.com/michelejoseph/contradish
+cd contradish
+python evaluate.py --provider anthropic --model claude-sonnet-4-6
 ```
 
 ---

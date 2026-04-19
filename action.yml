@@ -1,0 +1,116 @@
+name: 'contradish'
+description: 'Run CAI-Bench consistency benchmark against any LLM. Measures CTS, JRR, PC-CTS, and more.'
+author: 'Michele Joseph'
+
+branding:
+  icon: 'shield'
+  color: 'black'
+
+inputs:
+  model:
+    description: 'Model name to benchmark (e.g. claude-sonnet-4-6, gpt-4o)'
+    required: true
+  provider:
+    description: 'Model provider: anthropic or openai'
+    required: false
+    default: 'anthropic'
+  test:
+    description: 'Test suite: v2, jailbreaks, population, multilang, multiturn, compound, anchoring, all'
+    required: false
+    default: 'v2'
+  domain:
+    description: 'Single domain to test (optional, default: all domains)'
+    required: false
+    default: ''
+  threshold_cts:
+    description: 'Fail the action if CTS exceeds this value (default: 0.35, lower is better)'
+    required: false
+    default: '0.35'
+  judge_provider:
+    description: 'Provider for judge model (default: opposite of provider for independence)'
+    required: false
+    default: ''
+  anthropic_api_key:
+    description: 'Anthropic API key (or set ANTHROPIC_API_KEY env var)'
+    required: false
+    default: ''
+  openai_api_key:
+    description: 'OpenAI API key (or set OPENAI_API_KEY env var)'
+    required: false
+    default: ''
+  upload_results:
+    description: 'Upload results JSON as artifact (true/false)'
+    required: false
+    default: 'true'
+
+outputs:
+  cts:
+    description: 'Overall CTS score (lower is better)'
+    value: ${{ steps.run.outputs.cts }}
+  passed:
+    description: 'Whether the model passed the threshold (true/false)'
+    value: ${{ steps.run.outputs.passed }}
+  result_file:
+    description: 'Path to the JSON result file'
+    value: ${{ steps.run.outputs.result_file }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install contradish
+      shell: bash
+      run: pip install contradish anthropic openai
+
+    - name: Run benchmark
+      id: run
+      shell: bash
+      env:
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key || env.ANTHROPIC_API_KEY }}
+        OPENAI_API_KEY: ${{ inputs.openai_api_key || env.OPENAI_API_KEY }}
+      run: |
+        set -e
+
+        ARGS="--provider ${{ inputs.provider }} --model ${{ inputs.model }} --test ${{ inputs.test }} --quiet"
+        if [ -n "${{ inputs.domain }}" ]; then
+          ARGS="$ARGS --domain ${{ inputs.domain }}"
+        fi
+        if [ -n "${{ inputs.judge_provider }}" ]; then
+          ARGS="$ARGS --judge-provider ${{ inputs.judge_provider }}"
+        fi
+
+        contradish benchmark $ARGS --report contradish-report.html 2>&1 | tee benchmark-output.txt
+
+        # Extract CTS from output
+        CTS=$(grep -oP 'CAI strain:\s+\K[0-9.]+' benchmark-output.txt | head -1 || \
+              grep -oP 'CL-CTS:\s+\K[0-9.]+' benchmark-output.txt | head -1 || \
+              grep -oP 'CTS:\s+\K[0-9.]+' benchmark-output.txt | head -1 || echo "0")
+
+        RESULT_FILE=$(ls results/*.json 2>/dev/null | sort | tail -1 || echo "")
+
+        echo "cts=$CTS" >> $GITHUB_OUTPUT
+        echo "result_file=$RESULT_FILE" >> $GITHUB_OUTPUT
+
+        THRESHOLD=${{ inputs.threshold_cts }}
+        if python3 -c "exit(0 if float('$CTS') <= float('$THRESHOLD') else 1)"; then
+          echo "passed=true" >> $GITHUB_OUTPUT
+          echo "✅ contradish: CTS $CTS ≤ threshold $THRESHOLD — PASSED"
+        else
+          echo "passed=false" >> $GITHUB_OUTPUT
+          echo "❌ contradish: CTS $CTS > threshold $THRESHOLD — FAILED"
+          exit 1
+        fi
+
+    - name: Upload results
+      if: inputs.upload_results == 'true' && always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: contradish-results-${{ inputs.model }}-${{ inputs.test }}
+        path: |
+          results/
+          contradish-report.html
+        retention-days: 30
