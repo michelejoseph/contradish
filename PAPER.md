@@ -1,7 +1,6 @@
 # CAI-Bench: A Benchmark for Measuring Surface-Form Consistency in Large Language Models
 
 **Michele Joseph**  
-Independent Researcher  
 michele.a.joseph@gmail.com
 
 ---

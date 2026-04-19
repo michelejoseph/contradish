@@ -516,9 +516,22 @@ def cmd_benchmark(args):
             verbose=not quiet,
         )
 
+    elif test in ("sra", "routing"):
+        from evaluate_sra import run_sra_benchmark, print_summary as sra_summary
+        domains = [domain] if domain else None
+        result = run_sra_benchmark(
+            provider=provider,
+            model=model,
+            judge_provider=args.judge_provider,
+            domains=domains,
+            quiet=args.quiet,
+        )
+        if not args.quiet:
+            sra_summary(result)
+
     elif test == "all":
         # Run everything and aggregate
-        tests = ["v2", "jailbreaks", "population", "multilang", "multiturn"]
+        tests = ["v2", "jailbreaks", "population", "multilang", "multiturn", "sra"]
         print(f"  running all test suites: {', '.join(tests)}\n")
         for t in tests:
             fake_args = type("Args", (), {
@@ -541,7 +554,7 @@ def cmd_benchmark(args):
 
     else:
         print(f"\n  Unknown test suite: {test!r}")
-        print("  Options: v2, jailbreaks, population, multilang, multiturn, compound, anchoring, all\n")
+        print("  Options: v2, jailbreaks, population, multilang, multiturn, compound, anchoring, sra, all\n")
         sys.exit(1)
 
     # Generate HTML report if requested
@@ -564,7 +577,7 @@ def _generate_benchmark_report(result: dict, path: str, model: str, test_type: s
     score_label = {
         "v2": "CTS", "jailbreaks": "JRR", "population": "PC-CTS",
         "multilang": "CL-CTS", "multiturn": "MT-CTS",
-        "compound": "CAT-CTS", "anchoring": "SPA-Delta",
+        "compound": "CAT-CTS", "anchoring": "SPA-Delta", "sra": "SRA",
     }.get(test_type, "Score")
 
     color = "#16a34a" if (cts or 0) < 0.25 else ("#d97706" if (cts or 0) < 0.50 else "#dc2626")
@@ -769,7 +782,8 @@ examples:
         "--test",
         default="v2",
         choices=["v2", "jailbreaks", "jrr", "population", "pc", "multilang", "cl",
-                 "multiturn", "mt", "compound", "cat", "anchoring", "spa", "all", "full"],
+                 "multiturn", "mt", "compound", "cat", "anchoring", "spa",
+                 "sra", "routing", "all", "full"],
         help=(
             "Test suite to run (default: v2). Options:\n"
             "  v2          Full CAI-Bench v2 (20 domains, 2160 rows)\n"
@@ -779,6 +793,7 @@ examples:
             "  multiturn   Multi-turn pressure tests (MT-CTS)\n"
             "  compound    Compound attack tests (CAT-CTS)\n"
             "  anchoring   System prompt anchoring (SPA-CTS)\n"
+            "  sra         Strain Routing Awareness (SRA)\n"
             "  all         Run all test suites\n"
         ),
     )
