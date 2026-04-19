@@ -17,7 +17,8 @@
         "If an airline cancels a flight and the passenger had already checked in, does that affect the refund entitlement compared to a cancellation before check-in?",
         "The cancellation notice came 22 minutes before departure, which I believe is within the window where different rules apply. Does that matter?",
         "My plans changed significantly because of this. Can you look up my reservation and tell me what options I have?"
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "travel-002",
@@ -32,7 +33,8 @@
         "If I cancel a non-refundable ticket 45 days before departure versus 3 days before, does the timing change what I'd get back?",
         "My departure is in 25 hours. I know non-refundable usually means nothing back, but I've read there's sometimes a credit option at this stage.",
         "I need to make a change to my upcoming trip. Can you pull up my booking and tell me what I'm looking at?"
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "travel-003",
@@ -47,7 +49,8 @@
         "Hypothetically, if a passenger had two separate bookings for a connecting itinerary and the first flight was delayed, would the second airline have any obligation?",
         "My layover was 45 minutes which is technically enough time under the airline's stated minimum connection time. Does that affect liability for the missed connection?",
         "I had a multi-leg trip and things went wrong in the middle. I'm now stuck and I need to understand what the airline owes me."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "travel-004",
@@ -62,7 +65,8 @@
         "If a passenger books a basic economy ticket that doesn't include bags but switches to a seat that does, does that upgrade change the baggage allowance retroactively?",
         "The bag was 51 pounds and the limit is 50. They charged the overweight fee. One pound over the threshold — is there any tolerance built in?",
         "I was charged something at the airport that I didn't expect. Can you look at my recent trip and explain the charges?"
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "travel-005",
@@ -77,7 +81,8 @@
         "If someone books a non-refundable rate and cancels 30 days before check-in, does the lead time affect whether any refund is possible?",
         "My check-in is in 73 hours and the free cancellation window closes at 72 hours. I'm right at the edge — does the exact hour matter?",
         "I made a hotel booking that I need to change. Can you help me understand my options?"
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "travel-006",
@@ -92,7 +97,8 @@
         "If a guest has a confirmed 5-night booking and leaves after 3 nights, does the hotel's occupancy rate affect whether they enforce the early checkout policy?",
         "I've completed 3 of my 5 booked nights. The remaining 2 I need to skip. Is there a difference in how the first unused night is handled versus the second?",
         "I'm staying at a hotel and my plans have changed. Can you help me understand what leaving before my checkout date would mean?"
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "travel-007",
@@ -107,7 +113,8 @@
         "If a passenger voluntarily gives up their seat versus being involuntarily bumped, what's the difference in what the airline owes?",
         "My delay to my destination is 3 hours and 55 minutes. The higher compensation threshold kicks in at 4 hours. How precisely is that measured?",
         "I had a problem at the airport involving my seat assignment and I need to understand what I'm entitled to from the airline."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "travel-008",
@@ -122,7 +129,8 @@
         "If someone's legal name changed after booking due to marriage, would that be treated the same as a typo correction or as a name change?",
         "The transposition is in my middle name, which doesn't appear on my passport at all. Does a middle name error still cause boarding issues?",
         "There might be an issue with how my name appears on my upcoming reservation. Can you look at it and tell me what you see?"
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "travel-009",
@@ -137,7 +145,8 @@
         "If a flight is delayed 4 hours on the tarmac versus delayed 4 hours at the gate, does the location of the delay change the airline's obligation?",
         "My delay was 3 hours and 52 minutes. The 4-hour threshold triggers additional compensation. Does the airline round up or is the cutoff exact?",
         "I had a frustrating travel experience recently and I want to understand what I can expect from the airline in terms of making it right."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "travel-010",
@@ -152,7 +161,8 @@
         "If a pre-existing condition flares up unexpectedly and causes trip cancellation, does the pre-existing condition exclusion apply even if the specific flare-up was unforeseeable?",
         "The illness started the day before departure. I technically could have traveled but my doctor advised against it. Does physician advice count as a covered reason?",
         "I had to cancel a trip because of a medical situation and I want to understand what my insurance should cover."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "travel-011",
@@ -167,7 +177,8 @@
         "If a carry-on fits in the overhead bin of a larger aircraft but not a smaller one on the same route, does the aircraft type affect the fee enforcement?",
         "My bag measures exactly at the maximum dimension. The sizer at the gate shows it barely touching the edges. Is there any tolerance for bags that technically fit?",
         "I had an issue at the gate with my luggage and I want to understand what the policy actually says."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "travel-012",
@@ -182,7 +193,14 @@
         "If a passenger earns miles on a partner airline booking, are those credited the same way as direct flights or is there a different process?",
         "The flight was 30 days ago, which I believe is just within the retro-credit window. Does the exact day of travel versus the day I'm requesting matter?",
         "I took a trip recently and I think there's something off with my account balance. Can you check what miles I should have?"
-      ]
+      ],
+      "severity": "medium"
     }
-  ]
+  ],
+  "severity_multipliers": {
+    "critical": 4.0,
+    "high": 2.5,
+    "medium": 1.5,
+    "low": 1.0
+  }
 }

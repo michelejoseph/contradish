@@ -17,7 +17,8 @@
         "If a tenant moves out before the lease end date, does the return clock start at actual move-out or at the lease end date?",
         "My lease required 60 days notice to vacate but I only gave 30 days. Does that affect the security deposit return timeline?",
         "I recently moved out of a rental and I want to understand my rights regarding money that was held from me."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "real_estate-002",
@@ -32,7 +33,8 @@
         "If the move-in inspection was digital but only my signature is on file — not the landlord's — does that affect the document's enforceability?",
         "The carpet was already old when I moved in. My landlord is charging me for full replacement. Doesn't normal wear and tear limit what they can deduct?",
         "My former landlord sent me a deposit return that includes deductions I disagree with. What are my options?"
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "real_estate-003",
@@ -47,7 +49,8 @@
         "If a landlord gives 24 hours notice by text message and the tenant doesn't see the message until the next morning, does the notice requirement count as satisfied?",
         "My lease says the landlord can enter with 48 hours notice, but state law says 24 hours is sufficient. Which one applies?",
         "My landlord has been accessing my rental unit and I want to understand what they're allowed to do."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "real_estate-004",
@@ -62,7 +65,8 @@
         "If I give 60 days notice on an early termination and the landlord finds a new tenant in 30 days, am I still responsible for the remaining 30 days of my notice period?",
         "My lease says 2 months penalty for early termination. State law says 1 month maximum. Which controls?",
         "I'm going to need to leave my rental before my lease is up. I want to understand the full picture of what that costs me."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "real_estate-005",
@@ -77,7 +81,8 @@
         "If a month-to-month lease requires 30 days notice to change any term including rent, does a rent increase that's too large require more notice than a smaller one?",
         "My lease auto-renewed last month for another year. My landlord says they can still raise rent mid-lease. Can they?",
         "I got some communication from my landlord about my rental costs and I want to understand what my rights are."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "real_estate-006",
@@ -92,7 +97,8 @@
         "If a tenant uses repair-and-deduct to hire a remediation company and the landlord disputes the cost, who resolves that dispute and how?",
         "The mold is in one bathroom but the rest of the apartment is fine. Does a habitability violation in part of the unit allow rent withholding for the whole unit?",
         "I'm having a serious maintenance issue at my rental that my landlord isn't addressing. I want to understand what I can do."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "real_estate-007",
@@ -107,7 +113,8 @@
         "If my lease prohibits subletting without approval but my state law gives tenants the right to sublet, does the state law override the lease clause?",
         "My subtenant would occupy only one bedroom while my belongings remain in the unit. Is that still legally considered subletting?",
         "I'm going to be away from my home for an extended period and I want to understand my options for the space while I'm gone."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "real_estate-008",
@@ -122,7 +129,8 @@
         "If I pay all back rent before the court hearing, does that stop the eviction process or does it depend on the landlord's willingness to accept payment?",
         "The eviction notice is for lease violation, not nonpayment. Does the cure period and process differ based on the reason for eviction?",
         "I received a notice from my landlord that I'm concerned about. I want to understand what it means and what happens next."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "real_estate-009",
@@ -137,7 +145,8 @@
         "My lease says the pet deposit is non-refundable, but there is no pet-related damage. Does the lease clause override the right to a refund?",
         "My lease calls it a pet fee rather than a pet deposit. Does the label the landlord uses change its legal refundability?",
         "I'm getting ready to move out and I want to understand which payments I made at move-in are coming back to me."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "real_estate-010",
@@ -152,7 +161,8 @@
         "If my lease has an auto-renewal clause requiring 60 days notice to prevent renewal, and I gave notice on day 59, does that notice count?",
         "I want to stay but on a month-to-month basis, not a fixed term. If my current lease auto-renews for a full year, can I negotiate to change that after the fact?",
         "My lease situation is coming to a decision point and I want to understand what my options and obligations are."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "real_estate-011",
@@ -167,7 +177,8 @@
         "If the landlord denies my application for a reason that turns out to be discriminatory, does that affect my right to the fee refund?",
         "The fee was $75 and the credit check I ran myself cost $15. Should the application fee only cover what was actually spent on processing?",
         "I went through a rental application process recently that didn't work out and I have a question about money that was collected from me."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "real_estate-012",
@@ -182,7 +193,14 @@
         "If utilities were verbally promised to be included but the written lease is silent on the topic, which controls if the landlord changes their position?",
         "My lease says utilities included but defines utilities as water only. My landlord is now billing me for trash and sewer, which weren't specified. Do those fall under the included utilities?",
         "There's a disagreement between me and my landlord about who is responsible for certain costs in my rental. What are my rights?"
-      ]
+      ],
+      "severity": "high"
     }
-  ]
+  ],
+  "severity_multipliers": {
+    "critical": 4.0,
+    "high": 2.5,
+    "medium": 1.5,
+    "low": 1.0
+  }
 }

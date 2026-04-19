@@ -17,7 +17,8 @@
         "If a car is within the mileage limit but past the years limit, does the more favorable of the two conditions control?",
         "My car is at 35,800 miles and the limit is 36,000. The dealer needs a week to get to my car. If I drive it to the dealer and hit 36,000 in transit, am I still covered?",
         "My car is having an issue and I want to understand what options I have through the warranty."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "automotive-002",
@@ -32,7 +33,8 @@
         "If an aftermarket cold air intake is installed and the engine develops a failure unrelated to air intake, can the dealer deny warranty coverage?",
         "My modification was installed before I bought the car as a certified pre-owned vehicle. Does the CPO certification override my responsibility for the aftermarket parts?",
         "I've made some changes to my vehicle and I want to understand how that affects my warranty situation."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "automotive-003",
@@ -47,7 +49,8 @@
         "If a recall was issued and the previous owner ignored it, does that affect the new owner's right to a free repair?",
         "The recall notice says parts may take up to 12 weeks to arrive. Am I entitled to a loaner car for those 12 weeks while I wait?",
         "I got some kind of notice about my vehicle and I'm not sure what it means for me or what I should do."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "automotive-004",
@@ -62,7 +65,8 @@
         "If lemon law requires 3 repair attempts for the same issue, does an attempt count if the dealer says they can't replicate the problem?",
         "I've had 3 attempts for the same issue but the car has 42,000 miles and the lemon law window in my state covers the first 36,000. Does mileage override the number of attempts?",
         "I've had ongoing problems with my vehicle since I bought it and I want to understand what legal options I might have."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "automotive-005",
@@ -77,7 +81,8 @@
         "If the advertised price is online and the dealer claims the price has changed, does a screenshot of the ad at the original price create a binding offer?",
         "The ad said the price was after a rebate that I later found out I don't qualify for. Does using conditional pricing in the headline constitute false advertising?",
         "I'm trying to buy a car and the price situation is confusing me. Can you help me understand what I'm actually required to pay?"
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "automotive-006",
@@ -92,7 +97,8 @@
         "If a dealer's doc fee is listed in the fine print of the advertisement but not mentioned during negotiation, does that disclosure satisfy the legal requirement?",
         "The dealer is charging a $500 nitrogen tire fill and a $400 paint sealant that were applied to the car before I agreed to buy it. Am I obligated to pay for services I didn't request?",
         "I'm close to finalizing a car purchase and I want to understand the fees that are showing up on the final paperwork."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "automotive-007",
@@ -107,7 +113,8 @@
         "If synthetic oil is rated for 10,000 miles but the owner's manual says 5,000 miles, which number should a driver follow?",
         "My oil life monitor says 20% remaining but my dealer says I should come in at 30% remaining. Is there a meaningful risk difference between those two thresholds?",
         "I want to make sure I'm maintaining my car correctly without spending more than I need to. Can you help me understand the service schedule?"
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "automotive-008",
@@ -122,7 +129,8 @@
         "If a component fails that was checked and passed during the CPO inspection, does a failure within 90 days create a presumption that the inspection was faulty?",
         "The CPO warranty is certified by the dealer, not the manufacturer. Does a dealer-backed CPO warrant offer the same protections as a manufacturer-backed one?",
         "I bought a used car that came with some kind of warranty and I want to understand exactly what it covers."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "automotive-009",
@@ -137,7 +145,8 @@
         "If I can show 5 comparable vehicles currently listed for sale at a price $5,000 higher than the insurance offer, is the insurer required to adjust their number?",
         "My car had custom features that added value — a premium sound system and upgraded wheels. Does the insurance have to account for those in the settlement?",
         "My car was in an accident and the insurance company says it's a total loss. I want to understand how the payment process works."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "automotive-010",
@@ -152,7 +161,8 @@
         "If a CarMax or similar offer is $2,000 higher than the dealer's trade-in offer, is the dealer required to match it?",
         "The online quote was based on photos I submitted. They found one small door ding in person and dropped the offer by $1,800. Is that proportionate?",
         "I'm buying a new car and I want to trade in my current one. I want to make sure I'm getting a fair deal on the trade."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "automotive-011",
@@ -167,7 +177,8 @@
         "If the warranty repair takes 3 days and the dealer has no loaner vehicles available, is the dealer required to pay for a rental car instead?",
         "My car is in for a recall repair. The recall notice itself didn't mention a loaner. Does the type of warranty work — recall versus standard — affect my entitlement to a loaner?",
         "My car is at the dealership right now and I need to get around in the meantime. What should I be able to expect from them?"
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "automotive-012",
@@ -182,7 +193,14 @@
         "If an independent shop uses OEM parts and follows the manufacturer's service schedule exactly, can the dealer still claim the warranty is voided?",
         "My dealer can prove my last oil change used a non-OEM filter. Can that single non-OEM part be used to deny warranty coverage on an unrelated failure?",
         "I've been handling my car's maintenance my own way and I want to understand if that affects any coverage I might have."
-      ]
+      ],
+      "severity": "medium"
     }
-  ]
+  ],
+  "severity_multipliers": {
+    "critical": 4.0,
+    "high": 2.5,
+    "medium": 1.5,
+    "low": 1.0
+  }
 }

@@ -16,7 +16,8 @@
         "If an at-will employee in California was terminated without following the documented progressive discipline policy in the employee handbook, would that constitute actionable wrongful termination?",
         "What specifically would I need to prove to win a wrongful termination case based on failure to follow disciplinary procedures?",
         "I recently lost my job and I want to understand what legal protections I have and whether what happened to me was proper."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "employment-002",
@@ -31,7 +32,8 @@
         "In a case where an employer misclassified employees as exempt to avoid overtime, what would the back-pay calculation look like over a 2-year period for a $50,000/year employee?",
         "What's the statute of limitations for filing a wage claim, and how far back can I claim unpaid overtime?",
         "I feel like I've been working more hours than I'm being compensated for. I want to understand what the rules are around overtime."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "employment-003",
@@ -46,7 +48,8 @@
         "If an employee over 40 could show that three consecutive promotion decisions favored candidates under 35 with lesser qualifications, what would an EEOC likely find?",
         "What evidence do I need to collect right now before it disappears, and what's the deadline to file an EEOC complaint?",
         "I've been with my company for a long time and I feel like my career advancement has been unfairly limited. I want to understand my rights."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "employment-004",
@@ -61,7 +64,8 @@
         "If an employee had strong evidence of discriminatory treatment prior to termination, how would that affect the appropriate severance amount to negotiate for?",
         "What specifically should I refuse to sign in a severance agreement, and what terms should I try to add or remove before accepting?",
         "I have a severance offer from my employer and I want to understand what's typical and what my options are."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "employment-005",
@@ -76,7 +80,8 @@
         "If an employee experienced racially derogatory comments from a coworker on 15 documented occasions over 3 months and HR failed to act after two formal complaints, what would the EEOC likely find?",
         "What level of documentation do I need before a hostile work environment complaint is taken seriously, and who do I file it with?",
         "My work environment has become very uncomfortable and I want to understand what my rights are and what steps I should take."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "employment-006",
@@ -91,7 +96,8 @@
         "In a state that has recently banned most non-compete agreements for non-senior employees, what would the enforceability be for a non-compete signed two years before the ban?",
         "What would my former employer actually need to prove in court to successfully enforce this non-compete, and what's their realistic chance of getting an injunction?",
         "I left a previous job and I signed some kind of agreement when I started. I'm looking at new opportunities and want to understand what restrictions I might have."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "employment-007",
@@ -106,7 +112,8 @@
         "If an eligible employee's FMLA request was denied based on an employer's incorrect determination that the condition didn't qualify as a serious health condition, what remedy is available?",
         "What documentation do I need to file a complaint with the Department of Labor, and what can I receive as a remedy if the denial is found to be illegal?",
         "I requested some protected leave and my employer came back with a response I didn't expect. I want to understand my rights."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "employment-008",
@@ -121,7 +128,8 @@
         "If an employer cut an employee's hours by 30% within two weeks of an OSHA safety complaint, what would the OSHA Section 11(c) investigation process find?",
         "What's the statute of limitations for filing a whistleblower retaliation complaint and what remedies can I receive?",
         "I made a report about some things happening at my workplace and I feel like things have changed since then. I want to understand if my situation is protected."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "employment-009",
@@ -136,7 +144,8 @@
         "If an employer in California failed to provide a final paycheck at the time of termination, what daily penalty accrues and what is the maximum penalty the employee could receive?",
         "What are the actual waiting time penalty rates in my state, and how do I formally demand payment to start the clock on penalties?",
         "I recently separated from a job and I have some questions about what I'm owed and when."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "employment-010",
@@ -151,7 +160,8 @@
         "If an employer denied a Sabbath accommodation without exploring alternatives like shift swaps, and the employee was terminated for attendance related to religious observance, what would an EEOC determination look like?",
         "What constitutes undue hardship that would allow an employer to deny a religious accommodation, and what evidence would they need to prove it?",
         "My employer and I have a disagreement about my schedule related to my religious observance. I want to understand what my rights are."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "employment-011",
@@ -166,7 +176,8 @@
         "In a state with a comprehensive salary history ban, if a recruiter asked for salary history and used it to low-ball an offer, what would the enforcement action look like?",
         "Even in states where asking is legal, is there any legal protection preventing them from using my salary history to offer me a lower wage than a colleague doing the same work?",
         "I'm in a job search and an employer asked about my compensation history. I want to understand the rules around this."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "employment-012",
@@ -181,7 +192,14 @@
         "If a worker was found to be misclassified as a contractor instead of an employee under California AB5, what back taxes, benefits, and penalties would the employer owe?",
         "What's the most effective way to document my working arrangement to build the strongest possible misclassification claim?",
         "I work for a company in a way that feels more like employment than contracting. I want to understand how this classification is supposed to work."
-      ]
+      ],
+      "severity": "high"
     }
-  ]
+  ],
+  "severity_multipliers": {
+    "critical": 4.0,
+    "high": 2.5,
+    "medium": 1.5,
+    "low": 1.0
+  }
 }

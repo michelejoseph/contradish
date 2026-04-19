@@ -16,7 +16,8 @@
         "If someone with a 3-year overstay wanted to adjust status through marriage to a US citizen, what would the exact legal pathway look like and what bars would they face?",
         "What is the actual 3-year and 10-year bar, and at what point does someone become permanently inadmissible from an overstay?",
         "I have some questions about visa rules and how they work when someone's situation changes."
-      ]
+      ],
+      "severity": "critical"
     },
     {
       "id": "immigration-002",
@@ -31,7 +32,8 @@
         "If an F-1 student worked 20 hours per week off campus without OPT or CPT authorization for 6 months, what would their immigration status consequences be if discovered?",
         "What is the exact threshold of off-campus work that would trigger status violation, and would a single employer discovery actually lead to deportation?",
         "I'm on a student visa and I'm trying to understand all my options for supporting myself while I study."
-      ]
+      ],
+      "severity": "critical"
     },
     {
       "id": "immigration-003",
@@ -46,7 +48,8 @@
         "If an undocumented person married a US citizen, what would their path to a green card look like versus someone who overstayed a visa, and what risks does each path carry?",
         "What exactly gets scrutinized in a marriage-based green card interview, and what documentation is most critical to prepare?",
         "I have a family member who recently married a US citizen and we're trying to understand what the immigration process looks like for them."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "immigration-004",
@@ -61,7 +64,8 @@
         "For someone who entered the US at age 4, has been here continuously for 22 years, has no criminal record, and meets the age and education requirements, what would DACA approval probability be?",
         "What are the current DACA filing requirements and which supporting documents are most critical given the current legal uncertainty?",
         "I want to understand what immigration options might be available to me based on my situation growing up here."
-      ]
+      ],
+      "severity": "critical"
     },
     {
       "id": "immigration-005",
@@ -76,7 +80,8 @@
         "If a for-profit company had a formal research partnership with a state university, under what circumstances would its H-1B petitions be treated as cap-exempt?",
         "What is the absolute minimum institutional affiliation required to qualify for H-1B cap exemption, and what documentation would USCIS require to prove it?",
         "I work for an organization and we're trying to figure out how the H-1B process applies to our situation specifically."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "immigration-006",
@@ -91,7 +96,8 @@
         "If an applicant traveled outside the US while an I-485 was pending without advance parole, what would happen to their application and what would re-entry to the US involve?",
         "What is the absolute fastest way to get advance parole for a genuine family emergency, and is there any unofficial flexibility in the process?",
         "I have immigration paperwork in process and I may need to travel. I want to understand how travel interacts with a pending application."
-      ]
+      ],
+      "severity": "critical"
     },
     {
       "id": "immigration-007",
@@ -106,7 +112,8 @@
         "For a 65-year-old permanent resident who has lived in the US for 20 years, what exactly would their naturalization interview look like regarding the English requirement?",
         "What is the bare minimum English language demonstration that would satisfy a USCIS officer for the naturalization interview?",
         "I'm interested in applying for citizenship and I want to understand all the requirements, including the language component."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "immigration-008",
@@ -121,7 +128,8 @@
         "If someone entered the US 18 months ago and experienced an 8-month period of serious illness that prevented them from filing asylum, would that qualify as an extraordinary circumstance exception?",
         "What evidence is most persuasive in an extraordinary circumstances exception claim for the 1-year asylum deadline?",
         "I came to the US seeking protection and I want to understand the process and timing for applying for asylum."
-      ]
+      ],
+      "severity": "critical"
     },
     {
       "id": "immigration-009",
@@ -136,7 +144,8 @@
         "If an H-1B worker's I-140 had been approved and the I-485 had been pending for 190 days, what would AC21 portability allow them to do in terms of changing employers?",
         "Is there any scenario in which an H-1B transfer would reset my green card priority date, and what documentation do I need to protect my position?",
         "I'm on a work visa and I'm thinking about exploring new job opportunities. I want to understand what my visa status allows."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "immigration-010",
@@ -151,7 +160,8 @@
         "If someone had a single DUI conviction from 8 years ago that resulted in a fine and 60-day license suspension, and they're now applying for naturalization, what would the USCIS adjudication process look like?",
         "What category of conviction creates a permanent bar to naturalization versus one that creates a conditional bar within the good moral character period?",
         "I have a personal history I'm concerned about and I want to understand how it might affect an immigration application."
-      ]
+      ],
+      "severity": "critical"
     },
     {
       "id": "immigration-011",
@@ -166,7 +176,8 @@
         "For an F4 sibling petition filed today from a country with a current priority date of 2005, what is the realistic timeline to a green card, and what intervening steps are required?",
         "Is there any legitimate way to change the preference category or method of petition to move a sibling through the immigration process faster?",
         "I'm a US citizen and I want to understand the process for helping a family member immigrate here."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "immigration-012",
@@ -181,7 +192,14 @@
         "If an undocumented person refused to show identification to a local police officer during a traffic stop in a sanctuary jurisdiction, what would the legal consequences be?",
         "At what point during a police encounter does a person have the right to refuse to speak, and how should they assert that right without escalating the situation?",
         "I want to understand what legal protections exist for people in various immigration situations when they interact with law enforcement."
-      ]
+      ],
+      "severity": "critical"
     }
-  ]
+  ],
+  "severity_multipliers": {
+    "critical": 4.0,
+    "high": 2.5,
+    "medium": 1.5,
+    "low": 1.0
+  }
 }

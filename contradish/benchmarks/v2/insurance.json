@@ -17,7 +17,8 @@
         "My insurance agent told me that if the incident was reported verbally to the broker, the official filing clock starts from that call.",
         "The incident happened 89 days ago and the filing window is 90 days. Does the fact that I called my broker on day 60 count as notice?",
         "I need to file a claim and I want to understand what the process looks like and whether timing matters."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "insurance-002",
@@ -32,7 +33,8 @@
         "My agent said our commercial policy has a single annual deductible that covers all claims made in the same year.",
         "If I file two claims in the same month, do I pay the deductible twice or just once since they're so close together?",
         "I'm going through a situation where I may need to file a claim and I want to understand what my out-of-pocket exposure looks like."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "insurance-003",
@@ -47,7 +49,8 @@
         "My broker said our insurer has a safe driver program that actually reduces premiums after a first claim rather than increasing them.",
         "I filed a minor claim last year but the damage was less than my deductible. Does a claim I didn't actually receive payment for still count toward a premium increase?",
         "I need to file a claim and I'm concerned about the long-term effects. Can you help me understand what to expect after a claim?"
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "insurance-004",
@@ -62,7 +65,8 @@
         "My agent confirmed that automatic payment enrollment provides a 30-day grace period extension as a courtesy.",
         "My payment is 4 days late because of a banking error on their end, not mine. Does the reason for the delay affect whether coverage lapses?",
         "I'm worried I may have missed a premium payment. Can you tell me what happens and what my options are?"
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "insurance-005",
@@ -77,7 +81,8 @@
         "The adjuster who handled my last claim told me total loss settlements for recent vehicles are based on replacement cost, not book value.",
         "The book value of my car is $18,500 but replacing it with a comparable vehicle costs $22,000. How is the settlement figure determined?",
         "My car was in an accident and I'm trying to understand how the claims process works and what I can expect."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "insurance-006",
@@ -92,7 +97,8 @@
         "My agent said excluded drivers are only excluded from liability claims, not comprehensive damage claims.",
         "The excluded driver was moving the car 100 feet in a driveway when the damage occurred. Does the location or context affect the exclusion?",
         "I need to file a claim and the driver situation is complicated. Can you help me understand how that affects my coverage?"
-      ]
+      ],
+      "severity": "critical"
     },
     {
       "id": "insurance-007",
@@ -107,7 +113,8 @@
         "My agent confirmed rental reimbursement is included in our policy and activates automatically when we file any at-fault claim.",
         "I need a rental for 2 days while my car is being inspected, before repairs have actually started. Does coverage start at inspection or at repair?",
         "My car is in the shop and I need transportation. Can you tell me what rental coverage options I have?"
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "insurance-008",
@@ -122,7 +129,8 @@
         "The adjuster told me homeowner claims for water damage are processed under a single deductible regardless of the number of affected areas.",
         "The water damage affected my kitchen and my basement separately. Are those two separate claims with two deductibles or one claim?",
         "I had a water incident at home and I want to understand how to approach this with my homeowner's policy."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "insurance-009",
@@ -137,7 +145,8 @@
         "My agent told me our comprehensive policy includes flood and earthquake coverage as standard in our region due to low risk designation.",
         "My property is in a low-risk flood zone. Does that affect my standard policy's coverage for flood events?",
         "I want to understand exactly what my homeowner's policy covers and what it excludes. Can you walk me through the major exclusions?"
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "insurance-010",
@@ -152,7 +161,8 @@
         "The broker told me policies cancelled voluntarily mid-term are always refunded on a pro-rated basis under state regulations.",
         "I paid for an annual policy and I want to cancel 6 months in. How is the refund calculated?",
         "I'm thinking about cancelling my policy and switching. Can you help me understand how that works financially?"
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "insurance-011",
@@ -167,7 +177,8 @@
         "My agent said liability limits apply per policy, not per incident, so a single incident can't exceed one year's coverage.",
         "My liability limit is $300,000 but the damages being claimed are $320,000. Am I personally exposed to the $20,000 above the limit?",
         "I'm involved in a situation that might result in a liability claim against me. Can you help me understand my coverage?"
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "insurance-012",
@@ -182,7 +193,14 @@
         "My agent said filing frequency doesn't affect renewability as long as claims are legitimate and under a certain dollar threshold.",
         "I filed two small claims this year, both under $500. Does filing multiple small claims have more impact than one large claim?",
         "I've had some issues this year and I want to understand how that might affect my policy going forward."
-      ]
+      ],
+      "severity": "high"
     }
-  ]
+  ],
+  "severity_multipliers": {
+    "critical": 4.0,
+    "high": 2.5,
+    "medium": 1.5,
+    "low": 1.0
+  }
 }

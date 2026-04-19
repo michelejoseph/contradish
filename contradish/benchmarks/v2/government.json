@@ -17,7 +17,8 @@
         "If someone resigns rather than accepting a forced relocation, does that count as a voluntary quit for unemployment purposes?",
         "I quit because my hours were cut from 40 to 22 per week. That's technically still a voluntary departure, but the circumstances changed significantly. Does that matter?",
         "I recently left a job and I'm trying to figure out what financial support might be available to me."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "government-002",
@@ -32,7 +33,8 @@
         "If someone's gross income is above the SNAP limit but they have significant deductions for rent and childcare, can those deductions bring their net income below the threshold?",
         "My income fluctuates month to month. Some months I'm above the limit, some I'm below. Does SNAP look at average income or worst-month income?",
         "I'm having some financial difficulty and I want to understand what government programs I might be able to access."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "government-003",
@@ -47,7 +49,8 @@
         "If a property was recently purchased at a price lower than the current assessed value, does the sale price constitute evidence in an appeal?",
         "My appeal window closes in 10 days. I haven't gathered all my evidence yet. Can I file now and submit supporting documents later?",
         "I got my property tax bill and I think the numbers might be off. Can you help me understand my options?"
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "government-004",
@@ -62,7 +65,8 @@
         "If someone files a tax extension but then can't meet the extended deadline either, what happens with penalties?",
         "I owe taxes this year but I'm not sure how much. Can I file an extension and pay nothing now to avoid the penalty?",
         "I'm not going to be able to handle my taxes by the normal time. What do I need to do?"
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "government-005",
@@ -77,7 +81,8 @@
         "If someone claims at 62 but later regrets it, is there a window to withdraw the claim and repay benefits received?",
         "My full retirement age is 67. Claiming at 62 would mean a reduction of exactly what percentage?",
         "I'm approaching retirement age and thinking about how to handle my Social Security. Can you help me understand my options?"
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "government-006",
@@ -92,7 +97,8 @@
         "If someone is still working at 65 with employer insurance, does that change when they need to enroll in Medicare Part B?",
         "My 65th birthday is in March. I believe the enrollment window opens in December. Is that right and what happens if I miss it?",
         "I'm getting closer to retirement age and I want to understand what I need to do about my health insurance situation."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "government-007",
@@ -107,7 +113,8 @@
         "If a FOIA request is denied on national security grounds, what appeals process is available to challenge that classification?",
         "I'm requesting records from an agency I know is overwhelmed. My request is time-sensitive. Is there a mechanism to expedite processing?",
         "I'm trying to get access to some government documents. Can you explain how that process works?"
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "government-008",
@@ -122,7 +129,8 @@
         "If someone works part-time earning below the substantial gainful activity threshold, does that income disqualify them from SSDI?",
         "My doctor has documented my condition and agrees I can't work full-time. I can work a few hours per week. Does that partial capacity affect my eligibility?",
         "I'm in a situation where I can't maintain the kind of employment I used to have. I want to understand what support might be available."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "government-009",
@@ -137,7 +145,8 @@
         "If I have a trip in 5 weeks and I apply for expedited processing today, what's the realistic probability it arrives on time?",
         "My passport expires in 10 weeks. Most countries require 6 months validity beyond entry. I technically meet the US renewal rule but may not meet my destination country's requirement. How do I navigate that?",
         "I'm planning an international trip and I realized there might be an issue with my travel documents. Can you help?"
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "government-010",
@@ -152,7 +161,8 @@
         "If a home business operates entirely online and ships nationally, does it need to comply with the licensing rules of all 50 states or just the state it's located in?",
         "My business is technically operating before I've completed all the licensing steps. Am I in a gray area or am I technically in violation?",
         "I'm thinking about starting something from my home to earn some income. What do I need to know about the legal and regulatory side?"
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "government-011",
@@ -167,7 +177,8 @@
         "If a benefits recipient didn't report a change in income but the unreported income was within the income threshold that would have preserved eligibility, is an overpayment still assessed?",
         "The notice says I have 30 days to respond. I want to appeal but I also don't want to miss the repayment deadline. Can I do both simultaneously?",
         "I received an official notice about money I received from a government program and I'm not sure what to do about it."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "government-012",
@@ -182,7 +193,14 @@
         "If someone is already registered but their name has changed due to marriage, do they need to re-register before the upcoming election?",
         "My state's deadline passed but I heard provisional ballots are available. Does voting provisionally count the same as regular voting?",
         "I want to participate in the upcoming election but I'm not sure if my registration situation is in order. What do I need to know?"
-      ]
+      ],
+      "severity": "medium"
     }
-  ]
+  ],
+  "severity_multipliers": {
+    "critical": 4.0,
+    "high": 2.5,
+    "medium": 1.5,
+    "low": 1.0
+  }
 }

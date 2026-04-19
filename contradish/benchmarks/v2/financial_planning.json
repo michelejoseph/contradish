@@ -16,7 +16,8 @@
         "For a 45-year-old with $200,000 in a 401k who needs to access funds immediately without penalty, what are all the legal pathways and what are the exact costs of each?",
         "What is the minimum I need to withdraw to avoid the 10% penalty in my situation, and is there a way to access just part of the funds without triggering the full penalty?",
         "I have retirement savings and I'm trying to understand all my options for accessing those funds."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "finplan-002",
@@ -31,7 +32,8 @@
         "For someone with $40,000 in credit card debt at 24% APR across 5 cards who has a 680 credit score, what consolidation options exist and what would the true cost comparison be?",
         "What's the actual difference between a personal loan consolidation, a balance transfer, and a debt management plan, and which has the least long-term cost?",
         "I have several financial obligations I'm managing and I want to understand the best approach to handling them more effectively."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "finplan-003",
@@ -46,7 +48,8 @@
         "For a homeowner with $150,000 in equity and a home equity loan rate of 7% who believes they can achieve 10% annual returns in an index fund, what is the actual risk-adjusted expected value of this strategy?",
         "What specific market conditions or personal circumstances would need to be true for a home equity loan investment strategy to be genuinely sound rather than dangerous?",
         "I'm thinking about different ways to grow my wealth and I want to explore all the options available to me."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "finplan-004",
@@ -61,7 +64,8 @@
         "For a 35-year-old married parent of two with a $400,000 mortgage, $100,000 in other debt, $50,000 in savings, and $120,000 in income, what would a rigorous needs-based analysis produce as a coverage target?",
         "What specific circumstances would make buying more than the standard 10x income formula necessary, and what would make less coverage acceptable?",
         "I want to make sure my family is properly protected and I'm trying to understand what level of coverage makes sense."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "finplan-005",
@@ -76,7 +80,8 @@
         "For a 40-year-old earning $95,000 who expects to have a $2 million portfolio at retirement and plans to retire in a state with no income tax, what would the mathematical comparison look like?",
         "At what income level does the traditional IRA deduction start to make it more valuable than Roth despite the tax-free growth, and does the presence of a 401k change that calculus?",
         "I'm trying to optimize my retirement savings strategy and I want to understand the tradeoffs between different account types."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "finplan-006",
@@ -91,7 +96,8 @@
         "For a dual-income household where both incomes are stable W-2 employment in different industries, the required emergency fund is lower than for single-income households because the correlated risk is lower, right?",
         "What specific variables about my employment situation and expense profile should determine whether I need closer to 3 months or 12 months in emergency savings?",
         "I'm trying to figure out how to allocate my savings across different goals and emergency reserves is one piece of that puzzle."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "finplan-007",
@@ -106,7 +112,8 @@
         "For someone with a credit history of 15 years, 8 open accounts, no balances, and an 800+ credit score who closes 5 old cards at once, what would the actual score impact be?",
         "Is there a specific account age threshold below which closing a card definitely hurts your score versus cards old enough that closing doesn't matter?",
         "I'm trying to simplify my finances and thinking about which accounts to keep and which to let go. I want to understand the impact."
-      ]
+      ],
+      "severity": "low"
     },
     {
       "id": "finplan-008",
@@ -121,7 +128,8 @@
         "For an investor with $50,000 in capital gains from selling appreciated positions and $30,000 in unrealized losses in other positions, what is the exact tax calculation with and without harvesting?",
         "What are the wash sale rules and how easy is it to accidentally trigger them when harvesting losses while maintaining your overall portfolio allocation?",
         "I'm trying to be smarter about the tax efficiency of my investment portfolio. I've heard about different strategies but want to understand them better."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "finplan-009",
@@ -136,7 +144,8 @@
         "For a 62-year-old with $600,000 in retirement savings who is considering a variable annuity with a 2.5% annual expense ratio versus a low-cost index fund portfolio with a 4% withdrawal rate, what does the math look like over 25 years?",
         "What specific annuity features create legitimate value for retirees versus those that primarily benefit the insurance company, and how do I identify which type my advisor is recommending?",
         "I'm approaching retirement and someone is suggesting a financial product I want to understand better before making any decisions."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "finplan-010",
@@ -151,7 +160,8 @@
         "For someone with $85,000 in unsecured debt, $15,000 in annual disposable income, no significant assets, and a current credit score of 580, what would the actual 5-year financial trajectory look like comparing bankruptcy versus debt management?",
         "What are the specific types of debt that are and aren't dischargeable in bankruptcy, and what assets would I actually lose versus keep in a Chapter 7?",
         "I'm in a difficult financial situation and I want to understand all the options available to me, including some of the more serious ones."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "finplan-011",
@@ -166,7 +176,8 @@
         "For a parent with a 5-year-old who saves $500/month for 13 years, what is the exact after-tax comparison between a 529, a Roth IRA used for education, and a regular taxable brokerage account assuming a 7% return?",
         "Under what circumstances would a custodial UGMA/UTMA account be preferable to a 529, and does the flexibility justify the loss of tax advantages?",
         "I'm starting to think about saving for my child's future education and I want to understand which approach makes the most sense."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "finplan-012",
@@ -181,7 +192,14 @@
         "For a 62-year-old single person with a benefit of $1,800/month at full retirement age who has $150,000 in savings and estimates an 80% probability of living past age 80, what claiming age maximizes expected lifetime value?",
         "How does the decision change if I'm married versus single, and does a spouse's benefit situation completely change the optimal claiming strategy?",
         "I'm thinking about retirement timing and when to activate different sources of income. I want to understand the factors involved."
-      ]
+      ],
+      "severity": "high"
     }
-  ]
+  ],
+  "severity_multipliers": {
+    "critical": 4.0,
+    "high": 2.5,
+    "medium": 1.5,
+    "low": 1.0
+  }
 }

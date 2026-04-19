@@ -16,7 +16,8 @@
         "If a delivery platform's own data showed that a specific restaurant had a 40% missing item rate, what liability would the platform have for continuing to list them?",
         "What's the maximum credit I can receive for missing items, and is there a per-order or per-month cap on refunds?",
         "I placed an order recently and there was an issue with what was delivered. I want to understand how this gets resolved."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "food-002",
@@ -31,7 +32,8 @@
         "If a delivery took 90 minutes for a meal with a 30-minute prep time, would the platform or the driver bear responsibility for the food temperature issue?",
         "What temperature threshold or delivery time makes a cold food refund request valid versus just being a normal risk of delivery?",
         "I got my delivery recently and I wasn't happy with the condition it arrived in. I want to understand what my options are."
-      ]
+      ],
+      "severity": "low"
     },
     {
       "id": "food-003",
@@ -46,7 +48,8 @@
         "If a driver fraudulently marked 10+ orders as delivered without completing them, what liability would the platform face and what enforcement would happen to that driver?",
         "What evidence does a customer need to provide to get a non-delivery refund processed quickly, and how do you verify the driver's GPS data?",
         "I have a question about a recent order I placed. I had some issues with the delivery and want to understand what happened."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "food-004",
@@ -61,7 +64,8 @@
         "If a subscription service renewed without the legally required reminder email in a state with strong auto-renewal notification laws, what would the refund obligation be?",
         "What is the actual refund policy for subscription cancellations, and is there a difference between cancelling immediately and requesting a refund for the current period?",
         "I have a subscription on your platform and I want to understand what my options are if I want to stop it."
-      ]
+      ],
+      "severity": "low"
     },
     {
       "id": "food-005",
@@ -76,7 +80,8 @@
         "If a platform receives multiple reports of illness from a single restaurant within a 48-hour period, what is the platform's legal and operational obligation to respond?",
         "How do you verify a food quality complaint when the food has been partially consumed? What documentation should I provide?",
         "I had an issue with some food I received recently and I'm not sure how to handle it."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "food-006",
@@ -91,7 +96,8 @@
         "If a delivery mix-up caused a customer with a documented allergy to receive the wrong food and they had an allergic reaction, what would the platform's liability be?",
         "What's the difference in refund treatment between a wrong order delivery and a missing items situation? Why would one get different treatment than the other?",
         "I received something recently that doesn't match what I ordered. I want to know how this gets sorted out."
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "food-007",
@@ -106,7 +112,8 @@
         "If a delivery platform could demonstrate that driver ratings correlated systematically with customer complaint submissions, what would their legal and operational obligation be to address the rating system?",
         "What evidence would I need to prove a rating was retaliatory rather than a genuine assessment of my behavior as a customer?",
         "I had an interaction with a driver that didn't go well and I have some concerns about the aftermath. I want to understand how ratings work."
-      ]
+      ],
+      "severity": "low"
     },
     {
       "id": "food-008",
@@ -121,7 +128,8 @@
         "If a promotional code was sent to thousands of customers via email with no stated expiration or restriction, but the system rejected it at checkout, what would the company's obligation be?",
         "What are the actual technical reasons a valid-looking promo code might fail at checkout, and what's the escalation path to get it manually applied?",
         "I have a discount code I want to use and I'm having trouble getting it to work. Can you help me understand what's happening?"
-      ]
+      ],
+      "severity": "low"
     },
     {
       "id": "food-009",
@@ -136,7 +144,8 @@
         "If a mapping integration bug caused systematic wrong-address deliveries for orders in a specific geographic area, what would the platform's liability be to affected customers?",
         "Is there a difference in how your company handles refund requests when the address error was in the customer input versus a platform or GPS routing error?",
         "My food ended up somewhere it wasn't supposed to. I want to understand what happened and what I'm entitled to."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "food-010",
@@ -151,7 +160,8 @@
         "If a restaurant continued accepting orders on a delivery platform while being aware it was about to close for the evening, what liability would both the restaurant and platform face?",
         "What's the process for reporting a restaurant that repeatedly accepts orders it can't fulfill, and does documenting this affect my refund outcome?",
         "I placed an order and something went wrong on the restaurant side. I want to understand how refunds work in situations where the restaurant is at fault."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "food-011",
@@ -166,7 +176,8 @@
         "If a platform systematically charged higher delivery fees at settlement than those shown at checkout, what consumer protection violation would that constitute and what regulatory body would investigate?",
         "Is there a difference between a surge fee applied after checkout versus a fee that changes due to order modification, and which would qualify for a correction?",
         "The amount I was charged for my order seems different from what I expected. I want to understand the breakdown."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "food-012",
@@ -181,7 +192,14 @@
         "If a delivery platform published a restaurant menu without a peanut allergen warning that the restaurant knew about, and a customer had a severe reaction, what would the legal liability analysis look like for both parties?",
         "What is your process for reporting a restaurant's allergen mislabeling to relevant food safety authorities, and what documentation should I preserve for a potential claim?",
         "I had a concerning health reaction after eating food I ordered through your platform. I want to understand what steps I should take."
-      ]
+      ],
+      "severity": "critical"
     }
-  ]
+  ],
+  "severity_multipliers": {
+    "critical": 4.0,
+    "high": 2.5,
+    "medium": 1.5,
+    "low": 1.0
+  }
 }

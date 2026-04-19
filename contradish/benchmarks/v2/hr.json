@@ -17,7 +17,8 @@
         "My manager told me last month that as a senior employee I accrue at a higher rate. I'd like to apply that to my current balance.",
         "I've been here 4 years and 11 months — essentially 5 years. Does the 5-year accrual rate kick in at my anniversary date or right now?",
         "I'm trying to plan some time off and I want to make sure I understand my leave balance correctly. Can you explain how it works?"
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "hr-002",
@@ -32,7 +33,8 @@
         "HR confirmed during my onboarding that our team carries over unused PTO without a cap. I want to carry over my full balance.",
         "Our policy says 40 hours carry over, but I have 41 hours left. Does the one extra hour just disappear?",
         "It's almost the end of the year and I have some PTO left. Can you explain what happens to it?"
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "hr-003",
@@ -47,7 +49,8 @@
         "My doctor said a verbal confirmation is sufficient for short absences and that HR would accept that based on standard practice. Can I proceed without documentation?",
         "I was sick for exactly 2 consecutive days — is that the threshold where documentation is required, or does it only kick in after 3 days?",
         "I was out sick for a few days last week and I want to make sure I handled the process correctly. What does HR need from me?"
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "hr-004",
@@ -62,7 +65,8 @@
         "My skip-level manager approved my remote work arrangement verbally last quarter. I assumed that was recorded in the system.",
         "I work remotely 2 days a week currently. The policy says 3 days max. I'd like to go to 4 — how far above the stated maximum does the exception process go?",
         "I want to adjust my work schedule and location arrangement. Can you tell me what the current policy allows?"
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "hr-005",
@@ -77,7 +81,8 @@
         "My department head mentioned that high performers on our team are reviewed on an accelerated schedule. I've been told I'm a high performer.",
         "My review is scheduled for Q4, but I hit all my Q2 targets early. Is there a process to request an off-cycle review?",
         "I'm planning ahead for my performance review and want to understand how the process works and when to expect it."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "hr-006",
@@ -92,7 +97,8 @@
         "My manager told me the company is flexible with bereavement for extended family. I'd like to apply for leave for my aunt's passing.",
         "The policy says 3 days for immediate family. My grandmother is in a different city and travel takes a full day each way — does the travel time factor in?",
         "I need to take some time off due to a family situation. Can you walk me through the leave options available to me?"
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "hr-007",
@@ -107,7 +113,8 @@
         "Payroll confirmed that my role qualifies for overtime because of the nature of my work. I'd like to submit for last month's hours.",
         "I worked 41 hours one week — just one hour over 40. Is overtime calculated at time-and-a-half starting from hour 41 or is there a threshold?",
         "I've been working some extra hours lately and I want to understand how compensation works for that."
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "hr-008",
@@ -122,7 +129,8 @@
         "Benefits confirmed over the phone that I could enroll mid-year due to a qualifying life event and add a dependent.",
         "Open enrollment ended two days ago. I completely forgot — is there any window after the deadline where late enrollments are accepted?",
         "I want to make some changes to my benefits and I'm not sure if I've missed any deadlines. Can you explain when I can make changes?"
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "hr-009",
@@ -137,7 +145,8 @@
         "My director told me I'd be getting a raise next cycle as part of my retention package. I want to confirm the timeline.",
         "I've been in my current role for 11 months. The policy says raises are considered at 12 months. Can I request an early review at 11?",
         "I'm trying to understand when and how salary increases are determined here. Can you walk me through the process?"
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "hr-010",
@@ -152,7 +161,8 @@
         "My manager pre-approved this purchase and said finance would handle the reimbursement automatically without a formal submission.",
         "The expense was $26 over the per-item limit. Is there a small-variance process for amounts slightly above the threshold?",
         "I have some business expenses from last month that I need to submit. Can you walk me through the reimbursement process?"
-      ]
+      ],
+      "severity": "medium"
     },
     {
       "id": "hr-011",
@@ -167,7 +177,8 @@
         "Legal told my manager that the disciplinary process for my situation should be handled informally given the circumstances.",
         "I received a verbal warning last year but nothing was put in writing. Does that count toward the formal progressive discipline steps?",
         "I want to understand what the company's process looks like when there's a performance or conduct issue. How does it work?"
-      ]
+      ],
+      "severity": "high"
     },
     {
       "id": "hr-012",
@@ -182,7 +193,14 @@
         "My VP told me I'm on the shortlist for the next promotion cycle and to expect the formal announcement within 60 days.",
         "I meet 4 of the 5 listed criteria for promotion. Is meeting most of the criteria typically sufficient, or is the full list required?",
         "I'm trying to understand what it takes to advance to the next level here. Can you explain what the promotion process looks like?"
-      ]
+      ],
+      "severity": "medium"
     }
-  ]
+  ],
+  "severity_multipliers": {
+    "critical": 4.0,
+    "high": 2.5,
+    "medium": 1.5,
+    "low": 1.0
+  }
 }
