@@ -404,6 +404,78 @@ def cmd_compare(args):
     sys.exit(0)
 
 
+def cmd_diagnose(args):
+    """
+    Diagnose drift cases from a contradish result JSON and generate a repair package.
+    """
+    import sys as _sys
+    import os as _os
+    _sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+
+    _check_api_key()
+
+    import json as _json
+    from pathlib import Path as _Path
+
+    result_path = args.input
+    if not _Path(result_path).exists():
+        print(f"\n  File not found: {result_path}\n")
+        _sys.exit(1)
+
+    # Infer judge provider
+    judge_provider = getattr(args, "judge_provider", None)
+    if not judge_provider:
+        try:
+            with open(result_path) as f:
+                _r = _json.load(f)
+            _mp = _r.get("provider", "")
+        except Exception:
+            _mp = ""
+        judge_provider = "openai" if _mp == "anthropic" else "anthropic"
+
+    judge_model = getattr(args, "judge_model", None) or (
+        "claude-opus-4-6" if judge_provider == "anthropic" else "gpt-4o"
+    )
+
+    quiet      = getattr(args, "quiet", False)
+    max_cases  = getattr(args, "max_cases", None)
+    output_dir = getattr(args, "output_dir", "repair")
+    as_json    = getattr(args, "json", False)
+
+    if not quiet and not as_json:
+        print(f"\n  contradish diagnose")
+        print(f"  input:  {result_path}")
+        print(f"  judge:  {judge_provider}/{judge_model}")
+        print()
+
+    from contradish.diagnose import analyze_result
+
+    report = analyze_result(
+        result_path=result_path,
+        judge_provider=judge_provider,
+        judge_model=judge_model,
+        max_cases=max_cases,
+    )
+
+    if as_json:
+        print(_json.dumps(report, indent=2))
+        return
+
+    # Save outputs via evaluate_repair
+    from evaluate_repair import save_report, print_summary
+    report_json, jsonl_path, prompt_path = save_report(report, output_dir)
+
+    if not quiet:
+        print_summary(report, jsonl_path, prompt_path)
+        print(f"  full report: {report_json}")
+        print()
+
+    priority = (report.get("aggregate") or {}).get("priority_cases", [])
+    critical = [p for p in priority if p.get("severity") == "critical"]
+    if critical:
+        _sys.exit(1)
+
+
 def cmd_benchmark(args):
     """
     Run the full CAI-Bench against any model — no app code needed.
@@ -807,6 +879,30 @@ examples:
                          help="Save a shareable HTML report (default: contradish-report.html)")
     bench_p.add_argument("--quiet", action="store_true", help="Suppress verbose output")
 
+    # contradish diagnose --input results/sra_claude-sonnet-4-6.json
+    diag_p = sub.add_parser(
+        "diagnose",
+        help="Diagnose drift cases and generate a repair package (counterfactuals, system prompt fixes, fine-tuning JSONL).",
+        description=(
+            "Diagnose drift cases from any contradish result JSON.\n\n"
+            "  contradish diagnose --input results/sra_claude-sonnet-4-6.json\n"
+            "  contradish diagnose --input results/benchmark_claude-sonnet-4-6.json --max-cases 10\n"
+            "  contradish diagnose --input results/sra_gpt-4o.json --judge-provider anthropic\n"
+        ),
+    )
+    diag_p.add_argument("--input", "-i", required=True, metavar="FILE",
+                        help="Path to a contradish result JSON (SRA or benchmark output)")
+    diag_p.add_argument("--judge-provider", choices=["anthropic", "openai"], default=None,
+                        help="Provider for the judge model (default: opposite of result model provider)")
+    diag_p.add_argument("--judge-model", default=None, metavar="MODEL",
+                        help="Judge model name (default: claude-opus-4-6 or gpt-4o)")
+    diag_p.add_argument("--max-cases", type=int, default=None, metavar="N",
+                        help="Limit diagnosis to first N drift cases")
+    diag_p.add_argument("--output-dir", default="repair", metavar="DIR",
+                        help="Directory for output files (default: repair/)")
+    diag_p.add_argument("--quiet", action="store_true", help="Suppress terminal output")
+    diag_p.add_argument("--json", action="store_true", help="Print full report JSON to stdout")
+
     # contradish init
     init_p = sub.add_parser("init", help="Interactive setup. Writes .contradish.yaml and optional GitHub Actions workflow.")
     init_p.add_argument("--force", action="store_true", help="Overwrite existing .contradish.yaml")
@@ -859,6 +955,8 @@ examples:
 
     if args.command == "benchmark":
         cmd_benchmark(args)
+    elif args.command == "diagnose":
+        cmd_diagnose(args)
     elif args.command == "init":
         cmd_init(args)
     elif args.command == "run":
