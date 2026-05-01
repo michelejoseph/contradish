@@ -476,6 +476,101 @@ def cmd_diagnose(args):
         _sys.exit(1)
 
 
+def cmd_monitor(args):
+    """
+    Detect consistency failures in real production conversation logs.
+    """
+    import sys as _sys
+    import os as _os
+    _sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+
+    _check_api_key()
+
+    import json as _json
+    from pathlib import Path as _Path
+
+    from contradish.monitor import (
+        load_log, find_clusters, score_clusters,
+        analyze_monitor, print_monitor_summary,
+    )
+    # LLM and Judge imported below after path setup
+
+    judge_provider = getattr(args, "judge_provider", None) or (
+        "openai" if _os.environ.get("ANTHROPIC_API_KEY") else "anthropic"
+    )
+    judge_model = getattr(args, "judge_model", None) or (
+        "claude-opus-4-6" if judge_provider == "anthropic" else "gpt-4o"
+    )
+    quiet   = getattr(args, "quiet", False)
+    as_json = getattr(args, "json", False)
+
+    if not quiet and not as_json:
+        print(f"\n  contradish monitor  —  {args.input}")
+        print(f"  judge: {judge_provider}/{judge_model}")
+        print()
+
+    try:
+        conversations = load_log(
+            args.input,
+            max_conversations=getattr(args, "max", 200),
+            format=getattr(args, "format", "auto"),
+        )
+    except (FileNotFoundError, ValueError) as e:
+        print(f"\n  {e}\n")
+        _sys.exit(1)
+
+    if not quiet and not as_json:
+        print(f"  loaded {len(conversations)} conversations")
+
+    from contradish.llm   import LLMClient as _LLM
+    from contradish.judge import Judge as _Judge
+    llm   = _LLM(provider=judge_provider, model=judge_model)
+    judge = _Judge(llm)
+
+    clusters = find_clusters(
+        conversations, judge,
+        min_cluster_size=getattr(args, "min_cluster_size", 3),
+        batch_size=getattr(args, "batch_size", 25),
+        quiet=quiet or as_json,
+    )
+
+    if not clusters:
+        if not as_json:
+            print(f"\n  No clusters found. Try --min-cluster-size 2 or --max with a higher value.\n")
+        _sys.exit(0)
+
+    scored   = score_clusters(clusters, judge, quiet=quiet or as_json)
+    analysis = analyze_monitor(scored, total_conversations=len(conversations))
+    analysis["log_path"]       = args.input
+    analysis["judge_provider"] = judge_provider
+    analysis["judge_model"]    = judge_model
+
+    if as_json:
+        print(_json.dumps(analysis, indent=2))
+        return
+
+    if not quiet:
+        print_monitor_summary(analysis, args.input)
+
+    out_path = getattr(args, "output", None)
+    if not out_path:
+        stem     = _Path(args.input).stem
+        out_path = f"results/monitor_{stem}.json"
+
+    _Path(out_path).parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w") as f:
+        _json.dump(analysis, f, indent=2)
+
+    if not quiet:
+        print(f"  report saved: {out_path}")
+        print()
+
+    drift_rate = analysis.get("drift_rate", 0.0)
+    threshold  = getattr(args, "threshold", 0.30)
+    if drift_rate > threshold:
+        _sys.exit(1)
+
+
 def cmd_benchmark(args):
     """
     Run the full CAI-Bench against any model — no app code needed.
@@ -903,6 +998,36 @@ examples:
     diag_p.add_argument("--quiet", action="store_true", help="Suppress terminal output")
     diag_p.add_argument("--json", action="store_true", help="Print full report JSON to stdout")
 
+    # contradish monitor --input production_logs.jsonl
+    mon_p = sub.add_parser(
+        "monitor",
+        help="Detect consistency failures in real production conversation logs.",
+        description=(
+            "Find drift hotspots in your actual production traffic.\n\n"
+            "  contradish monitor --input logs.jsonl\n"
+            "  contradish monitor --input logs.jsonl --min-cluster-size 3 --max 500\n"
+            "  contradish monitor --input logs.jsonl --threshold 0.25 --output results/monitor.json\n"
+        ),
+    )
+    mon_p.add_argument("--input", "-i", required=True, metavar="FILE",
+                       help="Path to conversation log (JSONL, JSON, or CSV)")
+    mon_p.add_argument("--format", choices=["auto", "jsonl", "json", "csv"], default="auto",
+                       help="Log format (default: auto-detect from extension)")
+    mon_p.add_argument("--max", type=int, default=200, metavar="N",
+                       help="Maximum conversations to load (default: 200)")
+    mon_p.add_argument("--min-cluster-size", type=int, default=3, metavar="N",
+                       help="Minimum conversations per cluster to score (default: 3)")
+    mon_p.add_argument("--batch-size", type=int, default=25, metavar="N",
+                       help="Inputs per clustering batch (default: 25)")
+    mon_p.add_argument("--threshold", type=float, default=0.30, metavar="F",
+                       help="Drift rate threshold for exit 1 (default: 0.30)")
+    mon_p.add_argument("--judge-provider", choices=["anthropic", "openai"], default=None)
+    mon_p.add_argument("--judge-model", default=None, metavar="MODEL")
+    mon_p.add_argument("--output", "-o", default=None, metavar="FILE",
+                       help="Save full analysis JSON to this path")
+    mon_p.add_argument("--quiet", action="store_true")
+    mon_p.add_argument("--json", action="store_true", help="Print analysis JSON to stdout")
+
     # contradish init
     init_p = sub.add_parser("init", help="Interactive setup. Writes .contradish.yaml and optional GitHub Actions workflow.")
     init_p.add_argument("--force", action="store_true", help="Overwrite existing .contradish.yaml")
@@ -955,6 +1080,8 @@ examples:
 
     if args.command == "benchmark":
         cmd_benchmark(args)
+    elif args.command == "monitor":
+        cmd_monitor(args)
     elif args.command == "diagnose":
         cmd_diagnose(args)
     elif args.command == "init":
