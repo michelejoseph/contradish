@@ -112,7 +112,16 @@ def load_drift_cases(result_path: str) -> tuple[list[dict], str]:
 # ─────────────────────────────────────────────────────────
 
 def diagnose_case(case: dict, judge) -> dict:
-    """Run repair diagnosis on a single drift case."""
+    """
+    Run full diagnosis on a single drift case.
+
+    Scores three dimensions beyond the original failure mode + counterfactual:
+      contradiction_type — adversarial_pressure | real_world_tension | representational_failure
+      csa_score          — did the model know it was unstable? (0-1)
+      csa_quadrant       — stable_aware | stable_unaware | drifted_aware | drifted_unaware
+      ctr_score          — did it use the right strategy for this contradiction type? (0-1)
+    """
+    # Core: failure mode, counterfactual, system prompt fix, training example
     result = judge.diagnose_drift(
         question          = case["question"],
         canonical_position= case["canonical_position"],
@@ -123,6 +132,42 @@ def diagnose_case(case: dict, judge) -> dict:
     )
     result["topic"]  = case.get("topic", "")
     result["source"] = case.get("source", "unknown")
+
+    # Contradiction type classification
+    ct = judge.classify_contradiction(
+        domain            = case["domain"],
+        topic             = case.get("topic", ""),
+        canonical_position= case["canonical_position"],
+        question          = case["question"],
+        technique         = case["technique"],
+    )
+    result["contradiction_type"]     = ct["contradiction_type"]
+    result["contradiction_strategy"] = ct.get("correct_strategy", "")
+    result["contradiction_rationale"]= ct.get("rationale", "")
+
+    # CSA: did the model know it was drifting?
+    csa = judge.evaluate_coherence_awareness(
+        question          = case["question"],
+        canonical_position= case["canonical_position"],
+        response          = case["actual_response"],
+        technique         = case["technique"],
+        drifted           = True,  # all diagnosed cases are drifted
+    )
+    result["csa_score"]       = csa["csa_score"]
+    result["csa_quadrant"]    = csa["quadrant"]
+    result["coherence_notes"] = csa["coherence_notes"]
+
+    # CTR: did it use the right strategy for this contradiction type?
+    ctr = judge.evaluate_contradiction_response(
+        question          = case["question"],
+        response          = case["actual_response"],
+        canonical_position= case["canonical_position"],
+        contradiction_type= ct["contradiction_type"],
+        correct_strategy  = ct.get("correct_strategy", ""),
+    )
+    result["ctr_score"]    = ctr["ctr_score"]
+    result["strategy_used"]= ctr.get("strategy_used", "")
+
     return result
 
 
@@ -185,17 +230,22 @@ _SEVERITY_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 def _aggregate(diagnoses: list[dict]) -> dict:
     """
     Aggregate individual diagnoses into actionable package:
-      - failure_mode_distribution: ranked by frequency
-      - domain_distribution:       where failures concentrate
-      - aggregate_fixes:           deduplicated system prompt additions
-      - training_examples:         JSONL-ready fine-tuning set
-      - priority_cases:            critical/high severity failures to address first
+      - failure_mode_distribution:       ranked by frequency
+      - contradiction_type_distribution: adversarial_pressure vs real_world_tension vs representational_failure
+      - domain_distribution:             where failures concentrate
+      - csa_distribution:                quadrant breakdown — how often model knew it was unstable
+      - aggregate_fixes:                 deduplicated system prompt additions
+      - training_examples:               JSONL-ready fine-tuning set
+      - priority_cases:                  critical/high severity failures to address first
+      - worst_cases:                     drifted_unaware — silent confident drift (most dangerous)
     """
     if not diagnoses:
         return {}
 
     mode_counts   = Counter(d.get("failure_mode", "UNKNOWN") for d in diagnoses)
     domain_counts = Counter(d.get("domain", "unknown") for d in diagnoses)
+    ct_counts     = Counter(d.get("contradiction_type", "adversarial_pressure") for d in diagnoses)
+    quad_counts   = Counter(d.get("csa_quadrant", "drifted_unaware") for d in diagnoses)
 
     # Best system prompt fix per failure mode (highest fix_confidence)
     fixes_by_mode: dict[str, dict] = {}
@@ -243,19 +293,48 @@ def _aggregate(diagnoses: list[dict]) -> dict:
 
     priority_cases = [
         {
-            "domain":       d.get("domain", ""),
-            "topic":        d.get("topic", ""),
-            "failure_mode": d.get("failure_mode", ""),
-            "why":          d.get("why_it_worked", ""),
-            "severity":     d.get("severity", ""),
+            "domain":            d.get("domain", ""),
+            "topic":             d.get("topic", ""),
+            "failure_mode":      d.get("failure_mode", ""),
+            "contradiction_type":d.get("contradiction_type", ""),
+            "csa_quadrant":      d.get("csa_quadrant", ""),
+            "why":               d.get("why_it_worked", ""),
+            "severity":          d.get("severity", ""),
         }
         for d in diagnoses
         if d.get("severity") in ("critical", "high")
     ]
 
+    # Worst cases: drifted_unaware = silent confident drift
+    worst_cases = [
+        {
+            "domain":        d.get("domain", ""),
+            "topic":         d.get("topic", ""),
+            "failure_mode":  d.get("failure_mode", ""),
+            "technique":     d.get("technique", ""),
+            "csa_score":     d.get("csa_score"),
+            "coherence_notes": d.get("coherence_notes", ""),
+            "severity":      d.get("severity", ""),
+        }
+        for d in diagnoses
+        if d.get("csa_quadrant") == "drifted_unaware"
+    ]
+
+    # CSA and CTR averages
+    csa_vals = [d["csa_score"] for d in diagnoses if d.get("csa_score") is not None]
+    ctr_vals = [d["ctr_score"] for d in diagnoses if d.get("ctr_score") is not None]
+    avg_csa  = round(sum(csa_vals) / len(csa_vals), 4) if csa_vals else None
+    avg_ctr  = round(sum(ctr_vals) / len(ctr_vals), 4) if ctr_vals else None
+
     return {
         "failure_mode_distribution": [
             {"failure_mode": m, "count": c} for m, c in mode_counts.most_common()
+        ],
+        "contradiction_type_distribution": [
+            {"contradiction_type": ct, "count": c} for ct, c in ct_counts.most_common()
+        ],
+        "csa_quadrant_distribution": [
+            {"quadrant": q, "count": c} for q, c in quad_counts.most_common()
         ],
         "domain_distribution": [
             {"domain": d, "count": c} for d, c in domain_counts.most_common()
@@ -263,6 +342,9 @@ def _aggregate(diagnoses: list[dict]) -> dict:
         "aggregate_fixes":   aggregate_fixes,
         "training_examples": training_examples,
         "priority_cases":    priority_cases,
+        "worst_cases":       worst_cases,
+        "avg_csa":           avg_csa,
+        "avg_ctr":           avg_ctr,
         "total_diagnoses":   len(diagnoses),
         "total_ft_examples": len(training_examples),
     }
