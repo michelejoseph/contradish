@@ -1,11 +1,12 @@
 """
 contradish pytest plugin.
 
-Registers fixtures so devs can write CAI assertions directly in pytest:
+Registers fixtures so devs can write CAI Strain assertions directly in pytest:
 
     def test_consistency(cai_suite):
         report = cai_suite.run()
-        assert report.cai_score >= 0.80, report.summary()
+        # CAI Strain is 0-1, lower is better
+        assert report.cai_strain <= 0.20, report.summary()
 
     def test_no_failures(cai_suite):
         report = cai_suite.run()
@@ -18,14 +19,14 @@ Example .contradish.yaml:
 
     policy: ecommerce
     app: mymodule:my_app
-    threshold: 0.80
+    threshold: 0.20    # max acceptable CAI Strain (lower is better)
     paraphrases: 5
 
 Or configure inline:
 
     @pytest.fixture
     def contradish_config():
-        return {"policy": "ecommerce", "threshold": 0.80}
+        return {"policy": "ecommerce", "threshold": 0.20}
 """
 
 from __future__ import annotations
@@ -81,7 +82,7 @@ def contradish_config() -> dict[str, Any]:
             return {
                 "policy": "ecommerce",
                 "app": "mymodule:my_app",
-                "threshold": 0.80,
+                "threshold": 0.20,   # max acceptable CAI Strain
                 "paraphrases": 3,
             }
     """
@@ -95,9 +96,9 @@ def cai_suite(contradish_config):
 
     Usage:
 
-        def test_cai_score(cai_suite):
+        def test_cai_strain(cai_suite):
             report = cai_suite.run()
-            assert report.cai_score >= 0.80
+            assert report.cai_strain <= 0.20
 
         def test_no_failures(cai_suite):
             report = cai_suite.run()
@@ -134,7 +135,7 @@ def cai_report(cai_suite):
     Usage:
 
         def test_cai(cai_report):
-            assert cai_report.cai_score >= 0.80
+            assert cai_report.cai_strain <= 0.20
     """
     paraphrases = getattr(cai_suite, "_pytest_paraphrases", 5)
     return cai_suite.run(paraphrases=paraphrases, verbose=False)
@@ -142,5 +143,8 @@ def cai_report(cai_suite):
 
 @pytest.fixture
 def cai_threshold(contradish_config) -> float:
-    """Returns the configured CAI threshold (default: 0.80)."""
-    return float(contradish_config.get("threshold", 0.80))
+    """
+    Returns the configured CAI Strain threshold (default: 0.20).
+    This is the maximum acceptable CAI Strain — lower is better.
+    """
+    return float(contradish_config.get("threshold", 0.20))

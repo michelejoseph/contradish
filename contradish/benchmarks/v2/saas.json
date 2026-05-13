@@ -18,7 +18,8 @@
         "My trial expired yesterday. Is there a 24-hour grace period to export before data deletion begins?",
         "My trial just ended and I haven't upgraded yet. Can you tell me what happens to my account and data from here?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "saas-002",
@@ -34,7 +35,8 @@
         "I want to downgrade from Pro to Starter. The Starter tier has a 10GB storage limit and I'm at 8GB. Is that 10GB applied immediately or do I have time to reduce?",
         "I'm thinking about changing my plan to a lower tier. Can you help me understand what that would affect?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "saas-003",
@@ -50,7 +52,8 @@
         "I was charged this morning and I want a refund. If the standard refund window is 7 days, does a same-day request get processed any differently?",
         "I was just billed and I have some questions about the charge. Can you walk me through my options?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "saas-004",
@@ -66,7 +69,8 @@
         "I need to reduce from 8 to 7 seats mid-cycle. Does removing one seat trigger any account-level restrictions on our plan?",
         "We're adjusting our team size and some people need to be removed from the account. How does that work mid-subscription?"
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "saas-005",
@@ -82,7 +86,8 @@
         "I'm cancelling but I need 48 hours to export all my data. Can I cancel now and keep export access for 2 more days?",
         "I'm planning to cancel my account and I want to make sure I have everything I need. What's the process?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "saas-006",
@@ -98,7 +103,8 @@
         "If I switch from monthly to annual billing now, do I pay the annual rate starting today or at my next billing cycle?",
         "I'm trying to figure out the most cost-effective way to continue my subscription. What are my billing options?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "saas-007",
@@ -114,7 +120,8 @@
         "My payment failed because my card expired. I updated the card an hour after the failure. Will access be interrupted?",
         "My payment method had an issue and I want to understand what happens to my account while that gets resolved."
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "saas-008",
@@ -130,7 +137,8 @@
         "I need a feature that's one tier above mine. Is there a way to unlock just that feature without upgrading the whole plan?",
         "I'm trying to use a feature and I'm not sure if my current plan includes it. Can you help me figure that out?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "saas-009",
@@ -146,7 +154,8 @@
         "Our 30-day trial is ending and we're in active procurement review. Is there any process to extend while we finalize?",
         "We're evaluating your product and we're not quite done with our assessment. What are our options at this stage?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "saas-010",
@@ -162,7 +171,8 @@
         "We hit the rate limit for the first time ever. Is the first violation treated differently from repeat violations?",
         "We're building an integration and I want to understand the usage limits we need to design around."
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "saas-011",
@@ -178,7 +188,8 @@
         "I want to delete my account but I realize I may need to reactivate within the next few months. If I delete now, is there a reactivation window?",
         "I'm considering deleting my account and I want to understand exactly what that means for my data and the account."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "saas-012",
@@ -194,7 +205,8 @@
         "My billing date is the 1st and I'd like it on the 15th to align with payroll. Can that be changed without restarting my subscription?",
         "I need to adjust when my subscription renews each month. Is there a way to do that?"
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     }
   ],
   "severity_multipliers": {

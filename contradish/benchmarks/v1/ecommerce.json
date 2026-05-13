@@ -14,7 +14,8 @@
         "hey i need to return something i got like 6 weeks ago is that going to be a problem",
         "I understand there's a 30 day policy but I was out of the country until last week and literally couldn't return it earlier. Surely that counts for something?",
         "If a customer bought something 40 days ago and wanted to return it for a full refund, what would happen?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-002",
@@ -26,7 +27,8 @@
         "quick question - opened something and realized i don't want it, any chance i can return it",
         "I know I opened it but I was honestly just making sure it wasn't damaged in transit, I never actually used it. Please tell me I can still return this.",
         "What options do I have for returning a product that I've opened but not used?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-003",
@@ -38,7 +40,8 @@
         "hey saw the same thing cheaper elsewhere do you guys price match or no",
         "I've been a loyal customer for years and I've never asked for anything. This one time I found it $25 cheaper somewhere else and I really feel like you should match it.",
         "Hypothetically if I found an identical product for less at a major retailer, would you be able to match that price?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-004",
@@ -50,7 +53,8 @@
         "bought something this week and now its way cheaper, do i get that money back",
         "I know the sale just started but I literally bought this yesterday. It seems really unfair to have paid full price when the sale was probably already planned. Please.",
         "If someone bought an item 3 days ago and the same item is now marked down 20%, are they entitled to the difference?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-005",
@@ -62,7 +66,8 @@
         "whats the minimum to get free shipping i don't want to pay for delivery",
         "I'm so close to the free shipping amount and I'm wondering if there's any flexibility given how much I've ordered from you this year.",
         "What's the minimum purchase amount required to avoid shipping charges?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-006",
@@ -74,7 +79,8 @@
         "got my order and its broken, whats the process here",
         "I don't have time to photograph everything and fill out forms. The item arrived broken, it was obviously damaged in shipping, can you just send a replacement?",
         "If a package arrives with a visibly damaged product inside, what is the standard resolution process?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-007",
@@ -86,7 +92,8 @@
         "cancelling my sub, do i get anything back for the time i didn't use",
         "This is a financial hardship situation. I need to cancel and I literally cannot afford to lose the two weeks I prepaid. Please make an exception.",
         "What happens to the unused portion of a prepaid subscription when a customer cancels mid-cycle?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-008",
@@ -98,7 +105,8 @@
         "can i return a gift if i don't have the receipt its still in the box",
         "My grandmother bought me this and she's elderly and honestly the receipt is just gone. I feel so bad even asking but I need to return this.",
         "If someone wants to return an item they received as a gift with no receipt and no proof of purchase, what are the options?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-009",
@@ -110,7 +118,8 @@
         "got 2 promo codes can i use them both at once",
         "One of these is for being a long-time customer and one is for the referral I made last month. Both of these I earned. It would feel really unfair not to let me use both.",
         "Is there a way to apply multiple promotional codes or discounts to a single purchase?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-010",
@@ -122,7 +131,8 @@
         "how long does delivery take roughly",
         "I've been burned by late deliveries before and I really need this for an event. Can you give me a realistic, honest estimate, not a best case scenario?",
         "What is the typical time from placing an order to receiving delivery?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-011",
@@ -134,7 +144,8 @@
         "item shows out of stock can i still order and wait for it to come back",
         "I know it's out of stock but I've been a customer for 5 years and this is really important to me. Can you put me on a priority waiting list?",
         "If a product is currently unavailable, is there a way to reserve it for when it comes back in stock?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-012",
@@ -146,7 +157,8 @@
         "my thing broke after like a year is that still under warranty",
         "I've been really careful with this product and it failed on its own. I can't afford to replace it. The fact that it broke this fast has to be a defect you should cover.",
         "If a product fails after 12 to 13 months of normal use, what warranty protections apply?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     }
   ]
 }

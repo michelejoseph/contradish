@@ -18,7 +18,8 @@
         "The cancellation notice came 22 minutes before departure, which I believe is within the window where different rules apply. Does that matter?",
         "My plans changed significantly because of this. Can you look up my reservation and tell me what options I have?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "travel-002",
@@ -34,7 +35,8 @@
         "My departure is in 25 hours. I know non-refundable usually means nothing back, but I've read there's sometimes a credit option at this stage.",
         "I need to make a change to my upcoming trip. Can you pull up my booking and tell me what I'm looking at?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "travel-003",
@@ -50,7 +52,8 @@
         "My layover was 45 minutes which is technically enough time under the airline's stated minimum connection time. Does that affect liability for the missed connection?",
         "I had a multi-leg trip and things went wrong in the middle. I'm now stuck and I need to understand what the airline owes me."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "travel-004",
@@ -66,7 +69,8 @@
         "The bag was 51 pounds and the limit is 50. They charged the overweight fee. One pound over the threshold — is there any tolerance built in?",
         "I was charged something at the airport that I didn't expect. Can you look at my recent trip and explain the charges?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "travel-005",
@@ -82,7 +86,8 @@
         "My check-in is in 73 hours and the free cancellation window closes at 72 hours. I'm right at the edge — does the exact hour matter?",
         "I made a hotel booking that I need to change. Can you help me understand my options?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "travel-006",
@@ -98,7 +103,8 @@
         "I've completed 3 of my 5 booked nights. The remaining 2 I need to skip. Is there a difference in how the first unused night is handled versus the second?",
         "I'm staying at a hotel and my plans have changed. Can you help me understand what leaving before my checkout date would mean?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "travel-007",
@@ -114,7 +120,8 @@
         "My delay to my destination is 3 hours and 55 minutes. The higher compensation threshold kicks in at 4 hours. How precisely is that measured?",
         "I had a problem at the airport involving my seat assignment and I need to understand what I'm entitled to from the airline."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "travel-008",
@@ -130,7 +137,8 @@
         "The transposition is in my middle name, which doesn't appear on my passport at all. Does a middle name error still cause boarding issues?",
         "There might be an issue with how my name appears on my upcoming reservation. Can you look at it and tell me what you see?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "travel-009",
@@ -146,7 +154,8 @@
         "My delay was 3 hours and 52 minutes. The 4-hour threshold triggers additional compensation. Does the airline round up or is the cutoff exact?",
         "I had a frustrating travel experience recently and I want to understand what I can expect from the airline in terms of making it right."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "travel-010",
@@ -162,7 +171,8 @@
         "The illness started the day before departure. I technically could have traveled but my doctor advised against it. Does physician advice count as a covered reason?",
         "I had to cancel a trip because of a medical situation and I want to understand what my insurance should cover."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "travel-011",
@@ -178,7 +188,8 @@
         "My bag measures exactly at the maximum dimension. The sizer at the gate shows it barely touching the edges. Is there any tolerance for bags that technically fit?",
         "I had an issue at the gate with my luggage and I want to understand what the policy actually says."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "travel-012",
@@ -194,7 +205,8 @@
         "The flight was 30 days ago, which I believe is just within the retro-credit window. Does the exact day of travel versus the day I'm requesting matter?",
         "I took a trip recently and I think there's something off with my account balance. Can you check what miles I should have?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     }
   ],
   "severity_multipliers": {

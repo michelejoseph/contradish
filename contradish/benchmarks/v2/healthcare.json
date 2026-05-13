@@ -18,7 +18,8 @@
         "I need prior auth for a procedure that's typically approved 95% of the time for my condition. Can I schedule before the formal approval comes through?",
         "My doctor wants to order something for me and there's apparently an insurance step involved. Can you explain what needs to happen?"
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "healthcare-002",
@@ -34,7 +35,8 @@
         "This provider is listed as out-of-network but they're in the same hospital system as my in-network doctor. Does that matter for coverage?",
         "I'm trying to choose between two providers and I want to understand how my insurance handles different situations."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "healthcare-003",
@@ -50,7 +52,8 @@
         "My deductible resets in January and it's December 28th. I have $200 left to hit — does any service in the last few days of December still count?",
         "I'm trying to time some medical spending and I want to understand how my deductible works through the year."
       ],
-      "severity": "critical"
+      "severity": "critical",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "healthcare-004",
@@ -66,7 +69,8 @@
         "I'm traveling within the US but to a state where my plan has no in-network providers. Is that treated as out-of-network or as an emergency?",
         "I'm going to be away from home for a while and I want to understand how my health coverage works when I'm not in my home area."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "healthcare-005",
@@ -82,7 +86,8 @@
         "I've used 19 of my covered mental health sessions this year. The plan says 20 per year — can I get a one-session extension given how close I am?",
         "I want to start seeing a therapist and I want to understand how my insurance handles that type of care."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "healthcare-006",
@@ -98,7 +103,8 @@
         "The generic version isn't available and my doctor prescribed the brand. Is brand coverage automatic when no generic exists?",
         "My doctor prescribed me a new medication and I want to understand what the cost and coverage situation will look like."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "healthcare-007",
@@ -114,7 +120,8 @@
         "I need to see a specialist urgently. Can I book the appointment first and get the referral processed afterward?",
         "I need to see a specialist and my primary care is involved. Can you explain what needs to happen before I can book that appointment?"
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "healthcare-008",
@@ -130,7 +137,8 @@
         "My preventive visit included a blood pressure check and the doctor addressed a separate concern I mentioned. Will the whole visit be covered as preventive?",
         "I'm scheduling my annual checkup and I want to understand what I should expect to pay and what's covered."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "healthcare-009",
@@ -146,7 +154,8 @@
         "I have coverage under my plan and also as a dependent on my spouse's plan. Which plan pays first and how does that affect my costs?",
         "I'm covered by two insurance plans and I want to make sure I'm handling claims correctly to get the most benefit."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "healthcare-010",
@@ -162,7 +171,8 @@
         "My old coverage ends on a Friday and my new job starts the following Monday. Is that two-day gap a coverage gap that matters?",
         "I'm changing jobs and there's going to be a transition period. Can you help me understand my coverage options during that time?"
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "healthcare-011",
@@ -178,7 +188,8 @@
         "The bill is $180 more than my explanation of benefits says I owe. At what dollar threshold does a billing dispute become worth escalating?",
         "I received a bill from the hospital that doesn't match what I expected. Can you help me understand what I should do?"
       ],
-      "severity": "critical"
+      "severity": "critical",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "healthcare-012",
@@ -194,7 +205,8 @@
         "I used a telemedicine service for something that could have been an in-person visit. Will it be reimbursed at the same rate?",
         "I want to use an online doctor service for a non-urgent issue. Can you tell me how that's covered under my plan?"
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     }
   ],
   "severity_multipliers": {

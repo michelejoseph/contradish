@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "contradish"
-version = "1.0.0"
-description = "CAI testing for LLM apps. CAI-Bench v2: 20 domains, 2160 rows, 8 adversarial techniques. Consistency scoring, failure fingerprinting, pytest plugin, GitHub Actions, SARIF output, regression gating, and prompt repair."
+version = "1.3.0"
+description = "Close the repair loop: contradish improve runs the benchmark, rewrites your system prompt, re-runs, and returns the diff in CAI Strain in one command. Equivalence is audited per case so the headline number reflects model failure, not benchmark framing. CAI-Bench v2: 20 domains, 2,160 strain tests, 8 adversarial techniques."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }

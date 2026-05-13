@@ -2,8 +2,8 @@
 PromptRepair: automatically generates and tests improved prompt variants.
 
 Takes a system prompt with known CAI failures and returns up to N improved
-versions, each tested and ranked by their CAI score. Shows exactly how much
-each variant improved (or didn't).
+versions, each tested and ranked by their improvement in CAI Strain. Shows
+exactly how much each variant reduced drift (or didn't).
 
 Example:
     from contradish import Suite, PromptRepair
@@ -35,7 +35,7 @@ Example:
     )
 
     best = results[0]
-    print(f"CAI: {best.original_cai_score:.2f} -> {best.improved_cai_score:.2f} (+{best.delta:.2f})")
+    print(f"CAI Strain: {best.original_cai_strain:.2f} -> {best.improved_cai_strain:.2f} ({best.strain_delta:+.2f})")
     print(best.improved_prompt)
 """
 
@@ -73,7 +73,7 @@ class PromptRepair:
     Automatically generates improved prompt versions that fix CAI failures.
 
     Generates N variants, tests each one, and returns them ranked by
-    improved CAI score so you know exactly which fix worked best.
+    CAI Strain reduction so you know exactly which fix reduced the most drift.
 
     Args:
         api_key:  API key for the judge. Reads from env if omitted.
@@ -87,8 +87,8 @@ class PromptRepair:
             report=failing_report,
             app_factory=lambda prompt: lambda q: call_llm(q, system=prompt),
         )
-        print(results[0].improved_prompt)   # best version
-        print(results[0].delta)             # CAI improvement
+        print(results[0].improved_prompt)    # best version
+        print(results[0].strain_delta)       # CAI Strain change (negative = improvement)
     """
 
     def __init__(
@@ -120,14 +120,15 @@ class PromptRepair:
             verbose:       Print progress.
 
         Returns:
-            List of RepairResult sorted best to worst by improved CAI score.
+            List of RepairResult sorted best to worst (lowest CAI Strain first).
             results[0] is the best fix.
         """
-        original_cai = report.cai_score or 0.0
-        failures     = self._format_failures(report)
+        original_cai    = report.cai_score or 0.0
+        original_strain = round(1.0 - original_cai, 4)
+        failures        = self._format_failures(report)
 
         if verbose:
-            print_progress(f"original CAI score: {original_cai:.2f}")
+            print_progress(f"original CAI Strain: {original_strain:.2f}")
             print_progress(f"generating {self.n} improved prompt variants")
 
         improved_prompts = self._generate_variants(system_prompt, failures)
@@ -167,8 +168,9 @@ class PromptRepair:
         if verbose:
             print("\n  Prompt repair results:")
             for r in results:
-                arrow = f"+{r.delta:.2f}" if r.delta >= 0 else f"{r.delta:.2f}"
-                print(f"  #{r.rank}: CAI {r.original_cai_score:.2f} -> {r.improved_cai_score:.2f} ({arrow})")
+                # strain_delta < 0 means improvement (less drift)
+                arrow = f"{r.strain_delta:+.2f}"
+                print(f"  #{r.rank}: CAI Strain {r.original_cai_strain:.2f} -> {r.improved_cai_strain:.2f} ({arrow})")
 
         return results
 
@@ -195,7 +197,8 @@ class PromptRepair:
         lines = []
         for r in report.failed:
             lines.append(f"Rule: {r.test_case.name}")
-            lines.append(f"  CAI score: {r.cai_score:.2f}")
+            strain = r.cai_strain if r.cai_strain is not None else 1.0
+            lines.append(f"  CAI Strain: {strain:.2f}")
             if r.unstable_patterns:
                 lines.append(f"  Pattern: {r.unstable_patterns[0]}")
             if r.suggestion:

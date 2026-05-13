@@ -1,7 +1,7 @@
 """
 contradish diagnose — consistency failure diagnosis and prescription.
 
-The measurement layer (CTS, SRA, etc.) tells you your model is drifting.
+The measurement layer (Strain, SRA, etc.) tells you your model is drifting.
 The diagnosis layer tells you why, and what to change.
 
 For every drifted case, diagnose produces:

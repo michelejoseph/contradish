@@ -519,7 +519,7 @@ def to_audit_html(
       </div>
       <div class="nist-cell">
         <div class="nist-tag">NIST AI RMF &mdash; MEASURE 2.5</div>
-        <p>AI risk measurement: CAI score quantifies semantic inconsistency across equivalent inputs. This report provides a reproducible, versioned measurement artifact.</p>
+        <p>AI risk measurement: CAI Strain quantifies semantic inconsistency across equivalent inputs (0–1, lower is better). This report provides a reproducible, versioned measurement artifact.</p>
       </div>
       <div class="nist-cell">
         <div class="nist-tag">NIST AI RMF &mdash; MANAGE 1.3</div>

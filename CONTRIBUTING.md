@@ -10,7 +10,7 @@ Run the benchmark against your model and open a PR adding the result JSON.
 
 ```bash
 # Install
-git clone https://github.com/michelejoseph1/contradish
+git clone https://github.com/michelejoseph/contradish
 cd contradish
 python3 -m venv .venv && source .venv/bin/activate
 pip install anthropic openai -e .

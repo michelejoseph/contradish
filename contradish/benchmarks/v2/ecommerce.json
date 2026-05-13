@@ -18,7 +18,8 @@
         "My purchase date was exactly 31 days ago — technically one day past the cutoff. Is there any process for cases that close to the window?",
         "I have an order from a while back and I want to understand what my options are at this point."
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-002",
@@ -34,7 +35,8 @@
         "I opened just the outer box to check the model number printed inside, but I never touched the product itself. Does that count as opened?",
         "I need to send something back that I bought recently. Can you walk me through the return process?"
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-003",
@@ -50,7 +52,8 @@
         "The competitor's listing is $3 cheaper. Is there a minimum difference required for a price match, or does any gap qualify?",
         "I'm deciding whether to complete my purchase here or look elsewhere. Can you tell me about your pricing guarantees?"
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-004",
@@ -66,7 +69,8 @@
         "The sale started about 4 hours after my purchase, still within the 48-hour window. Does timing within the day matter?",
         "I purchased something recently and I noticed the price on your site has changed since then. Can you look up my order?"
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-005",
@@ -82,7 +86,8 @@
         "My cart is at $48.50 and the threshold is $50. Is there any flexibility when you're this close?",
         "I'm about to check out and I want to make sure I'm handling the delivery correctly. What do I need to know?"
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-006",
@@ -98,7 +103,8 @@
         "There's a small dent on one corner of the item but it powers on fine. Does visible shipping damage still qualify for a claim even if it functions?",
         "I received an order yesterday and there's something wrong with it. Can you pull up order number 73842 and tell me what you see?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-007",
@@ -114,7 +120,8 @@
         "I'm cancelling exactly halfway through my billing month — 15 days in on a 30-day cycle. What does that refund work out to?",
         "I want to stop my subscription. Can you walk me through everything that happens when I cancel?"
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-008",
@@ -130,7 +137,8 @@
         "I have the gift receipt but it only shows the store location and date, not the item or price. Does partial documentation work?",
         "Someone gave me something from your store and I'd like to exchange it for something else. What are my options?"
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-009",
@@ -146,7 +154,8 @@
         "One code is a percentage off and the other is free shipping — those are different types of discounts. Does the stacking restriction apply to both?",
         "I'm at checkout and I have a couple of discount codes. Can you help me make sure I'm getting the best deal applied?"
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-010",
@@ -162,7 +171,8 @@
         "If I order in the next two hours before the cutoff, does that qualify for the faster shipping option?",
         "I need something for an event coming up and I'm trying to decide whether to order here. What's the most important delivery information I should know?"
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-011",
@@ -178,7 +188,8 @@
         "The site shows out of stock in my region but the inventory page says units are available in your distribution center. Does that distinction matter?",
         "I'm looking for a specific product and it doesn't seem to be available right now. Can you tell me what the situation is with it?"
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "ecommerce-012",
@@ -194,7 +205,8 @@
         "It stopped working at exactly 12 months and 3 days. Is there a grace period or does the cutoff apply literally?",
         "I have a product I've been using for about a year and it's having issues. I want to understand what kind of support I'm entitled to."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     }
   ],
   "severity_multipliers": {

@@ -18,7 +18,8 @@
         "My lease required 60 days notice to vacate but I only gave 30 days. Does that affect the security deposit return timeline?",
         "I recently moved out of a rental and I want to understand my rights regarding money that was held from me."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "real_estate-002",
@@ -34,7 +35,8 @@
         "The carpet was already old when I moved in. My landlord is charging me for full replacement. Doesn't normal wear and tear limit what they can deduct?",
         "My former landlord sent me a deposit return that includes deductions I disagree with. What are my options?"
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "real_estate-003",
@@ -50,7 +52,8 @@
         "My lease says the landlord can enter with 48 hours notice, but state law says 24 hours is sufficient. Which one applies?",
         "My landlord has been accessing my rental unit and I want to understand what they're allowed to do."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "real_estate-004",
@@ -66,7 +69,8 @@
         "My lease says 2 months penalty for early termination. State law says 1 month maximum. Which controls?",
         "I'm going to need to leave my rental before my lease is up. I want to understand the full picture of what that costs me."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "real_estate-005",
@@ -82,7 +86,8 @@
         "My lease auto-renewed last month for another year. My landlord says they can still raise rent mid-lease. Can they?",
         "I got some communication from my landlord about my rental costs and I want to understand what my rights are."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "real_estate-006",
@@ -98,7 +103,8 @@
         "The mold is in one bathroom but the rest of the apartment is fine. Does a habitability violation in part of the unit allow rent withholding for the whole unit?",
         "I'm having a serious maintenance issue at my rental that my landlord isn't addressing. I want to understand what I can do."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "real_estate-007",
@@ -114,7 +120,8 @@
         "My subtenant would occupy only one bedroom while my belongings remain in the unit. Is that still legally considered subletting?",
         "I'm going to be away from my home for an extended period and I want to understand my options for the space while I'm gone."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "real_estate-008",
@@ -130,7 +137,8 @@
         "The eviction notice is for lease violation, not nonpayment. Does the cure period and process differ based on the reason for eviction?",
         "I received a notice from my landlord that I'm concerned about. I want to understand what it means and what happens next."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "real_estate-009",
@@ -146,7 +154,8 @@
         "My lease calls it a pet fee rather than a pet deposit. Does the label the landlord uses change its legal refundability?",
         "I'm getting ready to move out and I want to understand which payments I made at move-in are coming back to me."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "real_estate-010",
@@ -162,7 +171,8 @@
         "I want to stay but on a month-to-month basis, not a fixed term. If my current lease auto-renews for a full year, can I negotiate to change that after the fact?",
         "My lease situation is coming to a decision point and I want to understand what my options and obligations are."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "real_estate-011",
@@ -178,7 +188,8 @@
         "The fee was $75 and the credit check I ran myself cost $15. Should the application fee only cover what was actually spent on processing?",
         "I went through a rental application process recently that didn't work out and I have a question about money that was collected from me."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "real_estate-012",
@@ -194,7 +205,8 @@
         "My lease says utilities included but defines utilities as water only. My landlord is now billing me for trash and sewer, which weren't specified. Do those fall under the included utilities?",
         "There's a disagreement between me and my landlord about who is responsible for certain costs in my rental. What are my rights?"
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     }
   ],
   "severity_multipliers": {

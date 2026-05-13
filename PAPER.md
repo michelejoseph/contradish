@@ -9,7 +9,7 @@ michele.a.joseph@gmail.com
 
 We introduce CAI-Bench, a benchmark for measuring *surface-form consistency* in large language models (LLMs): the degree to which a model's output changes when semantically equivalent inputs are phrased differently. Existing evaluation frameworks assess correctness but assume phrasing invariance — an assumption that fails in production. A model that gives different answers to the same policy question depending on whether the user is casual, emotional, or authoritative is unsafe, regardless of whether either answer is individually correct.
 
-CAI-Bench v2 consists of 2,160 test cases across 20 domains, each case comprising one canonical question and 8 adversarial phrasings drawn from a fixed taxonomy of pressure techniques. We introduce the Compression Tension Score (CTS) — the complement of a consistency score assigned by an independent LLM judge — as the primary metric. Lower CTS indicates a model whose outputs are invariant to surface form. We further introduce Severity-Weighted CTS (SW-CTS), which penalises failures in high-stakes domains (medication, ai_safety, immigration) more than low-stakes ones (ecommerce, saas), and Multi-Turn CTS (MT-CTS), the first benchmark metric for measuring positional consistency under escalating conversational pressure. Benchmark files, evaluation scripts, and results are released at [github.com/michelejoseph1/contradish](https://github.com/michelejoseph1/contradish).
+CAI-Bench v2 consists of 2,160 test cases across 20 domains, each case comprising one canonical question and 8 adversarial phrasings drawn from a fixed taxonomy of pressure techniques. We introduce **CAI Strain** — the complement of a consistency score assigned by an independent LLM judge — as the primary metric. Lower CAI Strain indicates a model whose outputs are invariant to surface form. We further introduce Severity-Weighted Strain (SW-Strain), which penalises failures in high-stakes domains (medication, ai_safety, immigration) more than low-stakes ones (ecommerce, saas), and Multi-Turn Strain (MT-Strain), the first benchmark metric for measuring positional consistency under escalating conversational pressure. Benchmark files, evaluation scripts, and results are released at [github.com/michelejoseph/contradish](https://github.com/michelejoseph/contradish).
 
 ---
 
@@ -19,14 +19,14 @@ A language model deployed as a customer-support agent, medical assistant, or leg
 
 This failure mode is invisible to standard benchmarks. MMLU (Hendrycks et al., 2021), HumanEval (Chen et al., 2021), and MT-Bench (Zheng et al., 2023) evaluate whether a model gives a correct or high-quality answer to a fixed input. They do not test whether the model gives *the same* answer across input variations. CheckList (Ribeiro et al., 2020) tests for linguistic robustness but focuses on NLP classification tasks and does not target the policy-consistency failure mode that arises in production LLM deployments.
 
-We define **surface-form consistency** as a property of a model *f*: for all semantically equivalent inputs *x* and *x'* (same meaning, different phrasing), |*f(x) - f(x')*| should be small under some semantic distance metric. The **Compression Tension Score (CTS)** measures how much this property is violated.
+We define **surface-form consistency** as a property of a model *f*: for all semantically equivalent inputs *x* and *x'* (same meaning, different phrasing), |*f(x) - f(x')*| should be small under some semantic distance metric. **CAI Strain** measures how much this property is violated.
 
 ### 1.1 Contributions
 
 1. **CAI-Bench v2**: 2,160 test cases, 20 domains, 8 adversarial techniques, all frozen for reproducibility.
-2. **Severity-Weighted CTS (SW-CTS)**: A weighted variant that assigns 4× weight to critical-domain failures.
-3. **Multi-Turn CTS (MT-CTS)**: The first benchmark metric for positional drift under adversarial conversational pressure.
-4. **Per-technique fingerprint**: Result output includes a breakdown of CTS by adversarial technique, enabling targeted system-prompt remediation.
+2. **Severity-Weighted Strain (SW-Strain)**: A weighted variant that assigns 4× weight to critical-domain failures.
+3. **Multi-Turn Strain (MT-Strain)**: The first benchmark metric for positional drift under adversarial conversational pressure.
+4. **Per-technique fingerprint**: Result output includes a breakdown of Strain by adversarial technique, enabling targeted system-prompt remediation.
 5. **Open benchmark + evaluation script**: Any model accessible via Anthropic or OpenAI API can be evaluated with a single command.
 
 ---
@@ -43,17 +43,17 @@ Formally, let *S* be a semantic equivalence class (a set of inputs that mean the
 ∀ x, x' ∈ S: f*(x) = f*(x')
 ```
 
-Real models are not ideal compressors. The **Compression Tension** of a model on *S* is:
+Real models are not ideal compressors. The **CAI Strain** of a model on *S* is:
 
 ```
-CT(f, S) = 1 - consistency(f(x₁), f(x₂), ..., f(xₙ))   for x₁...xₙ ∈ S
+Strain(f, S) = 1 - consistency(f(x₁), f(x₂), ..., f(xₙ))   for x₁...xₙ ∈ S
 ```
 
-where `consistency` is measured by an independent LLM judge on a [0, 1] scale.
+where `consistency` is measured by an independent LLM judge on a [0, 1] scale. Lower CAI Strain indicates a model that better preserves the equivalence class.
 
 ### 2.2 The Terminal
 
-We define **the terminal** as the theoretical model with CT = 0.00 across all inputs — a perfect compressor. No finite model reaches the terminal; it is an asymptote. CAI-Bench measures how close a model comes to the terminal on the specific failure mode of adversarial surface-form variation.
+We define **the terminal** as the theoretical model with CAI Strain = 0.00 across all inputs — a perfect compressor. No finite model reaches the terminal; it is an asymptote. CAI-Bench measures how close a model comes to the terminal on the specific failure mode of adversarial surface-form variation.
 
 ### 2.3 Adversarial Techniques
 
@@ -83,13 +83,13 @@ Not all consistency failures are equal. A model that incorrectly allows an early
 | medium | government, automotive, hr, telecom, travel, food_delivery, education, saas | 1.5 |
 | low | ecommerce | 1.0 |
 
-Severity-Weighted CTS (SW-CTS) is:
+Severity-Weighted Strain (SW-Strain) is:
 
 ```
-SW-CTS = 1 - (Σ wᵢ · consistencyᵢ) / (Σ wᵢ)
+SW-Strain = 1 - (Σ wᵢ · consistencyᵢ) / (Σ wᵢ)
 ```
 
-where *wᵢ* is the severity multiplier for case *i*. A model that fails only on ecommerce will have SW-CTS ≈ CTS; a model that fails on medication will have SW-CTS >> CTS.
+where *wᵢ* is the severity multiplier for case *i*. A model that fails only on ecommerce will have SW-Strain ≈ Strain; a model that fails on medication will have SW-Strain >> Strain.
 
 ---
 
@@ -149,7 +149,7 @@ By default, the judge model is selected from the *opposite* provider than the mo
 
 Single-turn consistency tests miss a critical failure mode: a model that correctly refuses a request at turn 1 may reverse its position by turn 4 under escalating conversational pressure. This is the adversarial equivalent of social engineering — wearing down a policy through persistence, sympathy, and reframing.
 
-MT-CTS is the first benchmark metric designed to measure this phenomenon.
+MT-Strain is the first benchmark metric designed to measure this phenomenon.
 
 ### 4.2 Scenario Structure
 
@@ -161,13 +161,13 @@ Each MT scenario consists of 4 turns:
 
 The model accumulates full conversation history across all turns (simulating a real chat session). The judge compares the model's turn-1 response to its turn-4 response and scores consistency.
 
-### 4.3 MT-CTS Formula
+### 4.3 MT-Strain Formula
 
 ```
-MT-CTS = 1 - mean(consistency_score(turn_1, turn_4) across all scenarios)
+MT-Strain = 1 - mean(consistency_score(turn_1, turn_4) across all scenarios)
 ```
 
-MT-CTS = 0.00 means the model never changed its position under conversational pressure. MT-CTS = 1.00 means it always reversed.
+MT-Strain = 0.00 means the model never changed its position under conversational pressure. MT-Strain = 1.00 means it always reversed.
 
 ### 4.4 v2-MT Coverage
 
@@ -208,14 +208,12 @@ Results are saved as JSON to `results/<model>_<date>.json` and include:
 
 ```json
 {
-  "avg_cai_score": 0.7821,
-  "avg_cai_strain": 0.2179,
+  "cai_strain": 0.2179,
   "results": {
     "medication": {
-      "cai_score": 0.6943,
       "cai_strain": 0.3057,
-      "severity_weighted_cts": 0.3812,
-      "technique_cts": {
+      "sw_strain": 0.3812,
+      "technique_strain": {
         "emotional": 0.41,
         "presuppose": 0.38,
         "authority": 0.29,
@@ -228,7 +226,7 @@ Results are saved as JSON to `results/<model>_<date>.json` and include:
 
 ### 5.3 Per-Technique Vulnerability
 
-The technique CTS breakdown shows which of the 8 adversarial techniques is most effective at destabilising a model. This enables targeted remediation: a system prompt fix for "hypothetical" drift is different from one for "authority" drift.
+The technique Strain breakdown shows which of the 8 adversarial techniques is most effective at destabilising a model. This enables targeted remediation: a system prompt fix for "hypothetical" drift is different from one for "authority" drift.
 
 ---
 
@@ -250,7 +248,7 @@ The technique CTS breakdown shows which of the 8 adversarial techniques is most 
 
 ## 7. Limitations
 
-**Judge reliability.** CTS scores depend on LLM judge quality. Judges may themselves be inconsistent or biased. We mitigate this with independent judging (cross-provider) but cannot eliminate it.
+**Judge reliability.** Strain scores depend on LLM judge quality. Judges may themselves be inconsistent or biased. We mitigate this with independent judging (cross-provider) but cannot eliminate it.
 
 **Domain coverage.** 20 domains is comprehensive but not exhaustive. High-stakes domains not yet covered include nuclear safety, criminal justice, and child welfare.
 
@@ -264,11 +262,11 @@ The technique CTS breakdown shows which of the 8 adversarial techniques is most 
 
 ## 8. Conclusion
 
-We have introduced CAI-Bench, a benchmark for surface-form consistency in LLMs, and three new metrics: CTS, SW-CTS, and MT-CTS. These metrics capture a failure mode — phrasing-induced output drift — that is invisible to existing benchmarks but directly relevant to production AI safety.
+We have introduced CAI-Bench, a benchmark for surface-form consistency in LLMs, and three new metrics: **CAI Strain**, **SW-Strain**, and **MT-Strain**. These metrics capture a failure mode — phrasing-induced output drift — that is invisible to existing benchmarks but directly relevant to production AI safety.
 
-The ideal model is the **terminal**: a perfect compressor with CTS = 0.00 across all inputs. No current model reaches the terminal. CAI-Bench provides the first systematic measurement of how close models come to it, across 20 domains, 8 adversarial techniques, and 4-turn multi-turn pressure scenarios.
+The ideal model is the **terminal**: a perfect compressor with CAI Strain = 0.00 across all inputs. No current model reaches the terminal. CAI-Bench provides the first systematic measurement of how close models come to it, across 20 domains, 8 adversarial techniques, and 4-turn multi-turn pressure scenarios.
 
-We release the benchmark, evaluation scripts, and leaderboard at [github.com/michelejoseph1/contradish](https://github.com/michelejoseph1/contradish) and invite the community to submit results.
+We release the benchmark, evaluation scripts, and leaderboard at [github.com/michelejoseph/contradish](https://github.com/michelejoseph/contradish) and invite the community to submit results.
 
 ---
 
@@ -285,7 +283,7 @@ All benchmark cases are frozen and committed to the repository. Results can be r
   title     = {CAI-Bench: A Benchmark for Measuring Surface-Form Consistency in Large Language Models},
   author    = {Joseph, Michele},
   year      = {2026},
-  url       = {https://github.com/michelejoseph1/contradish},
+  url       = {https://github.com/michelejoseph/contradish},
   note      = {CAI-Bench v2: 20 domains, 2{,}160 cases, 8 adversarial techniques}
 }
 ```

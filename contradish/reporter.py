@@ -176,6 +176,7 @@ def to_html(
     passed  = len(report.passed)
     failed  = len(report.failed)
     agg     = report.cai_score if hasattr(report, "cai_score") else 0.0
+    strain  = report.cai_strain if hasattr(report, "cai_strain") else None
     ts      = datetime.datetime.now().strftime("%B %d, %Y at %H:%M")
 
     agg_color  = _score_color(agg)
@@ -196,8 +197,16 @@ def to_html(
     failing_cards = "".join(_failing_card(r) for r in report.results if not r.passed(report.thresholds))
     passing_cards = "".join(_passing_card(r) for r in report.results if r.passed(report.thresholds))
 
-    # Aggregate score display
-    agg_display = f"{agg:.2f}" if agg else "n/a"
+    # Aggregate score display — show headline CAI Strain (Strain over the
+    # audited-equivalence subset of cases) as the big number.
+    headline = report.headline_strain if hasattr(report, "headline_strain") else strain
+    agg_display = f"{headline:.2f}" if headline is not None else "n/a"
+    eq_cov     = report.eq_coverage if hasattr(report, "eq_coverage") else None
+    eq_subline = (
+        f"audited equivalence: {eq_cov:.0%} of cases"
+        if eq_cov is not None
+        else "audited equivalence: not yet reported"
+    )
 
     # Passing rules section
     passing_rows = "".join(
@@ -497,7 +506,7 @@ def to_html(
     </div>
     <div class="score-block">
       <div class="score-number" style="color:{agg_color}">{agg_display}</div>
-      <div class="score-sublabel">CAI score</div>
+      <div class="score-sublabel">CAI Strain (lower is better)<br><span style="font-size:11px;color:#6b7280">{eq_subline}</span></div>
     </div>
   </div>
 

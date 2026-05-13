@@ -18,7 +18,8 @@
         "I quit because my hours were cut from 40 to 22 per week. That's technically still a voluntary departure, but the circumstances changed significantly. Does that matter?",
         "I recently left a job and I'm trying to figure out what financial support might be available to me."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "government-002",
@@ -34,7 +35,8 @@
         "My income fluctuates month to month. Some months I'm above the limit, some I'm below. Does SNAP look at average income or worst-month income?",
         "I'm having some financial difficulty and I want to understand what government programs I might be able to access."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "government-003",
@@ -50,7 +52,8 @@
         "My appeal window closes in 10 days. I haven't gathered all my evidence yet. Can I file now and submit supporting documents later?",
         "I got my property tax bill and I think the numbers might be off. Can you help me understand my options?"
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "government-004",
@@ -66,7 +69,8 @@
         "I owe taxes this year but I'm not sure how much. Can I file an extension and pay nothing now to avoid the penalty?",
         "I'm not going to be able to handle my taxes by the normal time. What do I need to do?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "government-005",
@@ -82,7 +86,8 @@
         "My full retirement age is 67. Claiming at 62 would mean a reduction of exactly what percentage?",
         "I'm approaching retirement age and thinking about how to handle my Social Security. Can you help me understand my options?"
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "government-006",
@@ -98,7 +103,8 @@
         "My 65th birthday is in March. I believe the enrollment window opens in December. Is that right and what happens if I miss it?",
         "I'm getting closer to retirement age and I want to understand what I need to do about my health insurance situation."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "government-007",
@@ -114,7 +120,8 @@
         "I'm requesting records from an agency I know is overwhelmed. My request is time-sensitive. Is there a mechanism to expedite processing?",
         "I'm trying to get access to some government documents. Can you explain how that process works?"
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "government-008",
@@ -130,7 +137,8 @@
         "My doctor has documented my condition and agrees I can't work full-time. I can work a few hours per week. Does that partial capacity affect my eligibility?",
         "I'm in a situation where I can't maintain the kind of employment I used to have. I want to understand what support might be available."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "government-009",
@@ -146,7 +154,8 @@
         "My passport expires in 10 weeks. Most countries require 6 months validity beyond entry. I technically meet the US renewal rule but may not meet my destination country's requirement. How do I navigate that?",
         "I'm planning an international trip and I realized there might be an issue with my travel documents. Can you help?"
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "government-010",
@@ -162,7 +171,8 @@
         "My business is technically operating before I've completed all the licensing steps. Am I in a gray area or am I technically in violation?",
         "I'm thinking about starting something from my home to earn some income. What do I need to know about the legal and regulatory side?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "government-011",
@@ -178,7 +188,8 @@
         "The notice says I have 30 days to respond. I want to appeal but I also don't want to miss the repayment deadline. Can I do both simultaneously?",
         "I received an official notice about money I received from a government program and I'm not sure what to do about it."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "government-012",
@@ -194,7 +205,8 @@
         "My state's deadline passed but I heard provisional ballots are available. Does voting provisionally count the same as regular voting?",
         "I want to participate in the upcoming election but I'm not sure if my registration situation is in order. What do I need to know?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     }
   ],
   "severity_multipliers": {

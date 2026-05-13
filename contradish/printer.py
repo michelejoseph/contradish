@@ -77,10 +77,10 @@ def print_report(report) -> None:
               f"{_GRAY}All {total} rule{'s' if total != 1 else ''} stable.{_RESET}")
         print()
         for result in report.results:
-            score     = result.consistency_score
-            score_str = f"{score:.2f}" if score is not None else "n/a"
+            strain     = result.cai_strain
+            strain_str = f"{strain:.2f}" if strain is not None else "n/a"
             print(f"  {_GREEN}✓{_RESET}  {result.test_case.name}  "
-                  f"{_GRAY}CAI score: {score_str}{_RESET}")
+                  f"{_GRAY}CAI Strain: {strain_str}{_RESET}")
         print()
         return
 
@@ -95,11 +95,12 @@ def print_report(report) -> None:
         ok = result.passed(report.thresholds)
 
         score     = result.consistency_score
-        score_str = f"{score:.2f}" if score is not None else "n/a"
+        strain     = result.cai_strain
+        strain_str = f"{strain:.2f}" if strain is not None else "n/a"
 
         if ok:
             print(f"  {_GREEN}✓{_RESET}  {_GRAY}{tc.name}  "
-                  f"CAI score: {score_str}  (stable){_RESET}")
+                  f"CAI Strain: {strain_str}  (stable){_RESET}")
             print()
             continue
 
@@ -114,7 +115,7 @@ def print_report(report) -> None:
 
         print(f"{_RED}{_BOLD}CAI FAILURE{_RESET}  "
               f"\"{tc.name}\"  "
-              f"{_GRAY}score {score_str}{_RESET}"
+              f"{_GRAY}strain {strain_str}{_RESET}"
               f"{sev_badge}")
         print()
 
@@ -186,10 +187,10 @@ def print_report(report) -> None:
     clean_list = [r for r in report.results if r.passed(report.thresholds)]
     if clean_list:
         for r in clean_list:
-            score     = r.consistency_score
-            score_str = f"{score:.2f}" if score is not None else "n/a"
+            strain     = r.cai_strain
+            strain_str = f"{strain:.2f}" if strain is not None else "n/a"
             print(f"  {_GREEN}✓{_RESET}  {_GRAY}{r.test_case.name}  "
-                  f"CAI score: {score_str}  (stable){_RESET}")
+                  f"CAI Strain: {strain_str}  (stable){_RESET}")
         print()
 
     # ── Summary line ───────────────────────────────────────────────────
@@ -211,6 +212,28 @@ def print_next_steps(report) -> None:
 
     print(f"{_GRAY}{'─' * 60}{_RESET}")
     print()
+
+    # Honest headline: Strain over expert-confirmed cases, with EQ coverage
+    headline = report.headline_strain
+    coverage = report.eq_coverage
+    if headline is not None:
+        cov_pct = f"{coverage:.0%}" if coverage is not None else "n/a"
+        print(
+            f"  {_BOLD}CAI Strain:{_RESET} {_BOLD}{headline:.3f}{_RESET}  "
+            f"{_GRAY}(headline; over {cov_pct} of cases with audited equivalence){_RESET}"
+        )
+        contested = report.contested_strain
+        if contested is not None:
+            print(
+                f"  {_GRAY}contested Strain:{_RESET}  {contested:.3f}  "
+                f"{_GRAY}(cases where annotators disagreed on equivalence){_RESET}"
+            )
+        if report.ambiguous_count:
+            print(
+                f"  {_GRAY}excluded as ambiguous: {report.ambiguous_count} case(s) "
+                f"(equivalence_confidence below 0.50){_RESET}"
+            )
+        print()
 
     if failed > 0:
         fail_word = "failure" if failed == 1 else "failures"

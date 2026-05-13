@@ -20,24 +20,38 @@ class TestCase:
     A single input to test for reasoning stability.
 
     Args:
-        input:           The prompt or question to test.
-        name:            Optional label. Auto-generated from input if omitted.
-        expected_traits: Optional hints for the judge (e.g. "should not invent policy").
+        input:                   The prompt or question to test.
+        name:                    Optional label. Auto-generated from input if omitted.
+        expected_traits:         Optional hints for the judge (e.g. "should not invent policy").
+        equivalence_confidence:  Inter-annotator agreement that the original and adversarial
+                                 paraphrases of this case really do mean the same thing.
+                                 1.0 = expert-confirmed; 0.5–0.8 = contested equivalence;
+                                 <0.5 = the framing is itself ambiguous and the case is
+                                 excluded from headline CAI Strain. Default 1.0 means
+                                 "asserted, not yet audited" — populate from a real
+                                 annotation pass to make Strain numbers honest.
 
     Example:
         TestCase(
             name="refund policy",
             input="Can I get a refund after 45 days?",
             expected_traits=["should say no", "should not invent exceptions"],
+            equivalence_confidence=0.92,  # 11 of 12 annotators agreed
         )
     """
     input: str
     name: Optional[str] = None
     expected_traits: list[str] = field(default_factory=list)
+    equivalence_confidence: float = 1.0
 
     def __post_init__(self):
         if not self.name:
             self.name = (self.input[:47] + "...") if len(self.input) > 50 else self.input
+        # Clamp to [0, 1] — annotation pipelines occasionally produce out-of-band values
+        if self.equivalence_confidence < 0.0:
+            self.equivalence_confidence = 0.0
+        elif self.equivalence_confidence > 1.0:
+            self.equivalence_confidence = 1.0
 
 
 @dataclass
@@ -68,12 +82,23 @@ class TestResult:
     @property
     def cai_score(self) -> Optional[float]:
         """
-        CAI (Compression-Aware Intelligence) score for this test case.
-        Measures how consistently the app reasons across semantically
-        equivalent inputs. 0 = maximally inconsistent. 1 = fully stable.
-        Alias for consistency_score.
+        Legacy CAI consistency score (0–1, higher = more consistent).
+        Kept for backward compatibility with code that relied on this attribute.
+        Prefer `cai_strain` in new code.
         """
         return self.consistency_score
+
+    @property
+    def cai_strain(self) -> Optional[float]:
+        """
+        CAI Strain for this test case (0–1, lower = more consistent).
+        0.00 = perfectly consistent. 1.00 = maximally inconsistent.
+        Equivalent to (1 - cai_score). This is the canonical contradish metric;
+        ML literature calls the same phenomenon "drift."
+        """
+        if self.consistency_score is None:
+            return None
+        return round(1.0 - self.consistency_score, 4)
 
     def passed(self, thresholds: Optional[dict] = None) -> bool:
         t = {"consistency": 0.75, "contradiction": 0.30, **(thresholds or {})}
@@ -84,11 +109,34 @@ class TestResult:
         return True
 
 
+# Default threshold above which a case is considered "expert-confirmed equivalent"
+# and contributes to the headline CAI Strain. Cases below this threshold but
+# above CONTESTED_EQ_FLOOR are reported separately. Cases below CONTESTED_EQ_FLOOR
+# are excluded from any Strain calculation (the equivalence itself is unsafe).
+HEADLINE_EQ_THRESHOLD: float = 0.80
+CONTESTED_EQ_FLOOR:    float = 0.50
+
+
 @dataclass
 class Report:
-    """Aggregate report across all TestCases."""
+    """
+    Aggregate report across all TestCases.
+
+    Reports two strain numbers:
+      - `cai_strain`     : unweighted mean across all cases (legacy)
+      - `headline_strain`: mean across cases where equivalence_confidence
+                           meets `eq_threshold`. This is the honest number —
+                           strain only on cases where annotators agreed the
+                           paraphrases really did mean the same thing.
+
+    Cases with equivalence_confidence in [CONTESTED_EQ_FLOOR, eq_threshold)
+    are surfaced via `contested_strain` so the user can see whether the
+    model drifted on contested cases (which may be appropriate sensitivity)
+    vs. expert-confirmed ones (which is the genuine failure signal).
+    """
     results:    list[TestResult]
     thresholds: dict = field(default_factory=dict)
+    eq_threshold: float = HEADLINE_EQ_THRESHOLD
 
     @property
     def passed(self)  -> list[TestResult]:
@@ -101,15 +149,84 @@ class Report:
     @property
     def cai_score(self) -> Optional[float]:
         """
-        Aggregate CAI score across all test cases.
-        Average of individual CAI scores. 0 = maximally inconsistent. 1 = fully stable.
+        Legacy aggregate CAI consistency score (0–1, higher = more consistent).
+        Kept for backward compatibility. Prefer `cai_strain` in new code.
         """
         s = [r.cai_score for r in self.results if r.cai_score is not None]
         return round(sum(s) / len(s), 3) if s else None
 
     @property
+    def cai_strain(self) -> Optional[float]:
+        """
+        Unweighted aggregate CAI Strain across ALL test cases (0–1, lower = more
+        consistent). Mean of per-case CAI Strain regardless of equivalence
+        confidence. Useful for backward compatibility; for the honest headline
+        number, use `headline_strain` instead.
+        """
+        score = self.cai_score
+        return None if score is None else round(1.0 - score, 3)
+
+    @property
+    def headline_strain(self) -> Optional[float]:
+        """
+        Honest CAI Strain: mean drift across cases where annotators agreed
+        the paraphrases really meant the same thing (equivalence_confidence
+        >= eq_threshold). This is the number that should be reported to users
+        and shown on the leaderboard — strain attributable to the model, not
+        to the benchmark designer's framing choices.
+        """
+        scored = [
+            r.cai_strain
+            for r in self.results
+            if r.cai_strain is not None
+            and getattr(r.test_case, "equivalence_confidence", 1.0) >= self.eq_threshold
+        ]
+        return round(sum(scored) / len(scored), 3) if scored else None
+
+    @property
+    def contested_strain(self) -> Optional[float]:
+        """
+        CAI Strain on cases where the experts themselves disagreed about
+        equivalence (CONTESTED_EQ_FLOOR <= EQ < eq_threshold). Drift here
+        is not necessarily a model failure; it may reflect appropriate
+        context-sensitivity to genuinely ambiguous framings.
+        """
+        scored = [
+            r.cai_strain
+            for r in self.results
+            if r.cai_strain is not None
+            and CONTESTED_EQ_FLOOR <= getattr(r.test_case, "equivalence_confidence", 1.0) < self.eq_threshold
+        ]
+        return round(sum(scored) / len(scored), 3) if scored else None
+
+    @property
+    def eq_coverage(self) -> float:
+        """
+        Fraction of cases that meet the equivalence threshold and therefore
+        count toward `headline_strain`. A benchmark with eq_coverage=1.0 has
+        every case audited and confirmed; eq_coverage=0.4 means only 40% of
+        the cases have a defensible equivalence claim — headline_strain is
+        computed over a smaller, sturdier subset.
+        """
+        if not self.results:
+            return 0.0
+        n = sum(
+            1 for r in self.results
+            if getattr(r.test_case, "equivalence_confidence", 1.0) >= self.eq_threshold
+        )
+        return round(n / len(self.results), 3)
+
+    @property
+    def ambiguous_count(self) -> int:
+        """Cases below CONTESTED_EQ_FLOOR — excluded from Strain entirely."""
+        return sum(
+            1 for r in self.results
+            if getattr(r.test_case, "equivalence_confidence", 1.0) < CONTESTED_EQ_FLOOR
+        )
+
+    @property
     def avg_consistency(self) -> Optional[float]:
-        """Alias for cai_score. Use cai_score in new code."""
+        """Alias for cai_score. Use cai_strain in new code."""
         return self.cai_score
 
     @property
@@ -124,10 +241,13 @@ class Report:
 
     def summary(self) -> str:
         """One-line summary of the report."""
-        score = self.cai_score
-        score_str = f"{score:.3f}" if score is not None else "n/a"
+        headline = self.headline_strain
+        cov      = self.eq_coverage
+        head_str = f"{headline:.3f}" if headline is not None else "n/a"
+        cov_str  = f"{cov:.0%}" if cov is not None else "n/a"
         return (
-            f"CAI score: {score_str} | "
+            f"CAI Strain: {head_str} | "
+            f"EQ coverage: {cov_str} | "
             f"{len(self.passed)}/{len(self.results)} passed | "
             f"{self.failure_count} failure(s)"
         )
@@ -138,8 +258,8 @@ class Report:
             return "No failures."
         lines = [f"{self.failure_count} CAI failure(s):"]
         for r in self.failed:
-            score_str = f"{r.cai_score:.2f}" if r.cai_score is not None else "n/a"
-            lines.append(f"  - {r.test_case.name} (score {score_str})")
+            strain_str = f"{r.cai_strain:.2f}" if r.cai_strain is not None else "n/a"
+            lines.append(f"  - {r.test_case.name} (CAI Strain {strain_str})")
             for c in r.contradictions[:1]:
                 lines.append(f"    asked: {c.input_a!r}")
                 lines.append(f"    got:   {c.output_a[:120]!r}")
@@ -149,19 +269,32 @@ class Report:
     def to_dict(self) -> dict:
         """
         Serialize the report to a dict suitable for JSON output.
-        CAI scores are included at both the report and test-case level.
+
+        Headline Strain (the honest number — drift over expert-confirmed
+        equivalences only), plus the unweighted Strain (legacy / cross-set
+        comparison), plus the contested Strain (drift on cases where the
+        experts disagreed about equivalence), plus EQ coverage so consumers
+        of the JSON can see exactly how much of the benchmark was audited.
         """
         return {
-            "cai_score":   self.cai_score,
-            "total":       len(self.results),
-            "passed":      len(self.passed),
-            "failed":      len(self.failed),
+            "headline_strain":   self.headline_strain,
+            "eq_threshold":      self.eq_threshold,
+            "eq_coverage":       self.eq_coverage,
+            "contested_strain":  self.contested_strain,
+            "ambiguous_count":   self.ambiguous_count,
+            "cai_strain":        self.cai_strain,   # unweighted, all cases
+            "cai_score":         self.cai_score,    # legacy alias (higher=better)
+            "total":             len(self.results),
+            "passed":            len(self.passed),
+            "failed":            len(self.failed),
             "results": [
                 {
-                    "name":               r.test_case.name,
-                    "input":              r.test_case.input,
-                    "cai_score":          r.cai_score,
-                    "contradiction_score": r.contradiction_score,
+                    "name":                   r.test_case.name,
+                    "input":                  r.test_case.input,
+                    "equivalence_confidence": getattr(r.test_case, "equivalence_confidence", 1.0),
+                    "cai_strain":             r.cai_strain,
+                    "cai_score":              r.cai_score,  # legacy alias
+                    "contradiction_score":    r.contradiction_score,
                     "risk":               r.risk.value,
                     "passed":             r.passed(self.thresholds),
                     "contradictions": [
@@ -189,7 +322,7 @@ class Report:
 class RegressionResult:
     """
     Compares baseline vs candidate app on the same test cases.
-    Use .fail_if_below() to gate CI/CD merges on CAI score.
+    Use .fail_if_above() to gate CI/CD merges on CAI Strain.
     """
     baseline_label:   str
     candidate_label:  str
@@ -198,7 +331,7 @@ class RegressionResult:
 
     @property
     def cai_delta(self) -> Optional[float]:
-        """Change in CAI score. Positive = improvement. Negative = regression."""
+        """Legacy: change in cai_score (higher=better). Positive = improvement."""
         b = self.baseline_report.cai_score
         c = self.candidate_report.cai_score
         if b is None or c is None:
@@ -206,25 +339,54 @@ class RegressionResult:
         return round(c - b, 3)
 
     @property
-    def regressed(self) -> bool:
-        """True if candidate CAI score dropped vs baseline."""
-        delta = self.cai_delta
-        return delta is not None and delta < 0
-
-    def fail_if_below(self, consistency: float = 0.75) -> None:
+    def strain_delta(self) -> Optional[float]:
         """
-        Raise AssertionError if candidate CAI score falls below threshold.
+        Change in CAI Strain (lower=better). Negative = improvement (less drift).
+        Positive = regression (more drift).
+        """
+        b = self.baseline_report.cai_strain
+        c = self.candidate_report.cai_strain
+        if b is None or c is None:
+            return None
+        return round(c - b, 3)
+
+    @property
+    def regressed(self) -> bool:
+        """True if candidate CAI Strain rose vs baseline (more drift)."""
+        delta = self.strain_delta
+        return delta is not None and delta > 0
+
+    def fail_if_above(self, strain: float = 0.25) -> None:
+        """
+        Raise AssertionError if candidate CAI Strain exceeds threshold.
         Drop this in a GitHub Actions step to block merges on regressions.
 
         Args:
-            consistency: Minimum acceptable CAI score (default 0.75).
+            strain: Maximum acceptable CAI Strain (default 0.25). Lower is better.
 
         Raises:
-            AssertionError: If candidate CAI score < consistency threshold.
+            AssertionError: If candidate CAI Strain > strain threshold.
 
         Example:
             result = suite.compare(baseline_app, candidate_app)
-            result.fail_if_below(consistency=0.80)  # CI fails if score drops below 0.80
+            result.fail_if_above(strain=0.20)  # CI fails if Strain rises above 0.20
+        """
+        observed = self.candidate_report.cai_strain
+        if observed is not None and observed > strain:
+            base_strain = self.baseline_report.cai_strain
+            base_str = f"{base_strain:.3f}" if base_strain is not None else "n/a"
+            delta_str = f"{self.strain_delta:+.3f}" if self.strain_delta is not None else "n/a"
+            raise AssertionError(
+                f"CAI regression: {self.candidate_label} CAI Strain {observed:.3f} "
+                f"(max allowed: {strain}). "
+                f"Baseline ({self.baseline_label}): {base_str}. "
+                f"Delta: {delta_str}"
+            )
+
+    def fail_if_below(self, consistency: float = 0.75) -> None:
+        """
+        Legacy CI gate: raise if candidate cai_score (higher=better) falls below
+        `consistency`. Prefer `fail_if_above(strain=...)` in new code.
         """
         score = self.candidate_report.cai_score
         if score is not None and score < consistency:
@@ -239,6 +401,10 @@ class RegressionResult:
         return {
             "baseline_label":  self.baseline_label,
             "candidate_label": self.candidate_label,
+            "baseline_strain":    self.baseline_report.cai_strain,
+            "candidate_strain":   self.candidate_report.cai_strain,
+            "strain_delta":       self.strain_delta,
+            # legacy fields (cai_score-based, higher=better):
             "baseline_cai":    self.baseline_report.cai_score,
             "candidate_cai":   self.candidate_report.cai_score,
             "cai_delta":       self.cai_delta,
@@ -248,14 +414,19 @@ class RegressionResult:
         }
 
     def __str__(self) -> str:
-        delta = self.cai_delta
+        delta = self.strain_delta
         status = "REGRESSION" if self.regressed else "PASS"
+        # for Strain, an improvement is a *negative* delta (less drift), so flip arrow
         arrow = f"{delta:+.3f}" if delta is not None else "N/A"
+        base_strain = self.baseline_report.cai_strain
+        cand_strain = self.candidate_report.cai_strain
+        base_str = f"{base_strain:.3f}" if base_strain is not None else "n/a"
+        cand_str = f"{cand_strain:.3f}" if cand_strain is not None else "n/a"
         return (
-            f"\nCAI Regression: {status}\n"
-            f"  {self.baseline_label}:  {self.baseline_report.cai_score:.3f}\n"
-            f"  {self.candidate_label}: {self.candidate_report.cai_score:.3f}\n"
-            f"  delta: {arrow}\n"
+            f"\nCAI Strain Regression: {status}\n"
+            f"  {self.baseline_label}:  {base_str}\n"
+            f"  {self.candidate_label}: {cand_str}\n"
+            f"  delta: {arrow}  (lower CAI Strain is better)\n"
         )
 
 
@@ -285,8 +456,26 @@ class RepairResult:
     """One improved prompt variant from PromptRepair.fix()."""
     original_prompt:    str
     improved_prompt:    str
-    original_cai_score: float
-    improved_cai_score: float
-    delta:              float
+    original_cai_score: float        # legacy (higher = better)
+    improved_cai_score: float        # legacy
+    delta:              float        # legacy: improved_cai_score - original_cai_score (positive = better)
     report:             Report
     rank:               int  # 1 = best
+
+    @property
+    def original_cai_strain(self) -> float:
+        """CAI Strain of the original prompt (lower = better)."""
+        return round(1.0 - self.original_cai_score, 4)
+
+    @property
+    def improved_cai_strain(self) -> float:
+        """CAI Strain of the improved prompt (lower = better)."""
+        return round(1.0 - self.improved_cai_score, 4)
+
+    @property
+    def strain_delta(self) -> float:
+        """
+        Change in CAI Strain from original to improved (negative = improvement).
+        Equivalent to (improved_cai_strain - original_cai_strain).
+        """
+        return round(self.improved_cai_strain - self.original_cai_strain, 4)

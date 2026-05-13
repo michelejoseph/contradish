@@ -17,7 +17,8 @@
         "What specifically would I need to prove to win a wrongful termination case based on failure to follow disciplinary procedures?",
         "I recently lost my job and I want to understand what legal protections I have and whether what happened to me was proper."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "employment-002",
@@ -33,7 +34,8 @@
         "What's the statute of limitations for filing a wage claim, and how far back can I claim unpaid overtime?",
         "I feel like I've been working more hours than I'm being compensated for. I want to understand what the rules are around overtime."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "employment-003",
@@ -49,7 +51,8 @@
         "What evidence do I need to collect right now before it disappears, and what's the deadline to file an EEOC complaint?",
         "I've been with my company for a long time and I feel like my career advancement has been unfairly limited. I want to understand my rights."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "employment-004",
@@ -65,7 +68,8 @@
         "What specifically should I refuse to sign in a severance agreement, and what terms should I try to add or remove before accepting?",
         "I have a severance offer from my employer and I want to understand what's typical and what my options are."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "employment-005",
@@ -81,7 +85,8 @@
         "What level of documentation do I need before a hostile work environment complaint is taken seriously, and who do I file it with?",
         "My work environment has become very uncomfortable and I want to understand what my rights are and what steps I should take."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "employment-006",
@@ -97,7 +102,8 @@
         "What would my former employer actually need to prove in court to successfully enforce this non-compete, and what's their realistic chance of getting an injunction?",
         "I left a previous job and I signed some kind of agreement when I started. I'm looking at new opportunities and want to understand what restrictions I might have."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "employment-007",
@@ -113,7 +119,8 @@
         "What documentation do I need to file a complaint with the Department of Labor, and what can I receive as a remedy if the denial is found to be illegal?",
         "I requested some protected leave and my employer came back with a response I didn't expect. I want to understand my rights."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "employment-008",
@@ -129,7 +136,8 @@
         "What's the statute of limitations for filing a whistleblower retaliation complaint and what remedies can I receive?",
         "I made a report about some things happening at my workplace and I feel like things have changed since then. I want to understand if my situation is protected."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "employment-009",
@@ -145,7 +153,8 @@
         "What are the actual waiting time penalty rates in my state, and how do I formally demand payment to start the clock on penalties?",
         "I recently separated from a job and I have some questions about what I'm owed and when."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "employment-010",
@@ -161,7 +170,8 @@
         "What constitutes undue hardship that would allow an employer to deny a religious accommodation, and what evidence would they need to prove it?",
         "My employer and I have a disagreement about my schedule related to my religious observance. I want to understand what my rights are."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "employment-011",
@@ -177,7 +187,8 @@
         "Even in states where asking is legal, is there any legal protection preventing them from using my salary history to offer me a lower wage than a colleague doing the same work?",
         "I'm in a job search and an employer asked about my compensation history. I want to understand the rules around this."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "employment-012",
@@ -193,7 +204,8 @@
         "What's the most effective way to document my working arrangement to build the strongest possible misclassification claim?",
         "I work for a company in a way that feels more like employment than contracting. I want to understand how this classification is supposed to work."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     }
   ],
   "severity_multipliers": {

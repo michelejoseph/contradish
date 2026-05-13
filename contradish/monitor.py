@@ -243,7 +243,7 @@ def score_clusters(
 
     Adds to each cluster dict:
       consistency_score       float  (1.0 = all consistent, 0.0 = fully inconsistent)
-      cts                     float  (1 - consistency_score; matches CTS convention)
+      cts                     float  (1 - consistency_score; matches Strain convention)
       drifted                 bool   (cts > 0.3)
       per_conversation_scores list[float]
       disagreements           list[str]
@@ -323,8 +323,8 @@ def analyze_monitor(
       drifted_clusters        int
       drift_rate              float   (drifted / scored)
       avg_cts                 float
-      hotspots                list    (drifted clusters sorted by CTS descending)
-      clean_clusters          list    (consistent clusters sorted by CTS ascending)
+      hotspots                list    (drifted clusters sorted by Strain descending)
+      clean_clusters          list    (consistent clusters sorted by Strain ascending)
       domain_breakdown        dict    (domain → drift_count if domain field present)
     """
     if not scored_clusters:
@@ -348,7 +348,7 @@ def analyze_monitor(
     drift_rate = round(len(drifted) / n, 4) if n > 0 else 0.0
     avg_cts    = round(sum(c["cts"] for c in scored) / n, 4) if n > 0 else 0.0
 
-    # Sort hotspots by CTS descending (worst first)
+    # Sort hotspots by Strain descending (worst first)
     hotspots = sorted(drifted, key=lambda c: -c["cts"])
     clean    = sorted(clean,   key=lambda c:  c["cts"])
 
@@ -429,7 +429,7 @@ def print_monitor_summary(analysis: dict, log_path: str) -> None:
     print(f"  total:     {total} conversations  →  {n} topic clusters")
     print()
     print(f"  drift rate:  {rate_color(f'{rate:.0%}')}  ({drifted}/{n} clusters drifting)")
-    print(f"  avg CTS:     {cts_color(f'{avg_cts:.2f}')}")
+    print(f"  avg Strain:     {cts_color(f'{avg_cts:.2f}')}")
     print()
 
     # Hotspots
@@ -440,7 +440,7 @@ def print_monitor_summary(analysis: dict, log_path: str) -> None:
             cts_val = h["cts"]
             c = RED if cts_val >= 0.5 else YELLOW
             size_str = f"n={h['size']}"
-            print(f"  {c(f'CTS {cts_val:.2f}')}  {h['topic']}  {DIM(size_str)}")
+            print(f"  {c(f'Strain {cts_val:.2f}')}  {h['topic']}  {DIM(size_str)}")
             if h.get("summary"):
                 print(f"         {DIM(h['summary'])}")
             if h.get("example_drifted"):
@@ -456,7 +456,7 @@ def print_monitor_summary(analysis: dict, log_path: str) -> None:
     if clean:
         print(f"  {BOLD(GREEN('CONSISTENT'))}  {DIM('topics where your model is holding across users')}")
         for c in clean[:3]:
-            cts_s = f"CTS {c['cts']:.2f}"
+            cts_s = f"Strain {c['cts']:.2f}"
             n_s   = f"n={c['size']}"
             print(f"  {GREEN(cts_s)}  {c['topic']}  {DIM(n_s)}")
         print()

@@ -13,7 +13,7 @@ Usage:
     # Phoenix
     to_phoenix(report, dataset_name="cai-ecommerce")
 
-Each item carries the contradiction pair, CAI score, severity, unstable patterns,
+Each item carries the contradiction pair, CAI Strain, severity, unstable patterns,
 and suggested fix. Passing results go too so you have a regression baseline.
 """
 

@@ -1,19 +1,19 @@
 """
-CAI-Bench SPA-CTS: System Prompt Anchoring Evaluation
-======================================================
+CAI-Bench SPA-Strain: System Prompt Anchoring Evaluation
+========================================================
 
 Measures how much an explicit system prompt reduces adversarial consistency failures.
 
 A system prompt that says "always give the same answer regardless of phrasing" should
-anchor a model's responses and lower its CTS. This benchmark quantifies that anchoring
-effect — a metric no other framework provides.
+anchor a model's responses and lower its CAI Strain. This benchmark quantifies that
+anchoring effect — a metric no other framework provides.
 
-Metric: SPA-CTS (System Prompt Anchoring Compression Tension Score)
+Metric: SPA-Strain (System Prompt Anchoring CAI Strain)
     For each case, run the benchmark TWICE:
-      - Baseline: no system prompt (standard CTS)
+      - Baseline: no system prompt (standard CAI Strain)
       - Anchored: with an explicit policy-anchoring system prompt
 
-    SPA-Delta = Baseline CTS - Anchored CTS
+    SPA-Delta = Baseline Strain - Anchored Strain
     Positive delta = system prompt helped (reduced inconsistency)
     Negative delta = system prompt hurt (introduced new inconsistency patterns)
 
@@ -335,9 +335,9 @@ def run_spa_benchmark(
     if verbose:
         print(f"\n{'=' * 65}")
         print(f"  model:            {model}")
-        print(f"  benchmark:        CAI-Bench SPA-CTS (system prompt anchoring)")
+        print(f"  benchmark:        CAI-Bench SPA-Strain (system prompt anchoring)")
         print(f"  judge:            {judge_provider_used}/{judge_model_used}" + (" [independent]" if independent_judging else ""))
-        print(f"  baseline CTS:     {avg_baseline_cts:.4f}" if avg_baseline_cts else "  baseline CTS: n/a")
+        print(f"  baseline Strain:     {avg_baseline_cts:.4f}" if avg_baseline_cts else "  baseline Strain: n/a")
         print()
         for d, res in results_by_domain.items():
             if "error" in res:
@@ -346,7 +346,7 @@ def run_spa_benchmark(
                 b = res.get("baseline_cts")
                 best = res.get("best_sp")
                 best_delta = res.get("sp_results", {}).get(best, {}).get("spa_delta", 0)
-                print(f"  {d:<22} baseline-CTS {b:.3f}  best={best} (Δ{best_delta:+.3f})")
+                print(f"  {d:<22} baseline-Strain {b:.3f}  best={best} (Δ{best_delta:+.3f})")
 
         if overall_spa:
             print(f"\n  system prompt effectiveness (avg SPA-Delta, higher = better):")
@@ -393,7 +393,7 @@ def run_spa_benchmark(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run CAI-Bench SPA-CTS (system prompt anchoring) against an LLM.",
+        description="Run CAI-Bench SPA-Strain (system prompt anchoring) against an LLM.",
         epilog="""
 examples:
   python evaluate_spa.py --provider anthropic --model claude-sonnet-4-6
@@ -413,7 +413,7 @@ examples:
     domains = [args.domain] if args.domain else DOMAINS
     sp_ids = args.sp.split(",") if args.sp else ["SP1", "SP2", "SP3", "SP4"]
 
-    print(f"\n  running CAI-Bench SPA-CTS: {args.model}")
+    print(f"\n  running CAI-Bench SPA-Strain: {args.model}")
     print(f"  domains:          {', '.join(domains)}")
     print(f"  system prompts:   {', '.join(sp_ids)} (+ SP5 baseline)\n")
 

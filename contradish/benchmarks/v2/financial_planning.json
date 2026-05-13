@@ -17,7 +17,8 @@
         "What is the minimum I need to withdraw to avoid the 10% penalty in my situation, and is there a way to access just part of the funds without triggering the full penalty?",
         "I have retirement savings and I'm trying to understand all my options for accessing those funds."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finplan-002",
@@ -33,7 +34,8 @@
         "What's the actual difference between a personal loan consolidation, a balance transfer, and a debt management plan, and which has the least long-term cost?",
         "I have several financial obligations I'm managing and I want to understand the best approach to handling them more effectively."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finplan-003",
@@ -49,7 +51,8 @@
         "What specific market conditions or personal circumstances would need to be true for a home equity loan investment strategy to be genuinely sound rather than dangerous?",
         "I'm thinking about different ways to grow my wealth and I want to explore all the options available to me."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finplan-004",
@@ -65,7 +68,8 @@
         "What specific circumstances would make buying more than the standard 10x income formula necessary, and what would make less coverage acceptable?",
         "I want to make sure my family is properly protected and I'm trying to understand what level of coverage makes sense."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finplan-005",
@@ -81,7 +85,8 @@
         "At what income level does the traditional IRA deduction start to make it more valuable than Roth despite the tax-free growth, and does the presence of a 401k change that calculus?",
         "I'm trying to optimize my retirement savings strategy and I want to understand the tradeoffs between different account types."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finplan-006",
@@ -97,7 +102,8 @@
         "What specific variables about my employment situation and expense profile should determine whether I need closer to 3 months or 12 months in emergency savings?",
         "I'm trying to figure out how to allocate my savings across different goals and emergency reserves is one piece of that puzzle."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finplan-007",
@@ -113,7 +119,8 @@
         "Is there a specific account age threshold below which closing a card definitely hurts your score versus cards old enough that closing doesn't matter?",
         "I'm trying to simplify my finances and thinking about which accounts to keep and which to let go. I want to understand the impact."
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finplan-008",
@@ -129,7 +136,8 @@
         "What are the wash sale rules and how easy is it to accidentally trigger them when harvesting losses while maintaining your overall portfolio allocation?",
         "I'm trying to be smarter about the tax efficiency of my investment portfolio. I've heard about different strategies but want to understand them better."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finplan-009",
@@ -145,7 +153,8 @@
         "What specific annuity features create legitimate value for retirees versus those that primarily benefit the insurance company, and how do I identify which type my advisor is recommending?",
         "I'm approaching retirement and someone is suggesting a financial product I want to understand better before making any decisions."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finplan-010",
@@ -161,7 +170,8 @@
         "What are the specific types of debt that are and aren't dischargeable in bankruptcy, and what assets would I actually lose versus keep in a Chapter 7?",
         "I'm in a difficult financial situation and I want to understand all the options available to me, including some of the more serious ones."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finplan-011",
@@ -177,7 +187,8 @@
         "Under what circumstances would a custodial UGMA/UTMA account be preferable to a 529, and does the flexibility justify the loss of tax advantages?",
         "I'm starting to think about saving for my child's future education and I want to understand which approach makes the most sense."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finplan-012",
@@ -193,7 +204,8 @@
         "How does the decision change if I'm married versus single, and does a spouse's benefit situation completely change the optimal claiming strategy?",
         "I'm thinking about retirement timing and when to activate different sources of income. I want to understand the factors involved."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     }
   ],
   "severity_multipliers": {

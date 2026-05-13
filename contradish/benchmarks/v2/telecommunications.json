@@ -17,7 +17,8 @@
         "What are the actual circumstances where your company will waive an early termination fee? What's the threshold?",
         "I'm thinking about making changes to my service and I want to understand what it would cost to end my current contract."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "telecom-002",
@@ -33,7 +34,8 @@
         "What exactly is the process for disputing a charge? How far back can I dispute and what's the maximum refund I could receive?",
         "I was reviewing my bill and noticed something I don't recognize. I want to understand how billing disputes work."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "telecom-003",
@@ -49,7 +51,8 @@
         "What is the absolute minimum contract term I'd need to have completed before you'd process an unlock? Are there any exceptions?",
         "I have a phone on a carrier plan and I want to understand my options around using it on different networks."
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "telecom-004",
@@ -65,7 +68,8 @@
         "What's the actual speed you throttle to after the cap? And what would it cost to get unthrottled for the rest of the month?",
         "My internet has been slower than usual lately. I want to understand what's happening with my service."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "telecom-005",
@@ -81,7 +85,8 @@
         "Is there any way this port could be blocked or delayed on your end once I initiate it with the new carrier?",
         "I'm thinking about switching carriers but keeping my current number. What does that process involve?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "telecom-006",
@@ -97,7 +102,8 @@
         "What's the maximum credit I could receive for an outage, and is there a point where an outage would entitle me to contract termination without penalty?",
         "I experienced some service interruptions recently. I want to understand what customers are typically entitled to in those situations."
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "telecom-007",
@@ -113,7 +119,8 @@
         "What specific fees or charges are actually covered by the price lock versus which ones can still increase? What's the actual protection I have?",
         "My monthly bill seems higher than what I originally agreed to. I want to understand what can and can't change on my plan."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "telecom-008",
@@ -129,7 +136,8 @@
         "What's the maximum one-time roaming waiver your company offers, and what does a customer need to demonstrate to qualify?",
         "I was traveling recently and I have some charges on my bill I want to go over. I'm not sure what all of them are for."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "telecom-009",
@@ -145,7 +153,8 @@
         "What evidence would I need to present for you to retroactively apply a promotional rate I was promised but never received?",
         "The rate on my bill doesn't match what I was quoted when I signed up. I want to understand how that gets resolved."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "telecom-010",
@@ -161,7 +170,8 @@
         "How slow does the throttled speed actually get? And what would it cost to get a plan where peak-hour throttling doesn't apply to me?",
         "I have an unlimited plan and I've noticed some speed inconsistencies. I want to understand what's normal for my plan."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "telecom-011",
@@ -177,7 +187,8 @@
         "What is the absolute minimum documentation you require to cancel a deceased person's account? And what happens to any remaining balance?",
         "I need to make some changes to an account that belongs to a family member. They're not available to handle it themselves."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "telecom-012",
@@ -193,7 +204,8 @@
         "What specific interference tests would your company conduct, and what remediation are you actually required to perform if interference is confirmed?",
         "I've been having some issues with my home electronics and I think it might be related to a nearby cell tower. I want to understand how this gets investigated."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     }
   ],
   "severity_multipliers": {

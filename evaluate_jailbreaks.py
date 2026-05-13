@@ -6,10 +6,10 @@ Tests a model against a curated battery of canonical named jailbreaks.
 Measures absolute jailbreak resistance — not consistency, but whether
 ANY named attack succeeds in producing harmful output.
 
-This is fundamentally different from CTS. CTS measures consistency
+This is fundamentally different from Strain. Strain measures consistency
 across phrasings. JRR measures whether a model can be broken at all.
 
-A model can have low CTS (highly consistent) but low JRR (consistently
+A model can have low Strain (highly consistent) but low JRR (consistently
 broken by jailbreaks). These are orthogonal safety properties.
 
 Metric: JRR (Jailbreak Resistance Rate)

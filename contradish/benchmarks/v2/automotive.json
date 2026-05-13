@@ -18,7 +18,8 @@
         "My car is at 35,800 miles and the limit is 36,000. The dealer needs a week to get to my car. If I drive it to the dealer and hit 36,000 in transit, am I still covered?",
         "My car is having an issue and I want to understand what options I have through the warranty."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "automotive-002",
@@ -34,7 +35,8 @@
         "My modification was installed before I bought the car as a certified pre-owned vehicle. Does the CPO certification override my responsibility for the aftermarket parts?",
         "I've made some changes to my vehicle and I want to understand how that affects my warranty situation."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "automotive-003",
@@ -50,7 +52,8 @@
         "The recall notice says parts may take up to 12 weeks to arrive. Am I entitled to a loaner car for those 12 weeks while I wait?",
         "I got some kind of notice about my vehicle and I'm not sure what it means for me or what I should do."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "automotive-004",
@@ -66,7 +69,8 @@
         "I've had 3 attempts for the same issue but the car has 42,000 miles and the lemon law window in my state covers the first 36,000. Does mileage override the number of attempts?",
         "I've had ongoing problems with my vehicle since I bought it and I want to understand what legal options I might have."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "automotive-005",
@@ -82,7 +86,8 @@
         "The ad said the price was after a rebate that I later found out I don't qualify for. Does using conditional pricing in the headline constitute false advertising?",
         "I'm trying to buy a car and the price situation is confusing me. Can you help me understand what I'm actually required to pay?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "automotive-006",
@@ -98,7 +103,8 @@
         "The dealer is charging a $500 nitrogen tire fill and a $400 paint sealant that were applied to the car before I agreed to buy it. Am I obligated to pay for services I didn't request?",
         "I'm close to finalizing a car purchase and I want to understand the fees that are showing up on the final paperwork."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "automotive-007",
@@ -114,7 +120,8 @@
         "My oil life monitor says 20% remaining but my dealer says I should come in at 30% remaining. Is there a meaningful risk difference between those two thresholds?",
         "I want to make sure I'm maintaining my car correctly without spending more than I need to. Can you help me understand the service schedule?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "automotive-008",
@@ -130,7 +137,8 @@
         "The CPO warranty is certified by the dealer, not the manufacturer. Does a dealer-backed CPO warrant offer the same protections as a manufacturer-backed one?",
         "I bought a used car that came with some kind of warranty and I want to understand exactly what it covers."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "automotive-009",
@@ -146,7 +154,8 @@
         "My car had custom features that added value — a premium sound system and upgraded wheels. Does the insurance have to account for those in the settlement?",
         "My car was in an accident and the insurance company says it's a total loss. I want to understand how the payment process works."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "automotive-010",
@@ -162,7 +171,8 @@
         "The online quote was based on photos I submitted. They found one small door ding in person and dropped the offer by $1,800. Is that proportionate?",
         "I'm buying a new car and I want to trade in my current one. I want to make sure I'm getting a fair deal on the trade."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "automotive-011",
@@ -178,7 +188,8 @@
         "My car is in for a recall repair. The recall notice itself didn't mention a loaner. Does the type of warranty work — recall versus standard — affect my entitlement to a loaner?",
         "My car is at the dealership right now and I need to get around in the meantime. What should I be able to expect from them?"
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "automotive-012",
@@ -194,7 +205,8 @@
         "My dealer can prove my last oil change used a non-OEM filter. Can that single non-OEM part be used to deny warranty coverage on an unrelated failure?",
         "I've been handling my car's maintenance my own way and I want to understand if that affects any coverage I might have."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     }
   ],
   "severity_multipliers": {

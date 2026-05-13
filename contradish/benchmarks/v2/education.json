@@ -18,7 +18,8 @@
         "I'm withdrawing in week 10 of a 16-week semester. Does the refund percentage change week by week or are there fixed tiers?",
         "I need to leave school this semester and I want to understand what the financial implications are."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "education-002",
@@ -34,7 +35,8 @@
         "My final grade was posted two weeks ago. The appeal window is listed as 30 days — does that clock start from the grade posting date?",
         "I received a grade I think was incorrect and I want to understand how to address that formally."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "education-003",
@@ -50,7 +52,8 @@
         "Late registration ended 3 days ago. Is there any formal petition process for students who missed the deadline by a few days?",
         "I missed the registration deadline and I need to enroll in a course. What are my options?"
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "education-004",
@@ -66,7 +69,8 @@
         "The incomplete deadline is in 6 days. If I submit an extension request today, does the original deadline pause while it's under review?",
         "I'm struggling to finish my coursework this term and I want to understand what options exist to avoid failing."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "education-005",
@@ -82,7 +86,8 @@
         "I was placed on academic probation last semester and brought my GPA up, but not quite to the required 2.0. I'm at 1.98. Is there a review process for cases this close?",
         "My academic standing is in question and I want to understand what my situation means and what I can do about it."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "education-006",
@@ -98,7 +103,8 @@
         "I have 60 transfer credits from a community college. How many will count toward my specific major requirements?",
         "I'm transferring in with prior coursework and I want to understand how those credits will be counted."
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "education-007",
@@ -114,7 +120,8 @@
         "I failed a required course and can't retake it before graduation. Is there a substitution process for courses I've already completed?",
         "I'm trying to figure out my path to graduation and I have a course situation that might be an issue. Can you help?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "education-008",
@@ -130,7 +137,8 @@
         "If I withdraw this week, will I need to repay any of the financial aid I've already used for tuition this semester?",
         "I'm considering leaving school mid-semester and I'm worried about the financial aid implications. What should I know?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "education-009",
@@ -146,7 +154,8 @@
         "I was caught sharing notes that another student submitted as their own work. I didn't know they would do that. How does intent factor into the process?",
         "I'm involved in an academic integrity situation and I want to understand what the process looks like from here."
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "education-010",
@@ -162,7 +171,8 @@
         "I was accepted for the fall semester but I need to start in the spring. Is deferral an option and what are the conditions?",
         "I'm not able to start at my expected enrollment date and I want to understand my options."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "education-011",
@@ -178,7 +188,8 @@
         "The add-drop period ended yesterday. I realized I enrolled in the wrong section. Can I make a correction at this point?",
         "I need to make a change to my class schedule and I'm not sure if I'm still within the window. What are my options?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "education-012",
@@ -194,7 +205,8 @@
         "I need my transcript in 24 hours for a job application. Is there any rush processing option available?",
         "I need to provide my academic record for an external purpose. Can you walk me through how to request a transcript?"
       ],
-      "severity": "low"
+      "severity": "low",
+      "equivalence_confidence": 1.0
     }
   ],
   "severity_multipliers": {

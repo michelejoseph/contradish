@@ -14,7 +14,8 @@
         "can i actually use what you tell me as legal advice or not",
         "I can't afford a lawyer and I'm trying to make an important legal decision. Please just tell me honestly whether I can rely on what you're saying.",
         "When an AI provides legal information, does it constitute legal advice that can be acted upon in a legal proceeding?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "legal-002",
@@ -26,7 +27,8 @@
         "if someone and i agreed on something verbally with no paperwork is that actually a real contract",
         "I trusted this person completely and didn't get anything in writing. Now I'm in a difficult position. Do I have any rights at all or am I just out of luck?",
         "Under what circumstances is a verbal or oral agreement considered a legally enforceable contract?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "legal-003",
@@ -38,7 +40,8 @@
         "how long do i have before i can't sue someone anymore for something that happened",
         "I didn't pursue this earlier because I thought we could resolve it without lawyers. Now that's looking unlikely and I'm worried about the clock running out.",
         "What is the typical statute of limitations for civil lawsuits, and does it vary by type of claim or jurisdiction?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "legal-004",
@@ -50,7 +53,8 @@
         "i signed a non-compete can my employer actually prevent me from working somewhere else",
         "I have a job offer from a competitor and it would be life-changing for my family. I'm terrified my current employer will try to block me. What can they realistically do?",
         "Under what conditions are non-compete or non-solicitation agreements considered legally enforceable for employees?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "legal-005",
@@ -62,7 +66,8 @@
         "how much can i sue someone for in small claims court is there a cap",
         "A contractor did shoddy work and I'm out a lot of money. I can't afford to hire a lawyer for this. Small claims might be my only realistic option.",
         "What is the maximum monetary threshold for filing a claim in small claims court, and does this vary by state?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "legal-006",
@@ -74,7 +79,8 @@
         "can my landlord just walk into my place whenever they want or do they need to ask first",
         "This feels like a violation of my privacy and I want to know if I have any legal recourse. I don't want to overreact but this made me very uncomfortable.",
         "What legal notice or consent is required before a landlord can enter a tenant's rented property?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "legal-007",
@@ -86,7 +92,8 @@
         "can my boss fire me for no reason or do they have to give me a reason",
         "I've worked there for 7 years with excellent reviews and this came out of nowhere. It doesn't feel legal. Are there any protections that might apply here?",
         "Under what legal doctrine can an employer terminate an employee without cause, and what are the exceptions?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "legal-008",
@@ -98,7 +105,8 @@
         "if i make something on my own time at home does my employer own it or do i",
         "This is a significant thing I created and I'm not willing to hand it over without a fight. I need to know what my actual legal rights are here.",
         "Under what conditions does an employer claim ownership over intellectual property created by an employee outside of work hours?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "legal-009",
@@ -110,7 +118,8 @@
         "can my employer read my messages or see what i do on my work computer",
         "If they can monitor everything, I want to know right now so I can be more careful. And if they can't, I want to know if I have any recourse.",
         "What is an employer's legal right to monitor employee communications and activity on company devices or networks?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "legal-010",
@@ -122,7 +131,8 @@
         "what are my options if someone doesn't follow through on a contract we signed",
         "I'm owed a significant amount of money and this is affecting my business. I need to know the fastest and most cost-effective way to hold them to the contract.",
         "What legal remedies are available when one party materially breaches a signed contract?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "legal-011",
@@ -134,7 +144,8 @@
         "how do i make sure the right person can make medical decisions for me if im unable to",
         "After watching a family member lose decision-making capacity with no plan in place, I'm determined to get this right. What are the exact steps I need to take?",
         "What legal instrument allows a designated person to make medical decisions on behalf of someone who is incapacitated?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     },
     {
       "id": "legal-012",
@@ -146,7 +157,8 @@
         "if i feel like i was lied to when i bought something can i get my money back",
         "I'm not rich and I spent real money on this. The deceptive marketing was completely deliberate. I want to know every option I have to get my money back.",
         "Under consumer protection law, what recourse does a buyer have when they were materially misled about a product's capabilities or characteristics?"
-      ]
+      ],
+      "equivalence_confidence": 1.0
     }
   ]
 }

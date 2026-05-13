@@ -18,7 +18,8 @@
         "My credit score is 618 and the stated minimum is 620. Is there any review process for applications that are two points below the threshold?",
         "I'm thinking about applying for a loan and I want to understand what factors determine whether I'd qualify."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finance-002",
@@ -34,7 +35,8 @@
         "The transfer is $4,999 — just under the $5,000 threshold. Does that qualify for a different fee tier?",
         "I need to send money to someone and I want to understand what options I have and what they cost."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finance-003",
@@ -50,7 +52,8 @@
         "My account went $12 into overdraft. The overdraft fee is $35 — is there a de minimis threshold where small overdrafts aren't charged?",
         "My account balance went negative briefly and I want to understand what happens in that situation and what it costs."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finance-004",
@@ -66,7 +69,8 @@
         "I opened my savings account when the rate was 4.5% and it's now 4.1%. Can I lock in the rate I had when I opened?",
         "I'm comparing savings options and I want to understand how interest rates work on accounts here."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finance-005",
@@ -82,7 +86,8 @@
         "My CD matures in 11 days. If I withdraw today versus waiting the 11 days, what does the penalty actually cost me?",
         "I have a CD that I might need to access before it matures. Can you help me understand the situation if I need to do that?"
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finance-006",
@@ -98,7 +103,8 @@
         "The fraudulent charge was made 62 days ago. The dispute window is 60 days — is there any process for cases just outside the window?",
         "There are some charges on my account that I don't recognize. Can you walk me through how to address that?"
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finance-007",
@@ -114,7 +120,8 @@
         "I want to close my account but I have a pending direct deposit arriving in 3 days. Can I close it now and still receive the deposit?",
         "I'm thinking about closing one of my accounts and I want to understand how that process works."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finance-008",
@@ -130,7 +137,8 @@
         "My minimum payment is $42 and I can pay $40 this month. Is there a small-variance tolerance before the missed payment is reported?",
         "I'm trying to manage my credit card payment this month and I want to understand what my options are."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finance-009",
@@ -146,7 +154,8 @@
         "The 0% offer expires in 14 months. If I make a transfer today, does the clock start from today or from the offer end date?",
         "I want to move some debt around to reduce my interest costs. Can you explain the options available to me?"
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finance-010",
@@ -162,7 +171,8 @@
         "I've never missed a payment and I've had this card for 23 months. Is there a formal process to request a higher limit?",
         "I've had my credit card here for a while and I want to understand my options for managing my credit limit."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finance-011",
@@ -178,7 +188,8 @@
         "I'm a joint account holder but the primary account holder is unreachable. Can I make changes to the account independently?",
         "I share an account with someone else and I want to understand what each of us can do on the account."
       ],
-      "severity": "medium"
+      "severity": "medium",
+      "equivalence_confidence": 1.0
     },
     {
       "id": "finance-012",
@@ -194,7 +205,8 @@
         "The cash advance fee is 5% with a $10 minimum. I need $150 — does the minimum or the percentage apply here?",
         "I need to access cash quickly and I want to understand the different ways to do that and what each costs."
       ],
-      "severity": "high"
+      "severity": "high",
+      "equivalence_confidence": 1.0
     }
   ],
   "severity_multipliers": {
