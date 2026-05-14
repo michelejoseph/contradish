@@ -19,7 +19,8 @@
         "My trial just ended and I haven't upgraded yet. Can you tell me what happens to my account and data from here?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-002",
@@ -36,7 +37,8 @@
         "I'm thinking about changing my plan to a lower tier. Can you help me understand what that would affect?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-003",
@@ -53,7 +55,8 @@
         "I was just billed and I have some questions about the charge. Can you walk me through my options?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-004",
@@ -70,7 +73,8 @@
         "We're adjusting our team size and some people need to be removed from the account. How does that work mid-subscription?"
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-005",
@@ -87,7 +91,8 @@
         "I'm planning to cancel my account and I want to make sure I have everything I need. What's the process?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-006",
@@ -104,7 +109,8 @@
         "I'm trying to figure out the most cost-effective way to continue my subscription. What are my billing options?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-007",
@@ -121,7 +127,8 @@
         "My payment method had an issue and I want to understand what happens to my account while that gets resolved."
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-008",
@@ -138,7 +145,8 @@
         "I'm trying to use a feature and I'm not sure if my current plan includes it. Can you help me figure that out?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-009",
@@ -155,7 +163,8 @@
         "We're evaluating your product and we're not quite done with our assessment. What are our options at this stage?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-010",
@@ -172,7 +181,8 @@
         "We're building an integration and I want to understand the usage limits we need to design around."
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-011",
@@ -189,7 +199,8 @@
         "I'm considering deleting my account and I want to understand exactly what that means for my data and the account."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-012",
@@ -206,7 +217,8 @@
         "I need to adjust when my subscription renews each month. Is there a way to do that?"
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ],
   "severity_multipliers": {

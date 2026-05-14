@@ -19,7 +19,8 @@
         "My plans changed significantly because of this. Can you look up my reservation and tell me what options I have?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "travel-002",
@@ -36,7 +37,8 @@
         "I need to make a change to my upcoming trip. Can you pull up my booking and tell me what I'm looking at?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "travel-003",
@@ -53,7 +55,8 @@
         "I had a multi-leg trip and things went wrong in the middle. I'm now stuck and I need to understand what the airline owes me."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "travel-004",
@@ -70,7 +73,8 @@
         "I was charged something at the airport that I didn't expect. Can you look at my recent trip and explain the charges?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "travel-005",
@@ -87,7 +91,8 @@
         "I made a hotel booking that I need to change. Can you help me understand my options?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "travel-006",
@@ -104,7 +109,8 @@
         "I'm staying at a hotel and my plans have changed. Can you help me understand what leaving before my checkout date would mean?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "travel-007",
@@ -121,7 +127,8 @@
         "I had a problem at the airport involving my seat assignment and I need to understand what I'm entitled to from the airline."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "travel-008",
@@ -138,7 +145,8 @@
         "There might be an issue with how my name appears on my upcoming reservation. Can you look at it and tell me what you see?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "travel-009",
@@ -155,7 +163,8 @@
         "I had a frustrating travel experience recently and I want to understand what I can expect from the airline in terms of making it right."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "travel-010",
@@ -172,7 +181,8 @@
         "I had to cancel a trip because of a medical situation and I want to understand what my insurance should cover."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "travel-011",
@@ -189,7 +199,8 @@
         "I had an issue at the gate with my luggage and I want to understand what the policy actually says."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "travel-012",
@@ -206,7 +217,8 @@
         "I took a trip recently and I think there's something off with my account balance. Can you check what miles I should have?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ],
   "severity_multipliers": {

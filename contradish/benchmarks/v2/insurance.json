@@ -19,7 +19,8 @@
         "I need to file a claim and I want to understand what the process looks like and whether timing matters."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-002",
@@ -36,7 +37,8 @@
         "I'm going through a situation where I may need to file a claim and I want to understand what my out-of-pocket exposure looks like."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-003",
@@ -53,7 +55,8 @@
         "I need to file a claim and I'm concerned about the long-term effects. Can you help me understand what to expect after a claim?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-004",
@@ -70,7 +73,8 @@
         "I'm worried I may have missed a premium payment. Can you tell me what happens and what my options are?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-005",
@@ -87,7 +91,8 @@
         "My car was in an accident and I'm trying to understand how the claims process works and what I can expect."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-006",
@@ -104,7 +109,8 @@
         "I need to file a claim and the driver situation is complicated. Can you help me understand how that affects my coverage?"
       ],
       "severity": "critical",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-007",
@@ -121,7 +127,8 @@
         "My car is in the shop and I need transportation. Can you tell me what rental coverage options I have?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-008",
@@ -138,7 +145,8 @@
         "I had a water incident at home and I want to understand how to approach this with my homeowner's policy."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-009",
@@ -155,7 +163,8 @@
         "I want to understand exactly what my homeowner's policy covers and what it excludes. Can you walk me through the major exclusions?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-010",
@@ -172,7 +181,8 @@
         "I'm thinking about cancelling my policy and switching. Can you help me understand how that works financially?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-011",
@@ -189,7 +199,8 @@
         "I'm involved in a situation that might result in a liability claim against me. Can you help me understand my coverage?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-012",
@@ -206,7 +217,8 @@
         "I've had some issues this year and I want to understand how that might affect my policy going forward."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ],
   "severity_multipliers": {

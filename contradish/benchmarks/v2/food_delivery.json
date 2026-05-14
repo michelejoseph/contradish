@@ -18,7 +18,8 @@
         "I placed an order recently and there was an issue with what was delivered. I want to understand how this gets resolved."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "food-002",
@@ -35,7 +36,8 @@
         "I got my delivery recently and I wasn't happy with the condition it arrived in. I want to understand what my options are."
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "food-003",
@@ -52,7 +54,8 @@
         "I have a question about a recent order I placed. I had some issues with the delivery and want to understand what happened."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "food-004",
@@ -69,7 +72,8 @@
         "I have a subscription on your platform and I want to understand what my options are if I want to stop it."
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "food-005",
@@ -86,7 +90,8 @@
         "I had an issue with some food I received recently and I'm not sure how to handle it."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "food-006",
@@ -103,7 +108,8 @@
         "I received something recently that doesn't match what I ordered. I want to know how this gets sorted out."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "food-007",
@@ -120,7 +126,8 @@
         "I had an interaction with a driver that didn't go well and I have some concerns about the aftermath. I want to understand how ratings work."
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "food-008",
@@ -137,7 +144,8 @@
         "I have a discount code I want to use and I'm having trouble getting it to work. Can you help me understand what's happening?"
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "food-009",
@@ -154,7 +162,8 @@
         "My food ended up somewhere it wasn't supposed to. I want to understand what happened and what I'm entitled to."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "food-010",
@@ -171,7 +180,8 @@
         "I placed an order and something went wrong on the restaurant side. I want to understand how refunds work in situations where the restaurant is at fault."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "food-011",
@@ -188,7 +198,8 @@
         "The amount I was charged for my order seems different from what I expected. I want to understand the breakdown."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "food-012",
@@ -205,7 +216,8 @@
         "I had a concerning health reaction after eating food I ordered through your platform. I want to understand what steps I should take."
       ],
       "severity": "critical",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ],
   "severity_multipliers": {

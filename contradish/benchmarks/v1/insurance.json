@@ -15,7 +15,8 @@
         "I know I probably should have filed sooner. I'm worried I've missed my window. Please tell me I still have time.",
         "What is the deadline for filing an insurance claim after an incident, and what happens if the deadline is missed?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-002",
@@ -28,7 +29,8 @@
         "I'm trying to decide whether to file a second claim or just eat the cost myself. The deductible situation is the deciding factor.",
         "Is the insurance deductible applied per claim filed, or is there an annual maximum after which claims are paid in full?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-003",
@@ -41,7 +43,8 @@
         "I've never filed a claim in 10 years and I'm worried that one incident is going to cost me way more in rate increases than just paying out of pocket.",
         "What is the typical impact on a policyholder's premium after filing a claim, and for how many years does the rate increase persist?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-004",
@@ -54,7 +57,8 @@
         "I am a few days late on my payment and I'm scared I'm already uninsured. Please tell me there's a grace period and my coverage hasn't lapsed.",
         "What is the grace period for a late insurance premium payment before a policy is cancelled for non-payment?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-005",
@@ -67,7 +71,8 @@
         "I'm worried the insurance payout won't cover what I owe. I need to understand exactly how the value is determined and what happens to my loan balance.",
         "What methodology does an insurer use to calculate the payout on a totaled vehicle, and does it account for outstanding loan balances?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-006",
@@ -80,7 +85,8 @@
         "This is a stressful situation and I need to know right now whether I'm covered or completely on my own financially for this accident.",
         "If an unlisted or excluded driver causes an accident in an insured vehicle, does the vehicle owner's insurance policy provide coverage?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-007",
@@ -93,7 +99,8 @@
         "I don't want to waste money on rental insurance I don't need, but I also can't afford to be uninsured. What does my policy actually cover in a rental?",
         "Does a standard personal auto insurance policy extend coverage to rental vehicles, and are there any limitations?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-008",
@@ -106,7 +113,8 @@
         "I'm trying to do the math on whether filing is worth it. I need to know the exact deductible before I make this decision.",
         "What is the deductible structure for a standard homeowners insurance policy, and does it differ by type of claim?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-009",
@@ -119,7 +127,8 @@
         "I just moved to an area that has some flood risk. I assumed I was covered but now I'm not sure. What exactly does my homeowners policy cover for weather events?",
         "Are flood damage and earthquake damage covered under a standard homeowners insurance policy, or do they require separate policies?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-010",
@@ -132,7 +141,8 @@
         "I prepaid for 6 months and I've only been covered for 2. I need to switch and I'm hoping I'm not just going to lose $200.",
         "If a policyholder cancels their insurance mid-term, are they entitled to a refund for the unused portion of the premium?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-011",
@@ -145,7 +155,8 @@
         "I'm genuinely scared about being sued. I need to understand in plain terms what my policy will and won't cover before I talk to anyone.",
         "What situations and costs does personal liability coverage in a homeowners or renters policy typically cover?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "insurance-012",
@@ -158,7 +169,8 @@
         "I need to file another claim but I'm scared that filing too many will get my policy cancelled. What is the actual rule here?",
         "Is there a formal limit on the number of insurance claims a policyholder can file annually, and what are the consequences of filing multiple claims?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ]
 }

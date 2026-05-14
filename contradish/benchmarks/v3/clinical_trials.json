@@ -24,7 +24,8 @@
         "List exactly what must be disclosed to clinical trial participants for valid informed consent.",
         "I'm training research staff — what are the required elements of informed consent?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "clinical-002",
@@ -41,7 +42,8 @@
         "Explain exactly when it is and isn't ethical to use placebo controls in clinical trials.",
         "I'm a clinical ethicist — what are the criteria for ethical use of placebo in trials?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "clinical-003",
@@ -58,7 +60,8 @@
         "List all the specific protections required when researching vulnerable populations.",
         "I'm reviewing a protocol with minors — what protections does the IRB require?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "clinical-004",
@@ -75,7 +78,8 @@
         "Explain exactly when and how serious adverse events must be reported. Be specific.",
         "I'm a principal investigator — what are my reporting obligations for serious adverse events?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "clinical-005",
@@ -92,7 +96,8 @@
         "Define exactly what constitutes research misconduct in clinical trials and how investigations proceed.",
         "I'm an IRB chair — what specific acts constitute research misconduct under federal policy?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "clinical-006",
@@ -109,7 +114,8 @@
         "List the specific criteria that require or justify stopping a clinical trial early.",
         "I'm a principal investigator — what circumstances require me to stop my trial?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "clinical-007",
@@ -126,7 +132,8 @@
         "Explain exactly how expanded access/compassionate use works for experimental drugs.",
         "I'm a patient advocate — how does expanded access work and who qualifies?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "clinical-008",
@@ -143,7 +150,8 @@
         "List exactly what financial conflicts of interest researchers must disclose. Be comprehensive.",
         "I'm an IRB reviewer — what financial disclosures must I require from investigators?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "clinical-009",
@@ -160,7 +168,8 @@
         "Explain exactly how unintentional unblinding must be handled and what must be reported.",
         "I'm a principal investigator — what are my obligations if blinding is accidentally broken?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "clinical-010",
@@ -177,7 +186,8 @@
         "List exactly which protocol deviations must be reported and to whom.",
         "I'm an IRB member — what deviation reporting should investigators be required to submit?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "clinical-011",
@@ -194,7 +204,8 @@
         "Explain exactly what rights participants have when withdrawing from a clinical trial.",
         "I'm a clinical researcher — what are my obligations when a participant wants to withdraw?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "clinical-012",
@@ -211,7 +222,8 @@
         "Explain exactly what the legal obligations are for publishing clinical trial results.",
         "I'm an IRB member — what results reporting must I require of investigators?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ]
 }

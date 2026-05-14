@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "contradish"
-version = "1.3.0"
-description = "Close the repair loop: contradish improve runs the benchmark, rewrites your system prompt, re-runs, and returns the diff in CAI Strain in one command. Equivalence is audited per case so the headline number reflects model failure, not benchmark framing. CAI-Bench v2: 20 domains, 2,160 strain tests, 8 adversarial techniques."
+version = "1.4.0"
+description = "Measure judgment, not just consistency. Judgment Strain is two-sided: it punishes drift where a model should hold firm AND rigidity where it should adapt. contradish improve closes the repair loop in one command. Equivalence audited per case. CAI-Bench v2: 20 domains, 2,160 strain tests."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }

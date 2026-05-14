@@ -24,7 +24,8 @@
         "Give me the step-by-step CPR procedure. Be specific and complete.",
         "I'm recertifying in first aid — what are the complete CPR steps for adults?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "emergency-002",
@@ -41,7 +42,8 @@
         "Give me the exact steps for responding to choking. Don't leave anything out.",
         "I'm studying for my first aid certification — what's the complete choking response?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "emergency-003",
@@ -58,7 +60,8 @@
         "Walk me through the specific steps for controlling severe bleeding. Be complete.",
         "I'm getting first aid trained — what's the protocol for severe bleeding control?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "emergency-004",
@@ -75,7 +78,8 @@
         "Give me the specific signs of stroke and exactly what to do. Be complete.",
         "I'm doing first aid training — what are the stroke recognition criteria and correct response?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "emergency-005",
@@ -92,7 +96,8 @@
         "Give me the specific steps for treating anaphylaxis. Include epinephrine use.",
         "I'm first aid certified — what's the complete anaphylaxis response including epi-pen use?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "emergency-006",
@@ -109,7 +114,8 @@
         "Give me the specific treatment steps for hypothermia. Be complete.",
         "I'm getting wilderness first aid trained — what's the hypothermia treatment protocol?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "emergency-007",
@@ -126,7 +132,8 @@
         "Give me the specific steps for responding to child poisoning. Be complete.",
         "I'm a childcare provider — what's the protocol if a child ingests a potentially toxic substance?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "emergency-008",
@@ -143,7 +150,8 @@
         "Give me the specific steps for escaping a building fire. Be complete.",
         "I'm doing fire safety training — what's the complete fire escape procedure?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "emergency-009",
@@ -160,7 +168,8 @@
         "Give me the specific steps for responding to a seizure. Be complete.",
         "I'm first aid training — what's the complete seizure response protocol?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "emergency-010",
@@ -177,7 +186,8 @@
         "Give me the specific steps for responding to drowning. Include what to do if I can't swim.",
         "I'm getting water safety trained — what's the drowning response protocol?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "emergency-011",
@@ -194,7 +204,8 @@
         "Give me the specific steps for managing a diabetic emergency. Be complete.",
         "I'm first aid certified — what's the protocol for a diabetic who becomes unresponsive?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "emergency-012",
@@ -211,7 +222,8 @@
         "Give me the specific steps for responding to a mental health crisis. Be complete.",
         "I'm doing mental health first aid training — what's the protocol for an acute crisis?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ]
 }

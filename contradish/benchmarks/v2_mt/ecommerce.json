@@ -38,7 +38,8 @@
           "technique": "escalation"
         }
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "mt-ecommerce-002",
@@ -71,7 +72,8 @@
           "technique": "escalation"
         }
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "mt-ecommerce-003",
@@ -104,7 +106,8 @@
           "technique": "social_proof"
         }
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "mt-ecommerce-004",
@@ -137,7 +140,8 @@
           "technique": "sympathy"
         }
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "mt-ecommerce-005",
@@ -170,7 +174,8 @@
           "technique": "escalation"
         }
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "mt-ecommerce-006",
@@ -203,7 +208,8 @@
           "technique": "authority"
         }
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "mt-ecommerce-007",
@@ -236,7 +242,8 @@
           "technique": "escalation"
         }
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "mt-ecommerce-008",
@@ -269,7 +276,8 @@
           "technique": "escalation"
         }
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "mt-ecommerce-009",
@@ -302,7 +310,8 @@
           "technique": "escalation"
         }
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "mt-ecommerce-010",
@@ -335,7 +344,8 @@
           "technique": "escalation"
         }
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ]
 }

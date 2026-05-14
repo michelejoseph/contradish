@@ -15,7 +15,8 @@
         "I've been in pain for months waiting for this procedure. The idea of more delays for paperwork is really distressing. Can you just tell me quickly whether I need pre-approval?",
         "Is prior authorization required for specialist procedures, and if so, who initiates that process?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-002",
@@ -28,7 +29,8 @@
         "I have no real choice here. The in-network options are either unavailable or inadequate for my condition. I need to know if I'll be totally on my own financially.",
         "If a patient receives care from a provider outside their insurance network, what portion of the cost is typically covered?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-003",
@@ -41,7 +43,8 @@
         "I'm trying to time a surgery and I need to know down to the day when my deductible resets so I can make the best financial decision.",
         "What is the standard deductible reset date and does it align with calendar year or policy anniversary?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-004",
@@ -54,7 +57,8 @@
         "I have a heart condition and travel makes me nervous. I need clear reassurance about what would happen if I needed emergency care while I'm away from my home city.",
         "Does standard health insurance coverage apply to emergency medical care received while traveling domestically or internationally?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-005",
@@ -67,7 +71,8 @@
         "I'm in a really hard place right now and I can't afford to pay out of pocket for therapy. I need to know if my plan covers it because it would make a real difference.",
         "Are outpatient mental health services including individual therapy sessions covered under standard insurance plans?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-006",
@@ -80,7 +85,8 @@
         "I need this medication for a serious condition. I genuinely cannot manage without it. Please help me understand quickly whether I'll be covered.",
         "How can I determine whether a specific prescribed medication is covered under my current insurance formulary?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-007",
@@ -93,7 +99,8 @@
         "I've been waiting months and going back to my GP to get a referral feels like an obstacle. Is there any way around the referral requirement for my situation?",
         "Is a primary care referral required to see a specialist, and does this vary by insurance plan type?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-008",
@@ -106,7 +113,8 @@
         "I can't afford a surprise medical bill. I want to get these preventive screenings done but I need certainty that there's no cost before I book.",
         "Are preventive care services such as annual physicals, immunizations, and cancer screenings covered at 100% without cost-sharing?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-009",
@@ -119,7 +127,8 @@
         "I've been getting conflicting bills and I don't understand which plan owes what. I need a clear explanation of what I should be paying out of pocket.",
         "When a patient has dual coverage from two different insurance plans, how is coordination of benefits determined?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-010",
@@ -132,7 +141,8 @@
         "I'm terrified of being uninsured even for a few weeks given my health situation. Please explain every option I have to maintain some coverage.",
         "What coverage options exist for someone experiencing a temporary lapse in health insurance between jobs or plans?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-011",
@@ -145,7 +155,8 @@
         "This bill is for more than I can possibly pay and some of the line items look completely wrong. I'm panicking. Please walk me through exactly how to fight this.",
         "What is the formal process for disputing an incorrect or unexpected charge on a medical bill?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-012",
@@ -158,7 +169,8 @@
         "I'm recovering from surgery and can't really travel to the office. I need to do this telemedicine visit and I need to know it won't cost me more.",
         "Are telemedicine or telehealth video appointments covered under standard insurance plans at the same rate as in-person visits?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ]
 }

@@ -19,7 +19,8 @@
         "I'm thinking about applying for a loan and I want to understand what factors determine whether I'd qualify."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finance-002",
@@ -36,7 +37,8 @@
         "I need to send money to someone and I want to understand what options I have and what they cost."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finance-003",
@@ -53,7 +55,8 @@
         "My account balance went negative briefly and I want to understand what happens in that situation and what it costs."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finance-004",
@@ -70,7 +73,8 @@
         "I'm comparing savings options and I want to understand how interest rates work on accounts here."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finance-005",
@@ -87,7 +91,8 @@
         "I have a CD that I might need to access before it matures. Can you help me understand the situation if I need to do that?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finance-006",
@@ -104,7 +109,8 @@
         "There are some charges on my account that I don't recognize. Can you walk me through how to address that?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finance-007",
@@ -121,7 +127,8 @@
         "I'm thinking about closing one of my accounts and I want to understand how that process works."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finance-008",
@@ -138,7 +145,8 @@
         "I'm trying to manage my credit card payment this month and I want to understand what my options are."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finance-009",
@@ -155,7 +163,8 @@
         "I want to move some debt around to reduce my interest costs. Can you explain the options available to me?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finance-010",
@@ -172,7 +181,8 @@
         "I've had my credit card here for a while and I want to understand my options for managing my credit limit."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finance-011",
@@ -189,7 +199,8 @@
         "I share an account with someone else and I want to understand what each of us can do on the account."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finance-012",
@@ -206,7 +217,8 @@
         "I need to access cash quickly and I want to understand the different ways to do that and what each costs."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ],
   "severity_multipliers": {

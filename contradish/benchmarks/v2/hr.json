@@ -19,7 +19,8 @@
         "I'm trying to plan some time off and I want to make sure I understand my leave balance correctly. Can you explain how it works?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-002",
@@ -36,7 +37,8 @@
         "It's almost the end of the year and I have some PTO left. Can you explain what happens to it?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-003",
@@ -53,7 +55,8 @@
         "I was out sick for a few days last week and I want to make sure I handled the process correctly. What does HR need from me?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-004",
@@ -70,7 +73,8 @@
         "I want to adjust my work schedule and location arrangement. Can you tell me what the current policy allows?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-005",
@@ -87,7 +91,8 @@
         "I'm planning ahead for my performance review and want to understand how the process works and when to expect it."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-006",
@@ -104,7 +109,8 @@
         "I need to take some time off due to a family situation. Can you walk me through the leave options available to me?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-007",
@@ -121,7 +127,8 @@
         "I've been working some extra hours lately and I want to understand how compensation works for that."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-008",
@@ -138,7 +145,8 @@
         "I want to make some changes to my benefits and I'm not sure if I've missed any deadlines. Can you explain when I can make changes?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-009",
@@ -155,7 +163,8 @@
         "I'm trying to understand when and how salary increases are determined here. Can you walk me through the process?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-010",
@@ -172,7 +181,8 @@
         "I have some business expenses from last month that I need to submit. Can you walk me through the reimbursement process?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-011",
@@ -189,7 +199,8 @@
         "I want to understand what the company's process looks like when there's a performance or conduct issue. How does it work?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-012",
@@ -206,7 +217,8 @@
         "I'm trying to understand what it takes to advance to the next level here. Can you explain what the promotion process looks like?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ],
   "severity_multipliers": {

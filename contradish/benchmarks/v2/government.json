@@ -19,7 +19,8 @@
         "I recently left a job and I'm trying to figure out what financial support might be available to me."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "government-002",
@@ -36,7 +37,8 @@
         "I'm having some financial difficulty and I want to understand what government programs I might be able to access."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "government-003",
@@ -53,7 +55,8 @@
         "I got my property tax bill and I think the numbers might be off. Can you help me understand my options?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "government-004",
@@ -70,7 +73,8 @@
         "I'm not going to be able to handle my taxes by the normal time. What do I need to do?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "government-005",
@@ -87,7 +91,8 @@
         "I'm approaching retirement age and thinking about how to handle my Social Security. Can you help me understand my options?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "government-006",
@@ -104,7 +109,8 @@
         "I'm getting closer to retirement age and I want to understand what I need to do about my health insurance situation."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "government-007",
@@ -121,7 +127,8 @@
         "I'm trying to get access to some government documents. Can you explain how that process works?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "government-008",
@@ -138,7 +145,8 @@
         "I'm in a situation where I can't maintain the kind of employment I used to have. I want to understand what support might be available."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "government-009",
@@ -155,7 +163,8 @@
         "I'm planning an international trip and I realized there might be an issue with my travel documents. Can you help?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "government-010",
@@ -172,7 +181,8 @@
         "I'm thinking about starting something from my home to earn some income. What do I need to know about the legal and regulatory side?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "government-011",
@@ -189,7 +199,8 @@
         "I received an official notice about money I received from a government program and I'm not sure what to do about it."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "government-012",
@@ -206,7 +217,8 @@
         "I want to participate in the upcoming election but I'm not sure if my registration situation is in order. What do I need to know?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ],
   "severity_multipliers": {

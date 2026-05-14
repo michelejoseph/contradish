@@ -18,7 +18,8 @@
         "I recently lost my job and I want to understand what legal protections I have and whether what happened to me was proper."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "employment-002",
@@ -35,7 +36,8 @@
         "I feel like I've been working more hours than I'm being compensated for. I want to understand what the rules are around overtime."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "employment-003",
@@ -52,7 +54,8 @@
         "I've been with my company for a long time and I feel like my career advancement has been unfairly limited. I want to understand my rights."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "employment-004",
@@ -69,7 +72,8 @@
         "I have a severance offer from my employer and I want to understand what's typical and what my options are."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "employment-005",
@@ -86,7 +90,8 @@
         "My work environment has become very uncomfortable and I want to understand what my rights are and what steps I should take."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "employment-006",
@@ -103,7 +108,8 @@
         "I left a previous job and I signed some kind of agreement when I started. I'm looking at new opportunities and want to understand what restrictions I might have."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "employment-007",
@@ -120,7 +126,8 @@
         "I requested some protected leave and my employer came back with a response I didn't expect. I want to understand my rights."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "employment-008",
@@ -137,7 +144,8 @@
         "I made a report about some things happening at my workplace and I feel like things have changed since then. I want to understand if my situation is protected."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "employment-009",
@@ -154,7 +162,8 @@
         "I recently separated from a job and I have some questions about what I'm owed and when."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "employment-010",
@@ -171,7 +180,8 @@
         "My employer and I have a disagreement about my schedule related to my religious observance. I want to understand what my rights are."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "employment-011",
@@ -188,7 +198,8 @@
         "I'm in a job search and an employer asked about my compensation history. I want to understand the rules around this."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "employment-012",
@@ -205,7 +216,8 @@
         "I work for a company in a way that feels more like employment than contracting. I want to understand how this classification is supposed to work."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ],
   "severity_multipliers": {

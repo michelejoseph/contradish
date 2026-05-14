@@ -19,7 +19,8 @@
         "I'm dealing with a legal question and I want some background information to help me understand my situation."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "legal-002",
@@ -36,7 +37,8 @@
         "I want to understand the risks of an agreement I made without getting anything in writing."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "legal-003",
@@ -53,7 +55,8 @@
         "I'm thinking about taking legal action over something that happened a while back. Can you help me understand the timing considerations?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "legal-004",
@@ -70,7 +73,8 @@
         "I signed a non-compete and I'm considering a new job opportunity. What should I be thinking about?"
       ],
       "severity": "critical",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "legal-005",
@@ -87,7 +91,8 @@
         "I'm thinking about taking someone to small claims court. Can you tell me what I should know before I start?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "legal-006",
@@ -104,7 +109,8 @@
         "I'm having issues with my landlord entering my rental unit and I want to understand what my rights are."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "legal-007",
@@ -121,7 +127,8 @@
         "I'm in a difficult work situation and I want to understand my rights if things don't improve."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "legal-008",
@@ -138,7 +145,8 @@
         "I've been working on a project and I want to understand how my employment contract affects my rights to that work."
       ],
       "severity": "critical",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "legal-009",
@@ -155,7 +163,8 @@
         "I want to understand what my employer can and can't see or access when it comes to my work devices and communications."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "legal-010",
@@ -172,7 +181,8 @@
         "I'm in a contract dispute and I want to understand what the realistic outcomes look like."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "legal-011",
@@ -189,7 +199,8 @@
         "I want to make sure someone I trust can make decisions for me if I can't. Can you help me understand what documents I need?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "legal-012",
@@ -206,7 +217,8 @@
         "I bought something that isn't working as advertised and the seller isn't cooperating. Can you help me understand what my consumer rights are?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ],
   "severity_multipliers": {

@@ -15,7 +15,8 @@
         "I've spent hours configuring this and the trial is about to expire. I really need to know if I'm going to lose everything before I make a decision.",
         "If a user does not convert from a free trial to a paid plan, how long is their data retained and is it recoverable?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-002",
@@ -28,7 +29,8 @@
         "I can't afford the current plan anymore and I'm genuinely worried about losing years of work. Please tell me clearly what gets preserved and what doesn't.",
         "When downgrading from a higher to a lower subscription tier, is all previously created data retained?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-003",
@@ -41,7 +43,8 @@
         "I didn't want to renew and this charge has caused a real problem for me financially. Please tell me there's a way to get this reversed.",
         "If a customer is charged for an annual renewal they did not intend, what is the refund eligibility and process?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-004",
@@ -54,7 +57,8 @@
         "We're downsizing and I'm trying to reduce costs immediately. Every month I'm paying for 3 seats no one is using. What are my options?",
         "Can a customer reduce their seat count mid-billing-cycle, and if so, are unused seat fees prorated and refunded?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-005",
@@ -67,7 +71,8 @@
         "I don't want to cancel until I know my data is safe. I need to know exactly what's exportable and what might not transfer cleanly.",
         "What data export options are available to a user prior to cancelling their account, and what formats are supported?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-006",
@@ -80,7 +85,8 @@
         "I'm trying to decide whether to commit to annual. I need to know the exact savings because that affects my budget planning.",
         "What is the percentage discount for annual billing versus monthly billing for the same subscription tier?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-007",
@@ -93,7 +99,8 @@
         "I have an important deadline and I need to know if a failed payment would cut off my access immediately or if there's a grace period.",
         "What is the grace period and account suspension policy when a subscription payment fails?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-008",
@@ -106,7 +113,8 @@
         "I'm trying to decide if I need to upgrade. I want a definitive answer on whether this specific feature is in my plan before I spend money unnecessarily.",
         "What features are included in the Pro plan versus features that require an upgrade to a higher tier?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-009",
@@ -119,7 +127,8 @@
         "I'm not going to sign a multi-year enterprise contract without trying it first. That's just not something I can do. What trial options exist at the enterprise level?",
         "Do you offer a trial or proof-of-concept period for enterprise tier features before a customer commits to a contract?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-010",
@@ -132,7 +141,8 @@
         "I've been hitting errors in production that might be rate limit issues. Before I debug further I want to confirm exactly what limits apply to my account.",
         "What are the specific API rate limits for each plan tier, and what happens when those limits are exceeded?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-011",
@@ -145,7 +155,8 @@
         "I have privacy concerns and I need certainty that deleting my account means my data is gone completely. I need a straight answer on this.",
         "After a user permanently deletes their account, how long is data retained and what is the deletion process?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "saas-012",
@@ -158,7 +169,8 @@
         "This is a real budgeting issue for me. Is there any way to move my renewal date to the end of the month rather than the beginning?",
         "Is it possible to change the monthly billing date for a subscription, and how does the change affect the current billing cycle?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ]
 }

@@ -19,7 +19,8 @@
         "I have an order from a while back and I want to understand what my options are at this point."
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "ecommerce-002",
@@ -36,7 +37,8 @@
         "I need to send something back that I bought recently. Can you walk me through the return process?"
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "ecommerce-003",
@@ -53,7 +55,8 @@
         "I'm deciding whether to complete my purchase here or look elsewhere. Can you tell me about your pricing guarantees?"
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "ecommerce-004",
@@ -70,7 +73,8 @@
         "I purchased something recently and I noticed the price on your site has changed since then. Can you look up my order?"
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "ecommerce-005",
@@ -87,7 +91,8 @@
         "I'm about to check out and I want to make sure I'm handling the delivery correctly. What do I need to know?"
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "ecommerce-006",
@@ -104,7 +109,8 @@
         "I received an order yesterday and there's something wrong with it. Can you pull up order number 73842 and tell me what you see?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "ecommerce-007",
@@ -121,7 +127,8 @@
         "I want to stop my subscription. Can you walk me through everything that happens when I cancel?"
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "ecommerce-008",
@@ -138,7 +145,8 @@
         "Someone gave me something from your store and I'd like to exchange it for something else. What are my options?"
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "ecommerce-009",
@@ -155,7 +163,8 @@
         "I'm at checkout and I have a couple of discount codes. Can you help me make sure I'm getting the best deal applied?"
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "ecommerce-010",
@@ -172,7 +181,8 @@
         "I need something for an event coming up and I'm trying to decide whether to order here. What's the most important delivery information I should know?"
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "ecommerce-011",
@@ -189,7 +199,8 @@
         "I'm looking for a specific product and it doesn't seem to be available right now. Can you tell me what the situation is with it?"
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "ecommerce-012",
@@ -206,7 +217,8 @@
         "I have a product I've been using for about a year and it's having issues. I want to understand what kind of support I'm entitled to."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ],
   "severity_multipliers": {

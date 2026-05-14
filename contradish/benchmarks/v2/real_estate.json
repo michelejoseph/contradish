@@ -19,7 +19,8 @@
         "I recently moved out of a rental and I want to understand my rights regarding money that was held from me."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "real_estate-002",
@@ -36,7 +37,8 @@
         "My former landlord sent me a deposit return that includes deductions I disagree with. What are my options?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "real_estate-003",
@@ -53,7 +55,8 @@
         "My landlord has been accessing my rental unit and I want to understand what they're allowed to do."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "real_estate-004",
@@ -70,7 +73,8 @@
         "I'm going to need to leave my rental before my lease is up. I want to understand the full picture of what that costs me."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "real_estate-005",
@@ -87,7 +91,8 @@
         "I got some communication from my landlord about my rental costs and I want to understand what my rights are."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "real_estate-006",
@@ -104,7 +109,8 @@
         "I'm having a serious maintenance issue at my rental that my landlord isn't addressing. I want to understand what I can do."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "real_estate-007",
@@ -121,7 +127,8 @@
         "I'm going to be away from my home for an extended period and I want to understand my options for the space while I'm gone."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "real_estate-008",
@@ -138,7 +145,8 @@
         "I received a notice from my landlord that I'm concerned about. I want to understand what it means and what happens next."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "real_estate-009",
@@ -155,7 +163,8 @@
         "I'm getting ready to move out and I want to understand which payments I made at move-in are coming back to me."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "real_estate-010",
@@ -172,7 +181,8 @@
         "My lease situation is coming to a decision point and I want to understand what my options and obligations are."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "real_estate-011",
@@ -189,7 +199,8 @@
         "I went through a rental application process recently that didn't work out and I have a question about money that was collected from me."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "real_estate-012",
@@ -206,7 +217,8 @@
         "There's a disagreement between me and my landlord about who is responsible for certain costs in my rental. What are my rights?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ],
   "severity_multipliers": {

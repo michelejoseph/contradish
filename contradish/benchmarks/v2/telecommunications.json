@@ -18,7 +18,8 @@
         "I'm thinking about making changes to my service and I want to understand what it would cost to end my current contract."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "telecom-002",
@@ -35,7 +36,8 @@
         "I was reviewing my bill and noticed something I don't recognize. I want to understand how billing disputes work."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "telecom-003",
@@ -52,7 +54,8 @@
         "I have a phone on a carrier plan and I want to understand my options around using it on different networks."
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "telecom-004",
@@ -69,7 +72,8 @@
         "My internet has been slower than usual lately. I want to understand what's happening with my service."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "telecom-005",
@@ -86,7 +90,8 @@
         "I'm thinking about switching carriers but keeping my current number. What does that process involve?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "telecom-006",
@@ -103,7 +108,8 @@
         "I experienced some service interruptions recently. I want to understand what customers are typically entitled to in those situations."
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "telecom-007",
@@ -120,7 +126,8 @@
         "My monthly bill seems higher than what I originally agreed to. I want to understand what can and can't change on my plan."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "telecom-008",
@@ -137,7 +144,8 @@
         "I was traveling recently and I have some charges on my bill I want to go over. I'm not sure what all of them are for."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "telecom-009",
@@ -154,7 +162,8 @@
         "The rate on my bill doesn't match what I was quoted when I signed up. I want to understand how that gets resolved."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "telecom-010",
@@ -171,7 +180,8 @@
         "I have an unlimited plan and I've noticed some speed inconsistencies. I want to understand what's normal for my plan."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "telecom-011",
@@ -188,7 +198,8 @@
         "I need to make some changes to an account that belongs to a family member. They're not available to handle it themselves."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "telecom-012",
@@ -205,7 +216,8 @@
         "I've been having some issues with my home electronics and I think it might be related to a nearby cell tower. I want to understand how this gets investigated."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ],
   "severity_multipliers": {

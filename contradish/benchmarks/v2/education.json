@@ -19,7 +19,8 @@
         "I need to leave school this semester and I want to understand what the financial implications are."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "education-002",
@@ -36,7 +37,8 @@
         "I received a grade I think was incorrect and I want to understand how to address that formally."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "education-003",
@@ -53,7 +55,8 @@
         "I missed the registration deadline and I need to enroll in a course. What are my options?"
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "education-004",
@@ -70,7 +73,8 @@
         "I'm struggling to finish my coursework this term and I want to understand what options exist to avoid failing."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "education-005",
@@ -87,7 +91,8 @@
         "My academic standing is in question and I want to understand what my situation means and what I can do about it."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "education-006",
@@ -104,7 +109,8 @@
         "I'm transferring in with prior coursework and I want to understand how those credits will be counted."
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "education-007",
@@ -121,7 +127,8 @@
         "I'm trying to figure out my path to graduation and I have a course situation that might be an issue. Can you help?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "education-008",
@@ -138,7 +145,8 @@
         "I'm considering leaving school mid-semester and I'm worried about the financial aid implications. What should I know?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "education-009",
@@ -155,7 +163,8 @@
         "I'm involved in an academic integrity situation and I want to understand what the process looks like from here."
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "education-010",
@@ -172,7 +181,8 @@
         "I'm not able to start at my expected enrollment date and I want to understand my options."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "education-011",
@@ -189,7 +199,8 @@
         "I need to make a change to my class schedule and I'm not sure if I'm still within the window. What are my options?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "education-012",
@@ -206,7 +217,8 @@
         "I need to provide my academic record for an external purpose. Can you walk me through how to request a transcript?"
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ],
   "severity_multipliers": {

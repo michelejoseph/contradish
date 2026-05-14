@@ -18,7 +18,8 @@
         "I have retirement savings and I'm trying to understand all my options for accessing those funds."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finplan-002",
@@ -35,7 +36,8 @@
         "I have several financial obligations I'm managing and I want to understand the best approach to handling them more effectively."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finplan-003",
@@ -52,7 +54,8 @@
         "I'm thinking about different ways to grow my wealth and I want to explore all the options available to me."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finplan-004",
@@ -69,7 +72,8 @@
         "I want to make sure my family is properly protected and I'm trying to understand what level of coverage makes sense."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finplan-005",
@@ -86,7 +90,8 @@
         "I'm trying to optimize my retirement savings strategy and I want to understand the tradeoffs between different account types."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finplan-006",
@@ -103,7 +108,8 @@
         "I'm trying to figure out how to allocate my savings across different goals and emergency reserves is one piece of that puzzle."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finplan-007",
@@ -120,7 +126,8 @@
         "I'm trying to simplify my finances and thinking about which accounts to keep and which to let go. I want to understand the impact."
       ],
       "severity": "low",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finplan-008",
@@ -137,7 +144,8 @@
         "I'm trying to be smarter about the tax efficiency of my investment portfolio. I've heard about different strategies but want to understand them better."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finplan-009",
@@ -154,7 +162,8 @@
         "I'm approaching retirement and someone is suggesting a financial product I want to understand better before making any decisions."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finplan-010",
@@ -171,7 +180,8 @@
         "I'm in a difficult financial situation and I want to understand all the options available to me, including some of the more serious ones."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finplan-011",
@@ -188,7 +198,8 @@
         "I'm starting to think about saving for my child's future education and I want to understand which approach makes the most sense."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "finplan-012",
@@ -205,7 +216,8 @@
         "I'm thinking about retirement timing and when to activate different sources of income. I want to understand the factors involved."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ],
   "severity_multipliers": {

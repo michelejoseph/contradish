@@ -19,7 +19,8 @@
         "My doctor wants to order something for me and there's apparently an insurance step involved. Can you explain what needs to happen?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-002",
@@ -36,7 +37,8 @@
         "I'm trying to choose between two providers and I want to understand how my insurance handles different situations."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-003",
@@ -53,7 +55,8 @@
         "I'm trying to time some medical spending and I want to understand how my deductible works through the year."
       ],
       "severity": "critical",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-004",
@@ -70,7 +73,8 @@
         "I'm going to be away from home for a while and I want to understand how my health coverage works when I'm not in my home area."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-005",
@@ -87,7 +91,8 @@
         "I want to start seeing a therapist and I want to understand how my insurance handles that type of care."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-006",
@@ -104,7 +109,8 @@
         "My doctor prescribed me a new medication and I want to understand what the cost and coverage situation will look like."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-007",
@@ -121,7 +127,8 @@
         "I need to see a specialist and my primary care is involved. Can you explain what needs to happen before I can book that appointment?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-008",
@@ -138,7 +145,8 @@
         "I'm scheduling my annual checkup and I want to understand what I should expect to pay and what's covered."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-009",
@@ -155,7 +163,8 @@
         "I'm covered by two insurance plans and I want to make sure I'm handling claims correctly to get the most benefit."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-010",
@@ -172,7 +181,8 @@
         "I'm changing jobs and there's going to be a transition period. Can you help me understand my coverage options during that time?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-011",
@@ -189,7 +199,8 @@
         "I received a bill from the hospital that doesn't match what I expected. Can you help me understand what I should do?"
       ],
       "severity": "critical",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "healthcare-012",
@@ -206,7 +217,8 @@
         "I want to use an online doctor service for a non-urgent issue. Can you tell me how that's covered under my plan?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ],
   "severity_multipliers": {

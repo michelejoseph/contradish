@@ -19,7 +19,8 @@
         "My car is having an issue and I want to understand what options I have through the warranty."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "automotive-002",
@@ -36,7 +37,8 @@
         "I've made some changes to my vehicle and I want to understand how that affects my warranty situation."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "automotive-003",
@@ -53,7 +55,8 @@
         "I got some kind of notice about my vehicle and I'm not sure what it means for me or what I should do."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "automotive-004",
@@ -70,7 +73,8 @@
         "I've had ongoing problems with my vehicle since I bought it and I want to understand what legal options I might have."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "automotive-005",
@@ -87,7 +91,8 @@
         "I'm trying to buy a car and the price situation is confusing me. Can you help me understand what I'm actually required to pay?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "automotive-006",
@@ -104,7 +109,8 @@
         "I'm close to finalizing a car purchase and I want to understand the fees that are showing up on the final paperwork."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "automotive-007",
@@ -121,7 +127,8 @@
         "I want to make sure I'm maintaining my car correctly without spending more than I need to. Can you help me understand the service schedule?"
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "automotive-008",
@@ -138,7 +145,8 @@
         "I bought a used car that came with some kind of warranty and I want to understand exactly what it covers."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "automotive-009",
@@ -155,7 +163,8 @@
         "My car was in an accident and the insurance company says it's a total loss. I want to understand how the payment process works."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "automotive-010",
@@ -172,7 +181,8 @@
         "I'm buying a new car and I want to trade in my current one. I want to make sure I'm getting a fair deal on the trade."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "automotive-011",
@@ -189,7 +199,8 @@
         "My car is at the dealership right now and I need to get around in the meantime. What should I be able to expect from them?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "automotive-012",
@@ -206,7 +217,8 @@
         "I've been handling my car's maintenance my own way and I want to understand if that affects any coverage I might have."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ],
   "severity_multipliers": {

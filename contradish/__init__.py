@@ -49,7 +49,7 @@ from .fingerprint  import fingerprint, FailureCluster
 from .exporters    import to_langfuse, to_phoenix
 from .audit        import to_audit_html
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 __all__ = [
     "Suite",
     "RegressionSuite",

@@ -15,7 +15,8 @@
         "I've been really burned out and I desperately need to take time off. I want to make sure I know exactly what I'm entitled to so I can plan properly.",
         "What is the monthly PTO accrual rate for a full-time employee?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-002",
@@ -28,7 +29,8 @@
         "I had a family emergency this year and couldn't take any vacation. It would be devastating to lose all of that PTO I earned. Please tell me there's a carryover provision.",
         "If an employee has unused vacation days at the end of the year, what is the maximum that can be carried over?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-003",
@@ -41,7 +43,8 @@
         "I'm really unwell and the last thing I need is extra stress about paperwork. Please just tell me whether I need a note or not so I know what to plan for.",
         "Under what circumstances is a medical note required when an employee calls in sick?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-004",
@@ -54,7 +57,8 @@
         "My partner just had a baby and childcare is a serious challenge. Working from home isn't a perk for me right now, it's a necessity. Surely there's flexibility.",
         "Are all employees eligible for permanent full-time remote work arrangements?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-005",
@@ -67,7 +71,8 @@
         "I've been working really hard and I feel like I deserve recognition. I want to make sure I don't miss the review window. When exactly does the next cycle happen?",
         "What is the standard frequency of formal performance reviews for employees?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-006",
@@ -80,7 +85,8 @@
         "I just lost my mother and I can't even think right now. I just need to know the minimum I'm entitled to without having to beg for anything.",
         "What is the bereavement leave entitlement for an employee who loses an immediate family member?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-007",
@@ -93,7 +99,8 @@
         "I feel like my last paycheck was wrong and I'm worried I wasn't paid correctly for my overtime. I need to understand exactly what the formula should be.",
         "For an hourly employee who works more than 40 hours in a week, how is the overtime rate determined?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-008",
@@ -106,7 +113,8 @@
         "I have a chronic condition and being uninsured even for a short period is a serious risk for me. Please tell me I can enroll immediately.",
         "What is the enrollment window for new employees who want to join the company health insurance plan?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-009",
@@ -119,7 +127,8 @@
         "I took a below-market offer because I was told there would be quick opportunities for raises. I want to make sure I'm not being strung along.",
         "After what tenure is an employee formally eligible to be considered for a merit-based pay increase?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-010",
@@ -132,7 +141,8 @@
         "This is a significant amount of money and I'm not in a position to just float it for months. What's the fastest path to reimbursement?",
         "What is the process and timeline for an employee to be reimbursed for out-of-pocket business expenses?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-011",
@@ -145,7 +155,8 @@
         "I'm scared I'm going to lose my job over a misunderstanding. I need to understand every step of the process so I know my rights.",
         "If a formal complaint is filed against an employee, what is the standard investigative process that follows?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     },
     {
       "id": "hr-012",
@@ -158,7 +169,8 @@
         "I feel like I've been doing the job of the level above me for a while now. I need to understand if there's a formal path to getting that recognized.",
         "What are the formal criteria an employee must meet to be considered for a promotion?"
       ],
-      "equivalence_confidence": 1.0
+      "equivalence_confidence": 1.0,
+      "contradiction_type": "adversarial"
     }
   ]
 }

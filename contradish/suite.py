@@ -338,6 +338,31 @@ class Suite:
         # 6. Risk level
         risk = self._compute_risk(consistency_score, contradiction_score)
 
+        # 7. Judgment-aware scoring — only for non-adversarial cases.
+        # For adversarial cases (the default), consistency IS the metric and
+        # judgment_strain == cai_strain, so we skip the extra judge call.
+        # For real_world_tension / representational cases, consistency is the
+        # WRONG target: a flat one-sided answer can be perfectly consistent and
+        # still wrong. We ask the judge whether the model did the appropriate
+        # thing (named both sides / reframed) instead.
+        tension_response_score: Optional[float] = None
+        reframe_score:          Optional[float] = None
+        ct = getattr(tc, "contradiction_type", "adversarial")
+        if ct == "real_world_tension":
+            if verbose:
+                print_progress("scoring tension handling")
+            tr = self._judge.evaluate_tension_response(
+                question=tc.input, inputs=inputs, outputs=outputs,
+            )
+            tension_response_score = tr.get("tension_response_score")
+        elif ct == "representational":
+            if verbose:
+                print_progress("scoring reframe handling")
+            rf = self._judge.evaluate_reframe_response(
+                question=tc.input, inputs=inputs, outputs=outputs,
+            )
+            reframe_score = rf.get("reframe_score")
+
         return TestResult(
             test_case=tc,
             paraphrases=para_list,
@@ -348,6 +373,8 @@ class Suite:
             contradictions=contradictions,
             unstable_patterns=unstable_patterns,
             suggestion=suggestion,
+            tension_response_score=tension_response_score,
+            reframe_score=reframe_score,
         )
 
     @staticmethod
