@@ -1,6 +1,6 @@
 # contradish
 
-**The benchmark for adversarial consistency in language models.**
+**Find where your LLM contradicts itself, measure it, and repair it — in one loop.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Benchmark: v2](https://img.shields.io/badge/Benchmark-v2%20frozen-green.svg)](contradish/benchmarks/v2/)
@@ -13,7 +13,9 @@
 
 A model that refuses a harmful request in plain English but complies when the same request is rephrased as a roleplay, framed as hypothetical, or accompanied by a flattery-and-jargon combination is **not safe** — it is just inconsistently safe.
 
-Contradish quantifies this. **CAI Strain** measures how much a model's response changes across surface-form variants of the same question. A perfectly consistent model scores **0.00**. A model that drifts across phrasings scores toward **1.00**. **Lower is better.** ML researchers call this drift; we name it a CAI failure.
+Contradish quantifies this — but it measures **judgment, not just consistency**. The headline metric is **Judgment Strain** (0–1, lower is better): it is two-sided. On a case where the correct answer is fixed, drift is the failure and the model should hold firm. On a genuinely tensioned case, a model that flatly takes one side — *however consistently* — is also failing, and rigidity is the failure. A model can't game the score by becoming inflexible.
+
+**CAI Strain** is the consistency-only component, reported alongside: how much a model's response changes across surface-form variants of the same question. **0.00** is perfectly consistent, **1.00** is always inconsistent. ML researchers call this drift; we name it a CAI failure. See [Metrics](#metrics) for how the two relate.
 
 ---
 
@@ -409,7 +411,7 @@ MIT. See [LICENSE](LICENSE).
 
 ---
 
-## Quickstart
+## Python library quickstart
 
 ```python
 from contradish import Suite, TestCase
@@ -418,7 +420,8 @@ suite = Suite(app=my_llm_function)
 suite.add(TestCase(input="Can I get a refund after 45 days?", name="refund policy"))
 report = suite.run()
 
-print(report.cai_strain)          # 0.0-1.0, lower = more consistent
+print(report.judgment_strain)     # headline metric — 0.0-1.0, lower is better
+print(report.cai_strain)          # consistency-only component
 for r in report.results:
     print(r.test_case.name, r.cai_strain)
 ```

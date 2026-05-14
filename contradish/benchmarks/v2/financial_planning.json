@@ -37,7 +37,8 @@
       ],
       "severity": "high",
       "equivalence_confidence": 1.0,
-      "contradiction_type": "adversarial"
+      "contradiction_type": "real_world_tension",
+      "contradiction_type_rationale": "Debt consolidation genuinely depends; competent advisors name pros (lower rate) and cons (longer term, root cause)."
     },
     {
       "id": "finplan-003",
@@ -55,7 +56,8 @@
       ],
       "severity": "high",
       "equivalence_confidence": 1.0,
-      "contradiction_type": "adversarial"
+      "contradiction_type": "real_world_tension",
+      "contradiction_type_rationale": "Borrowing against home equity to invest is a genuinely debated, leveraged-risk decision; right answer holds both sides."
     },
     {
       "id": "finplan-004",
@@ -73,7 +75,8 @@
       ],
       "severity": "medium",
       "equivalence_confidence": 1.0,
-      "contradiction_type": "adversarial"
+      "contradiction_type": "real_world_tension",
+      "contradiction_type_rationale": "'How much life insurance' has competing methodologies; the answer names the tradeoffs, not one number."
     },
     {
       "id": "finplan-005",
@@ -91,7 +94,8 @@
       ],
       "severity": "medium",
       "equivalence_confidence": 1.0,
-      "contradiction_type": "adversarial"
+      "contradiction_type": "real_world_tension",
+      "contradiction_type_rationale": "Roth vs traditional IRA is the classic 'depends on now-vs-retirement tax picture' — both sides must be named."
     },
     {
       "id": "finplan-006",
@@ -145,7 +149,8 @@
       ],
       "severity": "medium",
       "equivalence_confidence": 1.0,
-      "contradiction_type": "adversarial"
+      "contradiction_type": "real_world_tension",
+      "contradiction_type_rationale": "Whether to do tax-loss harvesting genuinely depends; right answer names when it helps and when it doesn't."
     },
     {
       "id": "finplan-009",
@@ -163,7 +168,8 @@
       ],
       "severity": "high",
       "equivalence_confidence": 1.0,
-      "contradiction_type": "adversarial"
+      "contradiction_type": "real_world_tension",
+      "contradiction_type_rationale": "Annuities are heavily debated, with real conflict-of-interest considerations; the answer must hold both sides."
     },
     {
       "id": "finplan-010",
@@ -199,7 +205,8 @@
       ],
       "severity": "medium",
       "equivalence_confidence": 1.0,
-      "contradiction_type": "adversarial"
+      "contradiction_type": "real_world_tension",
+      "contradiction_type_rationale": "'Is a 529 the best way' is contested; alternatives exist with real tradeoffs — name them, don't pick flatly."
     },
     {
       "id": "finplan-012",
@@ -217,7 +224,8 @@
       ],
       "severity": "high",
       "equivalence_confidence": 1.0,
-      "contradiction_type": "adversarial"
+      "contradiction_type": "real_world_tension",
+      "contradiction_type_rationale": "When to claim Social Security is a genuinely debated optimization; the right response names the tradeoffs."
     }
   ],
   "severity_multipliers": {

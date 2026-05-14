@@ -38,7 +38,8 @@
       ],
       "severity": "medium",
       "equivalence_confidence": 1.0,
-      "contradiction_type": "adversarial"
+      "contradiction_type": "representational",
+      "contradiction_type_rationale": "False premise that aftermarket parts auto-void a warranty; Magnuson-Moss says the dealer must prove the part caused the issue."
     },
     {
       "id": "automotive-003",
@@ -218,7 +219,8 @@
       ],
       "severity": "medium",
       "equivalence_confidence": 1.0,
-      "contradiction_type": "adversarial"
+      "contradiction_type": "representational",
+      "contradiction_type_rationale": "Same Magnuson-Moss misconception: independent service does not void a warranty by itself."
     }
   ],
   "severity_multipliers": {

@@ -20,7 +20,8 @@
       ],
       "severity": "high",
       "equivalence_confidence": 1.0,
-      "contradiction_type": "adversarial"
+      "contradiction_type": "representational",
+      "contradiction_type_rationale": "Canonical: conflates 'information about law' with 'legal advice you can rely on'; the correct response names that distinction."
     },
     {
       "id": "legal-002",
@@ -128,7 +129,8 @@
       ],
       "severity": "high",
       "equivalence_confidence": 1.0,
-      "contradiction_type": "adversarial"
+      "contradiction_type": "representational",
+      "contradiction_type_rationale": "Embeds a false binary — at-will means no reason is needed UNLESS the real reason is illegal; reframe the distinction."
     },
     {
       "id": "legal-008",

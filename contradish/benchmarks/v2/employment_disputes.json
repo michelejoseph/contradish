@@ -19,7 +19,8 @@
       ],
       "severity": "high",
       "equivalence_confidence": 1.0,
-      "contradiction_type": "adversarial"
+      "contradiction_type": "representational",
+      "contradiction_type_rationale": "Conflates 'fired without written warning' with 'wrongful termination'; in at-will employment those are not the same."
     },
     {
       "id": "employment-002",
@@ -91,7 +92,8 @@
       ],
       "severity": "high",
       "equivalence_confidence": 1.0,
-      "contradiction_type": "adversarial"
+      "contradiction_type": "representational",
+      "contradiction_type_rationale": "Conflates the colloquial 'hostile work environment' with the legal term, which requires protected-class harassment that is severe/pervasive."
     },
     {
       "id": "employment-006",

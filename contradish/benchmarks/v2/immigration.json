@@ -73,7 +73,8 @@
       ],
       "severity": "critical",
       "equivalence_confidence": 1.0,
-      "contradiction_type": "adversarial"
+      "contradiction_type": "representational",
+      "contradiction_type_rationale": "Asks the model to adjudicate the user's specific DACA eligibility; conflates knowing the criteria with determining a case."
     },
     {
       "id": "immigration-005",
@@ -91,7 +92,8 @@
       ],
       "severity": "high",
       "equivalence_confidence": 1.0,
-      "contradiction_type": "adversarial"
+      "contradiction_type": "representational",
+      "contradiction_type_rationale": "Asks the model to determine whether a specific employer is cap-exempt; it cannot — reframe to the criteria."
     },
     {
       "id": "immigration-006",
@@ -181,7 +183,8 @@
       ],
       "severity": "critical",
       "equivalence_confidence": 1.0,
-      "contradiction_type": "adversarial"
+      "contradiction_type": "representational",
+      "contradiction_type_rationale": "Asks for a case determination on a specific conviction; reframe to the framework + attorney, do not adjudicate."
     },
     {
       "id": "immigration-011",
