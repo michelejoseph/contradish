@@ -454,6 +454,89 @@ def cmd_improve(args):
     sys.exit(0 if result.target_met else 1)
 
 
+def cmd_findings(args):
+    """
+    Re-mine an existing result JSON for findings.
+
+    findings are the discovery layer: one true, specific, surprising sentence
+    about the model under test, mined from the structured grid every run
+    produces. Useful for revisiting an old run without re-paying for API calls,
+    or for surfacing findings on a result that was generated from a non-suite
+    path (the frozen-benchmark runner, for example).
+    """
+    from contradish.findings import findings_from
+    from contradish.models import TestCase, TestResult, Report, ContradictionPair, RiskLevel
+
+    with open(args.result_file) as f:
+        data = json.load(f)
+
+    # Reconstruct a minimal Report from the JSON. Tolerant of older schemas —
+    # missing fields fall back to safe defaults so findings still runs cleanly.
+    raw_results = data.get("results", []) or []
+    results: list[TestResult] = []
+    for rd in raw_results:
+        tc = TestCase(
+            input                  = rd.get("input", "") or rd.get("name", ""),
+            name                   = rd.get("name"),
+            equivalence_confidence = float(rd.get("equivalence_confidence", 1.0) or 1.0),
+            contradiction_type     = rd.get("contradiction_type", "adversarial") or "adversarial",
+        )
+        contradictions = [
+            ContradictionPair(
+                input_a     = c.get("input_a", ""),
+                input_b     = c.get("input_b", ""),
+                output_a    = c.get("output_a", ""),
+                output_b    = c.get("output_b", ""),
+                explanation = c.get("explanation", ""),
+                severity    = c.get("severity", "") or "",
+            )
+            for c in (rd.get("contradictions") or [])
+        ]
+        risk_value = rd.get("risk", "low") or "low"
+        try:
+            risk = RiskLevel(risk_value)
+        except Exception:
+            risk = RiskLevel.LOW
+        tr = TestResult(
+            test_case              = tc,
+            paraphrases            = [],
+            outputs                = [],
+            consistency_score      = rd.get("cai_score"),
+            contradiction_score    = rd.get("contradiction_score"),
+            risk                   = risk,
+            contradictions         = contradictions,
+            unstable_patterns      = rd.get("unstable_patterns", []) or [],
+            suggestion             = rd.get("suggestion"),
+            tension_response_score = rd.get("tension_response_score"),
+            reframe_score          = rd.get("reframe_score"),
+        )
+        results.append(tr)
+    report = Report(
+        results      = results,
+        eq_threshold = float(data.get("eq_threshold", 0.80) or 0.80),
+    )
+
+    fs = findings_from(report)
+
+    use_json = getattr(args, "json", False)
+    if use_json:
+        print(json.dumps([f.to_dict() for f in fs], indent=2))
+        sys.exit(0)
+
+    if not fs:
+        print(f"\n  no findings — the result is structurally unremarkable, "
+              f"or there's not enough evidence to fire any detector cleanly.\n")
+        sys.exit(0)
+
+    word = "finding" if len(fs) == 1 else "findings"
+    print(f"\n  contradish {word} ({len(fs)}):\n")
+    for f in fs:
+        print(f"  ▸ {f.headline}")
+        print(f"    {f.detail}")
+        print()
+    sys.exit(0)
+
+
 def cmd_compare(args):
     """Compare baseline vs candidate app for CAI regression."""
     from contradish import RegressionSuite
@@ -1214,6 +1297,16 @@ examples:
     imp_p.add_argument("--report", nargs="?", const="contradish-report.html", metavar="FILE",
                        help="Save a shareable HTML report of the improved-prompt run")
 
+    # contradish findings <result.json> — re-mine an existing result for findings
+    find_p = sub.add_parser(
+        "findings",
+        help="Re-mine a result JSON for findings (root causes, rigidity, stability reframe, severity skew)",
+    )
+    find_p.add_argument("result_file", metavar="RESULT_JSON",
+                        help="Path to a result JSON file (output of `contradish benchmark`).")
+    find_p.add_argument("--json", action="store_true", default=False,
+                        help="Output findings as JSON instead of formatted text.")
+
     args = parser.parse_args()
 
     if args.command == "benchmark":
@@ -1230,6 +1323,8 @@ examples:
         cmd_compare(args)
     elif args.command == "improve":
         cmd_improve(args)
+    elif args.command == "findings":
+        cmd_findings(args)
     elif getattr(args, "policy", None):
         cmd_policy(args)
     elif args.system_prompt or args.prompt_file:

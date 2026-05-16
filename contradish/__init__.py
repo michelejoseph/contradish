@@ -35,6 +35,7 @@ from .regression   import RegressionSuite
 from .firewall     import Firewall
 from .repair       import PromptRepair
 from .improve      import improve, ImprovementResult
+from .findings     import findings_from, Finding
 from .models       import (
     TestCase,
     Report,
@@ -49,7 +50,7 @@ from .fingerprint  import fingerprint, FailureCluster
 from .exporters    import to_langfuse, to_phoenix
 from .audit        import to_audit_html
 
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -57,6 +58,8 @@ __all__ = [
     "PromptRepair",
     "improve",
     "ImprovementResult",
+    "findings_from",
+    "Finding",
     "TestCase",
     "Report",
     "TestResult",

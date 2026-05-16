@@ -203,6 +203,9 @@ def print_report(report) -> None:
 def print_next_steps(report) -> None:
     """
     Print after print_report. The artifact a developer takes away:
+    - the findings (what's notable about this run that they couldn't
+      have known by reading the failure list themselves)
+    - the score summary
     - what to do immediately
     - their evals.yaml (ready to save)
     - the CI command
@@ -213,14 +216,34 @@ def print_next_steps(report) -> None:
     print(f"{_GRAY}{'─' * 60}{_RESET}")
     print()
 
+    # Findings lead. The discovery — one true, surprising, specific sentence
+    # about the model — is the most valuable thing a run can produce, and a
+    # dev shouldn't have to know what to look for. Surface it before the score.
+    try:
+        from .findings import findings_from
+        fs = findings_from(report)
+    except Exception:
+        fs = []
+    if fs:
+        word = "finding" if len(fs) == 1 else "findings"
+        print(f"  {_BOLD}contradish {word} ({len(fs)}):{_RESET}")
+        print()
+        for f in fs:
+            print(f"  {_BOLD}▸{_RESET} {f.headline}")
+            print(f"    {_GRAY}{f.detail}{_RESET}")
+            print()
+
     # Honest headline: Strain over expert-confirmed cases, with EQ coverage
+    judgment = report.judgment_strain
     headline = report.headline_strain
     coverage = report.eq_coverage
-    if headline is not None:
+    if judgment is not None:
+        jud_str = f"{judgment:.3f}"
+        head_str = f"{headline:.3f}" if headline is not None else "n/a"
         cov_pct = f"{coverage:.0%}" if coverage is not None else "n/a"
         print(
-            f"  {_BOLD}CAI Strain:{_RESET} {_BOLD}{headline:.3f}{_RESET}  "
-            f"{_GRAY}(headline; over {cov_pct} of cases with audited equivalence){_RESET}"
+            f"  {_BOLD}Judgment Strain:{_RESET} {_BOLD}{jud_str}{_RESET}  "
+            f"{_GRAY}(CAI Strain {head_str}; EQ coverage {cov_pct}){_RESET}"
         )
         contested = report.contested_strain
         if contested is not None:

@@ -133,6 +133,52 @@ That's it. Results print to the terminal and save to `results/`. Pass `--report`
 
 ---
 
+## Findings — the discovery layer
+
+Every run produces a structured grid (cases × techniques × per-variant scores × contradiction types × severities). Aggregating it to a single number throws the structure away. contradish mines the grid and emits **findings** — short, specific statements about your model that you wouldn't have known by reading the failure list yourself. They lead every CLI run, and you can re-mine any saved result without spending another API call:
+
+```bash
+contradish findings results/gpt-4o.json
+```
+
+Example output:
+
+```
+  contradish findings (3):
+
+  ▸ Your model is rigid, not drifting. It scores 0.12 on adversarial cases
+    (held firm) but 0.78 on genuinely tensioned ones — it flatly takes one
+    side on questions that don't have one. The fix is the opposite of more
+    consistency.
+
+  ▸ 14 of your 18 failures share one root cause — they all involve
+    "emotional". One prompt patch typically covers them, not 18 different bugs.
+
+  ▸ On 11 of 20 questions, your model produced both a correct response AND
+    a contradicting one to the same question. This isn't a prompt-wording
+    problem — it's a stability problem.
+```
+
+Five detectors mine the report:
+
+- **rigidity** — adversarial cases hold but tension cases collapse; the model is too inflexible, not too flexible
+- **root_cause** — a single keyword spans most failures, so one fix resolves many
+- **stability_reframe** — the model gave both the right and the wrong answer to the same question; the problem isn't wording, it's invariance
+- **severity_concentration** — failures cluster on the high-stakes cases (the inverse of what you want)
+- **type_concentration** — failures cluster on a specific contradiction type, so the intervention is type-specific
+
+From Python:
+
+```python
+from contradish import findings_from
+for f in findings_from(report):
+    print(f.headline)
+```
+
+Each `Finding` carries a `headline`, a one-sentence `detail`, an `importance` rank, and the `evidence` dict behind the claim. Findings only fire when the evidence in the report supports them — the design contract is *no false findings*. It's better to surface nothing than to surface a wrong claim.
+
+---
+
 ## The end-to-end repair loop (`contradish improve`)
 
 Most consistency tools stop at the score. `contradish improve` closes the loop in one command: run the benchmark, identify failures, rewrite your system prompt to address them, re-run the benchmark with the new prompt, and report the diff in CAI Strain.
