@@ -267,7 +267,11 @@ def cmd_policy(args):
         app=app,
         verbose=not use_json,
     )
-    report = suite.run(paraphrases=args.paraphrases, verbose=not use_json)
+    report = suite.run(
+        paraphrases = args.paraphrases,
+        verbose     = not use_json,
+        concurrency = getattr(args, "concurrency", 4),
+    )
 
     # Apply the EQ threshold from CLI if provided (default is set on Report itself)
     eq_threshold = getattr(args, "eq_threshold", None)
@@ -339,7 +343,11 @@ def cmd_from_prompt(args):
         app=app,
         verbose=not use_json,
     )
-    report = suite.run(paraphrases=args.paraphrases, verbose=not use_json)
+    report = suite.run(
+        paraphrases = args.paraphrases,
+        verbose     = not use_json,
+        concurrency = getattr(args, "concurrency", 4),
+    )
 
     fmt = getattr(args, "format", None)
     if fmt == "json" or use_json:
@@ -369,7 +377,11 @@ def cmd_run(args):
     suite    = Suite(app=app)
     for tc in cases:
         suite.add(tc)
-    report = suite.run(paraphrases=args.paraphrases, verbose=not use_json)
+    report = suite.run(
+        paraphrases = args.paraphrases,
+        verbose     = not use_json,
+        concurrency = getattr(args, "concurrency", 4),
+    )
     if use_json:
         _output_json(report)
     else:
@@ -427,6 +439,9 @@ def cmd_improve(args):
         enable_finetune = args.enable_finetune,
         ft_provider     = args.ft_provider,
         verbose         = not use_json,
+        concurrency     = getattr(args, "concurrency", 4),
+        holdout_frac    = getattr(args, "holdout_frac", 0.0),
+        seed            = getattr(args, "seed", 0),
     )
 
     if use_json:
@@ -533,6 +548,8 @@ def cmd_findings(args):
     for f in fs:
         print(f"  ▸ {f.headline}")
         print(f"    {f.detail}")
+        if getattr(f, "cli_hint", None):
+            print(f"    ▶ {f.cli_hint}")
         print()
     sys.exit(0)
 
@@ -540,21 +557,73 @@ def cmd_findings(args):
 def cmd_compare(args):
     """Compare baseline vs candidate app for CAI regression."""
     from contradish import RegressionSuite
+    from contradish.models import Report
 
-    _check_api_key()
     use_json = getattr(args, "json", False)
 
+    # ── Path A: two saved result JSONs (no API calls, no live apps) ─────────
+    baseline_result_path  = getattr(args, "baseline_result", None)
+    candidate_result_path = getattr(args, "candidate_result", None)
+
+    if baseline_result_path and candidate_result_path:
+        with open(baseline_result_path) as f:
+            base_report = Report.from_dict(json.load(f))
+        with open(candidate_result_path) as f:
+            cand_report = Report.from_dict(json.load(f))
+
+        result = base_report.diff(
+            cand_report,
+            baseline_label  = args.baseline_label,
+            candidate_label = args.candidate_label,
+        )
+
+        if use_json:
+            print(json.dumps({
+                "baseline_label":  result.baseline_label,
+                "candidate_label": result.candidate_label,
+                "baseline_strain":  base_report.cai_strain,
+                "candidate_strain": cand_report.cai_strain,
+                "strain_delta":     result.strain_delta,
+                "regressed":        result.regressed,
+                "per_case":         result.per_case_deltas,
+            }, indent=2))
+        else:
+            print(f"\n  {result.summary()}")
+            regressed = [r for r in result.per_case_deltas if r["regressed"]]
+            if regressed:
+                print(f"\n  regressed cases ({len(regressed)}):")
+                for r in regressed:
+                    print(f"    {r['name']}  {r['baseline_strain']:.3f} → {r['candidate_strain']:.3f}  ({r['delta']:+.3f})")
+            print()
+
+        try:
+            result.fail_if_above(strain=args.threshold)
+        except AssertionError as e:
+            print(f"  FAIL: {e}\n")
+            sys.exit(1)
+        sys.exit(0)
+
+    # ── Path B: live --baseline/--candidate callables (legacy path) ─────────
+    if not (args.baseline_app and args.candidate_app and args.eval_file):
+        print("\n  contradish compare needs either:")
+        print("    --baseline-result FILE --candidate-result FILE     (compare two saved JSONs)")
+        print("  or")
+        print("    EVAL_FILE --baseline MOD:FN --candidate MOD:FN     (live runs)\n")
+        sys.exit(1)
+
+    _check_api_key()
     baseline_app  = _load_callable(args.baseline_app)
     candidate_app = _load_callable(args.candidate_app)
 
     suite = RegressionSuite.load(args.eval_file)
     result = suite.compare(
-        baseline_app=baseline_app,
-        candidate_app=candidate_app,
-        baseline_label=args.baseline_label,
-        candidate_label=args.candidate_label,
-        paraphrases=args.paraphrases,
-        verbose=not use_json,
+        baseline_app   = baseline_app,
+        candidate_app  = candidate_app,
+        baseline_label = args.baseline_label,
+        candidate_label= args.candidate_label,
+        paraphrases    = args.paraphrases,
+        verbose        = not use_json,
+        concurrency    = getattr(args, "concurrency", 4),
     )
 
     if use_json:
@@ -1061,6 +1130,13 @@ examples:
         help="Number of paraphrases per test case (default: 5)",
     )
     parser.add_argument(
+        "--concurrency",
+        type=int,
+        default=4,
+        metavar="N",
+        help="Test cases to run in parallel (default: 4). Pass 1 for strictly serial.",
+    )
+    parser.add_argument(
         "--json",
         action="store_true",
         default=False,
@@ -1216,6 +1292,8 @@ examples:
     run_p.add_argument("eval_file", help="Path to YAML or JSON eval file")
     run_p.add_argument("--app", required=True, metavar="MODULE:FUNCTION")
     run_p.add_argument("--paraphrases", type=int, default=5, metavar="N")
+    run_p.add_argument("--concurrency", type=int, default=4, metavar="N",
+                       help="Cases in parallel (default: 4). Pass 1 for serial.")
     run_p.add_argument("--json", action="store_true", default=False,
                        help="Output report as JSON")
     run_p.add_argument("--report", nargs="?", const="contradish-report.html",
@@ -1227,17 +1305,29 @@ examples:
         help="Compare baseline vs candidate for CAI regression (CI/CD gate)",
     )
     cmp_p.add_argument("eval_file",
-                       help="YAML or JSON file with test cases")
+                       nargs="?",
+                       default=None,
+                       help="YAML or JSON file with test cases (required for live --baseline/--candidate; omitted when comparing two saved result JSONs)")
     cmp_p.add_argument("--baseline",
                        dest="baseline_app",
-                       required=True,
+                       default=None,
                        metavar="MODULE:FUNCTION",
                        help="Baseline (current production) app callable")
     cmp_p.add_argument("--candidate",
                        dest="candidate_app",
-                       required=True,
+                       default=None,
                        metavar="MODULE:FUNCTION",
                        help="Candidate (new version) app callable")
+    cmp_p.add_argument("--baseline-result",
+                       dest="baseline_result",
+                       default=None,
+                       metavar="FILE",
+                       help="Path to a saved baseline result JSON. Skip live runs and diff two files instead.")
+    cmp_p.add_argument("--candidate-result",
+                       dest="candidate_result",
+                       default=None,
+                       metavar="FILE",
+                       help="Path to a saved candidate result JSON. Use with --baseline-result.")
     cmp_p.add_argument("--baseline-label",
                        default="baseline",
                        metavar="LABEL",
@@ -1252,6 +1342,8 @@ examples:
                        metavar="FLOAT",
                        help="Max CAI Strain for candidate to pass (default: 0.25). Lower is better.")
     cmp_p.add_argument("--paraphrases", type=int, default=5, metavar="N")
+    cmp_p.add_argument("--concurrency", type=int, default=4, metavar="N",
+                       help="Cases in parallel (default: 4). Pass 1 for serial.")
     cmp_p.add_argument("--json", action="store_true", default=False,
                        help="Output report as JSON")
 
@@ -1284,6 +1376,15 @@ examples:
                        help="Number of improved-prompt variants to generate and test (default: 3).")
     imp_p.add_argument("--paraphrases", type=int, default=5, metavar="N",
                        help="Adversarial paraphrases per test case (default: 5).")
+    imp_p.add_argument("--concurrency", type=int, default=4, metavar="N",
+                       help="Cases in parallel per Suite.run (default: 4). Pass 1 for serial.")
+    imp_p.add_argument("--holdout-frac", type=float, default=0.0, metavar="FRAC",
+                       dest="holdout_frac",
+                       help="Reserve this fraction of cases as a held-out set. The winner is selected on "
+                            "train but reported on holdout — the honest read of post-repair Strain. "
+                            "Default 0.0 keeps legacy behavior. Try 0.3 for a meaningful split.")
+    imp_p.add_argument("--seed", type=int, default=0, metavar="N",
+                       help="Seed for the train/holdout shuffle (default: 0). Same seed = same split.")
     imp_p.add_argument("--enable-finetune", action="store_true", default=False,
                        dest="enable_finetune",
                        help="Actually submit the fine-tuning job (only with --method finetune). "
@@ -1330,7 +1431,27 @@ examples:
     elif args.system_prompt or args.prompt_file:
         cmd_from_prompt(args)
     else:
-        parser.print_help()
+        # Bare `contradish` with no args: run the ecommerce policy pack in
+        # demo mode as a fast smoke test. ~30 seconds, one API key, no
+        # config file, no eval YAML. Show value cheaply before nudging the
+        # dev toward `contradish benchmark` for the full bench.
+        if not os.environ.get("ANTHROPIC_API_KEY") and not os.environ.get("OPENAI_API_KEY"):
+            parser.print_help()
+            print()
+            print("  No API key found. To run the 30-second smoke test:")
+            print("    export ANTHROPIC_API_KEY=sk-ant-...   # or OPENAI_API_KEY")
+            print("    contradish")
+            print()
+            sys.exit(0)
+        print()
+        print("  contradish smoke test  (ecommerce policy pack, demo mode)")
+        print("  ~30 seconds  ·  12 cases  ·  no app code, no config")
+        print("  for the full bench: contradish benchmark --model <name>")
+        print()
+        args.policy      = "ecommerce"
+        args.app         = None
+        args.threshold   = None
+        cmd_policy(args)
 
 
 if __name__ == "__main__":

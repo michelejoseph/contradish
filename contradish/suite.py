@@ -9,6 +9,7 @@ Minimal usage:
     suite.run()
 """
 
+import concurrent.futures
 from typing import Callable, Optional
 from .models  import TestCase, TestResult, Report, RiskLevel
 from .llm     import LLMClient
@@ -230,6 +231,7 @@ class Suite:
         self,
         paraphrases: int  = 5,
         verbose:     bool = True,
+        concurrency: int  = 4,
     ) -> Report:
         """
         Run all test cases and return a Report.
@@ -237,6 +239,12 @@ class Suite:
         Args:
             paraphrases: Number of semantic variants to generate per input. Default 5.
             verbose:     Print progress and report to stdout. Default True.
+            concurrency: Number of test cases to run in parallel. Default 4.
+                         Each case independently calls the user-supplied `app`
+                         and the judge LLM, so the user's app callable must be
+                         thread-safe at this level (most LLM SDK clients are).
+                         Pass `concurrency=1` to restore strictly serial behavior
+                         and full per-step verbose output.
 
         Returns:
             Report with CAI scores, failures, and suggestions.
@@ -247,14 +255,38 @@ class Suite:
                 "  suite.add(TestCase(input='your question here'))"
             )
 
-        results = []
-        total   = len(self._cases)
+        total = len(self._cases)
 
-        for i, tc in enumerate(self._cases, 1):
+        if concurrency <= 1 or total <= 1:
+            # Serial path — preserves the original full per-step verbose output.
+            results: list[TestResult] = []
+            for i, tc in enumerate(self._cases, 1):
+                if verbose:
+                    print_step("running...", tc.name, i, total)
+                results.append(self._run_one(tc, paraphrases=paraphrases, verbose=verbose))
+        else:
+            # Concurrent path — silence per-step progress inside _run_one (it
+            # would interleave chaotically) and print one tidy completion line
+            # per case as futures resolve. Results are stitched back into
+            # input order so downstream Report ordering is deterministic.
             if verbose:
-                print_step("running...", tc.name, i, total)
-            result = self._run_one(tc, paraphrases=paraphrases, verbose=verbose)
-            results.append(result)
+                print_progress(f"running {total} cases  ·  concurrency={concurrency}")
+            ordered: list[Optional[TestResult]] = [None] * total
+            with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as ex:
+                futures = {
+                    ex.submit(self._run_one, tc, paraphrases, False): idx
+                    for idx, tc in enumerate(self._cases)
+                }
+                done = 0
+                for fut in concurrent.futures.as_completed(futures):
+                    idx = futures[fut]
+                    ordered[idx] = fut.result()
+                    done += 1
+                    if verbose:
+                        tc   = self._cases[idx]
+                        name = tc.name or (tc.input[:40] + "…" if len(tc.input) > 40 else tc.input)
+                        print_progress(f"[{done}/{total}] {name}")
+            results = [r for r in ordered if r is not None]
 
         report = Report(results=results, thresholds=self._thresholds)
 

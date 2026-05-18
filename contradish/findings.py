@@ -78,16 +78,25 @@ class Finding:
                      Used to order findings in the output.
         evidence:    The raw numbers behind the headline so a sceptical reader
                      can check the claim against their result JSON.
+        cli_hint:    Suggested next command to run, with the finding's evidence
+                     baked in where applicable. The point of findings is to
+                     remove the "now what?" gap — the headline says what's
+                     wrong, the hint says exactly what to type next. Optional;
+                     None when no obviously-better command applies.
     """
     headline:   str
     detail:     str
     type:       str
     importance: float
     evidence:   dict = field(default_factory=dict)
+    cli_hint:   Optional[str] = None
 
     def summary(self) -> str:
         """One-block printable rendering."""
-        return f"  ▸ {self.headline}\n    {self.detail}"
+        out = f"  ▸ {self.headline}\n    {self.detail}"
+        if self.cli_hint:
+            out += f"\n    ▶ {self.cli_hint}"
+        return out
 
     def to_dict(self) -> dict:
         return {
@@ -96,6 +105,7 @@ class Finding:
             "type":       self.type,
             "importance": round(self.importance, 3),
             "evidence":   self.evidence,
+            "cli_hint":   self.cli_hint,
         }
 
 
@@ -183,6 +193,10 @@ def _detect_rigidity_vs_drift(report: "Report") -> Optional[Finding]:
             "real_world_tension_strain": round(tens, 4),
             "gap":                       round(delta, 4),
         },
+        cli_hint   = (
+            "contradish improve --policy <PACK> --target-strain 0.10 --holdout-frac 0.3   "
+            "# the repair pass adds explicit both-sides framing for tension cases"
+        ),
     )
 
 
@@ -251,6 +265,10 @@ def _detect_root_cause_collapse(report: "Report") -> Optional[Finding]:
             "total_failures":     n_fail,
             "coverage":           round(coverage, 3),
         },
+        cli_hint   = (
+            f"contradish improve --policy <PACK> --target-strain 0.10 --holdout-frac 0.3   "
+            f"# one patch should resolve the \"{top_token}\" cluster"
+        ),
     )
 
 
@@ -292,6 +310,10 @@ def _detect_stability_reframe(report: "Report") -> Optional[Finding]:
             "total_cases":    n,
             "unstable_rate":  round(rate, 3),
         },
+        cli_hint   = (
+            "contradish improve --policy <PACK> --target-strain 0.10 --method finetune   "
+            "# stability problems often need fine-tuning, not just prompt patches"
+        ),
     )
 
 
@@ -339,6 +361,10 @@ def _detect_severity_concentration(report: "Report") -> Optional[Finding]:
             "share":            round(share, 3),
             "by_severity":      dict(sev_counts),
         },
+        cli_hint   = (
+            "contradish improve --policy <PACK> --target-strain 0.05 --holdout-frac 0.3   "
+            "# critical/high failures need a tighter target than the default"
+        ),
     )
 
 
@@ -396,4 +422,8 @@ def _detect_type_concentration(report: "Report") -> Optional[Finding]:
             "failure_share":      round(failure_share, 3),
             "case_share":         round(case_share, 3),
         },
+        cli_hint   = (
+            f"contradish improve --policy <PACK> --target-strain 0.10 --holdout-frac 0.3   "
+            f"# {top_type} cases need a type-specific intervention"
+        ),
     )

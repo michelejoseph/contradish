@@ -49,8 +49,10 @@ from .policies     import load_policy, list_policies, PolicyPack
 from .fingerprint  import fingerprint, FailureCluster
 from .exporters    import to_langfuse, to_phoenix
 from .audit        import to_audit_html
+from .adapters     import wrap_litellm, wrap_openai_compatible
+from .caches       import FirewallCache, InMemoryCache, RedisCache
 
-__version__ = "1.5.0"
+__version__ = "1.6.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -75,4 +77,9 @@ __all__ = [
     "to_langfuse",
     "to_phoenix",
     "to_audit_html",
+    "wrap_litellm",
+    "wrap_openai_compatible",
+    "FirewallCache",
+    "InMemoryCache",
+    "RedisCache",
 ]

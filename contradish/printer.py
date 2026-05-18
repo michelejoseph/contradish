@@ -231,6 +231,8 @@ def print_next_steps(report) -> None:
         for f in fs:
             print(f"  {_BOLD}▸{_RESET} {f.headline}")
             print(f"    {_GRAY}{f.detail}{_RESET}")
+            if getattr(f, "cli_hint", None):
+                print(f"    {_CYAN}▶ {f.cli_hint}{_RESET}")
             print()
 
     # Honest headline: Strain over expert-confirmed cases, with EQ coverage

@@ -104,6 +104,7 @@ class RegressionSuite:
         candidate_label: str = "candidate",
         paraphrases:     int = 5,
         verbose:         bool = True,
+        concurrency:     int = 4,
     ) -> RegressionResult:
         """
         Run both apps against all test cases and return a RegressionResult.
@@ -115,6 +116,7 @@ class RegressionSuite:
             candidate_label: Human-readable label (e.g. "pr-456").
             paraphrases:     Adversarial variants per test case.
             verbose:         Print progress.
+            concurrency:     Test cases run in parallel per Suite.run. Default 4.
 
         Returns:
             RegressionResult with CAI delta and .fail_if_below() helper.
@@ -125,7 +127,7 @@ class RegressionSuite:
         baseline_suite = Suite(app=baseline_app, api_key=self.api_key, provider=self.provider)
         for tc in self.test_cases:
             baseline_suite.add(tc)
-        baseline_report = baseline_suite.run(paraphrases=paraphrases, verbose=verbose)
+        baseline_report = baseline_suite.run(paraphrases=paraphrases, verbose=verbose, concurrency=concurrency)
 
         if verbose:
             print(f"\nRunning candidate ({candidate_label})...")
@@ -133,7 +135,7 @@ class RegressionSuite:
         candidate_suite = Suite(app=candidate_app, api_key=self.api_key, provider=self.provider)
         for tc in self.test_cases:
             candidate_suite.add(tc)
-        candidate_report = candidate_suite.run(paraphrases=paraphrases, verbose=verbose)
+        candidate_report = candidate_suite.run(paraphrases=paraphrases, verbose=verbose, concurrency=concurrency)
 
         return RegressionResult(
             baseline_label=baseline_label,

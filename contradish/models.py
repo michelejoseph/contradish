@@ -75,6 +75,17 @@ class TestCase:
     expected_traits: list[str] = field(default_factory=list)
     equivalence_confidence: float = 1.0
     contradiction_type: str = "adversarial"
+    memory: list[str] = field(default_factory=list)
+    """
+    Prior committed facts the agent's long-term memory contains and should
+    respect. Each entry is a plain-English fact the agent has already
+    stored, learned, or committed to ("User stated on 2024-11-03 that they
+    are vegetarian"). When non-empty, contradish runs a second judge pass
+    that scores whether the model's response *contradicts* any of these
+    facts — the failure mode where the contradiction is separated in time,
+    invisible to single-turn paraphrase testing. This is what makes the
+    tool useful for agentic apps with persistent memory.
+    """
 
     def __post_init__(self):
         if not self.name:
@@ -121,6 +132,17 @@ class TestResult:
     # contradiction_type warrants it. None means "not scored on this axis."
     tension_response_score: Optional[float] = None  # 0–1, 1 = named both sides of a genuine tension well
     reframe_score:          Optional[float] = None  # 0–1, 1 = correctly reframed a representational confusion
+
+    # Memory-aware judge signal. Only populated when the test case carries
+    # `memory` (a list of prior committed facts the agent should respect).
+    # 1.0 = response is consistent with all prior memory; 0.0 = response
+    # flatly contradicts at least one prior commitment. None means the case
+    # had no memory context to check against. This catches the failure mode
+    # where the agent told the user X yesterday, stored X, and now says
+    # not-X — invisible to paraphrase-only testing because the contradiction
+    # is separated in time.
+    memory_consistency_score: Optional[float] = None
+    memory_contradictions:    list[str] = field(default_factory=list)  # specific facts contradicted
 
     @property
     def cai_score(self) -> Optional[float]:
@@ -448,6 +470,84 @@ class Report:
                 lines.append(f"    vs:    {c.output_b[:120]!r}")
         return "\n".join(lines)
 
+    @classmethod
+    def from_dict(cls, data: dict) -> "Report":
+        """
+        Reconstruct a minimal Report from a saved JSON dict (as written by
+        `to_dict()` or any of the CLI's `--json` outputs).
+
+        Lossy: rich fields like full contradictions, unstable patterns, and
+        judge outputs are reconstructed only enough to support `diff()` and
+        the simple summary properties. Use this when you have a saved result
+        JSON and want a Report to feed into comparison or finding-mining,
+        not when you need the full original artifact.
+
+        The intended workflow:
+
+            >>> import json
+            >>> from contradish import Report
+            >>> base = Report.from_dict(json.load(open("yesterday.json")))
+            >>> cand = Report.from_dict(json.load(open("today.json")))
+            >>> diff = base.diff(cand)
+            >>> print(diff.summary())
+        """
+        thresholds   = data.get("thresholds") or {}
+        eq_threshold = float(data.get("eq_threshold", 0.80) or 0.80)
+        results: list[TestResult] = []
+        for rd in data.get("results", []) or []:
+            tc = TestCase(
+                input                  = rd.get("input", "") or rd.get("name", "") or "",
+                name                   = rd.get("name"),
+                equivalence_confidence = float(rd.get("equivalence_confidence", 1.0) or 1.0),
+                contradiction_type     = rd.get("contradiction_type", "adversarial") or "adversarial",
+            )
+            risk_value = rd.get("risk", "low") or "low"
+            try:
+                risk = RiskLevel(risk_value)
+            except Exception:
+                risk = RiskLevel.LOW
+            results.append(TestResult(
+                test_case              = tc,
+                paraphrases            = [],
+                outputs                = [],
+                consistency_score      = rd.get("cai_score"),
+                contradiction_score    = rd.get("contradiction_score"),
+                risk                   = risk,
+                contradictions         = [],
+                unstable_patterns      = rd.get("unstable_patterns", []) or [],
+                suggestion             = rd.get("suggestion"),
+                tension_response_score = rd.get("tension_response_score"),
+                reframe_score          = rd.get("reframe_score"),
+            ))
+        return cls(results=results, thresholds=thresholds, eq_threshold=eq_threshold)
+
+    def diff(
+        self,
+        other:           "Report",
+        baseline_label:  str = "baseline",
+        candidate_label: str = "candidate",
+    ) -> "RegressionResult":
+        """
+        Compare self (baseline) against `other` (candidate).
+
+        Returns a RegressionResult whose `per_case_deltas` lists every case
+        present in either report with its baseline and candidate Strain
+        side-by-side and a regressed flag. Cases unique to one side appear
+        with the missing-side strain set to None — useful for catching when
+        a candidate run dropped a case you cared about.
+
+        Use this when you have two saved result JSONs and want to compare
+        them without re-running anything against the live model:
+
+            >>> Report.from_dict(b).diff(Report.from_dict(c)).fail_if_above(0.20)
+        """
+        return RegressionResult(
+            baseline_label   = baseline_label,
+            candidate_label  = candidate_label,
+            baseline_report  = self,
+            candidate_report = other,
+        )
+
     def to_dict(self) -> dict:
         """
         Serialize the report to a dict suitable for JSON output.
@@ -547,6 +647,72 @@ class RegressionResult:
         """True if candidate CAI Strain rose vs baseline (more drift)."""
         delta = self.strain_delta
         return delta is not None and delta > 0
+
+    @property
+    def per_case_deltas(self) -> list[dict]:
+        """
+        Per-case before/after view. One entry per unique case name across both
+        reports. `regressed` is True when the candidate strain rose. Cases that
+        appear in only one report are still listed (with the missing side set
+        to None) so an accidentally-dropped case is impossible to miss.
+
+        Each entry:
+            {"name": str, "baseline_strain": float|None,
+             "candidate_strain": float|None, "delta": float|None,
+             "regressed": bool}
+        """
+        def _by_name(rep: Report) -> dict[str, Optional[float]]:
+            out: dict[str, Optional[float]] = {}
+            for r in rep.results:
+                name = r.test_case.name or r.test_case.input[:60]
+                out[name] = r.cai_strain
+            return out
+
+        b = _by_name(self.baseline_report)
+        c = _by_name(self.candidate_report)
+        # Preserve baseline order, then append any cases unique to candidate.
+        names_seen: list[str] = []
+        for n in b.keys():
+            if n not in names_seen:
+                names_seen.append(n)
+        for n in c.keys():
+            if n not in names_seen:
+                names_seen.append(n)
+
+        rows = []
+        for n in names_seen:
+            bs = b.get(n)
+            cs = c.get(n)
+            delta = None
+            if bs is not None and cs is not None:
+                delta = round(cs - bs, 3)
+            regressed = delta is not None and delta > 0
+            rows.append({
+                "name":             n,
+                "baseline_strain":  bs,
+                "candidate_strain": cs,
+                "delta":            delta,
+                "regressed":        regressed,
+            })
+        return rows
+
+    def summary(self) -> str:
+        """One-line summary suitable for stdout or CI logs."""
+        b = self.baseline_report.cai_strain
+        c = self.candidate_report.cai_strain
+        b_str = f"{b:.3f}" if b is not None else "n/a"
+        c_str = f"{c:.3f}" if c is not None else "n/a"
+        if self.strain_delta is None:
+            arrow = "?"
+            delta_str = "n/a"
+        else:
+            arrow = "↑" if self.strain_delta > 0 else ("↓" if self.strain_delta < 0 else "=")
+            delta_str = f"{self.strain_delta:+.3f}"
+        regressions = sum(1 for r in self.per_case_deltas if r["regressed"])
+        return (
+            f"{self.baseline_label} {b_str} {arrow} {self.candidate_label} {c_str}  "
+            f"({delta_str})  regressions={regressions}"
+        )
 
     def fail_if_above(self, strain: float = 0.25) -> None:
         """

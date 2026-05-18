@@ -47,6 +47,7 @@ way, the user does not run the benchmark twice by hand.
 from __future__ import annotations
 
 import json
+import random
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional, Union
@@ -92,16 +93,28 @@ class ImprovementResult:
     variant_results:  list[RepairResult] = field(default_factory=list)
     ft_jsonl_path:    Optional[str] = None
     ft_job_id:        Optional[str] = None
+    # Holdout-split fields. Populated when improve() is called with
+    # holdout_frac > 0. The baseline_strain / improved_strain pair above
+    # reports honest (holdout) numbers when a holdout exists; the train-set
+    # numbers are kept here so a sceptical reader can verify the model
+    # generalized beyond the cases used to pick the winner.
+    train_baseline_strain: Optional[float] = None
+    train_improved_strain: Optional[float] = None
+    holdout_size:          Optional[int]   = None
+    train_size:            Optional[int]   = None
 
     def summary(self) -> str:
         """One-line summary for stdout."""
         arrow = "↓" if self.strain_delta < 0 else "↑"
         pct   = abs(self.strain_delta) / self.baseline_strain * 100 if self.baseline_strain else 0
         hit   = "target met" if self.target_met else f"target {self.target_strain:.2f} not yet hit"
+        scope = ""
+        if self.holdout_size is not None:
+            scope = f"  [holdout n={self.holdout_size}, train n={self.train_size}]"
         return (
             f"CAI Strain {self.baseline_strain:.3f} → {self.improved_strain:.3f}  "
             f"({arrow} {abs(self.strain_delta):.3f} / {pct:.0f}% reduction)  "
-            f"[{hit}]  method={self.method}"
+            f"[{hit}]  method={self.method}{scope}"
         )
 
     def to_dict(self) -> dict:
@@ -116,6 +129,10 @@ class ImprovementResult:
             "improved_prompt":  self.improved_prompt,
             "ft_jsonl_path":    self.ft_jsonl_path,
             "ft_job_id":        self.ft_job_id,
+            "train_baseline_strain": self.train_baseline_strain,
+            "train_improved_strain": self.train_improved_strain,
+            "holdout_size":          self.holdout_size,
+            "train_size":            self.train_size,
             "baseline_report":  self.baseline_report.to_dict(),
             "improved_report":  self.improved_report.to_dict(),
             "variant_strains":  [
@@ -247,6 +264,9 @@ def improve(
     enable_finetune: bool                = False,
     ft_provider:    str                  = "openai",
     verbose:        bool                 = True,
+    concurrency:    int                  = 4,
+    holdout_frac:   float                = 0.0,
+    seed:           int                  = 0,
 ) -> ImprovementResult:
     """
     Close the repair loop end-to-end.
@@ -279,6 +299,18 @@ def improve(
                          training costs don't surprise the user.
         ft_provider:     Fine-tuning provider. Only "openai" is wired today.
         verbose:         Print progress to stdout.
+        concurrency:     Test cases run in parallel per Suite.run. Default 4.
+                         Also bounds parallelism across variant re-tests inside
+                         PromptRepair.fix.
+        holdout_frac:    If > 0, reserve this fraction of cases as a held-out
+                         set. Variants are diagnosed and selected on the
+                         remaining (train) cases; the winner is then re-scored
+                         on the holdout. The returned baseline/improved Strain
+                         report the holdout numbers, with the train numbers
+                         retained on the result for transparency. This fixes
+                         the train-on-test bias of the legacy path. Default 0.0
+                         preserves prior behavior.
+        seed:            Seed for the holdout shuffle so splits are reproducible.
 
     Returns:
         ImprovementResult with before/after CAI Strain, the improved prompt,
@@ -292,9 +324,30 @@ def improve(
     if not case_list:
         raise ValueError("No test cases provided. Pass a policy name or a non-empty list of TestCase objects.")
 
-    # ── 1. Baseline run ─────────────────────────────────────────────────────────
+    # ── 0. Optional train/holdout split ────────────────────────────────────────
+    # With holdout_frac > 0, diagnose & pick the winner on a train subset,
+    # then re-score the winner on the held-out cases. The "headline" numbers
+    # surfaced to the user are the holdout numbers — that's the honest read.
+    holdout_cases: list[TestCase] = []
+    train_cases:   list[TestCase] = list(case_list)
+    if holdout_frac and holdout_frac > 0:
+        if not (0 < holdout_frac < 1):
+            raise ValueError(f"holdout_frac must be between 0 and 1 exclusive, got {holdout_frac}")
+        rng = random.Random(seed)
+        shuffled = list(case_list)
+        rng.shuffle(shuffled)
+        n_holdout = max(1, int(round(len(shuffled) * holdout_frac)))
+        n_holdout = min(n_holdout, len(shuffled) - 1)  # always leave ≥1 for train
+        holdout_cases = shuffled[:n_holdout]
+        train_cases   = shuffled[n_holdout:]
+        if verbose:
+            print(f"  [improve] holdout split: train n={len(train_cases)}, holdout n={len(holdout_cases)} (seed={seed})")
+
+    use_holdout = bool(holdout_cases)
+
+    # ── 1. Baseline run (TRAIN cases — these drive variant generation) ─────────
     if verbose:
-        print(f"\n  [improve] baseline run: {len(case_list)} cases on {model or '<default model>'}")
+        print(f"\n  [improve] baseline run on train set: {len(train_cases)} cases on {model or '<default model>'}")
     baseline_app = _make_app_for_prompt(
         system_prompt=system_prompt or "You are a helpful assistant.",
         model=model,
@@ -302,30 +355,61 @@ def improve(
         api_key=api_key,
     )
     baseline_suite = Suite(app=baseline_app, api_key=api_key, provider=provider)
-    for tc in case_list:
+    for tc in train_cases:
         baseline_suite.add(tc)
-    baseline_report = baseline_suite.run(paraphrases=paraphrases, verbose=verbose)
+    baseline_report_train = baseline_suite.run(
+        paraphrases = paraphrases,
+        verbose     = verbose,
+        concurrency = concurrency,
+    )
 
-    baseline_strain = baseline_report.cai_strain or 0.0
+    train_baseline_strain = baseline_report_train.cai_strain or 0.0
     if verbose:
-        print(f"  [improve] baseline CAI Strain: {baseline_strain:.3f}")
+        print(f"  [improve] train CAI Strain (baseline): {train_baseline_strain:.3f}")
 
-    # Early exit: already meeting target
-    if baseline_strain <= target_strain:
+    # Helper: re-score an arbitrary case set against a prompt, return (Report, strain).
+    def _score_on(case_set: list[TestCase], prompt_for_app: str) -> tuple[Report, float]:
+        app   = _make_app_for_prompt(
+            system_prompt=prompt_for_app, model=model, provider=provider, api_key=api_key,
+        )
+        suite = Suite(app=app, api_key=api_key, provider=provider)
+        for tc in case_set:
+            suite.add(tc)
+        rep    = suite.run(paraphrases=paraphrases, verbose=False, concurrency=concurrency)
+        strain = rep.cai_strain or 0.0
+        return rep, strain
+
+    # ── Baseline on holdout (if any) so we have an honest before/after pair ────
+    if use_holdout:
+        if verbose:
+            print(f"  [improve] baseline run on holdout: {len(holdout_cases)} cases")
+        baseline_report_holdout, baseline_strain_holdout = _score_on(holdout_cases, system_prompt or "You are a helpful assistant.")
+        baseline_strain_headline = baseline_strain_holdout
+        baseline_report_headline = baseline_report_holdout
+    else:
+        baseline_strain_headline = train_baseline_strain
+        baseline_report_headline = baseline_report_train
+
+    # ── Early exit: already meeting target on the headline (holdout if present) ─
+    if baseline_strain_headline <= target_strain:
         if verbose:
             print(f"  [improve] baseline already meets target ({target_strain:.2f}); no repair needed.")
         return ImprovementResult(
-            baseline_strain  = baseline_strain,
-            improved_strain  = baseline_strain,
+            baseline_strain  = baseline_strain_headline,
+            improved_strain  = baseline_strain_headline,
             strain_delta     = 0.0,
             target_strain    = target_strain,
             target_met       = True,
             method           = method,
             baseline_prompt  = system_prompt,
             improved_prompt  = system_prompt,
-            baseline_report  = baseline_report,
-            improved_report  = baseline_report,
+            baseline_report  = baseline_report_headline,
+            improved_report  = baseline_report_headline,
             variant_results  = [],
+            train_baseline_strain = train_baseline_strain if use_holdout else None,
+            train_improved_strain = train_baseline_strain if use_holdout else None,
+            holdout_size          = len(holdout_cases)    if use_holdout else None,
+            train_size            = len(train_cases)      if use_holdout else None,
         )
 
     # ── 2. Generate improved-prompt variants ────────────────────────────────────
@@ -333,7 +417,6 @@ def improve(
         print(f"  [improve] generating {n_variants} improved-prompt variants")
 
     repair = PromptRepair(api_key=api_key, provider=provider, n=n_variants)
-    # PromptRepair needs an app_factory that builds an app from a prompt
     def app_factory(prompt: str) -> Callable[[str], str]:
         return _make_app_for_prompt(
             system_prompt=prompt,
@@ -343,43 +426,62 @@ def improve(
         )
 
     variants = repair.fix(
-        system_prompt=system_prompt,
-        report=baseline_report,
-        app_factory=app_factory,
-        paraphrases=paraphrases,
-        verbose=verbose,
+        system_prompt = system_prompt,
+        report        = baseline_report_train,
+        app_factory   = app_factory,
+        paraphrases   = paraphrases,
+        verbose       = verbose,
+        concurrency   = concurrency,
+        cases         = train_cases,   # variants are scored on train only
     )
 
     if not variants:
         if verbose:
             print("  [improve] variant generation failed; returning baseline result.")
         return ImprovementResult(
-            baseline_strain  = baseline_strain,
-            improved_strain  = baseline_strain,
+            baseline_strain  = baseline_strain_headline,
+            improved_strain  = baseline_strain_headline,
             strain_delta     = 0.0,
             target_strain    = target_strain,
             target_met       = False,
             method           = method,
             baseline_prompt  = system_prompt,
             improved_prompt  = system_prompt,
-            baseline_report  = baseline_report,
-            improved_report  = baseline_report,
+            baseline_report  = baseline_report_headline,
+            improved_report  = baseline_report_headline,
             variant_results  = [],
+            train_baseline_strain = train_baseline_strain if use_holdout else None,
+            train_improved_strain = train_baseline_strain if use_holdout else None,
+            holdout_size          = len(holdout_cases)    if use_holdout else None,
+            train_size            = len(train_cases)      if use_holdout else None,
         )
 
-    # ── 3. Pick the best ────────────────────────────────────────────────────────
+    # ── 3. Pick the best on TRAIN ───────────────────────────────────────────────
     best = variants[0]   # PromptRepair sorts best-first (highest cai_score = lowest Strain)
-    improved_prompt = best.improved_prompt
-    improved_report = best.report
-    improved_strain = improved_report.cai_strain or baseline_strain
-    strain_delta    = round(improved_strain - baseline_strain, 4)
+    improved_prompt       = best.improved_prompt
+    train_improved_report = best.report
+    train_improved_strain = train_improved_report.cai_strain or train_baseline_strain
 
     if verbose:
-        arrow = "↓" if strain_delta < 0 else "↑"
-        print(f"  [improve] best variant: Strain {baseline_strain:.3f} {arrow} {improved_strain:.3f}")
+        arrow_t = "↓" if train_improved_strain < train_baseline_strain else "↑"
+        print(f"  [improve] train winner: Strain {train_baseline_strain:.3f} {arrow_t} {train_improved_strain:.3f}")
+
+    # ── 4. Score winner on HOLDOUT (the honest read) ────────────────────────────
+    if use_holdout:
+        if verbose:
+            print(f"  [improve] scoring winner on holdout ({len(holdout_cases)} cases)")
+        improved_report, improved_strain = _score_on(holdout_cases, improved_prompt)
+        if verbose:
+            arrow_h = "↓" if improved_strain < baseline_strain_headline else "↑"
+            print(f"  [improve] holdout result: Strain {baseline_strain_headline:.3f} {arrow_h} {improved_strain:.3f}")
+    else:
+        improved_report = train_improved_report
+        improved_strain = train_improved_strain
+
+    strain_delta = round(improved_strain - baseline_strain_headline, 4)
 
     result = ImprovementResult(
-        baseline_strain  = baseline_strain,
+        baseline_strain  = baseline_strain_headline,
         improved_strain  = improved_strain,
         strain_delta     = strain_delta,
         target_strain    = target_strain,
@@ -387,9 +489,13 @@ def improve(
         method           = method,
         baseline_prompt  = system_prompt,
         improved_prompt  = improved_prompt,
-        baseline_report  = baseline_report,
+        baseline_report  = baseline_report_headline,
         improved_report  = improved_report,
         variant_results  = variants,
+        train_baseline_strain = train_baseline_strain if use_holdout else None,
+        train_improved_strain = train_improved_strain if use_holdout else None,
+        holdout_size          = len(holdout_cases)    if use_holdout else None,
+        train_size            = len(train_cases)      if use_holdout else None,
     )
 
     # ── 4. Fine-tune scaffold ───────────────────────────────────────────────────
@@ -422,6 +528,9 @@ def improve(
     return result
 
 
+_DEFAULT_FT_BASE_MODEL = "gpt-4o-mini-2024-07-18"
+
+
 def _submit_finetune_job(
     jsonl_path: str,
     provider:   str,
@@ -431,28 +540,66 @@ def _submit_finetune_job(
     """
     Submit a fine-tuning job to the configured provider.
 
-    Stubbed. Wired only as a scaffold today — the production integration with
-    OpenAI's fine-tuning endpoint will live here. Returns the job ID once
-    the submission lands; until then raises NotImplementedError so callers
-    using enable_finetune=True see a clear "not yet" rather than a silent
-    no-op.
+    OpenAI today. Anthropic / Vertex / Bedrock will land as separate branches
+    when their fine-tuning APIs are stable enough to wrap behind one call.
+
+    The caller gates this entire path behind `--enable-finetune` (CLI) or
+    `enable_finetune=True` (Python), so this function only ever runs when
+    the user has explicitly opted into paying for a training run.
+
+    Args:
+        jsonl_path: Path to the training-pair JSONL written by
+                    _write_finetune_jsonl. Must be uploadable as-is.
+        provider:   "openai" today. Anything else raises NotImplementedError
+                    with a clear message so the user knows nothing was billed.
+        base_model: Optional base model. Defaults to the cheapest commonly
+                    fine-tunable OpenAI model so an accidental submission
+                    doesn't bill enterprise rates.
+        verbose:    Stdout progress about the upload step.
+
+    Returns:
+        The provider's job ID string. The caller is expected to surface this
+        to the user so they can poll status with the provider's own tools.
+
+    Raises:
+        ImportError if the openai SDK isn't installed.
+        NotImplementedError for non-openai providers.
+        Anything the provider SDK raises (auth, quota, validation) propagates
+        unchanged — failure modes belong with the user, not silently swallowed.
     """
     if provider != "openai":
-        raise NotImplementedError(f"fine-tune provider '{provider}' is not yet supported")
-    # TODO: wire openai.fine_tuning.jobs.create here once the upload+wait flow
-    # is hardened. The shape is:
-    #
-    #   from openai import OpenAI
-    #   client = OpenAI()
-    #   training_file = client.files.create(file=open(jsonl_path), purpose="fine-tune")
-    #   job = client.fine_tuning.jobs.create(
-    #       training_file=training_file.id,
-    #       model=base_model or "gpt-4o-mini-2024-07-18",
-    #   )
-    #   return job.id
-    raise NotImplementedError(
-        "OpenAI fine-tuning submission is not yet wired. "
-        "The JSONL is written and ready to upload via the OpenAI dashboard "
-        "or `openai api fine_tuning.jobs.create` manually. "
-        "Full automation lands in 1.4.0."
+        raise NotImplementedError(
+            f"fine-tune provider '{provider}' is not yet supported. "
+            f"Today only 'openai' is wired. The JSONL at {jsonl_path} is "
+            f"ready to upload to your provider of choice manually."
+        )
+
+    try:
+        from openai import OpenAI
+    except ImportError as e:
+        raise ImportError(
+            "openai SDK is required for fine-tune submission. Install with:\n"
+            "    pip install \"contradish[openai]\""
+        ) from e
+
+    if not jsonl_path:
+        raise ValueError("no JSONL path supplied to fine-tune submission")
+
+    client = OpenAI()
+    model  = base_model or _DEFAULT_FT_BASE_MODEL
+
+    if verbose:
+        print(f"  [improve] uploading {jsonl_path} to OpenAI")
+    with open(jsonl_path, "rb") as f:
+        training_file = client.files.create(file=f, purpose="fine-tune")
+    if verbose:
+        print(f"  [improve] file uploaded:    {training_file.id}")
+        print(f"  [improve] creating fine-tune job on base model: {model}")
+
+    job = client.fine_tuning.jobs.create(
+        training_file = training_file.id,
+        model         = model,
     )
+    if verbose:
+        print(f"  [improve] check status: openai api fine_tuning.jobs.retrieve {job.id}")
+    return job.id

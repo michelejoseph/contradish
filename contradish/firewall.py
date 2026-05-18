@@ -29,6 +29,7 @@ Example:
 from typing import Callable, Optional
 from .models import FirewallResult
 from .llm import LLMClient
+from .caches import FirewallCache, InMemoryCache
 
 
 _CONTRADICTION_CHECK_PROMPT = """You are checking whether an LLM app's new response contradicts any of its recent responses on the same topic.
@@ -88,7 +89,16 @@ class Firewall:
         provider:          Optional[str] = None,
         window:            int = 50,
         fallback_response: Optional[str] = None,
+        cache:             Optional[FirewallCache] = None,
     ):
+        """
+        Args:
+            cache: Cache backend. Default is `InMemoryCache(window=window)` —
+                   matches the historical per-process behavior. Pass a
+                   `RedisCache(...)` (or any object satisfying the
+                   `FirewallCache` protocol) for shared state across workers.
+                   See `contradish.caches` for built-in backends.
+        """
         if mode not in ("monitor", "block"):
             raise ValueError(f"mode must be 'monitor' or 'block', got: {mode!r}")
 
@@ -97,7 +107,7 @@ class Firewall:
         self._llm      = LLMClient(api_key=api_key, provider=provider)
         self.window    = window
         self._fallback = fallback_response or _DEFAULT_FALLBACK
-        self._cache: list[dict] = []   # [{query, response}]
+        self.cache     = cache if cache is not None else InMemoryCache(window=window)
         self.events: list[FirewallResult] = []
 
     # ── Public ─────────────────────────────────────────────────────────────────
@@ -116,10 +126,9 @@ class Firewall:
             self._check_contradiction(query, response)
         )
 
-        # Cache after checking (don't compare against self)
-        self._cache.append({"query": query, "response": response})
-        if len(self._cache) > self.window:
-            self._cache.pop(0)
+        # Cache after checking (don't compare against self). The cache backend
+        # handles its own window trimming and shared-state semantics.
+        self.cache.append(query, response)
 
         blocked = contradiction and self.mode == "block"
 
@@ -155,7 +164,7 @@ class Firewall:
 
     def reset(self) -> None:
         """Clear the response cache and event log."""
-        self._cache.clear()
+        self.cache.clear()
         self.events.clear()
 
     # ── Internal ───────────────────────────────────────────────────────────────
@@ -169,11 +178,14 @@ class Firewall:
         Compare query+response against recent cache.
         Returns (contradiction, matched_query, matched_response, explanation).
         """
-        if not self._cache:
+        if self.cache.size() == 0:
             return False, None, None, None
 
         # Use last N entries for comparison
-        sample = self._cache[-min(15, len(self._cache)):]
+        sample = self.cache.recent(15)
+        if not sample:
+            return False, None, None, None
+
         cache_pairs = "\n".join(
             f"Q: {c['query']}\nA: {c['response'][:300]}"
             for c in sample
@@ -190,7 +202,7 @@ class Firewall:
             if isinstance(result, dict) and result.get("contradiction"):
                 matched_query = result.get("matched_query")
                 matched_entry = next(
-                    (c for c in reversed(self._cache) if c["query"] == matched_query),
+                    (c for c in reversed(sample) if c["query"] == matched_query),
                     None,
                 )
                 return (

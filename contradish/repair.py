@@ -39,6 +39,7 @@ Example:
     print(best.improved_prompt)
 """
 
+import concurrent.futures
 from typing import Callable, Optional
 from .models import Report, RepairResult
 from .suite import Suite
@@ -107,6 +108,8 @@ class PromptRepair:
         app_factory:   Callable[[str], Callable[[str], str]],
         paraphrases:   int  = 5,
         verbose:       bool = True,
+        concurrency:   int  = 4,
+        cases:         Optional[list] = None,
     ) -> list[RepairResult]:
         """
         Generate improved prompt variants, test each, return ranked results.
@@ -118,6 +121,15 @@ class PromptRepair:
                            Used to create a fresh app for each improved prompt.
             paraphrases:   Adversarial variants per test case in re-testing.
             verbose:       Print progress.
+            concurrency:   Parallelism inside each variant's re-test Suite.
+                           Variants themselves are also run in parallel (capped
+                           at `min(len(variants), concurrency)`).
+            cases:         Optional explicit case list to re-test against. When
+                           None, the cases from `report` are used (legacy
+                           behavior). `improve()` passes a held-out split here
+                           so variant selection happens against the same train
+                           set the diagnoses came from, not against held-out
+                           cases reserved for honest measurement.
 
         Returns:
             List of RepairResult sorted best to worst (lowest CAI Strain first).
@@ -138,27 +150,54 @@ class PromptRepair:
                 print_progress("variant generation failed. returning empty results")
             return []
 
-        results = []
-        for i, improved_prompt in enumerate(improved_prompts, 1):
-            if verbose:
-                print_progress(f"testing variant {i}/{len(improved_prompts)}")
+        # Cases the variants will be scored against. By default, the same cases
+        # that produced the baseline report (legacy behavior). improve() passes
+        # an explicit train split here so the holdout set stays unseen.
+        retest_cases = cases if cases is not None else [r.test_case for r in report.results]
 
-            app = app_factory(improved_prompt)
+        def _score_variant(improved_prompt: str) -> RepairResult:
+            app   = app_factory(improved_prompt)
             suite = Suite(app=app)
-            for r in report.results:
-                suite.add(r.test_case)
-            new_report  = suite.run(paraphrases=paraphrases, verbose=False)
-            new_cai     = new_report.cai_score or 0.0
+            for tc in retest_cases:
+                suite.add(tc)
+            new_report = suite.run(
+                paraphrases = paraphrases,
+                verbose     = False,
+                concurrency = concurrency,
+            )
+            new_cai = new_report.cai_score or 0.0
+            return RepairResult(
+                original_prompt    = system_prompt,
+                improved_prompt    = improved_prompt,
+                original_cai_score = original_cai,
+                improved_cai_score = new_cai,
+                delta              = round(new_cai - original_cai, 3),
+                report             = new_report,
+                rank               = 0,
+            )
 
-            results.append(RepairResult(
-                original_prompt=system_prompt,
-                improved_prompt=improved_prompt,
-                original_cai_score=original_cai,
-                improved_cai_score=new_cai,
-                delta=round(new_cai - original_cai, 3),
-                report=new_report,
-                rank=0,
-            ))
+        # Run variants in parallel. Each variant internally also fans its
+        # cases out at `concurrency`, so total parallelism is bounded by
+        # the LLM provider's rate limits, not by us.
+        n_variants = len(improved_prompts)
+        if concurrency <= 1 or n_variants <= 1:
+            results = []
+            for i, p in enumerate(improved_prompts, 1):
+                if verbose:
+                    print_progress(f"testing variant {i}/{n_variants}")
+                results.append(_score_variant(p))
+        else:
+            if verbose:
+                print_progress(f"testing {n_variants} variants in parallel  ·  concurrency={concurrency}")
+            results = []
+            with concurrent.futures.ThreadPoolExecutor(max_workers=min(n_variants, concurrency)) as ex:
+                futures = {ex.submit(_score_variant, p): i for i, p in enumerate(improved_prompts, 1)}
+                for fut in concurrent.futures.as_completed(futures):
+                    i = futures[fut]
+                    r = fut.result()
+                    results.append(r)
+                    if verbose:
+                        print_progress(f"variant {i}/{n_variants} done")
 
         # Sort best to worst
         results.sort(key=lambda r: r.improved_cai_score, reverse=True)

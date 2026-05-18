@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "contradish"
-version = "1.5.0"
+version = "1.6.0"
 description = "Tells you what's actually wrong with your LLM, not just that something is. Findings layer mines every run for the one specific surprise — root-cause clusters, rigidity vs drift, the cases where your model gave both the right and the wrong answer to the same question. Plus: Judgment Strain (two-sided), the one-command repair loop, and per-case equivalence audit. CAI-Bench v2: 20 domains, 2,160 strain tests."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -29,8 +29,10 @@ dependencies = []
 [project.optional-dependencies]
 anthropic = ["anthropic>=0.25.0"]
 openai    = ["openai>=1.0.0"]
-all       = ["anthropic>=0.25.0", "openai>=1.0.0"]
-dev       = ["anthropic>=0.25.0", "openai>=1.0.0", "pytest>=7.0", "pytest-mock"]
+litellm   = ["litellm>=1.40.0"]
+redis     = ["redis>=4.0.0"]
+all       = ["anthropic>=0.25.0", "openai>=1.0.0", "litellm>=1.40.0", "redis>=4.0.0"]
+dev       = ["anthropic>=0.25.0", "openai>=1.0.0", "litellm>=1.40.0", "redis>=4.0.0", "pytest>=7.0", "pytest-mock"]
 
 [project.urls]
 Homepage    = "https://contradish.com"
