@@ -52,8 +52,9 @@ from .audit        import to_audit_html
 from .adapters     import wrap_litellm, wrap_openai_compatible
 from .caches       import FirewallCache, InMemoryCache, RedisCache
 from .prompt_analyzer import analyze_prompt, PromptAnalysis, PromptTension
+from .judge_calibration import measure_judge_floor, JudgeCalibration
 
-__version__ = "1.6.0"
+__version__ = "1.7.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -86,4 +87,6 @@ __all__ = [
     "analyze_prompt",
     "PromptAnalysis",
     "PromptTension",
+    "measure_judge_floor",
+    "JudgeCalibration",
 ]

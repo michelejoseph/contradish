@@ -253,6 +253,13 @@ def print_next_steps(report) -> None:
                 f"  {_GRAY}contested Strain:{_RESET}  {contested:.3f}  "
                 f"{_GRAY}(cases where annotators disagreed on equivalence){_RESET}"
             )
+        truth = getattr(report, "truth_strain", None)
+        if truth is not None:
+            tcov = getattr(report, "truth_coverage", 0.0)
+            print(
+                f"  {_BOLD}truth Strain:{_RESET}     {truth:.3f}  "
+                f"{_GRAY}(cases with a canonical answer; {tcov:.0%} truth coverage){_RESET}"
+            )
         if report.ambiguous_count:
             print(
                 f"  {_GRAY}excluded as ambiguous: {report.ambiguous_count} case(s) "

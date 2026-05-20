@@ -554,6 +554,46 @@ def cmd_findings(args):
     sys.exit(0)
 
 
+def cmd_judge_floor(args):
+    """
+    Measure the judge model's own CAI Strain on a built-in known-truth set.
+
+    Every Strain number a benchmark reports is bounded above by the judge's
+    own consistency. This command quantifies that floor so the leaderboard
+    can report it honestly.
+    """
+    from contradish.judge_calibration import measure_judge_floor
+
+    _check_api_key()
+    use_json = getattr(args, "json", False)
+
+    if not use_json:
+        print()
+        print(f"  measuring judge floor: provider={args.judge_provider or '<auto>'} "
+              f"model={args.judge_model or '<default>'}  "
+              f"n_rephrasings={args.n_rephrasings}")
+        print()
+
+    cal = measure_judge_floor(
+        judge_provider = args.judge_provider,
+        judge_model    = args.judge_model,
+        n_rephrasings  = args.n_rephrasings,
+        concurrency    = getattr(args, "concurrency", 4),
+    )
+
+    if use_json:
+        print(json.dumps(cal.to_dict(), indent=2))
+    else:
+        print(f"  {cal.summary()}")
+        print()
+        print(f"  Strain gaps smaller than confidence_floor ({cal.confidence_floor:.3f}) ")
+        print(f"  between two models cannot be statistically distinguished from judge noise.")
+        print(f"  Surface this number alongside every Strain measurement.")
+        print()
+
+    sys.exit(0)
+
+
 def cmd_prompt(args):
     """
     Static analysis of a system prompt for internal contradictions.
@@ -1495,6 +1535,29 @@ examples:
     find_p.add_argument("--json", action="store_true", default=False,
                         help="Output findings as JSON instead of formatted text.")
 
+    # contradish judge-floor — measure the judge's own CAI Strain
+    jf_p = sub.add_parser(
+        "judge-floor",
+        help="Measure the judge model's own consistency on a built-in known-truth set.",
+        description=(
+            "Every Strain number a benchmark reports is bounded above by the judge's "
+            "own consistency. This command quantifies that floor.\n\n"
+            "  contradish judge-floor --judge-provider openai --judge-model gpt-4o\n"
+            "  contradish judge-floor --judge-provider anthropic --json\n"
+        ),
+    )
+    jf_p.add_argument("--judge-provider", choices=("anthropic", "openai"), default=None,
+                      dest="judge_provider",
+                      help="Judge provider (auto-detected from env if omitted).")
+    jf_p.add_argument("--judge-model", default=None, metavar="MODEL", dest="judge_model",
+                      help="Specific judge model to calibrate (default: provider's judge model).")
+    jf_p.add_argument("--n-rephrasings", type=int, default=3, metavar="N", dest="n_rephrasings",
+                      help="How many rephrased instructions to ask each pair under (default: 3).")
+    jf_p.add_argument("--concurrency", type=int, default=4, metavar="N",
+                      help="Parallel pair evaluations (default: 4).")
+    jf_p.add_argument("--json", action="store_true", default=False,
+                      help="Output calibration as JSON.")
+
     # contradish prompt <file_or_inline> — static analysis of a system prompt
     prompt_p = sub.add_parser(
         "prompt",
@@ -1546,6 +1609,8 @@ examples:
         cmd_findings(args)
     elif args.command == "prompt":
         cmd_prompt(args)
+    elif args.command == "judge-floor":
+        cmd_judge_floor(args)
     elif getattr(args, "policy", None):
         cmd_policy(args)
     elif args.system_prompt or args.prompt_file:

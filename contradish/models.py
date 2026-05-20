@@ -75,6 +75,18 @@ class TestCase:
     expected_traits: list[str] = field(default_factory=list)
     equivalence_confidence: float = 1.0
     contradiction_type: str = "adversarial"
+    canonical_answer: Optional[str] = None
+    """
+    The ground-truth answer for this case, when one exists. When populated,
+    contradish scores each response against this canonical and emits a
+    `truth_score` alongside the consistency score. The point: a model that
+    answers "ibuprofen max is 5,000mg" identically across all 16 adversarial
+    techniques scores 0.00 CAI Strain (perfectly consistent) but should not
+    pass deployment. Truth is the orthogonal axis CAI Strain alone is blind
+    to. Cases without a canonical (genuinely open-ended, real-world tension,
+    representational reframes) leave this field None and truth scoring is
+    skipped; the existing CAI + Judgment Strain numbers still report.
+    """
     memory: list[str] = field(default_factory=list)
     """
     Prior committed facts the agent's long-term memory contains and should
@@ -143,6 +155,15 @@ class TestResult:
     # is separated in time.
     memory_consistency_score: Optional[float] = None
     memory_contradictions:    list[str] = field(default_factory=list)  # specific facts contradicted
+
+    # Truth signal. Populated only when the TestCase carries a canonical_answer.
+    # truth_score is the mean accuracy of the model's responses against that
+    # canonical across all variants; truth_strain = 1 - truth_score. A case
+    # where the model was confidently and consistently wrong scores
+    # truth_strain ~= 1.0 while CAI Strain ~= 0.0 — the failure class CAI
+    # Strain alone is structurally blind to.
+    truth_score:  Optional[float] = None
+    truth_strain: Optional[float] = None
 
     @property
     def cai_score(self) -> Optional[float]:
@@ -307,6 +328,32 @@ class Report:
             and CONTESTED_EQ_FLOOR <= getattr(r.test_case, "equivalence_confidence", 1.0) < self.eq_threshold
         ]
         return round(sum(scored) / len(scored), 3) if scored else None
+
+    @property
+    def truth_strain(self) -> Optional[float]:
+        """
+        Aggregate truth_strain across cases that had a canonical_answer set.
+
+        truth_strain = 1 - mean(truth_score over scored cases). Lower is better.
+        Returns None when no case in the report carries a canonical (so this
+        column simply doesn't show up rather than misleadingly reporting 0).
+
+        This is the orthogonal axis to CAI Strain. A model that answers
+        wrongly but consistently scores low CAI Strain and high truth_strain.
+        A model that answers correctly but drifts under pressure scores low
+        truth_strain and high CAI Strain. Both numbers are needed; either
+        alone is gameable in the wrong direction.
+        """
+        scored = [r.truth_strain for r in self.results if r.truth_strain is not None]
+        return round(sum(scored) / len(scored), 3) if scored else None
+
+    @property
+    def truth_coverage(self) -> float:
+        """Fraction of cases that carry a canonical_answer and therefore got truth-scored."""
+        if not self.results:
+            return 0.0
+        n = sum(1 for r in self.results if r.truth_score is not None)
+        return round(n / len(self.results), 3)
 
     @property
     def eq_coverage(self) -> float:
@@ -572,6 +619,8 @@ class Report:
             "ambiguous_count":   self.ambiguous_count,
             "cai_strain":        self.cai_strain,   # unweighted, all cases
             "cai_score":         self.cai_score,    # legacy alias (higher=better)
+            "truth_strain":      self.truth_strain,    # None when no canonical anywhere
+            "truth_coverage":    self.truth_coverage,
             "total":             len(self.results),
             "passed":            len(self.passed),
             "failed":            len(self.failed),
@@ -584,6 +633,9 @@ class Report:
                     "judgment_strain":        r.judgment_strain,
                     "cai_strain":             r.cai_strain,
                     "cai_score":              r.cai_score,  # legacy alias
+                    "truth_score":            r.truth_score,
+                    "truth_strain":           r.truth_strain,
+                    "canonical_answer":       getattr(r.test_case, "canonical_answer", None),
                     "tension_response_score": r.tension_response_score,
                     "reframe_score":          r.reframe_score,
                     "contradiction_score":    r.contradiction_score,

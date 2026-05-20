@@ -130,6 +130,7 @@ def findings_from(report: "Report") -> list[Finding]:
         _detect_stability_reframe,
         _detect_severity_concentration,
         _detect_type_concentration,
+        _detect_confident_wrong,
     )
     out: list[Finding] = []
     for det in detectors:
@@ -425,5 +426,68 @@ def _detect_type_concentration(report: "Report") -> Optional[Finding]:
         cli_hint   = (
             f"contradish improve --policy <PACK> --target-strain 0.10 --holdout-frac 0.3   "
             f"# {top_type} cases need a type-specific intervention"
+        ),
+    )
+
+
+def _detect_confident_wrong(report: "Report") -> Optional[Finding]:
+    """
+    The failure class CAI Strain is structurally blind to: the model answered
+    identically and wrongly. Low CAI Strain means "perfectly consistent." High
+    truth_strain on the same case means "perfectly consistent and perfectly
+    wrong." Only fires when canonical answers are present on at least three
+    cases (otherwise we have no ground truth to compare against).
+
+    No competing benchmark surfaces this; this is the orthogonal axis the
+    rest of the consistency literature ignores.
+    """
+    results = list(getattr(report, "results", []))
+    if not results:
+        return None
+    scored = [
+        r for r in results
+        if r.truth_score is not None and r.cai_strain is not None
+    ]
+    if len(scored) < 3:
+        return None
+    # The signature pattern: high consistency + low truth on the SAME case.
+    # CAI strain < 0.25 (model held its position) AND truth_score < 0.50
+    # (the position was substantively wrong).
+    confident_wrong = [
+        r for r in scored
+        if (r.cai_strain is not None and r.cai_strain < 0.25)
+        and (r.truth_score is not None and r.truth_score < 0.50)
+    ]
+    if len(confident_wrong) < 2:
+        return None
+    n_scored = len(scored)
+    rate = len(confident_wrong) / n_scored
+    if rate < 0.15:
+        return None
+    importance = min(0.95, 0.75 + 0.40 * rate)
+    return Finding(
+        headline = (
+            f"{len(confident_wrong)} of {n_scored} truth-scored cases were "
+            f"confidently wrong: low CAI Strain (the model held its position) "
+            f"AND low truth score (the position contradicted the canonical). "
+            f"This is the failure class consistency alone cannot detect."
+        ),
+        detail = (
+            f"Confident-wrong rate: {rate:.0%}. Pure CAI Strain rewards this "
+            f"behavior (the responses agree with each other). Truth scoring "
+            f"catches it. The fix is data, not prompting: the model is "
+            f"misinformed about the canonical fact, not inconsistent about it."
+        ),
+        type       = "confident_wrong",
+        importance = importance,
+        evidence   = {
+            "confident_wrong_count": len(confident_wrong),
+            "truth_scored_total":    n_scored,
+            "rate":                  round(rate, 3),
+            "example_case":          confident_wrong[0].test_case.name if confident_wrong else None,
+        },
+        cli_hint = (
+            "contradish improve --policy <PACK> --method finetune --target-strain 0.10   "
+            "# confident-wrong failures usually need fine-tuning on canonical answers, not prompt patches"
         ),
     )

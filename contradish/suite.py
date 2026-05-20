@@ -395,6 +395,32 @@ class Suite:
             )
             reframe_score = rf.get("reframe_score")
 
+        # 8. Truth scoring (only when the case carries a ground-truth canonical).
+        # The truth axis catches the failure CAI Strain is blind to: a model
+        # answering identically and wrongly across every variant. Cases
+        # without a canonical (real_world_tension, representational reframes,
+        # genuinely open-ended) leave this None and the rest of the report
+        # is unaffected.
+        truth_score:  Optional[float] = None
+        truth_strain: Optional[float] = None
+        canonical = getattr(tc, "canonical_answer", None)
+        if canonical and canonical.strip():
+            if verbose:
+                print_progress("scoring truth vs canonical")
+            try:
+                tr = self._judge.evaluate_truth(
+                    question         = tc.input,
+                    canonical_answer = canonical,
+                    outputs          = outputs,
+                )
+                ts = tr.get("truth_score")
+                if ts is not None:
+                    truth_score  = round(float(ts), 3)
+                    truth_strain = round(1.0 - truth_score, 3)
+            except Exception:
+                # Truth scoring is additive; never let it break a run.
+                pass
+
         return TestResult(
             test_case=tc,
             paraphrases=para_list,
@@ -407,6 +433,8 @@ class Suite:
             suggestion=suggestion,
             tension_response_score=tension_response_score,
             reframe_score=reframe_score,
+            truth_score=truth_score,
+            truth_strain=truth_strain,
         )
 
     @staticmethod
