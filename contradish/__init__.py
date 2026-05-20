@@ -51,6 +51,7 @@ from .exporters    import to_langfuse, to_phoenix
 from .audit        import to_audit_html
 from .adapters     import wrap_litellm, wrap_openai_compatible
 from .caches       import FirewallCache, InMemoryCache, RedisCache
+from .prompt_analyzer import analyze_prompt, PromptAnalysis, PromptTension
 
 __version__ = "1.6.0"
 __all__ = [
@@ -82,4 +83,7 @@ __all__ = [
     "FirewallCache",
     "InMemoryCache",
     "RedisCache",
+    "analyze_prompt",
+    "PromptAnalysis",
+    "PromptTension",
 ]

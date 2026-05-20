@@ -554,6 +554,93 @@ def cmd_findings(args):
     sys.exit(0)
 
 
+def cmd_prompt(args):
+    """
+    Static analysis of a system prompt for internal contradictions.
+
+    No model under test, no benchmark run. Scans the prompt against the
+    16-technique catalog and the 8 named failure modes; emits a list of
+    tensions and a deconflicted rewrite.
+    """
+    from contradish.prompt_analyzer import analyze_prompt, KNOWN_SEVERITIES
+
+    _check_api_key()
+    use_json = getattr(args, "json", False)
+
+    # Resolve the prompt: positional inline string, --inline, or file.
+    if getattr(args, "inline", None):
+        prompt_text = args.inline
+    elif getattr(args, "prompt_target", None):
+        target = args.prompt_target
+        if os.path.exists(target):
+            with open(target) as f:
+                prompt_text = f.read()
+        else:
+            prompt_text = target  # treat as inline
+    else:
+        print("\n  contradish prompt needs a file path or an inline string.")
+        print("    contradish prompt system_prompt.txt")
+        print("    contradish prompt --inline \"You are a support agent...\"\n")
+        sys.exit(1)
+
+    if not prompt_text.strip():
+        print("\n  Empty prompt; nothing to analyze.\n")
+        sys.exit(1)
+
+    analysis = analyze_prompt(
+        prompt   = prompt_text,
+        provider = getattr(args, "provider", None),
+        model    = getattr(args, "model", None),
+    )
+
+    # --rewrite: just emit the deconflicted prompt; everything else is silent.
+    if getattr(args, "rewrite", False):
+        sys.stdout.write(analysis.deconflicted_prompt)
+        if not analysis.deconflicted_prompt.endswith("\n"):
+            sys.stdout.write("\n")
+        sys.exit(0)
+
+    if use_json:
+        print(json.dumps(analysis.to_dict(), indent=2))
+    else:
+        n = analysis.tension_count
+        if n == 0:
+            print()
+            print("  No internal contradictions found.")
+            print("  The prompt is consistent under the 16 known pressure techniques.")
+            print()
+        else:
+            print()
+            print(f"  contradish prompt — {analysis.summary()}")
+            print()
+            for i, t in enumerate(analysis.tensions, 1):
+                print(f"  [{i}/{n}]  {t.summary()}")
+                print()
+            print("  Deconflicted prompt:")
+            print("  " + "-" * 58)
+            for line in analysis.deconflicted_prompt.splitlines():
+                print(f"  {line}")
+            print("  " + "-" * 58)
+            print()
+            print("  Next: pipe the rewrite into your config or run improve:")
+            print(f"    contradish prompt {getattr(args, 'prompt_target', '<file>')} --rewrite > clean_prompt.txt")
+            print(f"    contradish improve --prompt-file clean_prompt.txt --policy <PACK>")
+            print()
+
+    # Optional threshold gate for CI use
+    threshold = getattr(args, "threshold", None)
+    if threshold is not None:
+        if threshold not in KNOWN_SEVERITIES:
+            print(f"\n  unknown --threshold {threshold!r}; options: {', '.join(KNOWN_SEVERITIES)}\n")
+            sys.exit(1)
+        offenders = analysis.at_or_above(threshold)
+        if offenders:
+            print(f"  FAIL: {len(offenders)} tension(s) at or above {threshold} severity.\n")
+            sys.exit(1)
+
+    sys.exit(0)
+
+
 def cmd_compare(args):
     """Compare baseline vs candidate app for CAI regression."""
     from contradish import RegressionSuite
@@ -1408,6 +1495,37 @@ examples:
     find_p.add_argument("--json", action="store_true", default=False,
                         help="Output findings as JSON instead of formatted text.")
 
+    # contradish prompt <file_or_inline> — static analysis of a system prompt
+    prompt_p = sub.add_parser(
+        "prompt",
+        help="Static analysis of a system prompt for internal contradictions (no model under test).",
+        description=(
+            "Statically scan a system prompt for clauses that conflict under the 16 named "
+            "pressure techniques. Outputs every tension with severity, exploiting technique, "
+            "and a precedence-rule fix, plus a deconflicted rewrite of the prompt.\n\n"
+            "  contradish prompt system_prompt.txt\n"
+            "  contradish prompt --inline \"You are a support agent...\"\n"
+            "  contradish prompt system_prompt.txt --rewrite > clean_prompt.txt\n"
+            "  contradish prompt system_prompt.txt --threshold high   # CI gate\n"
+        ),
+    )
+    prompt_p.add_argument("prompt_target", nargs="?", default=None,
+                          metavar="FILE_OR_STRING",
+                          help="Path to a prompt file. If the path does not exist, treated as an inline string.")
+    prompt_p.add_argument("--inline", default=None, metavar="STRING",
+                          help="Inline prompt string (alternative to the positional argument).")
+    prompt_p.add_argument("--provider", choices=("anthropic", "openai"), default=None,
+                          help="Judge provider (auto-detected from env if omitted).")
+    prompt_p.add_argument("--model", default=None, metavar="MODEL",
+                          help="Override the judge model name.")
+    prompt_p.add_argument("--rewrite", action="store_true", default=False,
+                          help="Print only the deconflicted prompt to stdout. Suppresses all other output.")
+    prompt_p.add_argument("--threshold", default=None, metavar="LEVEL",
+                          help="Exit nonzero if any tension at or worse than this severity exists "
+                               "(critical | high | medium | low). Use for CI gating.")
+    prompt_p.add_argument("--json", action="store_true", default=False,
+                          help="Output analysis as JSON.")
+
     args = parser.parse_args()
 
     if args.command == "benchmark":
@@ -1426,6 +1544,8 @@ examples:
         cmd_improve(args)
     elif args.command == "findings":
         cmd_findings(args)
+    elif args.command == "prompt":
+        cmd_prompt(args)
     elif getattr(args, "policy", None):
         cmd_policy(args)
     elif args.system_prompt or args.prompt_file:
