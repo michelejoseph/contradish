@@ -72,6 +72,37 @@ contradish improve --eval-file my_cases.yaml --prompt-file system.txt \
 
 ---
 
+## Three axes most tools miss
+
+CAI Strain measures how much an answer moves when you hold meaning fixed and vary the surface. Vary different surfaces and the same machinery answers different questions.
+
+**Before the model runs (`contradish prompt`).** Model drift is usually a symptom. The conflict already lives in the prompt: "be empathetic" fights "no exceptions" under sympathy framing. Static analysis finds the clashing clauses with no API call and rewrites them with a precedence rule.
+
+```bash
+contradish prompt system_prompt.txt
+contradish prompt system_prompt.txt --rewrite > clean_prompt.txt   # pipe into improve
+```
+
+**Consistent is not correct (truth scoring).** A model that says "ibuprofen max is 5,000 mg" identically across all 16 techniques scores 0.00 CAI Strain. Perfectly consistent, perfectly wrong. Set `canonical_answer` on a `TestCase` and contradish scores `truth_strain` alongside CAI Strain. `improve` will refuse to call a consistency gain a win if truth regressed.
+
+```python
+suite.add(TestCase(input="Max daily ibuprofen?", canonical_answer="1,200 mg OTC for adults"))
+```
+
+**Who is asking (`contradish fairness`).** The same measurement, pointed at disclosed protected attributes (age, national origin, disability, socioeconomic status). A model that answers differently based on a disclosed trait is showing disparate treatment, the thing the EU AI Act, NYC Local Law 144, and EEOC guidance require testing for.
+
+```bash
+contradish fairness --policy ecommerce --app mymodule:my_app
+```
+
+**Honest measurement (`contradish judge-floor`).** Every benchmark scored by an LLM judge inherits the judge's own inconsistency as noise. This measures that floor so a Strain gap smaller than it is never sold as a ranking.
+
+```bash
+contradish judge-floor --judge-provider openai --judge-model gpt-4o
+```
+
+---
+
 ## Findings — the discovery layer
 
 Every run produces a structured grid (cases × techniques × per-variant scores × contradiction types × severities). Aggregating to one number throws the structure away. Contradish mines the grid and emits **findings** — one-sentence statements about your model that you wouldn't have known by reading the failure list yourself:
