@@ -54,8 +54,16 @@ from .caches       import FirewallCache, InMemoryCache, RedisCache
 from .prompt_analyzer import analyze_prompt, PromptAnalysis, PromptTension
 from .judge_calibration import measure_judge_floor, JudgeCalibration
 from .fairness     import audit_fairness, FairnessAudit, IdentityProfile
+from .memory       import (
+    ConversationMemory,
+    Commitment,
+    ContradictionFinding,
+    CommitmentStore,
+    InMemoryCommitmentStore,
+    RedisCommitmentStore,
+)
 
-__version__ = "1.9.0"
+__version__ = "1.10.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -93,4 +101,10 @@ __all__ = [
     "audit_fairness",
     "FairnessAudit",
     "IdentityProfile",
+    "ConversationMemory",
+    "Commitment",
+    "ContradictionFinding",
+    "CommitmentStore",
+    "InMemoryCommitmentStore",
+    "RedisCommitmentStore",
 ]

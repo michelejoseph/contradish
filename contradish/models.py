@@ -857,6 +857,15 @@ class FirewallResult:
     cached_query:           Optional[str] = None
     cached_response:        Optional[str] = None
     explanation:            Optional[str] = None
+    # Memory-aware fields (populated when the Firewall runs with a
+    # ConversationMemory). repaired_response is the corrected, consistent reply
+    # produced on a contradiction; grounded_on is the prior commitment it was
+    # reconciled against; confidence is the judge's contradiction confidence;
+    # session is the conversation scope the check ran in.
+    repaired_response:      Optional[str] = None
+    grounded_on:            Optional[str] = None
+    confidence:             Optional[float] = None
+    session:                Optional[str] = None
 
 
 # ── PromptRepair ───────────────────────────────────────────────────────────────

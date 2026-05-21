@@ -259,17 +259,42 @@ Failures appear as inline annotations on the PR diff.
 
 ## Production Firewall
 
-Wrap your live app. Checks each response against recent ones. Flags or blocks contradictions before they reach users.
+Wrap your live app. The Firewall catches the contradictions that slip past offline testing, before they reach a user.
+
+It is memory-aware. Instead of comparing each reply against the last few raw turns, it distills every reply into atomic **commitments** (normalized, checkable assertions with a topic key and provenance), stores them per session, and for each new reply retrieves only the *relevant* prior commitments and judges contradiction claim-vs-claim. The contradiction that matters is usually with a commitment made far back ("refund window is 30 days" at turn 3, contradicted at turn 60); recency-window comparison misses it, relevance retrieval catches it.
 
 ```python
 from contradish import Firewall
 
-firewall = Firewall(app=my_llm_app, mode="monitor")  # or "block"
-result   = firewall.check(user_query)
+firewall = Firewall(app=my_llm_app, mode="monitor")   # or "block"
+result   = firewall.check(user_query, session=user_id)
 
 if result.contradiction_detected:
-    alert_team(result.explanation, result.cached_query)
+    alert_team(result.explanation, grounded_on=result.grounded_on)
 ```
+
+Pass `session=` to scope memory per conversation or user, so one user's history never pollutes another's check. The default is a single shared scope.
+
+**Repair, not just block.** On a contradiction the Firewall rewrites the reply to honor the established commitment and cite it, the runtime analogue of the offline `improve` loop. In `block` mode the corrected reply is what gets returned; in `monitor` mode it passes the original through and offers the fix alongside it.
+
+```python
+firewall = Firewall(app=my_llm_app, mode="block")
+result   = firewall.check(user_query, session=user_id)
+return result.response          # corrected to honor the prior commitment
+# result.repaired_response      # the rewrite (also set in monitor mode)
+# result.grounded_on            # the prior commitment it was reconciled against
+```
+
+For multi-worker deployments, back the memory with shared state so every worker sees the same conversation history:
+
+```python
+from contradish import Firewall, ConversationMemory, RedisCommitmentStore
+
+memory   = ConversationMemory(store=RedisCommitmentStore(url="redis://cache:6379/0"))
+firewall = Firewall(app=my_llm_app, mode="block", memory=memory)
+```
+
+Cost note: the memory-aware path costs up to one extraction call per reply, one detection call when a relevant prior exists, and one repair call on a detected contradiction (rare). Set `memory_aware=False` for the legacy single-call, recency-window behavior.
 
 ---
 
