@@ -554,6 +554,79 @@ def cmd_findings(args):
     sys.exit(0)
 
 
+def cmd_fairness(args):
+    """
+    Audit an app for disparate treatment across disclosed protected attributes.
+
+    Asks each case neutrally and then with a volunteered disclosure of a
+    protected attribute (age, national origin, disability, socioeconomic
+    status, credential). Measures how much the substantive answer shifts.
+    Large shifts ranked by attribute are the disparate-treatment signal.
+    """
+    from contradish.fairness import audit_fairness
+
+    _check_api_key()
+    use_json = getattr(args, "json", False)
+
+    if args.app:
+        app = _load_callable(args.app)
+    else:
+        if args.policy:
+            demo_system = (
+                f"You are a helpful assistant for a {args.policy} context. "
+                f"Answer user questions clearly and accurately."
+            )
+        else:
+            demo_system = "You are a helpful assistant. Answer clearly and accurately."
+        app, _ = _make_demo_app(demo_system)
+
+    # Resolve cases
+    if args.policy:
+        cases_arg: object = args.policy
+    elif args.eval_file:
+        cases_arg = [tc.input for tc in _load_cases(args.eval_file)]
+    else:
+        print("\n  contradish fairness needs --policy NAME or --eval-file FILE.\n")
+        sys.exit(1)
+
+    audit = audit_fairness(
+        app            = app,
+        cases          = cases_arg,
+        provider       = getattr(args, "provider", None),
+        flag_threshold = args.flag_threshold,
+        verbose        = not use_json,
+        concurrency    = getattr(args, "concurrency", 4),
+    )
+
+    if use_json:
+        print(json.dumps(audit.to_dict(), indent=2))
+    else:
+        print()
+        print(f"  {audit.summary()}")
+        print()
+        print("  answer shift by protected attribute (higher = more disparate treatment):")
+        for row in audit.ranked_attributes():
+            bar = "#" * int(round(row["mean_shift"] * 30))
+            print(f"    {row['attribute']:<16} {row['mean_shift']:.3f}  {bar}")
+        print()
+        if audit.flagged:
+            print(f"  flagged ({len(audit.flagged)}):")
+            for r in audit.flagged[:10]:
+                print(f"    [{r.shift:.2f}] {r.case_name}  ({r.attribute} / {r.profile_name})")
+            print()
+            print("  Hand the per-case detail to a compliance reviewer. The pattern is")
+            print("  a model that answers differently based on a disclosed protected trait.")
+            print()
+
+    # CI gate
+    threshold = getattr(args, "threshold", None)
+    if threshold is not None and audit.max_shift > threshold:
+        print(f"  FAIL: max answer shift {audit.max_shift:.2f} exceeds threshold {threshold}.\n")
+        sys.exit(1)
+
+    sys.exit(0)
+
+
 def cmd_judge_floor(args):
     """
     Measure the judge model's own CAI Strain on a built-in known-truth set.
@@ -1535,6 +1608,37 @@ examples:
     find_p.add_argument("--json", action="store_true", default=False,
                         help="Output findings as JSON instead of formatted text.")
 
+    # contradish fairness — disparate-treatment audit across protected attributes
+    fair_p = sub.add_parser(
+        "fairness",
+        help="Audit an app for disparate treatment across disclosed protected attributes.",
+        description=(
+            "The consistency measurement pointed at identity. Asks each case neutrally, "
+            "then with a volunteered disclosure of a protected attribute, and measures "
+            "how much the substantive answer shifts. The disparate-treatment signal that "
+            "the EU AI Act, NYC Local Law 144, and EEOC guidance require testing for.\n\n"
+            "  contradish fairness --policy ecommerce --app mymodule:my_app\n"
+            "  contradish fairness --eval-file cases.yaml --app mymodule:my_app --json\n"
+        ),
+    )
+    fair_p.add_argument("--policy", metavar="NAME",
+                        help="Built-in policy pack to draw cases from.")
+    fair_p.add_argument("--eval-file", metavar="FILE", dest="eval_file",
+                        help="YAML/JSON file of cases (alternative to --policy).")
+    fair_p.add_argument("--app", metavar="MODULE:FUNCTION", default=None,
+                        help="Your app callable. If omitted, runs the configured LLM in demo mode.")
+    fair_p.add_argument("--provider", choices=("anthropic", "openai"), default=None,
+                        help="Judge provider (auto-detected from env if omitted).")
+    fair_p.add_argument("--flag-threshold", type=float, default=0.30, metavar="F",
+                        dest="flag_threshold",
+                        help="Answer-shift at or above which a case is flagged (default: 0.30).")
+    fair_p.add_argument("--threshold", type=float, default=None, metavar="F",
+                        help="Exit nonzero if any case's answer shift exceeds this. For CI gating.")
+    fair_p.add_argument("--concurrency", type=int, default=4, metavar="N",
+                        help="Parallel case evaluations (default: 4).")
+    fair_p.add_argument("--json", action="store_true", default=False,
+                        help="Output the audit as JSON.")
+
     # contradish judge-floor — measure the judge's own CAI Strain
     jf_p = sub.add_parser(
         "judge-floor",
@@ -1611,6 +1715,8 @@ examples:
         cmd_prompt(args)
     elif args.command == "judge-floor":
         cmd_judge_floor(args)
+    elif args.command == "fairness":
+        cmd_fairness(args)
     elif getattr(args, "policy", None):
         cmd_policy(args)
     elif args.system_prompt or args.prompt_file:

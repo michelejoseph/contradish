@@ -102,6 +102,15 @@ class ImprovementResult:
     train_improved_strain: Optional[float] = None
     holdout_size:          Optional[int]   = None
     train_size:            Optional[int]   = None
+    # Truth-gate fields. Populated only when the cases carry canonical answers.
+    # The integrity rule: a consistency win that came at the cost of truth is
+    # not a win. A prompt rewrite can make a model answer more consistently AND
+    # more wrongly (confident, fluent, uniform, incorrect). When that happens,
+    # truth_regressed is True and target_met is forced False regardless of the
+    # CAI Strain improvement. contradish will not sell a fluent lie as a fix.
+    baseline_truth_strain: Optional[float] = None
+    improved_truth_strain: Optional[float] = None
+    truth_regressed:       bool            = False
 
     def summary(self) -> str:
         """One-line summary for stdout."""
@@ -111,10 +120,18 @@ class ImprovementResult:
         scope = ""
         if self.holdout_size is not None:
             scope = f"  [holdout n={self.holdout_size}, train n={self.train_size}]"
+        truth = ""
+        if self.truth_regressed:
+            truth = (
+                f"  [REJECTED: truth_strain rose {self.baseline_truth_strain:.3f} "
+                f"to {self.improved_truth_strain:.3f}; consistency gain is not a win]"
+            )
+        elif self.improved_truth_strain is not None:
+            truth = f"  [truth_strain {self.baseline_truth_strain:.3f} to {self.improved_truth_strain:.3f}]"
         return (
             f"CAI Strain {self.baseline_strain:.3f} → {self.improved_strain:.3f}  "
             f"({arrow} {abs(self.strain_delta):.3f} / {pct:.0f}% reduction)  "
-            f"[{hit}]  method={self.method}{scope}"
+            f"[{hit}]  method={self.method}{scope}{truth}"
         )
 
     def to_dict(self) -> dict:
@@ -133,6 +150,9 @@ class ImprovementResult:
             "train_improved_strain": self.train_improved_strain,
             "holdout_size":          self.holdout_size,
             "train_size":            self.train_size,
+            "baseline_truth_strain": self.baseline_truth_strain,
+            "improved_truth_strain": self.improved_truth_strain,
+            "truth_regressed":       self.truth_regressed,
             "baseline_report":  self.baseline_report.to_dict(),
             "improved_report":  self.improved_report.to_dict(),
             "variant_strains":  [
@@ -480,12 +500,34 @@ def improve(
 
     strain_delta = round(improved_strain - baseline_strain_headline, 4)
 
+    # ── Truth gate ──────────────────────────────────────────────────────────────
+    # A consistency win that traded away truth is not a win. If the cases carry
+    # canonical answers, compare truth_strain before and after. When the rewrite
+    # made the model more consistent but more wrong (truth_strain rose beyond a
+    # small tolerance), reject the win: target_met is forced False even if the
+    # CAI Strain target was hit. Without canonicals, this is a no-op and behavior
+    # is unchanged.
+    baseline_truth = getattr(baseline_report_headline, "truth_strain", None)
+    improved_truth = getattr(improved_report, "truth_strain", None)
+    truth_regressed = False
+    _TRUTH_TOLERANCE = 0.02
+    if baseline_truth is not None and improved_truth is not None:
+        truth_regressed = improved_truth > baseline_truth + _TRUTH_TOLERANCE
+
+    target_met = (improved_strain <= target_strain) and not truth_regressed
+    if verbose and truth_regressed:
+        print(
+            f"  [improve] REJECTED: CAI Strain fell but truth_strain rose "
+            f"{baseline_truth:.3f} to {improved_truth:.3f}. A more consistent, "
+            f"more wrong model is not an improvement."
+        )
+
     result = ImprovementResult(
         baseline_strain  = baseline_strain_headline,
         improved_strain  = improved_strain,
         strain_delta     = strain_delta,
         target_strain    = target_strain,
-        target_met       = improved_strain <= target_strain,
+        target_met       = target_met,
         method           = method,
         baseline_prompt  = system_prompt,
         improved_prompt  = improved_prompt,
@@ -496,6 +538,9 @@ def improve(
         train_improved_strain = train_improved_strain if use_holdout else None,
         holdout_size          = len(holdout_cases)    if use_holdout else None,
         train_size            = len(train_cases)      if use_holdout else None,
+        baseline_truth_strain = baseline_truth,
+        improved_truth_strain = improved_truth,
+        truth_regressed       = truth_regressed,
     )
 
     # ── 4. Fine-tune scaffold ───────────────────────────────────────────────────
