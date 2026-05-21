@@ -6,7 +6,39 @@ Auto-detects from environment variables if no key/provider is specified.
 import os
 import json
 import re
-from typing import Optional
+import time
+import random
+from typing import Callable, Optional
+
+
+# Retry policy. A benchmark run fires thousands of calls; a single transient
+# rate-limit or 5xx should not fail the whole run. Non-transient errors
+# (auth, bad request) fail fast and are never retried.
+_MAX_RETRIES   = 4       # total attempts = 1 + _MAX_RETRIES
+_BASE_DELAY    = 1.0     # seconds; doubles each retry
+_MAX_DELAY     = 30.0    # cap on a single backoff sleep
+
+# Substrings / class names that signal a transient, retryable failure. Matched
+# against the exception class name and message so we don't need to import the
+# provider SDKs' exception types (they are optional dependencies).
+_TRANSIENT_MARKERS = (
+    "ratelimit", "rate limit", "429",
+    "timeout", "timedout", "timed out",
+    "apiconnection", "connection", "connectionerror",
+    "internalserver", "serviceunavailable", "service unavailable",
+    "overloaded", "502", "503", "504", "500",
+    "temporarily", "try again",
+)
+
+
+def _is_transient(exc: BaseException) -> bool:
+    """Return True if this exception looks worth retrying."""
+    # An explicit status_code attribute is the most reliable signal.
+    status = getattr(exc, "status_code", None) or getattr(exc, "status", None)
+    if isinstance(status, int) and (status == 429 or 500 <= status < 600):
+        return True
+    blob = (type(exc).__name__ + " " + str(exc)).lower()
+    return any(m in blob for m in _TRANSIENT_MARKERS)
 
 
 class LLMClient:
@@ -120,21 +152,52 @@ class LLMClient:
                     "Install the OpenAI SDK:  pip install openai"
                 )
 
+    # Injectable for testing so the suite never actually sleeps.
+    _sleep: Callable[[float], None] = staticmethod(time.sleep)
+
+    def _call_with_retry(self, fn: Callable[[], str]) -> str:
+        """
+        Run fn(), retrying transient failures with exponential backoff + jitter.
+
+        Retries on rate limits, timeouts, connection errors, and 5xx. Fails
+        fast (re-raises immediately) on anything that doesn't look transient,
+        such as auth or bad-request errors, where retrying is pointless.
+        """
+        attempt = 0
+        while True:
+            try:
+                return fn()
+            except BaseException as exc:  # noqa: BLE001 - we re-raise non-transient
+                if attempt >= _MAX_RETRIES or not _is_transient(exc):
+                    raise
+                delay = min(_MAX_DELAY, _BASE_DELAY * (2 ** attempt))
+                # Honor a Retry-After hint if the SDK exception carries one.
+                retry_after = getattr(exc, "retry_after", None)
+                if isinstance(retry_after, (int, float)) and retry_after > 0:
+                    delay = min(_MAX_DELAY, float(retry_after))
+                delay += random.uniform(0, delay * 0.25)  # jitter
+                self._sleep(delay)
+                attempt += 1
+
     def _anthropic_complete(self, prompt: str, model: str, max_tokens: int) -> str:
-        msg = self._client.messages.create(
-            model=model,
-            max_tokens=max_tokens,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return msg.content[0].text.strip()
+        def _do() -> str:
+            msg = self._client.messages.create(
+                model=model,
+                max_tokens=max_tokens,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return msg.content[0].text.strip()
+        return self._call_with_retry(_do)
 
     def _openai_complete(self, prompt: str, model: str, max_tokens: int) -> str:
-        resp = self._client.chat.completions.create(
-            model=model,
-            max_tokens=max_tokens,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return resp.choices[0].message.content.strip()
+        def _do() -> str:
+            resp = self._client.chat.completions.create(
+                model=model,
+                max_tokens=max_tokens,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return resp.choices[0].message.content.strip()
+        return self._call_with_retry(_do)
 
     @classmethod
     def make_judge_client(
