@@ -316,6 +316,130 @@ def _overlap_score(a: Commitment, b: Commitment) -> float:
 RelevanceFn = Callable[[Commitment, Commitment], float]
 
 
+# ── Semantic relevance (embeddings) ───────────────────────────────────────
+
+def _cosine(u: list, v: list) -> float:
+    import math
+    dot = 0.0
+    nu = 0.0
+    nv = 0.0
+    for a, b in zip(u, v):
+        dot += a * b
+        nu += a * a
+        nv += b * b
+    if nu <= 0.0 or nv <= 0.0:
+        return 0.0
+    return dot / (math.sqrt(nu) * math.sqrt(nv))
+
+
+# A batch embedder: many texts in, one vector per text out, in input order.
+EmbedFn = Callable[[list], list]
+
+
+class EmbeddingRelevance:
+    """
+    Semantic relevance scorer for ConversationMemory.
+
+    Lexical overlap (the default) misses paraphrased topics: "refund window"
+    and "return timeframe" share no tokens but mean the same thing, so the
+    contradiction between them is never even retrieved for the judge to see.
+    This scorer embeds each commitment and scores pairs by cosine similarity,
+    closing that recall gap.
+
+    It is a drop-in `relevance_fn`: pass it to ConversationMemory(relevance_fn=...)
+    or use the ConversationMemory.with_embeddings(...) factory, which also sets a
+    sensible threshold.
+
+    Args:
+        embed_fn: a batch embedder, Callable[[list[str]], list[list[float]]].
+                  Use openai_embedder(), or bring your own (Voyage, Cohere, a
+                  local sentence-transformer, etc.). Only the call shape matters.
+        cache:    when True (default) memoize embeddings by text, so each prior
+                  commitment is embedded once total rather than once per turn.
+    """
+
+    def __init__(self, embed_fn: EmbedFn, cache: bool = True):
+        self.embed_fn = embed_fn
+        self._cache: Optional[dict] = {} if cache else None
+
+    @staticmethod
+    def _text(c: Commitment) -> str:
+        topic = (c.topic or "").strip()
+        claim = (c.claim or "").strip()
+        combined = f"{topic}. {claim}".strip(". ").strip()
+        return combined or claim
+
+    def embed_many(self, texts: list) -> list:
+        """Embed a list of texts, using and filling the cache. Batches misses."""
+        if self._cache is None:
+            return list(self.embed_fn(list(texts)))
+        missing = [t for t in dict.fromkeys(texts) if t not in self._cache]
+        if missing:
+            vecs = self.embed_fn(missing)
+            for t, v in zip(missing, vecs):
+                self._cache[t] = v
+        return [self._cache[t] for t in texts]
+
+    def _vec(self, text: str) -> list:
+        return self.embed_many([text])[0]
+
+    def precompute(self, commitments: list) -> None:
+        """Optional: warm the cache for a batch of commitments in one call."""
+        self.embed_many([self._text(c) for c in commitments])
+
+    def __call__(self, a: Commitment, b: Commitment) -> float:
+        va = self._vec(self._text(a))
+        vb = self._vec(self._text(b))
+        return max(0.0, min(1.0, _cosine(va, vb)))
+
+
+def openai_embedder(
+    model:      str = "text-embedding-3-small",
+    api_key:    Optional[str] = None,
+    client:     object = None,
+    dimensions: Optional[int] = None,
+) -> EmbedFn:
+    """
+    Return a batch embed function backed by OpenAI embeddings, suitable for
+    EmbeddingRelevance / ConversationMemory.with_embeddings.
+
+    Args:
+        model:      embedding model. Default "text-embedding-3-small".
+        api_key:    OpenAI key. Falls back to OPENAI_API_KEY if omitted.
+        client:     pre-built OpenAI client (inject for tests / custom config).
+                    When provided, api_key is ignored.
+        dimensions: optional output dimensionality (text-embedding-3-* support
+                    truncation for cheaper storage).
+
+    Returns:
+        Callable[[list[str]], list[list[float]]] preserving input order.
+
+    Raises:
+        ImportError if the OpenAI SDK is not installed.
+    """
+    if client is None:
+        try:
+            from openai import OpenAI
+        except ImportError as e:
+            raise ImportError(
+                "The OpenAI SDK is required for openai_embedder. Install with:\n"
+                "    pip install \"contradish[openai]\""
+            ) from e
+        import os
+        key = (api_key or os.environ.get("OPENAI_API_KEY", "").strip()) or None
+        client = OpenAI(api_key=key) if key else OpenAI()
+
+    def _embed(texts: list) -> list:
+        kwargs = {"model": model, "input": list(texts)}
+        if dimensions is not None:
+            kwargs["dimensions"] = dimensions
+        resp = client.embeddings.create(**kwargs)
+        # resp.data is returned in the same order as the input.
+        return [d.embedding for d in resp.data]
+
+    return _embed
+
+
 # ── Prompts ───────────────────────────────────────────────────────────────
 
 _EXTRACT_PROMPT = """You extract the durable, checkable commitments an assistant made in a reply, so they can be checked for consistency later in the conversation.
@@ -396,6 +520,35 @@ class ConversationMemory:
         self.relevance_threshold = relevance_threshold
         self.top_k        = top_k
         self._llm_cached  = llm  # may be None; built lazily on first LLM use
+
+    @classmethod
+    def with_embeddings(
+        cls,
+        embed_fn:  EmbedFn,
+        threshold: float = 0.55,
+        cache:     bool = True,
+        **kwargs,
+    ) -> "ConversationMemory":
+        """
+        Build a ConversationMemory whose relevance step uses semantic embeddings
+        instead of lexical overlap, so paraphrased topics ("refund window" vs
+        "return timeframe") are still retrieved for the contradiction judge.
+
+        Args:
+            embed_fn:  batch embedder (see openai_embedder, or bring your own).
+            threshold: minimum cosine to treat a prior as relevant. 0.55 is a
+                       reasonable cut for normalized text-embedding cosine; tune
+                       for your embedder. Note this is a different scale than the
+                       lexical default (0.3), so it is set for you here.
+            cache:     memoize embeddings by text (default True).
+            **kwargs:  forwarded to __init__ (llm, store, api_key, top_k, ...).
+
+        Example:
+            from contradish import ConversationMemory, openai_embedder
+            mem = ConversationMemory.with_embeddings(openai_embedder())
+        """
+        scorer = EmbeddingRelevance(embed_fn, cache=cache)
+        return cls(relevance_fn=scorer, relevance_threshold=threshold, **kwargs)
 
     # -- lazy LLM so the store/relevance are usable with no key --
     @property
@@ -580,4 +733,7 @@ __all__ = [
     "RedisCommitmentStore",
     "ConversationMemory",
     "RelevanceFn",
+    "EmbeddingRelevance",
+    "openai_embedder",
+    "EmbedFn",
 ]

@@ -285,6 +285,17 @@ return result.response          # corrected to honor the prior commitment
 # result.grounded_on            # the prior commitment it was reconciled against
 ```
 
+Retrieval is lexical by default, which is fast and dependency-free but matches on shared words. To catch paraphrased topics ("refund window" vs "return timeframe") that share no tokens, switch the relevance step to embeddings:
+
+```python
+from contradish import Firewall, ConversationMemory, openai_embedder
+
+memory   = ConversationMemory.with_embeddings(openai_embedder())
+firewall = Firewall(app=my_llm_app, mode="block", memory=memory)
+```
+
+`openai_embedder()` is built in; any batch embedder (Voyage, Cohere, a local sentence-transformer) works, just pass it to `with_embeddings`. Embeddings are cached by text, so each prior commitment is embedded once, not once per turn.
+
 For multi-worker deployments, back the memory with shared state so every worker sees the same conversation history:
 
 ```python
