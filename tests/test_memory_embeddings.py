@@ -189,6 +189,132 @@ def test_openai_embedder_drives_embedding_relevance():
     assert emb(_A, _UNRELATED) < 0.55
 
 
+# ── Embedding persistence + cross-worker reuse ───────────────────────────
+
+from contradish.memory import RedisCommitmentStore
+
+
+class _FakeRedis:
+    def __init__(self):
+        self.lists = {}
+        self.sets = {}
+
+    def pipeline(self):
+        outer = self
+        class P:
+            def __init__(s): s.ops = []
+            def rpush(s, k, v): s.ops.append(("rpush", k, v)); return s
+            def ltrim(s, k, a, b): s.ops.append(("ltrim", k, a, b)); return s
+            def sadd(s, k, v): s.ops.append(("sadd", k, v)); return s
+            def execute(s):
+                for op in s.ops:
+                    getattr(outer, op[0])(*op[1:])
+        return P()
+
+    def rpush(self, k, v): self.lists.setdefault(k, []).append(v)
+    def ltrim(self, k, a, b):
+        cur = self.lists.get(k, [])
+        self.lists[k] = cur[a:] if b == -1 else cur[a:b + 1]
+    def sadd(self, k, v): self.sets.setdefault(k, set()).add(v)
+    def srem(self, k, v): self.sets.get(k, set()).discard(v)
+    def smembers(self, k): return set(self.sets.get(k, set()))
+    def lrange(self, k, a, b): return list(self.lists.get(k, []))
+    def llen(self, k): return len(self.lists.get(k, []))
+    def delete(self, k): self.lists.pop(k, None); self.sets.pop(k, None)
+
+
+def _counting_embed():
+    state = {"texts": 0, "batches": 0}
+    def embed(texts):
+        state["texts"] += len(texts)
+        state["batches"] += 1
+        return fake_embed(texts)
+    return embed, state
+
+
+def test_commitment_embedding_roundtrip():
+    c = Commitment(claim="Refund window is 30 days", topic="refund window",
+                   session="u1", embedding=[0.0, 1.0, 2.0, 3.0])
+    c2 = Commitment.from_dict(c.to_dict())
+    assert c2.embedding == [0.0, 1.0, 2.0, 3.0]
+    # Missing/empty embedding decodes to None, not a crash.
+    assert Commitment.from_dict({"claim": "x"}).embedding is None
+
+
+def test_attach_fills_and_skips_existing():
+    embed, state = _counting_embed()
+    emb = EmbeddingRelevance(embed)
+    a = Commitment(claim="Refund window is 30 days", topic="refund window")
+    b = Commitment(claim="Store hours are 9 to 5", topic="store hours",
+                   embedding=[9.0, 9.0, 9.0, 9.0])   # already embedded
+    emb.attach([a, b])
+    assert a.embedding is not None              # filled
+    assert b.embedding == [9.0, 9.0, 9.0, 9.0]  # untouched
+    assert state["texts"] == 1                  # only the un-embedded one
+
+
+def test_call_uses_stored_vectors_without_embedding():
+    embed, state = _counting_embed()
+    emb = EmbeddingRelevance(embed)
+    a = Commitment(claim="Refund window is 30 days", topic="refund window",
+                   embedding=fake_embed(["refund window. Refund window is 30 days"])[0])
+    b = Commitment(claim="Returns within the return timeframe", topic="return timeframe",
+                   embedding=fake_embed(["return timeframe. Returns within the return timeframe"])[0])
+    score = emb(a, b)
+    assert score >= 0.55
+    assert state["texts"] == 0                  # embed_fn never called
+
+
+def test_ingest_attaches_embeddings_in_embedding_mode():
+    embed, state = _counting_embed()
+    mem = ConversationMemory.with_embeddings(embed, store=InMemoryCommitmentStore())
+    c = Commitment(claim="Refund window is 30 days", topic="refund window", session="u1")
+    mem.ingest_commitments([c])
+    stored = mem.store.by_session("u1")[0]
+    assert stored.embedding is not None         # persisted in the store
+    assert state["texts"] == 1
+
+
+def test_ingest_leaves_embedding_none_in_lexical_mode():
+    mem = ConversationMemory(store=InMemoryCommitmentStore())   # lexical default
+    c = Commitment(claim="Refund window is 30 days", topic="refund window", session="u1")
+    mem.ingest_commitments([c])
+    assert mem.store.by_session("u1")[0].embedding is None
+
+
+def test_redis_roundtrips_embedding():
+    store = RedisCommitmentStore(client=_FakeRedis())
+    store.add(Commitment(claim="Refund window is 30 days", topic="refund window",
+                         session="u1", embedding=[1.0, 2.0, 3.0, 4.0]))
+    got = store.by_session("u1")[0]
+    assert got.embedding == [1.0, 2.0, 3.0, 4.0]
+
+
+def test_cross_worker_prior_not_reembedded():
+    # Shared store stands in for Redis across two worker processes.
+    shared = RedisCommitmentStore(client=_FakeRedis())
+
+    # Worker A embeds the prior once and persists its vector.
+    embA, stateA = _counting_embed()
+    memA = ConversationMemory(relevance_fn=EmbeddingRelevance(embA),
+                              relevance_threshold=0.55, store=shared)
+    memA.ingest_commitments([Commitment(claim="Refund window is 30 days",
+                                         topic="refund window", session="u1")])
+    assert shared.by_session("u1")[0].embedding is not None
+    assert stateA["texts"] == 1
+
+    # Worker B: fresh scorer, cold cache, same shared store.
+    embB, stateB = _counting_embed()
+    memB = ConversationMemory(relevance_fn=EmbeddingRelevance(embB),
+                              relevance_threshold=0.55, store=shared)
+    new = [Commitment(claim="Returns accepted within the return timeframe",
+                      topic="return timeframe", session="u1")]
+    rel = memB.relevant("u1", new)
+    assert len(rel) == 1 and "Refund window" in rel[0].claim
+    # Worker B embedded ONLY the new commitment; the prior's stored vector was reused.
+    assert stateB["texts"] == 1
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     passed = 0

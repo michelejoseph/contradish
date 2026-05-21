@@ -294,7 +294,7 @@ memory   = ConversationMemory.with_embeddings(openai_embedder())
 firewall = Firewall(app=my_llm_app, mode="block", memory=memory)
 ```
 
-`openai_embedder()` is built in; any batch embedder (Voyage, Cohere, a local sentence-transformer) works, just pass it to `with_embeddings`. Embeddings are cached by text, so each prior commitment is embedded once, not once per turn.
+`openai_embedder()` is built in; any batch embedder (Voyage, Cohere, a local sentence-transformer) works, just pass it to `with_embeddings`. Each commitment's embedding is computed once and persisted alongside it in the store, so with a shared `RedisCommitmentStore` every worker reuses the same vectors instead of re-embedding the history on a cold start.
 
 For multi-worker deployments, back the memory with shared state so every worker sees the same conversation history:
 

@@ -64,6 +64,11 @@ class Commitment:
         source_response: the full reply text the claim was extracted from.
         turn:            monotonic index within the session (0-based).
         created_at:      unix timestamp of ingestion.
+        embedding:       cached embedding vector for the claim (set by an
+                         embedding-based relevance scorer at ingest time and
+                         persisted with the commitment, so it is computed once
+                         globally rather than re-embedded per worker). None for
+                         lexical relevance.
     """
     claim:           str
     topic:           str = ""
@@ -72,12 +77,14 @@ class Commitment:
     source_response: str = ""
     turn:            int = 0
     created_at:      float = field(default_factory=time.time)
+    embedding:       Optional[list] = None
 
     def to_dict(self) -> dict:
         return asdict(self)
 
     @classmethod
     def from_dict(cls, d: dict) -> "Commitment":
+        emb = d.get("embedding")
         return cls(
             claim=str(d.get("claim", "")),
             topic=str(d.get("topic", "")),
@@ -86,6 +93,7 @@ class Commitment:
             source_response=str(d.get("source_response", "")),
             turn=int(d.get("turn", 0)),
             created_at=float(d.get("created_at", time.time())),
+            embedding=list(emb) if isinstance(emb, (list, tuple)) else None,
         )
 
 
@@ -383,13 +391,36 @@ class EmbeddingRelevance:
     def _vec(self, text: str) -> list:
         return self.embed_many([text])[0]
 
+    def _vector(self, c: Commitment) -> list:
+        """A commitment's embedding: its persisted vector if present, else embed
+        its text (memoized). Persisted vectors come from the shared store, so a
+        prior is never re-embedded once any worker has embedded it."""
+        stored = getattr(c, "embedding", None)
+        if isinstance(stored, (list, tuple)) and stored:
+            return list(stored)
+        return self._vec(self._text(c))
+
     def precompute(self, commitments: list) -> None:
         """Optional: warm the cache for a batch of commitments in one call."""
         self.embed_many([self._text(c) for c in commitments])
 
+    def attach(self, commitments: list) -> None:
+        """
+        Fill and persist .embedding on any commitment that lacks one, batching
+        the embed call. Called by ConversationMemory at ingest so the vector is
+        stored alongside the commitment and shared across workers. Idempotent:
+        commitments that already carry an embedding are skipped.
+        """
+        todo = [c for c in commitments if not isinstance(getattr(c, "embedding", None), (list, tuple)) or not getattr(c, "embedding")]
+        if not todo:
+            return
+        vecs = self.embed_many([self._text(c) for c in todo])
+        for c, v in zip(todo, vecs):
+            c.embedding = list(v)
+
     def __call__(self, a: Commitment, b: Commitment) -> float:
-        va = self._vec(self._text(a))
-        vb = self._vec(self._text(b))
+        va = self._vector(a)
+        vb = self._vector(b)
         return max(0.0, min(1.0, _cosine(va, vb)))
 
 
@@ -664,6 +695,16 @@ class ConversationMemory:
         return finding
 
     def ingest_commitments(self, commitments: list) -> None:
+        # If the relevance scorer can persist embeddings (EmbeddingRelevance),
+        # attach them before storing so the vector is computed once and shared
+        # via the store across workers. Embedding is an optimization, so a
+        # provider hiccup must never block storing the commitment itself.
+        attach = getattr(self.relevance_fn, "attach", None)
+        if callable(attach):
+            try:
+                attach(commitments)
+            except Exception:
+                pass
         for c in commitments:
             self.store.add(c)
 
