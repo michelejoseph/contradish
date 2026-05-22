@@ -34,7 +34,7 @@ from .suite        import Suite
 from .regression   import RegressionSuite
 from .firewall     import Firewall
 from .repair       import PromptRepair
-from .improve      import improve, ImprovementResult
+from .improve      import improve, improve_from_production, ImprovementResult
 from .findings     import findings_from, Finding
 from .models       import (
     TestCase,
@@ -73,15 +73,21 @@ from .replay       import (
     ReplayTurn,
 )
 from .prompt_analyzer import commitments_from_analysis
-from .reconcile    import reconcile, ReconciliationReport, CommitmentMatch
+from .reconcile    import (
+    reconcile,
+    ReconciliationReport,
+    CommitmentMatch,
+    cases_from_reconciliation,
+)
 
-__version__ = "1.14.0"
+__version__ = "1.16.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
     "Firewall",
     "PromptRepair",
     "improve",
+    "improve_from_production",
     "ImprovementResult",
     "findings_from",
     "Finding",
@@ -131,4 +137,5 @@ __all__ = [
     "reconcile",
     "ReconciliationReport",
     "CommitmentMatch",
+    "cases_from_reconciliation",
 ]

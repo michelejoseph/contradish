@@ -377,6 +377,35 @@ for m in rec.validity_gaps:
     print(m.prod_claim, "passed the bench but broke in production")
 ```
 
+### Auto-recalibrate: production breaks become benchmark cases
+
+`reconcile` tells you which commitments your benchmark missed. `improve_from_production` acts on them. It takes the same benchmark report and replay report, turns every validity gap and coverage gap into a fresh adversarial case (the query that triggered the break becomes the input, the commitment the model walked back becomes its canonical answer), and runs the normal repair loop over those cases. A contradiction observed in production becomes a harder benchmark case, drives a prompt rewrite, and the post-run Strain measures whether the fix actually held. It returns `None` when production surfaced nothing the benchmark missed.
+
+```bash
+# One command: reconcile, derive the missed cases, repair, re-measure.
+contradish improve --from-production results/gpt-4o.json replay.json \
+  --prompt-file prompt.txt --model gpt-4o-mini --target-strain 0.15
+```
+
+`--policy` or `--eval-file`, if given alongside `--from-production`, supplement the production-derived cases so your original coverage stays in the regression set. The same call from Python:
+
+```python
+from contradish import improve_from_production
+
+result = improve_from_production(
+    benchmark_report,              # what you tested
+    replay_report,                 # what actually broke in production
+    system_prompt=current_prompt,
+    model="gpt-4o-mini",
+    target_strain=0.15,
+)
+if result:
+    print(result.summary())
+    print(result.improved_prompt)
+```
+
+This is the repair loop closing on itself: the cases you never wrote come from reality, and the same truth gate that protects `improve` still applies, so a fluent-but-wrong rewrite is rejected even when it lowers Strain.
+
 ---
 
 ## The CAI benchmark

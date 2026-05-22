@@ -401,22 +401,11 @@ def cmd_improve(args):
     benchmark with the new prompt, and reports the diff in CAI Strain. The
     artifact is an improved prompt the user can drop into their config.
     """
-    from contradish.improve import improve
-
     _check_api_key()
     use_json = getattr(args, "json", False)
+    from_prod = getattr(args, "from_production", None)
 
-    # Resolve cases: --policy NAME, --eval-file FILE, or error.
-    cases_arg: object
-    if args.policy:
-        cases_arg = args.policy
-    elif args.eval_file:
-        cases_arg = _load_cases(args.eval_file)
-    else:
-        print("\n  contradish improve needs --policy NAME or --eval-file FILE.\n")
-        sys.exit(1)
-
-    # Resolve starting system prompt.
+    # Resolve starting system prompt (shared by both paths).
     system_prompt = ""
     if args.prompt_file:
         with open(args.prompt_file) as f:
@@ -424,25 +413,96 @@ def cmd_improve(args):
     elif args.system_prompt:
         system_prompt = args.system_prompt
     else:
-        # No prompt → the policy pack drives the run; improved prompt will still be useful
+        # No prompt → the policy pack drives the run; improved prompt is still useful.
         system_prompt = ""
 
-    result = improve(
-        cases           = cases_arg,
-        system_prompt   = system_prompt,
-        model           = args.model,
-        provider        = args.provider,
-        method          = args.method,
-        target_strain   = args.target_strain,
-        n_variants      = args.n_variants,
-        paraphrases     = args.paraphrases,
-        enable_finetune = args.enable_finetune,
-        ft_provider     = args.ft_provider,
-        verbose         = not use_json,
-        concurrency     = getattr(args, "concurrency", 4),
-        holdout_frac    = getattr(args, "holdout_frac", 0.0),
-        seed            = getattr(args, "seed", 0),
-    )
+    if from_prod:
+        # ── Closed loop: production gaps become benchmark cases, then repair ──
+        # contradish improve --from-production bench.json replay.json ...
+        from contradish.improve import improve_from_production
+        from contradish.models import Report
+        from contradish.replay import ReplayReport
+
+        bench_path, replay_path = from_prod
+        for label, path in (("benchmark report", bench_path),
+                            ("replay report", replay_path)):
+            if not os.path.exists(path):
+                print(f"\n  {label} not found: {path}\n")
+                sys.exit(1)
+        with open(bench_path) as f:
+            report = Report.from_dict(json.load(f))
+        with open(replay_path) as f:
+            replay_report = ReplayReport.from_dict(json.load(f))
+
+        # --policy / --eval-file are optional here: they supplement the
+        # production-derived cases so the regression set still covers originals.
+        base_cases = None
+        if args.policy:
+            from contradish.policies import load_policy
+            base_cases = load_policy(args.policy).cases
+        elif args.eval_file:
+            base_cases = _load_cases(args.eval_file)
+
+        kinds = (("validity_gap", "confirmed", "coverage_gap")
+                 if getattr(args, "include_confirmed", False)
+                 else ("validity_gap", "coverage_gap"))
+
+        result = improve_from_production(
+            report, replay_report,
+            system_prompt   = system_prompt,
+            model           = args.model,
+            base_cases      = base_cases,
+            kinds           = kinds,
+            match_threshold = getattr(args, "match_threshold", 0.3),
+            target_strain   = args.target_strain,
+            provider        = args.provider,
+            method          = args.method,
+            n_variants      = args.n_variants,
+            paraphrases     = args.paraphrases,
+            enable_finetune = args.enable_finetune,
+            ft_provider     = args.ft_provider,
+            verbose         = not use_json,
+            concurrency     = getattr(args, "concurrency", 4),
+            holdout_frac    = getattr(args, "holdout_frac", 0.0),
+            seed            = getattr(args, "seed", 0),
+        )
+        if result is None:
+            msg = "no validity or coverage gaps: production surfaced nothing the benchmark missed."
+            if use_json:
+                print(json.dumps({"recalibrated": False, "reason": msg}, indent=2))
+            else:
+                print(f"\n  {msg}\n")
+            sys.exit(0)
+    else:
+        from contradish.improve import improve
+
+        # Resolve cases: --policy NAME, --eval-file FILE, or error.
+        cases_arg: object
+        if args.policy:
+            cases_arg = args.policy
+        elif args.eval_file:
+            cases_arg = _load_cases(args.eval_file)
+        else:
+            print("\n  contradish improve needs --policy NAME, --eval-file FILE, "
+                  "or --from-production BENCH REPLAY.\n")
+            sys.exit(1)
+
+        result = improve(
+            cases           = cases_arg,
+            system_prompt   = system_prompt,
+            model           = args.model,
+            provider        = args.provider,
+            method          = args.method,
+            target_strain   = args.target_strain,
+            n_variants      = args.n_variants,
+            paraphrases     = args.paraphrases,
+            enable_finetune = args.enable_finetune,
+            ft_provider     = args.ft_provider,
+            verbose         = not use_json,
+            concurrency     = getattr(args, "concurrency", 4),
+            holdout_frac    = getattr(args, "holdout_frac", 0.0),
+            seed            = getattr(args, "seed", 0),
+        )
 
     if use_json:
         print(json.dumps(result.to_dict(), indent=2, default=str))
@@ -1665,6 +1725,21 @@ examples:
                        help="Built-in policy pack (ecommerce, hr, healthcare, legal, etc.)")
     imp_p.add_argument("--eval-file", metavar="FILE", dest="eval_file",
                        help="YAML/JSON file of test cases (alternative to --policy)")
+    imp_p.add_argument("--from-production", nargs=2, metavar=("BENCH", "REPLAY"),
+                       dest="from_production",
+                       help="Close the loop from real logs: reconcile a benchmark report "
+                            "(BENCH) against a replay report (REPLAY), turn every gap the "
+                            "benchmark missed into a case, and repair against those. "
+                            "--policy/--eval-file, if given, supplement the derived cases.")
+    imp_p.add_argument("--match-threshold", type=float, default=0.3, metavar="FLOAT",
+                       dest="match_threshold",
+                       help="Relevance cutoff for reconciliation (only with --from-production). "
+                            "Default 0.3.")
+    imp_p.add_argument("--include-confirmed", action="store_true", default=False,
+                       dest="include_confirmed",
+                       help="Also turn confirmed matches into cases (only with --from-production). "
+                            "Default: only validity and coverage gaps, since the bench already "
+                            "catches confirmed ones.")
     imp_p.add_argument("--system-prompt", metavar="TEXT", dest="system_prompt",
                        help="Inline system prompt to test and repair")
     imp_p.add_argument("--prompt-file", metavar="FILE", dest="prompt_file",

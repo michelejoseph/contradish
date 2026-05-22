@@ -545,9 +545,11 @@ def improve(
 
     # ── 4. Fine-tune scaffold ───────────────────────────────────────────────────
     if method == "finetune":
-        # Always write the JSONL — useful artifact even if we don't submit.
+        # Always write the JSONL: a useful artifact even if we don't submit.
+        # Mine the train baseline run (it carries the failures, contradictions,
+        # and repair suggestions the pair set is built from).
         ft_jsonl_path = _write_finetune_jsonl(
-            report        = baseline_report,
+            report        = baseline_report_train,
             system_prompt = improved_prompt,   # train against the improved prompt
             out_path      = "repair_finetune.jsonl",
         )
@@ -571,6 +573,114 @@ def improve(
                 print("  [improve] fine-tune JSONL written; pass enable_finetune=True to actually submit the job.")
 
     return result
+
+
+# ── Closing the loop at the system level ────────────────────────────────────
+
+def improve_from_production(
+    report,
+    replay_report,
+    system_prompt:   str             = "",
+    model:           Optional[str]   = None,
+    *,
+    base_cases:      Optional[list]  = None,
+    kinds:           tuple           = ("validity_gap", "coverage_gap"),
+    match_threshold: float           = 0.3,
+    relevance_fn                     = None,
+    target_strain:   float           = 0.15,
+    verbose:         bool            = True,
+    **improve_kwargs,
+) -> Optional[ImprovementResult]:
+    """
+    Close the repair loop at the system level: let production recalibrate the
+    benchmark, then repair against it.
+
+    improve() closes the loop *inside one benchmark run*: it repairs the cases
+    you already wrote. But the benchmark only knows what you thought to test.
+    Production breaks on things you didn't. This function feeds those back in:
+    it reconciles the benchmark Report against a ReplayReport of real
+    contradictions, turns every break the benchmark missed (a validity gap) or
+    never tested (a coverage gap) into a fresh adversarial case, and runs the
+    normal repair loop over those cases plus any you supply.
+
+    The result is auto-recalibration. A contradiction observed in production
+    becomes a harder benchmark case, drives a prompt rewrite, and the post-run
+    Strain measures whether the rewrite actually held. It is the same detect,
+    diagnose, patch, remeasure cycle, but now seeded by reality instead of
+    only by the cases you hand-wrote.
+
+    Args:
+        report:          benchmark Report to reconcile (the cases you tested).
+        replay_report:   ReplayReport of production contradictions (from logs).
+        system_prompt:   the prompt to repair. Same role as in improve().
+        model:           model to test against. Defaults to the fast model.
+        base_cases:      optional TestCases to fold in alongside the derived
+                         ones, so the regression set still covers your originals.
+        kinds:           which reconciliation verdicts become cases. Defaults to
+                         validity_gap + coverage_gap (the two the bench got
+                         wrong). "confirmed" is excluded because the bench
+                         already catches those.
+        match_threshold: relevance cutoff passed to reconcile().
+        relevance_fn:    optional semantic scorer passed to reconcile() (e.g. an
+                         EmbeddingRelevance) for higher recall on paraphrases.
+        target_strain:   target for the repair. Default 0.15.
+        verbose:         print progress.
+        **improve_kwargs: forwarded to improve() (provider, api_key, method,
+                         n_variants, paraphrases, holdout_frac, seed,
+                         concurrency, enable_finetune, ...).
+
+    Returns:
+        An ImprovementResult, or None when reconciliation surfaced nothing the
+        benchmark missed (no validity or coverage gaps), so there is simply
+        nothing new to repair.
+    """
+    from .reconcile import reconcile, cases_from_reconciliation
+
+    rec = reconcile(
+        report, replay_report,
+        match_threshold=match_threshold,
+        relevance_fn=relevance_fn,
+    )
+    derived = cases_from_reconciliation(rec, kinds=kinds)
+
+    if verbose:
+        print(
+            f"  [improve_from_production] reconcile: "
+            f"{len(rec.validity_gaps)} validity gap(s), "
+            f"{len(rec.coverage_gaps)} coverage gap(s), "
+            f"{len(rec.confirmed)} confirmed -> {len(derived)} new case(s)"
+        )
+
+    if not derived:
+        if verbose:
+            print("  [improve_from_production] production surfaced nothing the "
+                  "benchmark missed; nothing to repair.")
+        return None
+
+    # Merge supplied base cases first (so a user's canonical case wins on a
+    # collision), then the production-derived cases, deduped by (input, answer).
+    merged: list = []
+    seen = set()
+    for tc in list(base_cases or []) + derived:
+        key = (str(getattr(tc, "input", "")).strip().lower(),
+               str(getattr(tc, "canonical_answer", "") or "").strip().lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(tc)
+
+    if verbose:
+        print(f"  [improve_from_production] repairing over {len(merged)} case(s) "
+              f"({len(base_cases or [])} supplied + {len(derived)} from production)")
+
+    return improve(
+        cases=merged,
+        system_prompt=system_prompt,
+        model=model,
+        target_strain=target_strain,
+        verbose=verbose,
+        **improve_kwargs,
+    )
 
 
 _DEFAULT_FT_BASE_MODEL = "gpt-4o-mini-2024-07-18"

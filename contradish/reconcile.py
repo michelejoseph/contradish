@@ -44,6 +44,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Optional
 
 from .memory import Commitment, topic_of, _overlap_score
+from .models import TestCase
 
 
 # A relevance scorer over two commitments, in [0, 1]. Defaults to lexical
@@ -58,6 +59,7 @@ class CommitmentMatch:
     prod_claim:    str
     prod_session:  Optional[str] = None
     prod_turn:     Optional[int] = None
+    prod_query:    Optional[str] = None     # the query that triggered the break
     bench_claim:   Optional[str] = None
     bench_name:    Optional[str] = None
     bench_passed:  Optional[bool] = None
@@ -70,6 +72,7 @@ class CommitmentMatch:
             "prod_claim":   self.prod_claim,
             "prod_session": self.prod_session,
             "prod_turn":    self.prod_turn,
+            "prod_query":   self.prod_query,
             "bench_claim":  self.bench_claim,
             "bench_name":   self.bench_name,
             "bench_passed": self.bench_passed,
@@ -193,7 +196,11 @@ def _bench_commitments(report) -> list:
 
 def _prod_broken_commitments(replay_report) -> list:
     """Each production contradiction -> a distinct broken Commitment (deduped by
-    claim), carrying session/turn provenance."""
+    claim), carrying session/turn provenance and the query that triggered it.
+
+    The claim is the *prior* commitment the model walked back; the query is the
+    later turn where the walk-back surfaced. That pairing is exactly a benchmark
+    case: ask `query`, expect an answer consistent with `claim`."""
     out = []
     seen = set()
     for c in getattr(replay_report, "contradictions", []) or []:
@@ -207,11 +214,14 @@ def _prod_broken_commitments(replay_report) -> list:
         if key in seen:
             continue
         seen.add(key)
+        query = str(getattr(c, "query", "") or "").strip()
         commitment = Commitment(claim=claim, topic=topic_of(claim), origin="response",
-                                session=str(getattr(c, "session", "") or "default"))
+                                session=str(getattr(c, "session", "") or "default"),
+                                source_query=query)
         out.append((commitment,
                     getattr(c, "session", None),
-                    getattr(c, "prior_turn_index", None)))
+                    getattr(c, "prior_turn_index", None),
+                    query or None))
     return out
 
 
@@ -242,7 +252,7 @@ def reconcile(
     prod = _prod_broken_commitments(replay_report)
 
     matches: list = []
-    for prod_c, session, turn in prod:
+    for prod_c, session, turn, query in prod:
         best = None
         best_s = 0.0
         for bench_c, passed, strain, name in bench:
@@ -258,6 +268,7 @@ def reconcile(
                 prod_claim=prod_c.claim,
                 prod_session=session,
                 prod_turn=turn,
+                prod_query=query,
                 bench_claim=bench_c.claim,
                 bench_name=name,
                 bench_passed=passed,
@@ -270,9 +281,65 @@ def reconcile(
                 prod_claim=prod_c.claim,
                 prod_session=session,
                 prod_turn=turn,
+                prod_query=query,
             ))
 
     return ReconciliationReport(matches=matches, n_bench=len(bench), n_prod=len(prod))
+
+
+# ── Closing the loop: gaps become benchmark cases ───────────────────────────
+
+def cases_from_reconciliation(
+    rec,
+    kinds:              tuple = ("validity_gap", "coverage_gap"),
+    contradiction_type: str   = "adversarial",
+) -> list:
+    """
+    Turn a reconciliation's gaps into benchmark TestCases.
+
+    Each production break the benchmark missed (a validity gap) or never tested
+    (a coverage gap) becomes one adversarial case: ask the query that triggered
+    the break, and expect an answer consistent with the commitment the model
+    walked back. The query is the case input; the prior commitment is its
+    canonical answer, which also arms the truth gate. Feed these straight into
+    improve() and the loop closes: production teaches the benchmark what it
+    missed, the benchmark drives the repair, and the next run measures whether
+    the fix held.
+
+    `confirmed` matches are excluded by default. The benchmark already catches
+    those, so re-adding them teaches it nothing new.
+
+    Args:
+        rec:                a ReconciliationReport from reconcile().
+        kinds:              which verdicts to convert. Defaults to the two the
+                            benchmark got wrong: missed (validity_gap) and never
+                            tested (coverage_gap).
+        contradiction_type: stamped on each TestCase. "adversarial" by default.
+
+    Returns:
+        list[TestCase], deduped by (input, canonical_answer).
+    """
+    out: list = []
+    seen = set()
+    for m in getattr(rec, "matches", []) or []:
+        if m.verdict not in kinds:
+            continue
+        claim = (m.prod_claim or "").strip()
+        if not claim:
+            continue
+        question = (m.prod_query or "").strip() or claim
+        key = (question.lower(), claim.lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        topic = topic_of(claim)
+        out.append(TestCase(
+            input=question,
+            name=f"prod regression: {topic}" if topic else "prod regression",
+            canonical_answer=claim,
+            contradiction_type=contradiction_type,
+        ))
+    return out
 
 
 __all__ = [
@@ -280,4 +347,5 @@ __all__ = [
     "ReconciliationReport",
     "CommitmentMatch",
     "RelevanceFn",
+    "cases_from_reconciliation",
 ]
