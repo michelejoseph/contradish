@@ -344,6 +344,41 @@ for c in report.contradictions:
 
 ---
 
+## Reconcile: grade the benchmark against production (`contradish reconcile`)
+
+The prompt analyzer, the benchmark, and replay each render a verdict about the same model. Reconcile makes them agree. It expresses every layer in one shared unit, the **commitment**, then grades the benchmark against what actually broke in production.
+
+Give it a benchmark report and a replay report and it sorts every commitment that broke in production into three buckets: a **validity gap** (the benchmark covered it and said it was fine, but it broke anyway, so your benchmark was too weak there), a **confirmation** (the benchmark also flagged it), or a **coverage gap** (production broke on something the benchmark never tested). From those it reports two honest numbers about the benchmark itself: coverage and predictive validity.
+
+```bash
+contradish reconcile results/gpt-4o.json replay.json
+contradish reconcile bench.json replay.json --max-validity-gaps 0   # CI gate
+```
+
+```
+  contradish reconcile
+  240 benchmark commitments · 6 broke in production
+  coverage 0.67 · predictive validity 0.5
+
+  validity gaps (2): passed the bench, broke in production
+    · Refund window is 30 days, no exceptions
+        bench case "refund policy" passed (strain 0.04); broke in session 8841
+```
+
+The reconciliation is pure: it matches already-extracted claims and makes no API call, the same way `findings` mines a saved report for free. A validity gap is the highest-value signal contradish can give you, because it tells you exactly which commitment to write a harder benchmark case for. That closes the loop from production back to the benchmark.
+
+```python
+from contradish import reconcile
+
+rec = reconcile(benchmark_report, replay_report)
+print(rec.summary())
+print(rec.coverage, rec.predictive_validity)
+for m in rec.validity_gaps:
+    print(m.prod_claim, "passed the bench but broke in production")
+```
+
+---
+
 ## The CAI benchmark
 
 Public, frozen benchmark of adversarial question pairs across 20 high-stakes domains. **2,160 strain tests** scored with cross-provider judging (Anthropic models judged by OpenAI and vice versa, to remove same-provider self-preference bias).

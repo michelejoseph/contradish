@@ -69,6 +69,12 @@ class Commitment:
                          persisted with the commitment, so it is computed once
                          globally rather than re-embedded per worker). None for
                          lexical relevance.
+        origin:          which layer produced this commitment: "prompt" (a
+                         clause the system prompt promises), "benchmark" (a
+                         commitment a test case stresses), or "response" (one
+                         extracted from a model reply at runtime). The shared
+                         field that lets the same unit flow across every layer
+                         and be reconciled (see contradish.reconcile).
     """
     claim:           str
     topic:           str = ""
@@ -78,6 +84,7 @@ class Commitment:
     turn:            int = 0
     created_at:      float = field(default_factory=time.time)
     embedding:       Optional[list] = None
+    origin:          str = "response"
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -94,6 +101,7 @@ class Commitment:
             turn=int(d.get("turn", 0)),
             created_at=float(d.get("created_at", time.time())),
             embedding=list(emb) if isinstance(emb, (list, tuple)) else None,
+            origin=str(d.get("origin", "response")),
         )
 
 
@@ -283,6 +291,33 @@ _STOPWORDS = {
     "you", "your", "we", "our", "i", "they", "them", "can", "will", "may",
     "not", "no", "do", "does", "did", "has", "have", "had", "about",
 }
+
+
+def topic_of(text: str, n: int = 4) -> str:
+    """
+    Derive a short topic key from free text: the first `n` significant words
+    (stopwords dropped) in order. Used to give commitments a retrieval/matching
+    key when one was not supplied. Shared by the prompt analyzer and the
+    reconciler so every layer derives topics the same way.
+    """
+    out = []
+    word = []
+    for ch in (text or "").lower():
+        if ch.isalnum():
+            word.append(ch)
+        else:
+            if word:
+                w = "".join(word)
+                if w not in _STOPWORDS and len(w) > 1:
+                    out.append(w)
+                word = []
+            if len(out) >= n:
+                break
+    if word and len(out) < n:
+        w = "".join(word)
+        if w not in _STOPWORDS and len(w) > 1:
+            out.append(w)
+    return " ".join(out[:n])
 
 
 def _tokens(s: str) -> set:

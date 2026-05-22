@@ -72,8 +72,10 @@ from .replay       import (
     ReplayContradiction,
     ReplayTurn,
 )
+from .prompt_analyzer import commitments_from_analysis
+from .reconcile    import reconcile, ReconciliationReport, CommitmentMatch
 
-__version__ = "1.13.0"
+__version__ = "1.14.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -125,4 +127,8 @@ __all__ = [
     "ReplayReport",
     "ReplayContradiction",
     "ReplayTurn",
+    "commitments_from_analysis",
+    "reconcile",
+    "ReconciliationReport",
+    "CommitmentMatch",
 ]

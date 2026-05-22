@@ -352,8 +352,55 @@ def analyze_prompt(
     )
 
 
+def commitments_from_analysis(analysis: "PromptAnalysis") -> list:
+    """
+    Convert a PromptAnalysis into Commitments (the shared cross-layer unit).
+
+    A system prompt's commitments are the clauses it obligates the model to.
+    The analyzer surfaces those clauses as the two sides of each tension, so we
+    emit one Commitment per unique conflicting clause, tagged origin="prompt".
+    These can then be matched against benchmark commitments and runtime
+    commitments by contradish.reconcile, so a contradiction is traceable from
+    the prompt clause that planted it all the way to where it fired.
+
+    Each commitment carries the clause text as its claim, a derived topic, and
+    (in source_response) the strongest severity / exploiting technique seen for
+    that clause, for downstream prioritization.
+
+    Returns:
+        list[Commitment] with origin="prompt". Empty if the prompt had no
+        flagged tensions.
+    """
+    from .memory import Commitment, topic_of
+
+    seen: dict = {}
+    out: list = []
+    for tension in analysis.tensions:
+        for clause in tension.clauses:
+            claim = str(clause).strip()
+            key = claim.lower()
+            if not claim or key in seen:
+                # Keep the highest-severity annotation if the clause recurs.
+                if key in seen and tension.severity_rank() < seen[key].severity_rank():
+                    seen[key] = tension
+                continue
+            seen[key] = tension
+            techs = ", ".join(tension.exploiting_techniques)
+            note = f"severity={tension.severity}"
+            if techs:
+                note += f"; exploits={techs}"
+            out.append(Commitment(
+                claim=claim,
+                topic=topic_of(claim),
+                origin="prompt",
+                source_response=note,
+            ))
+    return out
+
+
 __all__ = [
     "analyze_prompt",
+    "commitments_from_analysis",
     "PromptAnalysis",
     "PromptTension",
     "KNOWN_TECHNIQUES",

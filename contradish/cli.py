@@ -814,6 +814,55 @@ def cmd_replay(args):
     sys.exit(0)
 
 
+def cmd_reconcile(args):
+    """
+    Reconcile a benchmark Report against a ReplayReport.
+
+    Grades the benchmark against production reality: which commitments passed
+    the bench but broke in production (the validity gap), which broke and were
+    never tested (the coverage gap), and the benchmark's coverage and
+    predictive-validity numbers. Pure: no API call unless --embeddings is set.
+    """
+    from contradish.reconcile import reconcile
+    from contradish.models import Report
+    from contradish.replay import ReplayReport
+
+    for label, path in (("benchmark report", args.report_file),
+                        ("replay report", args.replay_file)):
+        if not os.path.exists(path):
+            print(f"\n  {label} not found: {path}\n")
+            sys.exit(1)
+
+    with open(args.report_file) as f:
+        report = Report.from_dict(json.load(f))
+    with open(args.replay_file) as f:
+        replay_report = ReplayReport.from_dict(json.load(f))
+
+    relevance_fn = None
+    if getattr(args, "embeddings", False):
+        _check_api_key()
+        from contradish.memory import EmbeddingRelevance, openai_embedder
+        relevance_fn = EmbeddingRelevance(openai_embedder())
+
+    rec = reconcile(
+        report, replay_report,
+        match_threshold = getattr(args, "match_threshold", 0.3),
+        relevance_fn    = relevance_fn,
+    )
+
+    if getattr(args, "json", False):
+        print(json.dumps(rec.to_dict(), indent=2))
+    else:
+        print(rec.summary())
+
+    max_vg = getattr(args, "max_validity_gaps", None)
+    if max_vg is not None and len(rec.validity_gaps) > max_vg:
+        print(f"  FAIL: {len(rec.validity_gaps)} validity gap(s) exceed "
+              f"--max-validity-gaps {max_vg}.\n")
+        sys.exit(1)
+    sys.exit(0)
+
+
 def cmd_compare(args):
     """Compare baseline vs candidate app for CAI regression."""
     from contradish import RegressionSuite
@@ -1789,6 +1838,37 @@ examples:
     replay_p.add_argument("--json", action="store_true", default=False,
                           help="Print the replay report as JSON instead of formatted text.")
 
+    # contradish reconcile <report.json> <replay.json> — grade bench vs production
+    rec_p = sub.add_parser(
+        "reconcile",
+        help="Reconcile a benchmark report against a replay report: surface the validity gap.",
+        description=(
+            "Grade the benchmark against production reality. Expresses both a "
+            "benchmark report and a replay report (production contradictions from "
+            "real logs) as commitments, matches them, and reports which commitments "
+            "passed the benchmark but broke in production (the validity gap), which "
+            "broke and were never tested (the coverage gap), plus the benchmark's "
+            "coverage and predictive validity. Pure: no API call unless --embeddings.\n\n"
+            "  contradish reconcile results/gpt-4o.json replay.json\n"
+            "  contradish reconcile bench.json replay.json --embeddings --json\n"
+            "  contradish reconcile bench.json replay.json --max-validity-gaps 0   # CI gate\n"
+        ),
+    )
+    rec_p.add_argument("report_file", metavar="REPORT_JSON",
+                       help="Benchmark result JSON (output of `contradish benchmark`).")
+    rec_p.add_argument("replay_file", metavar="REPLAY_JSON",
+                       help="Replay report JSON (output of `contradish replay --json`/--output).")
+    rec_p.add_argument("--embeddings", action="store_true", default=False,
+                       help="Match commitments semantically (OpenAI embeddings; needs OPENAI_API_KEY).")
+    rec_p.add_argument("--match-threshold", type=float, default=0.3, metavar="F",
+                       dest="match_threshold",
+                       help="Minimum relevance to treat a prod and bench commitment as the same (default: 0.3).")
+    rec_p.add_argument("--max-validity-gaps", type=int, default=None, metavar="N",
+                       dest="max_validity_gaps",
+                       help="Exit nonzero if more than N validity gaps are found. For CI gating.")
+    rec_p.add_argument("--json", action="store_true", default=False,
+                       help="Print the reconciliation as JSON instead of formatted text.")
+
     args = parser.parse_args()
 
     if args.command == "benchmark":
@@ -1811,6 +1891,8 @@ examples:
         cmd_prompt(args)
     elif args.command == "replay":
         cmd_replay(args)
+    elif args.command == "reconcile":
+        cmd_reconcile(args)
     elif args.command == "judge-floor":
         cmd_judge_floor(args)
     elif args.command == "fairness":

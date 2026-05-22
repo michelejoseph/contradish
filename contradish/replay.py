@@ -118,6 +118,22 @@ class ReplayContradiction:
             "repaired":         self.repaired,
         }
 
+    @classmethod
+    def from_dict(cls, d: dict) -> "ReplayContradiction":
+        return cls(
+            session=str(d.get("session", "default")),
+            turn_index=int(d.get("turn_index", 0)),
+            query=str(d.get("query", "") or ""),
+            response=str(d.get("response", "") or ""),
+            prior_turn_index=d.get("prior_turn_index"),
+            prior_query=d.get("prior_query"),
+            new_claim=d.get("new_claim"),
+            prior_claim=d.get("prior_claim"),
+            explanation=d.get("explanation"),
+            confidence=d.get("confidence"),
+            repaired=d.get("repaired"),
+        )
+
 
 @dataclass
 class ReplayReport:
@@ -148,6 +164,26 @@ class ReplayReport:
             "sessions":           list(self.sessions),
             "contradictions":     [c.to_dict() for c in self.contradictions],
         }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "ReplayReport":
+        """Reconstruct a ReplayReport from its to_dict() form (for loading a
+        saved replay JSON, e.g. into contradish.reconcile)."""
+        contradictions = [ReplayContradiction.from_dict(c)
+                          for c in (d.get("contradictions") or [])
+                          if isinstance(c, dict)]
+        sessions = d.get("sessions")
+        if not isinstance(sessions, list):
+            sessions = []
+            for c in contradictions:
+                if c.session not in sessions:
+                    sessions.append(c.session)
+        return cls(
+            contradictions=contradictions,
+            n_turns=int(d.get("n_turns", 0) or 0),
+            n_commitments=int(d.get("n_commitments", 0) or 0),
+            sessions=sessions,
+        )
 
     def summary(self) -> str:
         lines = []
