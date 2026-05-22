@@ -754,6 +754,66 @@ def cmd_prompt(args):
     sys.exit(0)
 
 
+def cmd_replay(args):
+    """
+    Replay logged conversation transcripts through the memory-aware
+    contradiction check and report cross-turn self-contradictions.
+
+    The offline counterpart to the production Firewall: it does not call any
+    app, the responses already exist in the log. It runs the same commitment
+    extraction, relevance retrieval, and detection over the recorded turns and
+    reports where the assistant contradicted something it said earlier in the
+    same session.
+    """
+    from contradish.replay import load_transcript, replay_transcript
+
+    _check_api_key()
+    use_json = getattr(args, "json", False)
+
+    path = args.transcript
+    if not os.path.exists(path):
+        print(f"\n  transcript not found: {path}\n")
+        sys.exit(1)
+
+    turns = load_transcript(path)
+    if not turns:
+        print(f"\n  no turns found in {path}.")
+        print("  expected chat messages (role/content), paired query/response,")
+        print("  or a list of conversations with nested message lists.\n")
+        sys.exit(1)
+
+    embed_fn = None
+    if getattr(args, "embeddings", False):
+        from contradish.memory import openai_embedder
+        embed_fn = openai_embedder()   # OpenAI embeddings; needs OPENAI_API_KEY
+
+    report = replay_transcript(
+        turns,
+        repair   = getattr(args, "repair", False),
+        provider = getattr(args, "provider", None),
+        model    = getattr(args, "model", None),
+        embed_fn = embed_fn,
+    )
+
+    if getattr(args, "output", None):
+        with open(args.output, "w") as f:
+            json.dump(report.to_dict(), f, indent=2)
+        if not use_json:
+            print(f"\n  replay report -> {args.output}")
+
+    if use_json:
+        print(json.dumps(report.to_dict(), indent=2))
+    else:
+        print(report.summary())
+
+    max_c = getattr(args, "max_contradictions", None)
+    if max_c is not None and len(report.contradictions) > max_c:
+        print(f"  FAIL: {len(report.contradictions)} contradiction(s) exceed "
+              f"--max-contradictions {max_c}.\n")
+        sys.exit(1)
+    sys.exit(0)
+
+
 def cmd_compare(args):
     """Compare baseline vs candidate app for CAI regression."""
     from contradish import RegressionSuite
@@ -1693,6 +1753,42 @@ examples:
     prompt_p.add_argument("--json", action="store_true", default=False,
                           help="Output analysis as JSON.")
 
+    # contradish replay <transcript> — offline contradiction audit over logs
+    replay_p = sub.add_parser(
+        "replay",
+        help="Replay logged conversation transcripts and report cross-turn self-contradictions.",
+        description=(
+            "The offline counterpart to the production Firewall. Point it at your "
+            "recorded conversation logs and it reports every place the assistant "
+            "contradicted a commitment it made earlier in the same session. No app "
+            "is called; it runs commitment extraction, relevance retrieval, and "
+            "detection over the recorded turns.\n\n"
+            "Auto-detects chat-message logs (role/content), paired query/response, "
+            "and multi-conversation files (JSON or JSONL).\n\n"
+            "  contradish replay conversations.jsonl\n"
+            "  contradish replay logs.json --embeddings --repair\n"
+            "  contradish replay logs.json --max-contradictions 0   # CI gate\n"
+        ),
+    )
+    replay_p.add_argument("transcript", metavar="TRANSCRIPT",
+                          help="Path to a transcript file (JSON or JSONL).")
+    replay_p.add_argument("--embeddings", action="store_true", default=False,
+                          help="Use semantic (embedding) relevance instead of lexical. "
+                               "Uses OpenAI embeddings; needs OPENAI_API_KEY.")
+    replay_p.add_argument("--repair", action="store_true", default=False,
+                          help="Also compute a corrected reply for each contradiction.")
+    replay_p.add_argument("--provider", choices=("anthropic", "openai"), default=None,
+                          help="Judge provider for extraction/detection (auto-detected if omitted).")
+    replay_p.add_argument("--model", default=None, metavar="MODEL",
+                          help="Override the model used for extraction/detection.")
+    replay_p.add_argument("--max-contradictions", type=int, default=None, metavar="N",
+                          dest="max_contradictions",
+                          help="Exit nonzero if more than N contradictions are found. For CI gating.")
+    replay_p.add_argument("--output", metavar="FILE", default=None,
+                          help="Write the full replay report as JSON to FILE.")
+    replay_p.add_argument("--json", action="store_true", default=False,
+                          help="Print the replay report as JSON instead of formatted text.")
+
     args = parser.parse_args()
 
     if args.command == "benchmark":
@@ -1713,6 +1809,8 @@ examples:
         cmd_findings(args)
     elif args.command == "prompt":
         cmd_prompt(args)
+    elif args.command == "replay":
+        cmd_replay(args)
     elif args.command == "judge-floor":
         cmd_judge_floor(args)
     elif args.command == "fairness":

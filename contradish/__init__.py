@@ -64,8 +64,16 @@ from .memory       import (
     EmbeddingRelevance,
     openai_embedder,
 )
+from .replay       import (
+    replay,
+    replay_transcript,
+    load_transcript,
+    ReplayReport,
+    ReplayContradiction,
+    ReplayTurn,
+)
 
-__version__ = "1.12.0"
+__version__ = "1.13.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -111,4 +119,10 @@ __all__ = [
     "RedisCommitmentStore",
     "EmbeddingRelevance",
     "openai_embedder",
+    "replay",
+    "replay_transcript",
+    "load_transcript",
+    "ReplayReport",
+    "ReplayContradiction",
+    "ReplayTurn",
 ]

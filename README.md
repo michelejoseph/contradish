@@ -309,6 +309,41 @@ Cost note: the memory-aware path costs up to one extraction call per reply, one 
 
 ---
 
+## Replay: audit your real logs (`contradish replay`)
+
+The Firewall catches contradictions live. Replay is the same check run after the fact, over conversations you already logged. Point it at a transcript and it reports every place the assistant contradicted a commitment it made earlier in the same session. No app is called; the responses already exist.
+
+```bash
+contradish replay conversations.jsonl
+contradish replay logs.json --embeddings --repair
+contradish replay logs.json --max-contradictions 0   # CI gate on a log fixture
+```
+
+```
+  contradish replay
+  3 sessions · 142 turns · 387 commitments
+  contradictions: 4  (rate 0.028)
+
+  [session support-8841]
+    turn 17 contradicts turn 3
+      now:     Refunds are allowed at 45 days
+      earlier: Refund window is 30 days, no exceptions
+      why:     45-day refund contradicts the stated 30-day window
+```
+
+Formats are auto-detected: OpenAI chat-message logs (`role`/`content`), paired `query`/`response` rows, and multi-conversation files, as JSON or JSONL. A `session`/`conversation_id` field scopes each conversation so one user's history never compares against another's.
+
+```python
+from contradish import replay
+
+report = replay("conversations.jsonl")
+print(report.summary())
+for c in report.contradictions:
+    print(c.session, "turn", c.turn_index, "contradicts turn", c.prior_turn_index)
+```
+
+---
+
 ## The CAI benchmark
 
 Public, frozen benchmark of adversarial question pairs across 20 high-stakes domains. **2,160 strain tests** scored with cross-provider judging (Anthropic models judged by OpenAI and vice versa, to remove same-provider self-preference bias).
