@@ -252,6 +252,81 @@ def test_redis_store_per_session_cap():
     assert [c.claim for c in rs.by_session("u1")] == ["c2", "c3"]
 
 
+# ── Dedup on ingest ──────────────────────────────────────────────────────
+
+def test_ingest_dedups_identical_claim():
+    mem = ConversationMemory(store=InMemoryCommitmentStore())   # no LLM needed
+    same = lambda: Commitment(claim="Refund window is 30 days", topic="refund window", session="u1")
+    mem.ingest_commitments([same(), same()])
+    assert mem.store.size("u1") == 1
+    mem.ingest_commitments([Commitment(claim="Store hours are 9 to 5", topic="store hours", session="u1")])
+    assert mem.store.size("u1") == 2
+
+
+def test_ingest_dedup_normalizes_case_and_punctuation():
+    mem = ConversationMemory(store=InMemoryCommitmentStore())
+    mem.ingest_commitments([Commitment(claim="Refund window is 30 days", session="u1")])
+    mem.ingest_commitments([Commitment(claim="  refund window is 30 days.  ", session="u1")])
+    assert mem.store.size("u1") == 1
+
+
+def test_ingest_dedup_is_session_scoped():
+    mem = ConversationMemory(store=InMemoryCommitmentStore())
+    mem.ingest_commitments([Commitment(claim="Refund window is 30 days", session="u1")])
+    mem.ingest_commitments([Commitment(claim="Refund window is 30 days", session="u2")])
+    assert mem.store.size("u1") == 1 and mem.store.size("u2") == 1
+
+
+def test_ingest_dedup_keeps_conflicting_claim():
+    # Safety: a claim that conflicts with a prior one must NOT be merged away.
+    mem = ConversationMemory(store=InMemoryCommitmentStore())
+    mem.ingest_commitments([Commitment(claim="Refund window is 30 days", topic="refund window", session="u1")])
+    mem.ingest_commitments([Commitment(claim="Refund window is 14 days", topic="refund window", session="u1")])
+    claims = {c.claim for c in mem.store.by_session("u1")}
+    assert claims == {"Refund window is 30 days", "Refund window is 14 days"}
+
+
+def test_ingest_dedup_off_keeps_duplicates():
+    mem = ConversationMemory(store=InMemoryCommitmentStore(), dedup=False)
+    mem.ingest_commitments([Commitment(claim="Refund window is 30 days", session="u1"),
+                            Commitment(claim="Refund window is 30 days", session="u1")])
+    assert mem.store.size("u1") == 2
+
+
+# ── Redundancy-aware eviction ─────────────────────────────────────────────
+
+def test_eviction_keeps_unique_drops_redundant():
+    # cap 2. A is unique; B and B2 are the same fact (shared topic). Plain FIFO
+    # would drop A (oldest) on the third add; redundancy eviction drops B
+    # instead, keeping the unique, load-bearing commitment A.
+    s = InMemoryCommitmentStore(per_session=2)
+    A  = Commitment(claim="Refund window is 30 days", topic="refund window", session="u1")
+    B  = Commitment(claim="Store hours are 9 to 5", topic="store hours", session="u1")
+    B2 = Commitment(claim="We are open 9 to 5 daily", topic="store hours", session="u1")
+    s.add(A); s.add(B); s.add(B2)
+    claims = [c.claim for c in s.by_session("u1")]
+    assert len(claims) == 2
+    assert "Refund window is 30 days" in claims          # unique fact survived
+    assert "Store hours are 9 to 5" not in claims        # redundant restatement dropped
+
+
+def test_eviction_fifo_when_nothing_redundant():
+    # Unrelated claims -> redundancy is zero everywhere -> degrade to oldest-first.
+    s = InMemoryCommitmentStore(per_session=2)
+    for i in range(5):
+        s.add(Commitment(claim=f"c{i}", session="u1"))
+    assert [c.claim for c in s.by_session("u1")] == ["c3", "c4"]
+
+
+def test_eviction_fifo_mode_explicit():
+    s = InMemoryCommitmentStore(per_session=2, eviction="fifo")
+    A  = Commitment(claim="Refund window is 30 days", topic="refund window", session="u1")
+    B  = Commitment(claim="Store hours are 9 to 5", topic="store hours", session="u1")
+    B2 = Commitment(claim="We are open 9 to 5 daily", topic="store hours", session="u1")
+    s.add(A); s.add(B); s.add(B2)
+    assert [c.claim for c in s.by_session("u1")] == ["Store hours are 9 to 5", "We are open 9 to 5 daily"]
+
+
 # ── Firewall: memory-aware path ──────────────────────────────────────────
 
 def _refund_llm():

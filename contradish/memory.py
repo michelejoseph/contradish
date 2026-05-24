@@ -146,21 +146,36 @@ class InMemoryCommitmentStore:
     share one history.
 
     Args:
-        per_session: optional cap on commitments retained per session
-                     (oldest dropped first). None means unbounded.
+        per_session: optional cap on commitments retained per session. None
+                     means unbounded.
+        eviction: which commitment to drop when a session is over its cap.
+                  "redundancy" (default) drops the most redundant commitment, so
+                  a near-duplicate restatement goes before a unique fact, and
+                  falls back to oldest-first when nothing is redundant. "fifo"
+                  always drops the oldest, which is cheaper but can evict a
+                  load-bearing early commitment.
     """
 
-    def __init__(self, per_session: Optional[int] = None):
+    def __init__(self, per_session: Optional[int] = None, eviction: str = "redundancy"):
         if per_session is not None and per_session <= 0:
             raise ValueError(f"per_session must be > 0 or None, got {per_session}")
+        if eviction not in ("redundancy", "fifo"):
+            raise ValueError(f"eviction must be 'redundancy' or 'fifo', got {eviction!r}")
         self.per_session = per_session
+        self.eviction = eviction
         self._by_session: dict[str, list[Commitment]] = {}
 
     def add(self, commitment: Commitment) -> None:
         bucket = self._by_session.setdefault(commitment.session, [])
         bucket.append(commitment)
-        if self.per_session is not None and len(bucket) > self.per_session:
-            del bucket[0:len(bucket) - self.per_session]
+        if self.per_session is None:
+            return
+        if self.eviction == "fifo":
+            if len(bucket) > self.per_session:
+                del bucket[0:len(bucket) - self.per_session]
+            return
+        while len(bucket) > self.per_session:
+            del bucket[_redundancy_evict_index(bucket)]
 
     def by_session(self, session: str) -> list:
         return list(self._by_session.get(session, []))
@@ -190,6 +205,12 @@ class RedisCommitmentStore:
     One Redis list per session under `{key}:{session}`. A companion set
     `{key}:__sessions__` tracks known sessions so clear()/size() with no
     argument can operate across all of them without SCAN.
+
+    Eviction here is oldest-first (atomic LTRIM), not the redundancy-aware
+    policy InMemoryCommitmentStore uses, because smart eviction would need a
+    read-modify-write that is not safe across concurrent workers. The primary
+    way to keep a shared store small is dedup at ingest (ConversationMemory),
+    which applies equally to both stores.
 
     Args:
         url:      Redis connection URL. Default redis://localhost:6379/0.
@@ -353,6 +374,35 @@ def _overlap_score(a: Commitment, b: Commitment) -> float:
     base = len(inter) / min(len(a_all), len(b_all))
     topic_bonus = 0.25 if (a_topic & b_topic) else 0.0
     return min(1.0, base + topic_bonus)
+
+
+def _redundancy_evict_index(commitments: list) -> int:
+    """
+    Index of the commitment to drop when a session is over its cap. Picks the
+    most redundant commitment (the one with the highest lexical overlap to any
+    other in the list), so a near-duplicate restatement is dropped before a
+    unique, load-bearing fact. Ties resolve to the lowest index (the oldest),
+    which makes the policy degrade to plain oldest-first when nothing in the
+    session is redundant.
+    """
+    n = len(commitments)
+    if n <= 1:
+        return 0
+    best_i = 0
+    best_score = -1.0
+    for i in range(n):
+        ci = commitments[i]
+        nn = 0.0
+        for j in range(n):
+            if i == j:
+                continue
+            s = _overlap_score(ci, commitments[j])
+            if s > nn:
+                nn = s
+        if nn > best_score:
+            best_score = nn
+            best_i = i
+    return best_i
 
 
 # Signature for a pluggable scorer: (new_commitment, prior_commitment) -> [0,1]
@@ -564,6 +614,10 @@ class ConversationMemory:
         relevance_fn:   scorer (new, prior) -> [0,1]. Default lexical overlap.
         relevance_threshold: minimum score to treat a prior as relevant.
         top_k:      max prior commitments retrieved per check.
+        dedup:      when True (default), an identical restatement is not stored
+                    twice in a session. Only exact normalized-claim matches are
+                    dropped, so a conflicting claim is still stored and surfaced
+                    by the check path rather than merged away.
     """
 
     def __init__(
@@ -576,6 +630,7 @@ class ConversationMemory:
         relevance_fn:        Optional[RelevanceFn] = None,
         relevance_threshold: float = 0.3,
         top_k:               int = 5,
+        dedup:               bool = True,
     ):
         self._llm_arg     = llm
         self._api_key     = api_key
@@ -585,6 +640,7 @@ class ConversationMemory:
         self.relevance_fn = relevance_fn or _overlap_score
         self.relevance_threshold = relevance_threshold
         self.top_k        = top_k
+        self.dedup        = dedup
         self._llm_cached  = llm  # may be None; built lazily on first LLM use
 
     @classmethod
@@ -730,6 +786,12 @@ class ConversationMemory:
         return finding
 
     def ingest_commitments(self, commitments: list) -> None:
+        # Dedup first so an identical restatement does not accumulate in the
+        # store, where it would bloat every later retrieval and cost more to
+        # scan. Only exact normalized-claim matches are dropped, scoped to the
+        # session, so a claim that conflicts with a prior one is never silently
+        # merged away; that conflict is what the check path is meant to surface.
+        keep = self._dedup(commitments) if self.dedup else list(commitments)
         # If the relevance scorer can persist embeddings (EmbeddingRelevance),
         # attach them before storing so the vector is computed once and shared
         # via the store across workers. Embedding is an optimization, so a
@@ -737,11 +799,39 @@ class ConversationMemory:
         attach = getattr(self.relevance_fn, "attach", None)
         if callable(attach):
             try:
-                attach(commitments)
+                attach(keep)
             except Exception:
                 pass
-        for c in commitments:
+        for c in keep:
             self.store.add(c)
+
+    def _dedup(self, commitments: list) -> list:
+        """Drop commitments whose normalized claim already exists in their
+        session, or repeats earlier in this same batch. Returns the survivors
+        in input order."""
+        keep: list = []
+        seen_by_session: dict = {}
+        for c in commitments:
+            sess = getattr(c, "session", "default")
+            if sess not in seen_by_session:
+                seen_by_session[sess] = {
+                    self._norm_claim(p.claim) for p in self.store.by_session(sess)
+                }
+            key = self._norm_claim(getattr(c, "claim", ""))
+            if not key or key in seen_by_session[sess]:
+                continue
+            seen_by_session[sess].add(key)
+            keep.append(c)
+        return keep
+
+    @staticmethod
+    def _norm_claim(claim: str) -> str:
+        """Normalize a claim for duplicate detection: lowercase, collapse inner
+        whitespace, strip surrounding quotes and trailing punctuation. Two
+        commitments with the same normalized claim are treated as one."""
+        import re
+        t = re.sub(r"\s+", " ", (claim or "").strip().lower())
+        return t.strip(" .;,:!?\"'")
 
     def ingest(self, session: str, query: str, response: str) -> list:
         """Extract commitments from a reply and store them. Returns them."""
