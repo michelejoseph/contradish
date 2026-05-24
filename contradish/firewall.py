@@ -103,6 +103,17 @@ class Firewall:
                            corrected reply is returned; in monitor mode it is
                            offered via result.repaired_response while the
                            original passes through.
+        min_confidence:    Minimum judge confidence (0-1) required before the
+                           Firewall acts on a contradiction (blocks or repairs).
+                           Detection is unaffected: a contradiction below this
+                           bar is still reported in the result and counted in
+                           summary(), it just is not blocked or rewritten, so a
+                           low-confidence judge call does not intercept a good
+                           reply. Default 0.0 acts on every detected
+                           contradiction (prior behavior). In block mode, ~0.6
+                           is a reasonable floor. Applies to the memory-aware
+                           path; the legacy path reports no confidence and is
+                           never suppressed.
 
     Example (monitor, log but don't block):
         firewall = Firewall(app=my_app, mode="monitor")
@@ -128,9 +139,12 @@ class Firewall:
         memory_aware:      bool = True,
         memory:            Optional[ConversationMemory] = None,
         repair:            bool = True,
+        min_confidence:    float = 0.0,
     ):
         if mode not in ("monitor", "block"):
             raise ValueError(f"mode must be 'monitor' or 'block', got: {mode!r}")
+        if not (0.0 <= min_confidence <= 1.0):
+            raise ValueError(f"min_confidence must be in [0, 1], got {min_confidence}")
 
         self.app          = app
         self.mode         = mode
@@ -140,6 +154,7 @@ class Firewall:
         self.cache        = cache if cache is not None else InMemoryCache(window=window)
         self.memory_aware = memory_aware
         self.repair       = repair
+        self.min_confidence = min_confidence
         if memory_aware:
             self.memory = memory if memory is not None else ConversationMemory(llm=self._llm)
         else:
@@ -216,11 +231,18 @@ class Firewall:
         self.cache.append(query, response)
 
         contradiction = finding.contradiction
+        # Act only when the judge is confident enough. Detection is reported
+        # regardless (below); this gate decides whether we block or rewrite, so
+        # a low-confidence call never intercepts a good reply. A missing
+        # confidence (legacy / unscored) is treated as actionable.
+        actionable = contradiction and (
+            finding.confidence is None or finding.confidence >= self.min_confidence
+        )
         repaired = None
-        if contradiction and self.repair:
+        if actionable and self.repair:
             repaired = self.memory.repair(query, response, finding)
 
-        blocked = contradiction and self.mode == "block"
+        blocked = actionable and self.mode == "block"
         if blocked:
             out_response = repaired if repaired else self._fallback
         else:

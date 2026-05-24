@@ -429,6 +429,62 @@ def test_firewall_legacy_path_still_works():
         fw_mod.LLMClient = orig
 
 
+# ── Firewall: confidence gate ─────────────────────────────────────────────
+
+def _refund_llm_conf(conf):
+    return FakeLLM(
+        extract_map={
+            "30 days": '[{"claim":"Refund window is 30 days, no exceptions","topic":"refund window"}]',
+            "45 days": '[{"claim":"Refunds are allowed at 45 days","topic":"refund window"}]',
+        },
+        detect={"contradiction": True, "new_claim": "Refunds are allowed at 45 days",
+                "prior_claim": "Refund window is 30 days, no exceptions",
+                "explanation": "45 days contradicts the 30-day window.", "confidence": conf},
+        repair_text="To confirm: refunds are within 30 days only, so 45 days is outside the window.",
+    )
+
+
+def test_firewall_min_confidence_suppresses_low_conf_block():
+    orig = fw_mod.LLMClient
+    fw_mod.LLMClient = lambda *a, **kw: _refund_llm_conf(0.4)
+    try:
+        fw = fw_mod.Firewall(app=_refund_app, mode="block", min_confidence=0.6)
+        fw.check("What is the refund policy?", session="b1")
+        r = fw.check("Can I refund at 45 days?", session="b1")
+        assert r.contradiction_detected         # still detected and monitored
+        assert not r.blocked                     # but not acted on below threshold
+        assert r.response.startswith("Sure")     # original reply passed through
+        assert r.repaired_response is None       # no repair generated below threshold
+    finally:
+        fw_mod.LLMClient = orig
+
+
+def test_firewall_min_confidence_allows_high_conf_block():
+    orig = fw_mod.LLMClient
+    fw_mod.LLMClient = lambda *a, **kw: _refund_llm_conf(0.9)
+    try:
+        fw = fw_mod.Firewall(app=_refund_app, mode="block", min_confidence=0.6)
+        fw.check("What is the refund policy?", session="b1")
+        r = fw.check("Can I refund at 45 days?", session="b1")
+        assert r.blocked and r.contradiction_detected
+        assert "30 days" in r.response
+    finally:
+        fw_mod.LLMClient = orig
+
+
+def test_firewall_default_min_confidence_acts_on_any():
+    # Default min_confidence=0.0 preserves prior behavior: even low confidence acts.
+    orig = fw_mod.LLMClient
+    fw_mod.LLMClient = lambda *a, **kw: _refund_llm_conf(0.4)
+    try:
+        fw = fw_mod.Firewall(app=_refund_app, mode="block")
+        fw.check("What is the refund policy?", session="b1")
+        r = fw.check("Can I refund at 45 days?", session="b1")
+        assert r.blocked and r.contradiction_detected
+    finally:
+        fw_mod.LLMClient = orig
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     passed = 0
