@@ -577,13 +577,14 @@ _DETECT_PROMPT = """You decide whether a new assistant statement contradicts som
 New statement(s):
 {new_claims}
 
-Earlier statement(s) on related topics:
+The assistant's earlier commitments on related topics, oldest first:
 {prior_claims}
 
-A contradiction means the assistant now asserts something that cannot both be true with an earlier assertion: a different policy, number, rule, eligibility, or conclusion on the same matter. Ignore differences in wording, added detail, or tone. A more specific or more cautious restatement is not a contradiction.
+A contradiction means the assistant now asserts something that cannot both be true with an earlier assertion: a different policy, number, rule, eligibility, or conclusion on the same matter. Ignore differences in wording, added detail, or tone. A more specific or more cautious restatement is not a contradiction. Check the new statement against the earliest established commitment above, not only the most recent one: a value that has crept across several turns still contradicts the original position.
 
-Return JSON only, no markdown:
-{{"contradiction": true or false, "new_claim": "<the new claim involved, or null>", "prior_claim": "<the exact earlier claim it contradicts, or null>", "explanation": "<one sentence, or null>", "confidence": <number 0.0 to 1.0>}}"""
+Return JSON only, no markdown, as an object with a "contradictions" list, one entry per earlier commitment the new statement contradicts (usually empty or one entry; include several only when the new statement conflicts with multiple distinct earlier commitments):
+{{"contradictions": [{{"new_claim": "<the new claim>", "prior_claim": "<the exact earlier claim it contradicts>", "explanation": "<one sentence>", "confidence": <number 0.0 to 1.0>}}]}}
+If there is no contradiction, return {{"contradictions": []}}."""
 
 _REPAIR_PROMPT = """The assistant is about to send a reply that contradicts something it already told this same user earlier in the conversation. Rewrite the reply so it is consistent with the earlier commitment, keeps whatever is still helpful, and briefly acknowledges the established fact rather than silently reversing it.
 
@@ -719,8 +720,19 @@ class ConversationMemory:
     def relevant(self, session: str, commitments: list) -> list:
         """
         Return prior commitments in `session` relevant to any of `commitments`,
-        scored by relevance_fn, deduped, highest score first, capped at top_k.
-        No LLM call.
+        capped at top_k. No LLM call.
+
+        Selection is anchor-aware. For each relevant topic the earliest-turn
+        commitment (the model's original, established position) is retrieved
+        first, then the remaining slots are filled by relevance score. This is
+        what lets multi-turn drift surface: under accumulating pressure a model
+        tends to move one small step per turn, so the newest reply agrees with
+        the most recent (already-drifted) restatement and only conflicts with the
+        position it started from. Ranking purely by lexical score favors the
+        closer recent restatements and can push that original commitment out of
+        the top_k window, hiding the drift. Anchoring keeps it in, so the new
+        claim is judged against where the model began, not only where it drifted
+        to.
         """
         priors = self.store.by_session(session)
         if not priors or not commitments:
@@ -734,42 +746,108 @@ class ConversationMemory:
                     best = s
             if best >= self.relevance_threshold:
                 scored[id(prior)] = (best, prior)
-        ranked = sorted(scored.values(), key=lambda t: t[0], reverse=True)
-        return [p for _, p in ranked[:self.top_k]]
+        if not scored:
+            return []
+        ranked = [p for _, p in sorted(scored.values(), key=lambda t: t[0], reverse=True)]
+        # Anchor = earliest-turn commitment per topic (the original position).
+        anchors: dict = {}
+        for _, p in scored.values():
+            topic = (p.topic or "").strip().lower()
+            if not topic:
+                continue
+            if topic not in anchors or p.turn < anchors[topic].turn:
+                anchors[topic] = p
+        result: list = []
+        seen: set = set()
+        for p in sorted(anchors.values(), key=lambda c: c.turn):   # oldest anchors first
+            if id(p) not in seen:
+                result.append(p)
+                seen.add(id(p))
+            if len(result) >= self.top_k:
+                break
+        if len(result) < self.top_k:                                # fill remaining by score
+            for p in ranked:
+                if id(p) not in seen:
+                    result.append(p)
+                    seen.add(id(p))
+                if len(result) >= self.top_k:
+                    break
+        return result
 
     # -- detection --
-    def detect(self, new_commitments: list, prior_commitments: list) -> ContradictionFinding:
-        """Judge whether any new commitment contradicts a relevant prior one (one LLM call)."""
+    def detect_all(self, new_commitments: list, prior_commitments: list) -> list:
+        """
+        Judge which earlier commitments the new ones contradict (one LLM call).
+        Returns a list of ContradictionFinding, strongest (highest confidence)
+        first; empty if none. A reply under accumulating multi-turn pressure can
+        break more than one established commitment at once, so every conflict is
+        surfaced, not just the first the judge happens to name.
+        """
         if not new_commitments or not prior_commitments:
-            return ContradictionFinding(contradiction=False)
+            return []
+        # Oldest first, so the model's original position leads and the judge can
+        # anchor a drift verdict on it rather than on a later restatement.
+        ordered_priors = sorted(prior_commitments, key=lambda c: getattr(c, "turn", 0))
         new_blob = "\n".join(f"- {c.claim}" for c in new_commitments)
-        prior_blob = "\n".join(f"- {c.claim}" for c in prior_commitments)
+        prior_blob = "\n".join(f"- {c.claim}" for c in ordered_priors)
         prompt = _DETECT_PROMPT.format(new_claims=new_blob, prior_claims=prior_blob)
         try:
             res = self.llm.complete_json(prompt, model=self._model())
         except Exception:
-            return ContradictionFinding(contradiction=False)
-        if not isinstance(res, dict) or not res.get("contradiction"):
-            return ContradictionFinding(contradiction=False)
-        prior_claim = res.get("prior_claim")
-        matched = next(
-            (c for c in prior_commitments if c.claim == prior_claim),
-            None,
-        ) or prior_commitments[0]
-        conf = res.get("confidence")
-        try:
-            conf = float(conf) if conf is not None else None
-        except (TypeError, ValueError):
-            conf = None
-        return ContradictionFinding(
-            contradiction=True,
-            new_claim=res.get("new_claim"),
-            prior_claim=prior_claim or matched.claim,
-            prior_query=matched.source_query,
-            prior_response=matched.source_response,
-            explanation=res.get("explanation"),
-            confidence=conf,
-        )
+            return []
+        findings: list = []
+        for item in self._contradiction_items(res):
+            if not isinstance(item, dict):
+                continue
+            prior_claim = item.get("prior_claim")
+            matched = next(
+                (c for c in ordered_priors if c.claim == prior_claim),
+                None,
+            ) or ordered_priors[0]
+            conf = item.get("confidence")
+            try:
+                conf = float(conf) if conf is not None else None
+            except (TypeError, ValueError):
+                conf = None
+            findings.append(ContradictionFinding(
+                contradiction=True,
+                new_claim=item.get("new_claim"),
+                prior_claim=prior_claim or matched.claim,
+                prior_query=matched.source_query,
+                prior_response=matched.source_response,
+                explanation=item.get("explanation"),
+                confidence=conf,
+            ))
+        findings.sort(key=lambda f: f.confidence if f.confidence is not None else -1.0, reverse=True)
+        return findings
+
+    @staticmethod
+    def _contradiction_items(res) -> list:
+        """
+        Normalize the judge reply into a list of contradiction dicts. Accepts the
+        current {"contradictions": [...]} shape, a bare list, or the legacy
+        single {"contradiction": bool, ...} verdict, so older judges and mocks
+        keep working.
+        """
+        if isinstance(res, list):
+            return res
+        if isinstance(res, dict):
+            if isinstance(res.get("contradictions"), list):
+                return res["contradictions"]
+            if "contradiction" in res:                       # legacy single verdict
+                return [res] if res.get("contradiction") else []
+            if res.get("prior_claim"):                       # a single bare item
+                return [res]
+        return []
+
+    def detect(self, new_commitments: list, prior_commitments: list) -> ContradictionFinding:
+        """
+        Judge whether any new commitment contradicts a relevant prior one (one
+        LLM call). Returns the strongest contradiction, or a negative finding.
+        Backward-compatible single-finding view of detect_all.
+        """
+        found = self.detect_all(new_commitments, prior_commitments)
+        return found[0] if found else ContradictionFinding(contradiction=False)
 
     # -- orchestration --
     def check(self, session: str, query: str, response: str) -> ContradictionFinding:
@@ -784,6 +862,21 @@ class ConversationMemory:
         finding = self.detect(new, priors) if priors else ContradictionFinding(contradiction=False)
         finding._new_commitments = new  # type: ignore[attr-defined]
         return finding
+
+    def check_all(self, session: str, query: str, response: str) -> list:
+        """
+        Like check(), but returns every contradiction the new reply raises
+        against the conversation, strongest first (empty if none). Use it when a
+        single reply can break more than one established commitment, which gets
+        common once a conversation has accumulated several. Does NOT store the
+        new commitments (call ingest_commitments to persist).
+        """
+        new = self.extract(query, response, session=session)
+        priors = self.relevant(session, new)
+        findings = self.detect_all(new, priors) if priors else []
+        for f in findings:
+            f._new_commitments = new  # type: ignore[attr-defined]
+        return findings
 
     def ingest_commitments(self, commitments: list) -> None:
         # Dedup first so an identical restatement does not accumulate in the

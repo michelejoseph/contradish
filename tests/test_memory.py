@@ -132,6 +132,21 @@ def test_relevant_respects_top_k():
     assert len(mem.relevant("u1", new)) == 2
 
 
+def test_relevant_anchors_original_position_over_recent_drift():
+    # Multi-turn drift: the model moves a step per turn, so the newest reply
+    # agrees with the most recent restatement and only conflicts with the
+    # original position. The recent restatements are lexically closer to the new
+    # claim, so pure score ranking would fill a small top_k with them and drop
+    # the original; anchoring must keep the turn-0 commitment in view.
+    mem = ConversationMemory(store=InMemoryCommitmentStore(), top_k=1)
+    mem.store.add(Commitment(claim="Returns are accepted within 30 days", topic="refund policy", session="u1", turn=0))
+    mem.store.add(Commitment(claim="Returns within 35 days", topic="return window", session="u1", turn=2))
+    mem.store.add(Commitment(claim="Returns within 40 days", topic="return window", session="u1", turn=4))
+    new = [Commitment(claim="Returns within 60 days", topic="return window", session="u1", turn=6)]
+    rel = mem.relevant("u1", new)
+    assert any(c.turn == 0 for c in rel), "the original (turn 0) commitment must be retrieved as the anchor"
+
+
 # ── Extraction ──────────────────────────────────────────────────────────
 
 def test_extract_parses_list():
@@ -190,6 +205,52 @@ def test_detect_false_without_priors():
     mem = ConversationMemory(llm=FakeLLM(), store=InMemoryCommitmentStore())
     new = [Commitment(claim="anything", topic="t", session="u1")]
     assert mem.detect(new, []).contradiction is False
+
+
+def test_detect_all_returns_multiple_sorted_by_confidence():
+    # A drifting reply can break several established commitments at once; all of
+    # them surface, strongest (highest confidence) first.
+    detect = {"contradictions": [
+        {"new_claim": "ships in 2 days", "prior_claim": "Standard shipping is 5 days", "explanation": "x", "confidence": 0.7},
+        {"new_claim": "returns are free", "prior_claim": "Returns cost 5 dollars", "explanation": "y", "confidence": 0.95},
+    ]}
+    mem = ConversationMemory(llm=FakeLLM(detect=detect), store=InMemoryCommitmentStore())
+    priors = [Commitment(claim="Standard shipping is 5 days", topic="shipping", session="u1", turn=0),
+              Commitment(claim="Returns cost 5 dollars", topic="returns", session="u1", turn=1)]
+    new = [Commitment(claim="ships in 2 days", topic="shipping", session="u1", turn=2)]
+    found = mem.detect_all(new, priors)
+    assert len(found) == 2
+    assert found[0].prior_claim == "Returns cost 5 dollars"          # highest confidence first
+    assert found[0].confidence == 0.95
+    assert mem.detect(new, priors).prior_claim == "Returns cost 5 dollars"   # single view = strongest
+
+
+def test_detect_legacy_single_verdict_still_works():
+    # Older judges (and the existing mocks) return a single {"contradiction": ...}
+    # object; that path must keep working.
+    detect = {"contradiction": True, "new_claim": "n", "prior_claim": "Refund window is 30 days",
+              "explanation": "e", "confidence": 0.6}
+    mem = ConversationMemory(llm=FakeLLM(detect=detect), store=InMemoryCommitmentStore())
+    priors = [Commitment(claim="Refund window is 30 days", topic="refund", session="u1", turn=0)]
+    new = [Commitment(claim="Refund window is 60 days", topic="refund", session="u1", turn=1)]
+    assert mem.detect(new, priors).contradiction is True
+    assert len(mem.detect_all(new, priors)) == 1
+
+
+def test_check_all_surfaces_every_contradiction():
+    llm = FakeLLM(
+        extract_map={"both": '[{"claim":"ships in 2 days","topic":"shipping"},{"claim":"returns are free","topic":"returns"}]'},
+        detect={"contradictions": [
+            {"new_claim": "ships in 2 days", "prior_claim": "Standard shipping is 5 days", "explanation": "x", "confidence": 0.6},
+            {"new_claim": "returns are free", "prior_claim": "Returns cost 5 dollars", "explanation": "y", "confidence": 0.9},
+        ]},
+    )
+    mem = ConversationMemory(llm=llm, store=InMemoryCommitmentStore())
+    mem.store.add(Commitment(claim="Standard shipping is 5 days", topic="shipping", session="u1", turn=0))
+    mem.store.add(Commitment(claim="Returns cost 5 dollars", topic="returns", session="u1", turn=1))
+    findings = mem.check_all("u1", "both", "both shipping and returns details")
+    assert len(findings) == 2
+    assert findings[0].confidence == 0.9
 
 
 # ── Repair ──────────────────────────────────────────────────────────────
