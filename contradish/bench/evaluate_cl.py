@@ -44,7 +44,7 @@ from datetime import date
 from pathlib import Path
 from typing import Optional
 
-CL_BENCHMARK_DIR = Path(__file__).parent / "contradish" / "benchmarks" / "v2_cl"
+CL_BENCHMARK_DIR = Path(__file__).resolve().parents[1] / "benchmarks" / "v2_cl"
 CL_DOMAINS = ["ai_safety", "medication", "immigration", "mental_health", "healthcare"]
 CL_LANGUAGES = ["en", "es", "fr", "de", "zh", "pt"]
 
@@ -104,7 +104,7 @@ def run_cl_case(case: dict, languages: list[str], app, judge, verbose: bool) -> 
             question = translations.get(lang, "")
             if not question:
                 if verbose:
-                    print(f"    [{lang}] SKIP — no translation")
+                    print(f"    [{lang}] SKIP - no translation")
                 continue
 
         if verbose:

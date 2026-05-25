@@ -1067,7 +1067,7 @@ def cmd_diagnose(args):
         return
 
     # Save outputs via evaluate_repair
-    from evaluate_repair import save_report, print_summary
+    from contradish.bench.evaluate_repair import save_report, print_summary
     report_json, jsonl_path, prompt_path = save_report(report, output_dir)
 
     if not quiet:
@@ -1202,7 +1202,7 @@ def cmd_benchmark(args):
     result = None
 
     if test == "v2" or test == "full":
-        from evaluate import run_benchmark, print_summary, save_result
+        from contradish.bench.evaluate import run_benchmark, print_summary, save_result
         result = run_benchmark(
             model=model,
             provider=provider,
@@ -1216,7 +1216,7 @@ def cmd_benchmark(args):
         print(f"  result saved: {path}")
 
     elif test == "jailbreaks" or test == "jrr":
-        from evaluate_jailbreaks import run_jrr_benchmark
+        from contradish.bench.evaluate_jailbreaks import run_jrr_benchmark
         jb_ids = args.jb.split(",") if getattr(args, "jb", None) else None
         tq_ids = args.tq.split(",") if getattr(args, "tq", None) else None
         result = run_jrr_benchmark(
@@ -1229,7 +1229,7 @@ def cmd_benchmark(args):
         )
 
     elif test == "population" or test == "pc":
-        from evaluate_pc import run_pc_benchmark, PC_DOMAINS
+        from contradish.bench.evaluate_pc import run_pc_benchmark, PC_DOMAINS
         domains = [domain] if domain else PC_DOMAINS
         result = run_pc_benchmark(
             model=model,
@@ -1241,7 +1241,7 @@ def cmd_benchmark(args):
         )
 
     elif test == "multilang" or test == "cl":
-        from evaluate_cl import run_cl_benchmark, CL_DOMAINS, CL_LANGUAGES
+        from contradish.bench.evaluate_cl import run_cl_benchmark, CL_DOMAINS, CL_LANGUAGES
         domains = [domain] if domain else CL_DOMAINS
         langs = args.lang.split(",") if getattr(args, "lang", None) else CL_LANGUAGES
         result = run_cl_benchmark(
@@ -1254,7 +1254,7 @@ def cmd_benchmark(args):
         )
 
     elif test == "multiturn" or test == "mt":
-        from evaluate_mt import run_mt_benchmark, MT_DOMAINS
+        from contradish.bench.evaluate_mt import run_mt_benchmark, MT_DOMAINS
         domains = [domain] if domain else MT_DOMAINS
         result = run_mt_benchmark(
             model=model,
@@ -1265,7 +1265,7 @@ def cmd_benchmark(args):
         )
 
     elif test == "compound" or test == "cat":
-        from evaluate_cat import run_cat_benchmark, CAT_DOMAINS
+        from contradish.bench.evaluate_cat import run_cat_benchmark, CAT_DOMAINS
         domains = [domain] if domain else CAT_DOMAINS
         result = run_cat_benchmark(
             model=model,
@@ -1277,7 +1277,7 @@ def cmd_benchmark(args):
         )
 
     elif test == "anchoring" or test == "spa":
-        from evaluate_spa import run_spa_benchmark, DOMAINS
+        from contradish.bench.evaluate_spa import run_spa_benchmark, DOMAINS
         domains = [domain] if domain else DOMAINS
         result = run_spa_benchmark(
             model=model,
@@ -1289,7 +1289,7 @@ def cmd_benchmark(args):
         )
 
     elif test in ("sra", "routing"):
-        from evaluate_sra import run_sra_benchmark, print_summary as sra_summary
+        from contradish.bench.evaluate_sra import run_sra_benchmark, print_summary as sra_summary
         domains = [domain] if domain else None
         result = run_sra_benchmark(
             provider=provider,

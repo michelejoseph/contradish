@@ -74,7 +74,7 @@ POLICIES_V2 = [
 
 POLICIES = POLICIES_V2  # default: run v2
 
-BENCHMARK_DIR = Path(__file__).parent / "contradish" / "benchmarks" / BENCHMARK_VERSION
+BENCHMARK_DIR = Path(__file__).resolve().parents[1] / "benchmarks" / BENCHMARK_VERSION
 
 TECHNIQUE_NAMES = [
     "emotional",       # T1
@@ -187,7 +187,7 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool) -> dict:
             elif t_idx < len(adversarial):
                 technique_scores[t_name].append(score)
 
-        # Refusal Quality Score (RQS) — score how well the model refused
+        # Refusal Quality Score (RQS) - score how well the model refused
         # on the original question (the canonical, unmanipulated phrasing)
         rqs_result = None
         if hasattr(judge, "evaluate_refusal_quality"):
@@ -199,14 +199,14 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool) -> dict:
                     if complied:
                         print(f"  RQS: complied (no refusal to score)")
                     elif rqs_val is not None:
-                        print(f"  RQS: {rqs_val:.3f} — {rqs_result.get('summary', '')[:60]}")
+                        print(f"  RQS: {rqs_val:.3f} - {rqs_result.get('summary', '')[:60]}")
             except Exception as e:
                 if verbose:
                     print(f"  RQS: error ({e})")
 
         # Judgment-aware scoring. For adversarial cases (the shipped default)
         # judgment_strain == cai_strain. For real_world_tension / representational
-        # cases, consistency is the wrong target — ask the judge whether the
+        # cases, consistency is the wrong target - ask the judge whether the
         # model did the appropriate thing instead.
         tension_response_score = None
         reframe_score = None
@@ -312,7 +312,7 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool) -> dict:
 
     # Judgment-aware aggregates: the two-sided metric. Over EQ-cleared cases,
     # judgment_strain scores each case against what the *correct* response to
-    # its contradiction_type looks like — drift on adversarial cases, rigidity
+    # its contradiction_type looks like - drift on adversarial cases, rigidity
     # on real_world_tension cases, failure-to-reframe on representational ones.
     judgment_vals = [
         d["judgment_strain"] for d in details
@@ -597,7 +597,7 @@ examples:
     bv = args.benchmark_version
     global BENCHMARK_VERSION, BENCHMARK_DIR, POLICIES
     BENCHMARK_VERSION = bv
-    BENCHMARK_DIR = Path(__file__).parent / "contradish" / "benchmarks" / bv
+    BENCHMARK_DIR = Path(__file__).resolve().parents[1] / "benchmarks" / bv
     POLICIES = POLICIES_V1 if bv == "v1" else POLICIES_V2
 
     for model in models_to_run:

@@ -39,7 +39,7 @@ from pathlib import Path
 from typing import Optional
 
 
-MT_BENCHMARK_DIR = Path(__file__).parent / "contradish" / "benchmarks" / "v2_mt"
+MT_BENCHMARK_DIR = Path(__file__).resolve().parents[1] / "benchmarks" / "v2_mt"
 MT_DOMAINS = ["ecommerce", "healthcare", "ai_safety", "medication", "immigration"]
 
 

@@ -1,20 +1,20 @@
 """
-contradish CSA — Coherence Self-Awareness analysis.
+contradish CSA - Coherence Self-Awareness analysis.
 
 Answers the question no other benchmark asks:
   Does this model know what it doesn't know?
 
 Takes any contradish result JSON (SRA or benchmark).
-For every case, scores whether the model signaled its own uncertainty —
+For every case, scores whether the model signaled its own uncertainty -
 regardless of whether it drifted. A model can drift with high CSA (the
 failure is visible and recoverable) or hold with low CSA (lucky consistency
 that will eventually fail silently). The 2D map is what matters.
 
 Four quadrants:
-  stable_aware    — held position AND showed awareness of pressure       (best)
-  stable_unaware  — held position but showed no awareness                (lucky)
-  drifted_aware   — drifted but signaled uncertainty                     (recoverable)
-  drifted_unaware — drifted silently with full apparent confidence       (worst)
+  stable_aware    - held position AND showed awareness of pressure       (best)
+  stable_unaware  - held position but showed no awareness                (lucky)
+  drifted_aware   - drifted but signaled uncertainty                     (recoverable)
+  drifted_unaware - drifted silently with full apparent confidence       (worst)
 
 Usage:
     python evaluate_csa.py --input results/sra_claude-sonnet-4-6.json
@@ -243,7 +243,7 @@ def print_csa_summary(analysis: dict, result_path: str) -> None:
     print(f"  {GREEN('stable_aware')}    held position AND knew it was pressured  {DIM('(best)')}")
     print(f"  {YELLOW('stable_unaware')}  held position but showed no awareness   {DIM('(lucky)')}")
     print(f"  {YELLOW('drifted_aware')}   drifted but signaled uncertainty         {DIM('(recoverable)')}")
-    print(f"  {RED('drifted_unaware')} silent confident drift — invisible failure {DIM('(worst)')}")
+    print(f"  {RED('drifted_unaware')} silent confident drift - invisible failure {DIM('(worst)')}")
     print()
 
     # CSA by contradiction type
@@ -264,7 +264,7 @@ def print_csa_summary(analysis: dict, result_path: str) -> None:
     worst = analysis.get("worst_cases", [])
     if worst:
         print(f"  {BOLD(RED('CRITICAL: drifted_unaware cases'))}")
-        print(f"  {DIM('Silent confident drift — model gave wrong answer with no uncertainty signal')}")
+        print(f"  {DIM('Silent confident drift - model gave wrong answer with no uncertainty signal')}")
         for c in worst:
             print(f"  {RED('WORST')}  {c['domain']}/{c['topic']}  "
                   f"[{c['technique']}]  csa={c['csa_score']:.2f}")
@@ -336,7 +336,7 @@ examples:
     )
 
     if not args.quiet and not args.json:
-        print(f"\n  contradish CSA  —  {len(cases)} cases  —  judge: {judge_provider}/{judge_model}")
+        print(f"\n  contradish CSA  -  {len(cases)} cases  -  judge: {judge_provider}/{judge_model}")
 
     from contradish.llm import LLMClient
     from contradish.judge import Judge
@@ -364,7 +364,7 @@ examples:
         out_path = f"results/csa_{stem}.json"
 
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
-    # Don't serialize full case responses — too large
+    # Don't serialize full case responses - too large
     export = {k: v for k, v in analysis.items() if k not in ("cases", "worst_cases", "best_cases")}
     export["worst_cases"] = [
         {k: v for k, v in c.items() if k != "response"}

@@ -47,7 +47,7 @@ from datetime import date
 from pathlib import Path
 from typing import Optional
 
-CAT_BENCHMARK_DIR = Path(__file__).parent / "contradish" / "benchmarks" / "v2_cat"
+CAT_BENCHMARK_DIR = Path(__file__).resolve().parents[1] / "benchmarks" / "v2_cat"
 CAT_DOMAINS = ["ai_safety", "medication", "mental_health", "immigration", "cybersecurity"]
 CAT_ATTACK_IDS = ["CA1", "CA2", "CA3", "CA4", "CA5"]
 
@@ -133,7 +133,7 @@ def run_cat_case(case: dict, attack_ids: list[str], app, judge, verbose: bool) -
         attack_text = compound_attacks.get(attack_id, "")
         if not attack_text:
             if verbose:
-                print(f"    [{attack_id}] SKIP — not defined")
+                print(f"    [{attack_id}] SKIP - not defined")
             continue
 
         if verbose:

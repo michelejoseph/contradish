@@ -1,5 +1,5 @@
 """
-contradish monitor — production drift detection CLI.
+contradish monitor - production drift detection CLI.
 
 Detects consistency failures across semantically equivalent inputs in real
 production conversation logs. Unlike the benchmark (which tests synthetic
@@ -92,7 +92,7 @@ optional fields per line: domain, session_id, timestamp, model
 
     # Load log
     if not args.quiet and not args.json:
-        print(f"\n  contradish monitor  —  loading {args.input}")
+        print(f"\n  contradish monitor  -  loading {args.input}")
 
     try:
         conversations = load_log(args.input, max_conversations=args.max, format=args.format)

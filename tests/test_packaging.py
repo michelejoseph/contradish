@@ -57,6 +57,25 @@ def test_benchmark_data_present():
     assert len(jsons) >= 20, f"expected the benchmark JSON fixtures to ship, found {len(jsons)}"
 
 
+def test_benchmark_runners_ship_in_package():
+    # The CAI-Bench runners must live inside the contradish package, not at the
+    # repo root. If they slip back to root-level modules they fall out of the
+    # wheel and `contradish benchmark` (the command the site leads with) dies
+    # with ModuleNotFoundError on a fresh `pip install` for every user.
+    import importlib
+    for name in ("evaluate", "evaluate_jailbreaks", "evaluate_pc", "evaluate_cl",
+                 "evaluate_mt", "evaluate_cat", "evaluate_spa", "evaluate_sra",
+                 "evaluate_repair"):
+        importlib.import_module(f"contradish.bench.{name}")
+
+
+def test_benchmark_data_resolves_from_package():
+    # The default `contradish benchmark` (v2) must find its fixtures relative to
+    # the installed package, not relative to a repo checkout.
+    import contradish.bench.evaluate as e
+    assert e.BENCHMARK_DIR.exists(), f"benchmark data dir does not resolve: {e.BENCHMARK_DIR}"
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     passed = 0

@@ -85,23 +85,27 @@ runs:
 
         contradish benchmark $ARGS --report contradish-report.html 2>&1 | tee benchmark-output.txt
 
-        # Extract CAI Strain from output
-        STRAIN=$(grep -oP 'CAI [Ss]train:\s+\K[0-9.]+' benchmark-output.txt | head -1 || \
-                 grep -oP 'CL-Strain:\s+\K[0-9.]+' benchmark-output.txt | head -1 || \
-                 grep -oP 'Strain:\s+\K[0-9.]+' benchmark-output.txt | head -1 || echo "0")
-
+        # Read the score from the structured result file, not stdout. A parse
+        # miss must FAIL the gate, never pass it, so a broken run cannot show green.
         RESULT_FILE=$(ls results/*.json 2>/dev/null | sort | tail -1 || echo "")
-
-        echo "strain=$STRAIN" >> $GITHUB_OUTPUT
         echo "result_file=$RESULT_FILE" >> $GITHUB_OUTPUT
 
         THRESHOLD=${{ inputs.threshold_strain }}
-        if python3 -c "exit(0 if float('$STRAIN') <= float('$THRESHOLD') else 1)"; then
+        STRAIN=$(python3 -c "import json; d=json.load(open('$RESULT_FILE')); print(next((d[k] for k in ('avg_cai_strain','avg_judgment_strain','cai_strain','judgment_strain') if isinstance(d.get(k),(int,float))),''))" 2>/dev/null) || STRAIN=""
+
+        if [ -z "$STRAIN" ]; then
+          echo "passed=false" >> $GITHUB_OUTPUT
+          echo "contradish: could not read CAI Strain from '$RESULT_FILE'; failing the gate (fail-closed)."
+          exit 1
+        fi
+
+        echo "strain=$STRAIN" >> $GITHUB_OUTPUT
+        if python3 -c "import sys; sys.exit(0 if float('$STRAIN') <= float('$THRESHOLD') else 1)"; then
           echo "passed=true" >> $GITHUB_OUTPUT
-          echo "✅ contradish: CAI Strain $STRAIN ≤ threshold $THRESHOLD — PASSED"
+          echo "contradish: CAI Strain $STRAIN <= threshold $THRESHOLD - PASSED"
         else
           echo "passed=false" >> $GITHUB_OUTPUT
-          echo "❌ contradish: CAI Strain $STRAIN > threshold $THRESHOLD — FAILED"
+          echo "contradish: CAI Strain $STRAIN > threshold $THRESHOLD - FAILED"
           exit 1
         fi
 

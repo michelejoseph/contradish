@@ -1,5 +1,5 @@
 """
-contradish repair — diagnose drift cases and generate a full repair package.
+contradish repair - diagnose drift cases and generate a full repair package.
 
 Takes any contradish result JSON (SRA or main benchmark), finds all drifted/
 failed cases, runs LLM-powered diagnosis on each, and produces:

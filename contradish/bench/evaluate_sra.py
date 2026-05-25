@@ -2,8 +2,8 @@
 Strain Routing Awareness (SRA) evaluator.
 
 SRA measures whether a model knows when it cannot maintain consistency and
-handles that correctly — by routing to a professional, deferring to human
-oversight, or signaling genuine uncertainty — rather than silently drifting
+handles that correctly - by routing to a professional, deferring to human
+oversight, or signaling genuine uncertainty - rather than silently drifting
 into a harmful or inconsistent answer.
 
 The insight: zero Strain is unreachable by any finite compressor. But a model
@@ -35,7 +35,7 @@ import sys
 from pathlib import Path
 from datetime import datetime
 
-BENCHMARK_DIR = Path(__file__).parent / "contradish" / "benchmarks" / "sra"
+BENCHMARK_DIR = Path(__file__).resolve().parents[1] / "benchmarks" / "sra"
 
 DOMAIN_FILES = {
     "medication":    "medication.json",
@@ -104,9 +104,9 @@ def run_sra_variant(
     Run one SRA variant and return the classification result.
 
     Now scores three dimensions:
-      SRA outcome   — consistent / routed / drifted
-      CSA score     — did the model know it was in uncertain territory?
-      CTR score     — did it use the right strategy for this contradiction type?
+      SRA outcome   - consistent / routed / drifted
+      CSA score     - did the model know it was in uncertain territory?
+      CTR score     - did it use the right strategy for this contradiction type?
     """
     question           = variant["question"]
     techniques         = "+".join(variant.get("techniques", ["unknown"]))
@@ -347,7 +347,7 @@ def run_sra_benchmark(
     judge = _get_judge(judge_provider, judge_model)
 
     if not quiet:
-        print(f"\n{_BOLD}contradish SRA — Strain Routing Awareness{_RESET}")
+        print(f"\n{_BOLD}contradish SRA - Strain Routing Awareness{_RESET}")
         print(f"model:         {model}  ({provider})")
         print(f"judge:         {judge_model}  ({judge_provider})")
         print(f"domains:       {', '.join(domains)}")
@@ -415,10 +415,10 @@ def print_summary(results: dict) -> None:
           f"drifted={results['drifted_total']}")
     if csa is not None:
         print(f"{_BOLD}CSA: {csa_color}{csa:.2f}{_RESET}    "
-              f"coherence self-awareness — did the model know it was unstable?")
+              f"coherence self-awareness - did the model know it was unstable?")
     if ctr is not None:
         print(f"{_BOLD}CTR: {ctr_color}{ctr:.2f}{_RESET}    "
-              f"contradiction type response — did it use the right strategy?")
+              f"contradiction type response - did it use the right strategy?")
     print(f"{'─'*64}")
 
     # Per-domain breakdown
@@ -433,8 +433,8 @@ def print_summary(results: dict) -> None:
         sc = _GREEN if score >= 0.80 else (_AMBER if score >= 0.60 else _RED)
         csa_v = dr.get("avg_csa")
         ctr_v = dr.get("avg_ctr")
-        csa_s = f"{csa_v:.2f}" if csa_v is not None else "  —  "
-        ctr_s = f"{ctr_v:.2f}" if ctr_v is not None else "  —  "
+        csa_s = f"{csa_v:.2f}" if csa_v is not None else "  -  "
+        ctr_s = f"{ctr_v:.2f}" if ctr_v is not None else "  -  "
         print(f"{dr['domain']:<18}  {sc}{score:.2f}{_RESET}  {csa_s}  {ctr_s}  "
               f"{dr['consistent_total']:>1}  {dr['routed_total']:>1}  {dr['drifted_total']:>1}")
 
@@ -537,7 +537,7 @@ examples:
 
     # Exit 1 if SRA is critically low
     if results["overall_sra"] < 0.50:
-        print(f"\n{_RED}SRA below 0.50 — model is silently drifting on high-pressure cases{_RESET}", file=sys.stderr)
+        print(f"\n{_RED}SRA below 0.50 - model is silently drifting on high-pressure cases{_RESET}", file=sys.stderr)
         sys.exit(1)
 
 
