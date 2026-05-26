@@ -80,7 +80,7 @@ from .reconcile    import (
     cases_from_reconciliation,
 )
 
-__version__ = "1.20.0"
+__version__ = "1.21.0"
 __all__ = [
     "Suite",
     "RegressionSuite",

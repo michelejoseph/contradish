@@ -253,6 +253,63 @@ def test_check_all_surfaces_every_contradiction():
     assert findings[0].confidence == 0.9
 
 
+# ── Stateful agents: durable vs volatile commitments ─────────────────────
+
+def test_commitment_kind_roundtrip():
+    assert Commitment(claim="x").kind == "durable"                       # default
+    c = Commitment(claim="Balance is 100 dollars", topic="balance", kind="volatile")
+    assert Commitment.from_dict(c.to_dict()).kind == "volatile"
+    assert Commitment.from_dict({"claim": "y"}).kind == "durable"        # missing -> durable
+
+
+def test_extract_classifies_kind_volatile():
+    llm = FakeLLM(extract_map={"balance": '[{"claim":"Balance is 100 dollars","topic":"balance","kind":"volatile"}]'})
+    mem = ConversationMemory(llm=llm, store=InMemoryCommitmentStore())
+    out = mem.extract("balance?", "Your balance is 100 dollars", session="u1")
+    assert out[0].kind == "volatile"
+
+
+def test_extract_kind_defaults_durable_when_absent():
+    llm = FakeLLM(extract_map={"refund": '[{"claim":"Refund window is 30 days","topic":"refund window"}]'})
+    mem = ConversationMemory(llm=llm, store=InMemoryCommitmentStore())
+    out = mem.extract("refund?", "refund policy", session="u1")
+    assert out[0].kind == "durable"
+
+
+def test_detect_suppresses_volatile_state_change():
+    # A stateful agent legitimately changes state: balance 100 -> 50 is a
+    # withdrawal, not a contradiction. Volatile changes must not be flagged.
+    detect = {"contradictions": [
+        {"new_claim": "Account balance is 50 dollars", "prior_claim": "Account balance is 100 dollars", "explanation": "changed", "confidence": 0.9}
+    ]}
+    mem = ConversationMemory(llm=FakeLLM(detect=detect), store=InMemoryCommitmentStore())
+    prior = [Commitment(claim="Account balance is 100 dollars", topic="balance", session="u1", turn=0, kind="volatile")]
+    new = [Commitment(claim="Account balance is 50 dollars", topic="balance", session="u1", turn=1, kind="volatile")]
+    assert mem.detect_all(new, prior) == []
+    assert mem.detect(new, prior).contradiction is False
+
+
+def test_detect_flags_durable_change():
+    detect = {"contradictions": [
+        {"new_claim": "Refund window is 14 days", "prior_claim": "Refund window is 30 days", "explanation": "changed", "confidence": 0.85}
+    ]}
+    mem = ConversationMemory(llm=FakeLLM(detect=detect), store=InMemoryCommitmentStore())
+    prior = [Commitment(claim="Refund window is 30 days", topic="refund window", session="u1", turn=0, kind="durable")]
+    new = [Commitment(claim="Refund window is 14 days", topic="refund window", session="u1", turn=1, kind="durable")]
+    found = mem.detect_all(new, prior)
+    assert len(found) == 1 and found[0].prior_claim == "Refund window is 30 days"
+
+
+def test_flag_state_changes_reenables_volatile():
+    detect = {"contradictions": [
+        {"new_claim": "Account balance is 50 dollars", "prior_claim": "Account balance is 100 dollars", "explanation": "changed", "confidence": 0.9}
+    ]}
+    mem = ConversationMemory(llm=FakeLLM(detect=detect), store=InMemoryCommitmentStore(), flag_state_changes=True)
+    prior = [Commitment(claim="Account balance is 100 dollars", topic="balance", session="u1", turn=0, kind="volatile")]
+    new = [Commitment(claim="Account balance is 50 dollars", topic="balance", session="u1", turn=1, kind="volatile")]
+    assert len(mem.detect_all(new, prior)) == 1
+
+
 # ── Repair ──────────────────────────────────────────────────────────────
 
 def test_repair_returns_text_on_contradiction():

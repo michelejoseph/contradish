@@ -85,6 +85,13 @@ class Commitment:
     created_at:      float = field(default_factory=time.time)
     embedding:       Optional[list] = None
     origin:          str = "response"
+    # "durable" = a policy, rule, definition, or stable fact that should not
+    # change (a refund window, a dosage ceiling). "volatile" = state that
+    # legitimately changes over time (a balance, an order status, a count, a
+    # date, a scheduled time). A change to a durable commitment is a
+    # contradiction; a change to a volatile one is a normal state update. This
+    # is what makes the memory layer safe for stateful agents.
+    kind:            str = "durable"
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -102,6 +109,7 @@ class Commitment:
             created_at=float(d.get("created_at", time.time())),
             embedding=list(emb) if isinstance(emb, (list, tuple)) else None,
             origin=str(d.get("origin", "response")),
+            kind=str(d.get("kind", "durable") or "durable"),
         )
 
 
@@ -565,10 +573,12 @@ Assistant replied: {response}
 
 A commitment is a specific assertion the reply commits to: a policy, number, rule, eligibility, recommendation, or factual claim that could later be contradicted. Ignore pleasantries, hedges, clarifying questions, and pure restatement of the user's words. Normalize each into a short standalone statement that makes sense on its own.
 
-For each commitment also give a short topic key of 2 to 4 lowercase words, used to find related statements later (for example "refund window", "melatonin long term use").
+For each commitment give a short topic key of 2 to 4 lowercase words, used to find related statements later (for example "refund window", "melatonin long term use").
+
+Also tag each commitment's kind. Use "durable" if it is a policy, rule, definition, or stable fact that should not change during the conversation (a refund window, a dosage ceiling, an eligibility rule). Use "volatile" if it is a value that legitimately changes over time (a current balance, an order status, a count, today's date, a scheduled time). A later change to a durable commitment is a contradiction; a change to a volatile one is just an update.
 
 Return JSON only, no markdown, as a list:
-[{{"claim": "<normalized standalone assertion>", "topic": "<short topic key>"}}]
+[{{"claim": "<normalized standalone assertion>", "topic": "<short topic key>", "kind": "durable" or "volatile"}}]
 
 If the reply makes no checkable commitment, return []."""
 
@@ -619,6 +629,16 @@ class ConversationMemory:
                     twice in a session. Only exact normalized-claim matches are
                     dropped, so a conflicting claim is still stored and surfaced
                     by the check path rather than merged away.
+        flag_state_changes: when False (default), a changed value on a volatile
+                    commitment (a balance, a status, a count) is treated as a
+                    normal state update and not reported as a contradiction, so
+                    a stateful agent that legitimately mutates state is not
+                    flagged on every change. Set True to treat volatile changes
+                    as contradictions too.
+
+    For a persistent agent, pass a stable id as the `session` so commitments
+    carry across conversations and a contradiction made weeks apart is still
+    caught.
     """
 
     def __init__(
@@ -632,6 +652,7 @@ class ConversationMemory:
         relevance_threshold: float = 0.3,
         top_k:               int = 5,
         dedup:               bool = True,
+        flag_state_changes:  bool = False,
     ):
         self._llm_arg     = llm
         self._api_key     = api_key
@@ -642,6 +663,7 @@ class ConversationMemory:
         self.relevance_threshold = relevance_threshold
         self.top_k        = top_k
         self.dedup        = dedup
+        self.flag_state_changes = flag_state_changes
         self._llm_cached  = llm  # may be None; built lazily on first LLM use
 
     @classmethod
@@ -707,6 +729,7 @@ class ConversationMemory:
                 source_query=query,
                 source_response=response,
                 turn=turn,
+                kind=("volatile" if str(item.get("kind", "")).strip().lower() == "volatile" else "durable"),
             ))
         return out
 
@@ -804,6 +827,11 @@ class ConversationMemory:
                 (c for c in ordered_priors if c.claim == prior_claim),
                 None,
             ) or ordered_priors[0]
+            # A changed volatile fact (balance, status, count, date) is a normal
+            # state update for a stateful agent, not a contradiction. Suppress it
+            # unless the caller opted into flagging state changes.
+            if getattr(matched, "kind", "durable") == "volatile" and not self.flag_state_changes:
+                continue
             conf = item.get("confidence")
             try:
                 conf = float(conf) if conf is not None else None
