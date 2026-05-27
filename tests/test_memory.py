@@ -310,6 +310,22 @@ def test_flag_state_changes_reenables_volatile():
     assert len(mem.detect_all(new, prior)) == 1
 
 
+def test_conversation_memory_records_to_ledger():
+    # Observing across time: the memory layer appends commitments and
+    # contradictions to a tamper-evident ledger as it runs.
+    from contradish import CommitmentLedger
+    led = CommitmentLedger()
+    detect = {"contradictions": [{"new_claim": "Refund window is 60 days", "prior_claim": "Refund window is 30 days", "explanation": "x", "confidence": 0.9}]}
+    llm = FakeLLM(extract_map={"60 days": '[{"claim":"Refund window is 60 days","topic":"refund window"}]'}, detect=detect)
+    mem = ConversationMemory(llm=llm, store=InMemoryCommitmentStore(), ledger=led)
+    mem.store.add(Commitment(claim="Refund window is 30 days", topic="refund window", session="u1", turn=0))
+    finding = mem.check("u1", "can I refund at 60 days?", "Refund window is 60 days")
+    assert finding.contradiction is True
+    mem.ingest_commitments(getattr(finding, "_new_commitments"))
+    s = led.audit_summary()
+    assert s["contradictions"] == 1 and s["commitments"] == 1 and s["verified"] is True
+
+
 # ── Repair ──────────────────────────────────────────────────────────────
 
 def test_repair_returns_text_on_contradiction():

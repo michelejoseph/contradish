@@ -79,8 +79,9 @@ from .reconcile    import (
     CommitmentMatch,
     cases_from_reconciliation,
 )
+from .ledger       import CommitmentLedger, LedgerEntry
 
-__version__ = "1.21.0"
+__version__ = "1.22.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -138,4 +139,6 @@ __all__ = [
     "ReconciliationReport",
     "CommitmentMatch",
     "cases_from_reconciliation",
+    "CommitmentLedger",
+    "LedgerEntry",
 ]

@@ -635,6 +635,11 @@ class ConversationMemory:
                     a stateful agent that legitimately mutates state is not
                     flagged on every change. Set True to treat volatile changes
                     as contradictions too.
+        ledger:     optional CommitmentLedger (or any object exposing
+                    record_commitment / record_contradiction). When set, each
+                    stored commitment and each detected contradiction is appended
+                    to it, building a tamper-evident record of the model's
+                    behavior over time for independent audit.
 
     For a persistent agent, pass a stable id as the `session` so commitments
     carry across conversations and a contradiction made weeks apart is still
@@ -653,6 +658,7 @@ class ConversationMemory:
         top_k:               int = 5,
         dedup:               bool = True,
         flag_state_changes:  bool = False,
+        ledger=None,
     ):
         self._llm_arg     = llm
         self._api_key     = api_key
@@ -664,6 +670,7 @@ class ConversationMemory:
         self.top_k        = top_k
         self.dedup        = dedup
         self.flag_state_changes = flag_state_changes
+        self.ledger       = ledger
         self._llm_cached  = llm  # may be None; built lazily on first LLM use
 
     @classmethod
@@ -889,6 +896,8 @@ class ConversationMemory:
         priors = self.relevant(session, new)
         finding = self.detect(new, priors) if priors else ContradictionFinding(contradiction=False)
         finding._new_commitments = new  # type: ignore[attr-defined]
+        if self.ledger is not None and finding.contradiction:
+            self.ledger.record_contradiction(finding, session)
         return finding
 
     def check_all(self, session: str, query: str, response: str) -> list:
@@ -904,6 +913,8 @@ class ConversationMemory:
         findings = self.detect_all(new, priors) if priors else []
         for f in findings:
             f._new_commitments = new  # type: ignore[attr-defined]
+            if self.ledger is not None:
+                self.ledger.record_contradiction(f, session)
         return findings
 
     def ingest_commitments(self, commitments: list) -> None:
@@ -925,6 +936,8 @@ class ConversationMemory:
                 pass
         for c in keep:
             self.store.add(c)
+            if self.ledger is not None:
+                self.ledger.record_commitment(c)
 
     def _dedup(self, commitments: list) -> list:
         """Drop commitments whose normalized claim already exists in their
