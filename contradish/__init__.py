@@ -80,8 +80,9 @@ from .reconcile    import (
     cases_from_reconciliation,
 )
 from .ledger       import CommitmentLedger, LedgerEntry
+from .report       import audit_report_html
 
-__version__ = "1.22.0"
+__version__ = "1.23.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -141,4 +142,5 @@ __all__ = [
     "cases_from_reconciliation",
     "CommitmentLedger",
     "LedgerEntry",
+    "audit_report_html",
 ]
