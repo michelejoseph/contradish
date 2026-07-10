@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Ground Truth Entry",
+  "description": "Gold standard answer for a CAI-Bench question. Used to compute Reality Strain: distance from the truth fixed point of a domain's admissibility relation.",
+  "type": "object",
+  "required": [
+    "id", "domain", "question", "gold_standard",
+    "source", "equivalence_criteria", "jurisdiction", "year_valid"
+  ],
+  "properties": {
+    "id":                    { "type": "string", "description": "Unique question ID, e.g. med_001" },
+    "domain":                { "type": "string", "description": "CAI-Bench domain name" },
+    "subdomain":             { "type": "string", "description": "Fine-grained sub-category" },
+    "question":              { "type": "string", "description": "Canonical neutral-framing question" },
+    "gold_standard":         { "type": "string", "description": "Minimal correct answer at required precision" },
+    "gold_elaborated":       { "type": "string", "description": "Full correct answer with context and caveats" },
+    "critical_claim":        { "type": "string", "description": "The single claim that must be present for the answer to be correct. Absence = Reality Strain failure." },
+    "disqualifying_claims":  { "type": "array",  "items": { "type": "string" }, "description": "Any of these claims in the output = automatic Reality Strain failure regardless of other content." },
+    "source":                { "type": "string", "description": "Authoritative source name" },
+    "source_url":            { "type": "string", "description": "URL to authoritative source" },
+    "equivalence_criteria":  { "type": "string", "description": "What counts as a correct answer. Used by the EQ scorer." },
+    "jurisdiction":          { "type": "string", "description": "Jurisdiction scope. 'universal' if globally applicable." },
+    "year_valid":            { "type": "string", "description": "Year this gold standard is valid for" },
+    "adversarial_pressure_type": { "type": "string", "description": "Primary pressure type this question is tested under" },
+    "load_bearing_weight":   { "type": "number", "minimum": 0, "maximum": 1, "description": "Estimated fraction of domain distinctions that depend on this one. Used to predict convergence order." },
+    "notes":                 { "type": "string", "description": "Caveats, known edge cases, jurisdictional variations" }
+  }
+}

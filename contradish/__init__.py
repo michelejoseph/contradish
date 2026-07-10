@@ -81,8 +81,104 @@ from .reconcile    import (
 )
 from .ledger       import CommitmentLedger, LedgerEntry
 from .report       import audit_report_html
+from .admissibility import (
+    AdmissibilityEngine,
+    AdmissibilityResult,
+    DomainIndex,
+    ThresholdPolicy,
+    CalibrationStore,
+)
+from .measurement import (
+    ReasoningDimension,
+    DIMENSIONS,
+    MeasurementLaw,
+    LAWS,
+    ReasoningProfile,
+    MeasurementUncertainty,
+    profile_from_results,
+    compare as compare_profiles,
+)
+from .epistemic import (
+    EpistemicAudit,
+    EpistemicProfile,
+    DisagreementMap,
+    InquiryScaffold,
+)
+from .observatory import (
+    Constraint,
+    ConstraintStatus,
+    ConstraintProfile,
+    ConstraintDelta,
+    ConstraintObservatory,
+    ConstraintProfiler,
+)
+from .structural_eval import (
+    JunctionSensitivity,
+    SensitivityProfile,
+    StructuralDelta,
+    StructuralEvaluationReport,
+    StructuralEvaluator,
+)
+from .active_oracle import (
+    GroundTruthSignal,
+    ModelProbeResult,
+    DiscoveryClassification,
+    DiscoveryResult,
+    ActiveOracle,
+)
+from .oracle import (
+    NodeProbe,
+    ConsensusNode,
+    ConsensusTopology,
+    TargetedPerturbation,
+    OracleResult,
+    TopologyOracle,
+    TopologyRegistry,
+)
+from .topology import (
+    ReasoningNode,
+    ReasoningEdge,
+    TopologyPath,
+    FailureTopologyMap,
+    topology_distance,
+    topology_from_phi_star,
+)
+from .convergence import (
+    ReasoningTrajectory,
+    trajectory_similarity,
+    population_trajectory_similarity,
+    CrossSystemAnalyzer,
+    CrossSystemResult,
+    SystemPairResult,
+    convergence_efficiency,
+    EfficiencyResult,
+)
+from .phi_star import (
+    PhiStarExplorer,
+    PhiStarResult,
+    DistinctionCluster,
+    ConvergenceResult,
+    Trajectory as PhiStarTrajectory,
+    run_convergence,
+    jaccard_similarity,
+    first_sentence_extractor,
+    FRAMING_PREFIXES,
+    ALL_FRAMINGS,
+)
+from .theorems import (
+    verify_all as verify_theorems,
+    theorem_1_convexity,
+    theorem_2_fixed_point,
+    theorem_3_gradient_optimality,
+    theorem_4_corner_optimality,
+    theorem_5_convergence_monotonicity,
+    theorem_6_threshold_optimality,
+    theorem_7_contraction_and_local_traps,
+    theorem_8_sag_bound,
+    TheoremResult,
+)
 
-__version__ = "1.23.0"
+__version__ = "1.25.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -143,4 +239,82 @@ __all__ = [
     "CommitmentLedger",
     "LedgerEntry",
     "audit_report_html",
+    "AdmissibilityEngine",
+    "AdmissibilityResult",
+    "DomainIndex",
+    "ThresholdPolicy",
+    "CalibrationStore",
+    # observatory
+    "Constraint",
+    "ConstraintStatus",
+    "ConstraintProfile",
+    "ConstraintDelta",
+    "ConstraintObservatory",
+    "ConstraintProfiler",
+    # active_oracle
+    "GroundTruthSignal",
+    "ModelProbeResult",
+    "DiscoveryClassification",
+    "DiscoveryResult",
+    "ActiveOracle",
+    # oracle
+    "NodeProbe",
+    "ConsensusNode",
+    "ConsensusTopology",
+    "TargetedPerturbation",
+    "OracleResult",
+    "TopologyOracle",
+    "TopologyRegistry",
+    # measurement
+    "ReasoningDimension",
+    "DIMENSIONS",
+    "MeasurementLaw",
+    "LAWS",
+    "ReasoningProfile",
+    "MeasurementUncertainty",
+    "profile_from_results",
+    "compare_profiles",
+    # epistemic
+    "EpistemicAudit",
+    "EpistemicProfile",
+    "DisagreementMap",
+    "InquiryScaffold",
+    # topology
+    "ReasoningNode",
+    "ReasoningEdge",
+    "TopologyPath",
+    "FailureTopologyMap",
+    "topology_distance",
+    "topology_from_phi_star",
+    # convergence
+    "ReasoningTrajectory",
+    "trajectory_similarity",
+    "population_trajectory_similarity",
+    "CrossSystemAnalyzer",
+    "CrossSystemResult",
+    "SystemPairResult",
+    "convergence_efficiency",
+    "EfficiencyResult",
+    # phi_star
+    "PhiStarExplorer",
+    "PhiStarResult",
+    "DistinctionCluster",
+    "ConvergenceResult",
+    "PhiStarTrajectory",
+    "run_convergence",
+    "jaccard_similarity",
+    "first_sentence_extractor",
+    "FRAMING_PREFIXES",
+    "ALL_FRAMINGS",
+    # theorems
+    "verify_theorems",
+    "theorem_1_convexity",
+    "theorem_2_fixed_point",
+    "theorem_3_gradient_optimality",
+    "theorem_4_corner_optimality",
+    "theorem_5_convergence_monotonicity",
+    "theorem_6_threshold_optimality",
+    "theorem_7_contraction_and_local_traps",
+    "theorem_8_sag_bound",
+    "TheoremResult",
 ]
