@@ -304,6 +304,96 @@ def cmd_policy(args):
     sys.exit(1 if report.failed else 0)
 
 
+def cmd_quick(args):
+    """
+    Zero-config stability analysis using the Residual Truth Engine.
+
+    No API key needed to evaluate your own model. An API key is only required
+    in demo mode (when --app is omitted), where the default LLM is the model
+    under test.
+    """
+    from contradish import analyze
+    from contradish.domains import list_domains, get_domain
+
+    domain  = getattr(args, "domain",  "customer-service")
+    app_str = getattr(args, "app",     None)
+    extra_q = getattr(args, "questions", None) or []
+    html_out = getattr(args, "html",   None)
+    sft_out  = getattr(args, "sft",    None)
+    dpo_out  = getattr(args, "dpo",    None)
+    full     = getattr(args, "full_framings", False)
+    n_rep    = getattr(args, "n_repairs", 30)
+
+    # Validate domain early
+    if domain not in list_domains() and not extra_q:
+        available = ", ".join(list_domains())
+        print(f"\n  Unknown domain {domain!r}. Available: {available}\n")
+        print(f"  Or pass --questions 'Q1' 'Q2' for custom questions.\n")
+        sys.exit(1)
+
+    # Resolve the model function
+    if app_str:
+        try:
+            model_fn = _load_callable(app_str)
+        except (ValueError, ImportError, AttributeError) as e:
+            print(f"\n  Could not load {app_str!r}: {e}\n")
+            sys.exit(1)
+        print(f"\n  contradish analyze · testing {app_str}")
+        print(f"  No API key required for analysis.\n")
+    else:
+        # Demo mode: test the default LLM behavior
+        _check_api_key()
+        pack = get_domain(domain)
+        demo_system = (
+            f"You are a helpful assistant. "
+            f"Answer user questions clearly and accurately."
+        )
+        model_fn, _ = _make_demo_app(demo_system)
+        print(f"\n  contradish analyze · demo mode  (testing default LLM behavior)")
+        print(f"  Add --app mymodule:my_fn to test your own model without an API key.\n")
+
+    # Run
+    result = analyze(
+        model_fn      = model_fn,
+        domain        = domain if domain in list_domains() else None,
+        questions     = extra_q or None,
+        n_repairs     = n_rep,
+        full_framings = full,
+        verbose       = True,
+    )
+
+    # Print terminal report
+    print(result)
+
+    # Optional outputs
+    if html_out:
+        result.to_html(html_out)
+        print(f"  HTML report:  {html_out}")
+
+    if sft_out:
+        sft_data = result.to_jsonl()
+        with open(sft_out, "w", encoding="utf-8") as f:
+            f.write(sft_data)
+        n = len([l for l in sft_data.splitlines() if l.strip()])
+        print(f"  SFT JSONL:    {sft_out}  ({n} records)")
+
+    if dpo_out:
+        dpo_data = result.to_dpo_jsonl()
+        with open(dpo_out, "w", encoding="utf-8") as f:
+            f.write(dpo_data)
+        n = len([l for l in dpo_data.splitlines() if l.strip()])
+        print(f"  DPO JSONL:    {dpo_out}  ({n} contrastive pairs)")
+
+    # Exit nonzero if strain exceeds threshold
+    threshold = getattr(args, "threshold", None)
+    if threshold is not None and result.overall_strain > threshold:
+        print(
+            f"\n  FAIL: strain {result.overall_strain:.2f} exceeds "
+            f"threshold {threshold} (lower is better)\n"
+        )
+        sys.exit(1)
+
+
 def cmd_from_prompt(args):
     """Run from a system prompt. Zero-config path."""
     from contradish import Suite
@@ -1944,6 +2034,69 @@ examples:
     rec_p.add_argument("--json", action="store_true", default=False,
                        help="Print the reconciliation as JSON instead of formatted text.")
 
+    # contradish analyze — zero-config stability analysis (no API key for your own model)
+    analyze_p = sub.add_parser(
+        "analyze",
+        help=(
+            "Stability analysis using the Residual Truth Engine. "
+            "No API key required to test your own model."
+        ),
+        description=(
+            "Contradiction-forced truth extraction. Run your model through 8 pressure "
+            "framings per question and extract what it actually commits to vs. what "
+            "only appears under emotional or authority pressure.\n\n"
+            "No API key needed to analyze your own model — the evaluator runs entirely "
+            "offline. An API key is only required in demo mode (no --app).\n\n"
+            "  contradish analyze --domain customer-service --app mymodule:my_fn\n"
+            "  contradish analyze --domain medical --app mybot:chat --html report.html\n"
+            "  contradish analyze --questions 'What is your refund policy?'\n"
+            "  contradish analyze   # demo: tests default LLM behavior (needs API key)\n"
+        ),
+    )
+    analyze_p.add_argument(
+        "--domain", default="customer-service", metavar="DOMAIN",
+        help=(
+            "Prebuilt question set to use: customer-service, medical, legal, "
+            "financial, safety, hr. (default: customer-service)"
+        ),
+    )
+    analyze_p.add_argument(
+        "--app", default=None, metavar="MODULE:FN",
+        help=(
+            "Your model function as 'module:function'. The function must accept "
+            "(system_prompt: str, question: str) -> str. "
+            "If omitted, the default LLM is tested in demo mode (needs API key)."
+        ),
+    )
+    analyze_p.add_argument(
+        "--questions", nargs="+", metavar="Q", default=None,
+        help="Additional questions to test (can be combined with --domain).",
+    )
+    analyze_p.add_argument(
+        "--html", default=None, metavar="FILE",
+        help="Write full visual HTML report to FILE.",
+    )
+    analyze_p.add_argument(
+        "--sft", default=None, metavar="FILE",
+        help="Write SFT training examples (JSONL) to FILE.",
+    )
+    analyze_p.add_argument(
+        "--dpo", default=None, metavar="FILE",
+        help="Write DPO contrastive pairs (JSONL) to FILE.",
+    )
+    analyze_p.add_argument(
+        "--full-framings", action="store_true", default=False, dest="full_framings",
+        help="Use all 16 pressure framings instead of the default 8.",
+    )
+    analyze_p.add_argument(
+        "--n-repairs", type=int, default=30, metavar="N", dest="n_repairs",
+        help="MAX-IS repair iterations per question (default: 30; use 60+ for production).",
+    )
+    analyze_p.add_argument(
+        "--threshold", type=float, default=None, metavar="F",
+        help="Exit nonzero if overall strain exceeds this value. For CI gating.",
+    )
+
     args = parser.parse_args()
 
     if args.command == "benchmark":
@@ -1972,6 +2125,8 @@ examples:
         cmd_judge_floor(args)
     elif args.command == "fairness":
         cmd_fairness(args)
+    elif args.command == "analyze":
+        cmd_quick(args)
     elif getattr(args, "policy", None):
         cmd_policy(args)
     elif args.system_prompt or args.prompt_file:

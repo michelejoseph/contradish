@@ -112,6 +112,67 @@ from .observatory import (
     ConstraintObservatory,
     ConstraintProfiler,
 )
+from .topology_training import (
+    TrainingExample,
+    TrainingCurriculum,
+    TopologyTrainer,
+    generate_curriculum,
+)
+from .residual_truth import (
+    Claim,
+    IncompatibilityEdge,
+    RepairStep,
+    RepairTrace,
+    ResidualTruthResult,
+    KeywordClaimExtractor,
+    PatternIncompatibilityDetector,
+    ResidualTruthEngine,
+)
+from .quickstart import analyze, QuickResult
+from .distinction import (
+    DistinctionPair,
+    DistinctionMeasurement,
+    DistinctionProfile,
+    DistinctionLossMap,
+    DistinctionProber,
+)
+from .surrender import (
+    SurrenderSample,
+    SurrenderPoint,
+    SurrenderCurve,
+    SurrenderProfiler,
+    SurrenderAtlas,
+    profile_constraints as profile_surrender,
+    PRESSURE_LEVELS,
+    ALL_PRESSURE_TYPES,
+)
+from .domains import (
+    DomainPack,
+    get_domain,
+    list_domains,
+    domain_questions,
+    CUSTOMER_SERVICE,
+    MEDICAL,
+    LEGAL,
+    FINANCIAL,
+    SAFETY,
+    HR,
+)
+from .cognitive_topology import (
+    ReliabilityPoint,
+    ReliabilityGradient,
+    IntegrationFinding,
+    CognitiveTopologyReport,
+    CognitiveTopologyProfiler,
+)
+from .behavioral_drift import (
+    Interaction,
+    SessionLog,
+    DriftSignal,
+    ImplicitCorrectionCandidate,
+    BehavioralDriftReport,
+    BehavioralDriftDetector,
+)
 from .structural_eval import (
     JunctionSensitivity,
     SensitivityProfile,
@@ -178,7 +239,7 @@ from .theorems import (
     TheoremResult,
 )
 
-__version__ = "1.25.0"
+__version__ = "1.27.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -244,6 +305,62 @@ __all__ = [
     "DomainIndex",
     "ThresholdPolicy",
     "CalibrationStore",
+    # topology_training
+    "TrainingExample",
+    "TrainingCurriculum",
+    "TopologyTrainer",
+    "generate_curriculum",
+    # residual_truth
+    "Claim",
+    "IncompatibilityEdge",
+    "RepairStep",
+    "RepairTrace",
+    "ResidualTruthResult",
+    "KeywordClaimExtractor",
+    "PatternIncompatibilityDetector",
+    "ResidualTruthEngine",
+    # quickstart
+    "analyze",
+    "QuickResult",
+    # distinction loss
+    "DistinctionPair",
+    "DistinctionMeasurement",
+    "DistinctionProfile",
+    "DistinctionLossMap",
+    "DistinctionProber",
+    # surrender curves
+    "SurrenderSample",
+    "SurrenderPoint",
+    "SurrenderCurve",
+    "SurrenderProfiler",
+    "SurrenderAtlas",
+    "profile_surrender",
+    "PRESSURE_LEVELS",
+    "ALL_PRESSURE_TYPES",
+    # domains
+    "DomainPack",
+    "get_domain",
+    "list_domains",
+    "domain_questions",
+    "CUSTOMER_SERVICE",
+    "MEDICAL",
+    "LEGAL",
+    "FINANCIAL",
+    "SAFETY",
+    "HR",
+    # cognitive topology
+    "ReliabilityPoint",
+    "ReliabilityGradient",
+    "IntegrationFinding",
+    "CognitiveTopologyReport",
+    "CognitiveTopologyProfiler",
+    # behavioral drift
+    "Interaction",
+    "SessionLog",
+    "DriftSignal",
+    "ImplicitCorrectionCandidate",
+    "BehavioralDriftReport",
+    "BehavioralDriftDetector",
     # observatory
     "Constraint",
     "ConstraintStatus",
