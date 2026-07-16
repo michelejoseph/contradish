@@ -129,6 +129,8 @@ from .residual_truth import (
     ResidualTruthEngine,
 )
 from .quickstart import analyze, QuickResult
+from .cdr        import generate_cdr
+from .conviction import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .distinction import (
     DistinctionPair,
     DistinctionMeasurement,
@@ -322,6 +324,12 @@ __all__ = [
     # quickstart
     "analyze",
     "QuickResult",
+    # cdr
+    "generate_cdr",
+    # conviction
+    "ConvictionProfiler",
+    "ConvictionReport",
+    "ConvictionResult",
     # distinction loss
     "DistinctionPair",
     "DistinctionMeasurement",
