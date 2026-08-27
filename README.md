@@ -2,6 +2,8 @@
 
 **Find where your LLM contradicts itself, measure it, repair it — in one loop.**
 
+This is semantic invariance testing for LLMs, also called paraphrase robustness testing: contradish checks whether a model's answer changes when a question is reworded but its meaning stays the same.
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Benchmark: v2](https://img.shields.io/badge/Benchmark-v2%20frozen-green.svg)](contradish/benchmarks/v2/)
 [![Paper](https://img.shields.io/badge/Paper-PAPER.md-orange.svg)](PAPER.md)
