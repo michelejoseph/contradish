@@ -1,11 +1,11 @@
 """
-run_free_models.py — CAI-Bench evaluation for Llama (Groq) and Mistral free tiers.
+run_free_models.py: CAI-Bench evaluation for Llama (Groq) and Mistral free tiers.
 
 Setup
 -----
     pip install openai
 
-    # Keys are already embedded below — or override with env vars:
+    # Required environment variables:
     # export GROQ_API_KEY=gsk_...
     # export MISTRAL_API_KEY=...
 
@@ -38,8 +38,17 @@ from datetime import date
 from pathlib import Path
 
 # ── KEYS (override with env vars if preferred) ────────────────────────────────
-GROQ_KEY    = os.environ.get("GROQ_API_KEY",    "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")
-MISTRAL_KEY = os.environ.get("MISTRAL_API_KEY", "wB3N02ANVxgOcVlDldfthaj0XOLnHDkO")
+GROQ_KEY    = os.environ.get("GROQ_API_KEY")
+MISTRAL_KEY = os.environ.get("MISTRAL_API_KEY")
+
+if not GROQ_KEY or not MISTRAL_KEY:
+    sys.exit(
+        "Set GROQ_API_KEY and MISTRAL_API_KEY as environment variables before running.\n"
+        "  export GROQ_API_KEY=gsk_...\n"
+        "  export MISTRAL_API_KEY=...\n"
+        "(Keys used to be hardcoded here as a fallback; removed so this script cannot "
+        "leak them if it is ever committed.)"
+    )
 
 # ── MODELS ────────────────────────────────────────────────────────────────────
 MODELS = {
@@ -127,7 +136,7 @@ def _chat(base_url: str, api_key: str, model: str, prompt: str, max_tokens: int 
             err = str(e).lower()
             if "429" in err or "rate" in err or "limit" in err:
                 wait = delay * (2 ** attempt) + 1
-                print(f"      rate limit — waiting {wait:.0f}s", flush=True)
+                print(f"      rate limit, waiting {wait:.0f}s", flush=True)
                 time.sleep(wait)
             elif attempt == retries - 1:
                 raise
@@ -174,16 +183,45 @@ def run_domain(domain: str, cfg: dict, verbose: bool = True) -> dict:
         if verbose:
             print(f"      [{i}/{len(cases)}] {name[:50]}", end=" ", flush=True)
 
-        # Get responses
+        # Get responses. Track real failures explicitly instead of only embedding
+        # them as "[ERROR: ...]" text for the judge to interpret -- a judge asked to
+        # score consistency across a set of API errors will produce a number, and
+        # that number means nothing about the model.
         inputs  = [original] + list(adversarial)
         outputs = []
+        error_texts = []
         for inp in inputs:
             try:
                 out = _chat(cfg["base_url"], cfg["api_key"], cfg["model_id"], inp)
                 outputs.append(out)
             except Exception as e:
-                outputs.append(f"[ERROR: {e}]")
+                err = str(e)
+                outputs.append(f"[ERROR: {err}]")
+                error_texts.append(err)
             time.sleep(cfg["req_delay"])
+
+        n_errors = len(error_texts)
+        original_errored = outputs[0].startswith("[ERROR:")
+
+        # Skip judging when there's not enough real signal to evaluate: the
+        # original response itself failed (nothing to compare variants against),
+        # or more than half the responses failed. This case is excluded from the
+        # strain calculation entirely rather than scored as consistent or
+        # inconsistent based on error text.
+        if original_errored or n_errors > len(outputs) / 2:
+            if verbose:
+                print(f"SKIP ({n_errors}/{len(outputs)} api errors)", flush=True)
+            details.append({
+                "id":         case["id"],
+                "name":       name,
+                "severity":   severity,
+                "skipped":    True,
+                "skip_reason": "api_errors",
+                "n_errors":   n_errors,
+                "n_total":    len(outputs),
+                "sample_error": error_texts[0] if error_texts else None,
+            })
+            continue
 
         # Judge consistency
         formatted = "\n".join(
@@ -210,7 +248,8 @@ def run_domain(domain: str, cfg: dict, verbose: bool = True) -> dict:
 
         if verbose:
             bar = "OK" if score >= 0.75 else ("DRIFT" if score >= 0.4 else "FAIL")
-            print(f"strain={cai_strain:.3f} [{bar}]", flush=True)
+            err_note = f", {n_errors} partial errors" if n_errors else ""
+            print(f"strain={cai_strain:.3f} [{bar}]{err_note}", flush=True)
 
         all_scores.append(score)
         weighted_scores.append(score * weight)
@@ -222,6 +261,7 @@ def run_domain(domain: str, cfg: dict, verbose: bool = True) -> dict:
             "cai_score":  round(score, 4),
             "cai_strain": cai_strain,
             "passed":     passed,
+            "n_errors":   n_errors,
             "disagreements": result.get("disagreements", []),
             "summary":    result.get("summary", ""),
         })
@@ -230,15 +270,18 @@ def run_domain(domain: str, cfg: dict, verbose: bool = True) -> dict:
     avg_strain = round(1 - avg_score, 4) if avg_score is not None else None
     sw_score   = round(sum(weighted_scores) / sum(weighted_weights), 4) if weighted_weights else None
     sw_strain  = round(1 - sw_score, 4) if sw_score is not None else None
+    n_skipped  = sum(1 for d in details if d.get("skipped"))
 
     return {
         "cai_score":              avg_score,
         "cai_strain":             avg_strain,
         "severity_weighted_cai":  sw_score,
         "severity_weighted_cts":  sw_strain,
-        "passed":  sum(1 for d in details if d["passed"]),
-        "failed":  sum(1 for d in details if not d["passed"]),
-        "total":   len(details),
+        "passed":         sum(1 for d in details if d.get("passed")),
+        "failed":         sum(1 for d in details if "passed" in d and not d["passed"]),
+        "judged":         len(all_scores),
+        "skipped_errors": n_skipped,
+        "total":          len(details),
         "details": details,
     }
 
@@ -253,7 +296,7 @@ def run_model(name: str, cfg: dict, resume: bool = False, verbose: bool = True) 
         try:
             prev = json.loads(out_file.read_text())
             existing = prev.get("results", {})
-            print(f"  resuming — {len(existing)} domains already done")
+            print(f"  resuming: {len(existing)} domains already done")
         except Exception:
             pass
 
@@ -267,9 +310,16 @@ def run_model(name: str, cfg: dict, resume: bool = False, verbose: bool = True) 
 
     for domain in DOMAINS:
         if domain in results_by_domain:
-            s = results_by_domain[domain].get("cai_strain", "?")
-            print(f"  SKIP {domain:<24} (done: strain={s})")
-            continue
+            prev = results_by_domain[domain]
+            judged = prev.get("judged", prev.get("total", 0))
+            if "error" in prev or not judged:
+                print(f"  RETRY {domain:<23} (previously had no judged cases -- not real data)")
+            else:
+                s = prev.get("cai_strain", "?")
+                skipped = prev.get("skipped_errors", 0)
+                note = f", {skipped} skipped for errors" if skipped else ""
+                print(f"  SKIP {domain:<24} (done: strain={s}, {judged} judged{note})")
+                continue
         try:
             res = run_domain(domain, cfg, verbose=verbose)
             results_by_domain[domain] = res
@@ -306,17 +356,44 @@ def _save(path: Path, model_id: str, cfg: dict, results: dict) -> None:
 
 # ── MAIN ─────────────────────────────────────────────────────────────────────
 
+def test_connection() -> None:
+    """One call per model/judge endpoint with the raw result printed. Run this
+    before a full sweep after any run that came back mostly errors -- it tells
+    you in seconds whether the problem is an invalid key, a decommissioned
+    model, exhausted quota, or a genuine rate limit, instead of guessing from
+    348 swallowed exceptions."""
+    for name, cfg in MODELS.items():
+        print(f"\n{name} -> model {cfg['model_id']} ({cfg['provider']})")
+        try:
+            out = _chat(cfg["base_url"], cfg["api_key"], cfg["model_id"], "Say OK.", retries=1)
+            print(f"  OK: {out[:80]!r}")
+        except Exception as e:
+            print(f"  FAILED: {e}")
+        print(f"{name} -> judge {cfg['judge_model']} ({cfg['judge_provider']})")
+        try:
+            out = _chat(cfg["judge_url"], cfg["judge_key"], cfg["judge_model"], "Say OK.", retries=1)
+            print(f"  OK: {out[:80]!r}")
+        except Exception as e:
+            print(f"  FAILED: {e}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", choices=["llama", "mistral", "both"], default="both")
     parser.add_argument("--resume", action="store_true", help="skip already-completed domains")
     parser.add_argument("--quiet", action="store_true")
+    parser.add_argument("--test-connection", action="store_true",
+                         help="one call per endpoint, print raw success/failure, then exit")
     args = parser.parse_args()
 
     try:
         from openai import OpenAI  # noqa: F401
     except ImportError:
         sys.exit("Run:  pip install openai")
+
+    if args.test_connection:
+        test_connection()
+        return
 
     to_run = ["llama", "mistral"] if args.model == "both" else [args.model]
     for name in to_run:
