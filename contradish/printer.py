@@ -34,12 +34,24 @@ def _wrap(text: str, width: int = 70, indent: str = "") -> str:
                          subsequent_indent=indent)
 
 
-def _cai_label(score: float) -> str:
-    if score >= 0.80:
+def _strain_label(strain: float) -> str:
+    """Qualitative bucket for a raw CAI Strain value (lower is better),
+    matching the public bands on contradish.com/research: <=0.20 stable,
+    <=0.40 marginal, otherwise unstable. Leads the human-facing summary so
+    a reader isn't left to eyeball a bare decimal to know if a number is
+    good or bad -- the decimal stays available, just demoted to a
+    parenthetical rather than the primary signal."""
+    if strain <= 0.20:
         return "stable"
-    if score >= 0.60:
+    if strain <= 0.40:
         return "marginal"
     return "unstable"
+
+
+def _cai_label(score: float) -> str:
+    """Same bands, expressed in consistency-score space (higher is
+    better, score == 1 - strain)."""
+    return _strain_label(1.0 - score)
 
 
 def print_start(prompt_preview: str = "") -> None:
@@ -79,8 +91,9 @@ def print_report(report) -> None:
         for result in report.results:
             strain     = result.cai_strain
             strain_str = f"{strain:.2f}" if strain is not None else "n/a"
+            slabel     = _strain_label(strain) if strain is not None else "unstable"
             print(f"  {_GREEN}✓{_RESET}  {result.test_case.name}  "
-                  f"{_GRAY}CAI Strain: {strain_str}{_RESET}")
+                  f"{_GRAY}{slabel} (strain {strain_str}){_RESET}")
         print()
         return
 
@@ -99,12 +112,13 @@ def print_report(report) -> None:
         strain_str = f"{strain:.2f}" if strain is not None else "n/a"
 
         if ok:
+            ok_label = _strain_label(strain) if strain is not None else "stable"
             print(f"  {_GREEN}✓{_RESET}  {_GRAY}{tc.name}  "
-                  f"CAI Strain: {strain_str}  (stable){_RESET}")
+                  f"{ok_label} (strain {strain_str}){_RESET}")
             print()
             continue
 
-        label = _cai_label(score) if score is not None else "unstable"
+        label = _strain_label(strain) if strain is not None else "unstable"
 
         # ── Failure header ─────────────────────────────────────────────
         sev_badge = ""
@@ -115,7 +129,8 @@ def print_report(report) -> None:
 
         print(f"{_RED}{_BOLD}CAI FAILURE{_RESET}  "
               f"\"{tc.name}\"  "
-              f"{_GRAY}strain {strain_str}{_RESET}"
+              f"{_RED}{label}{_RESET}"
+              f"{_GRAY}  (strain {strain_str}){_RESET}"
               f"{sev_badge}")
         print()
 
@@ -189,8 +204,9 @@ def print_report(report) -> None:
         for r in clean_list:
             strain     = r.cai_strain
             strain_str = f"{strain:.2f}" if strain is not None else "n/a"
+            clabel     = _strain_label(strain) if strain is not None else "stable"
             print(f"  {_GREEN}✓{_RESET}  {_GRAY}{r.test_case.name}  "
-                  f"CAI Strain: {strain_str}  (stable){_RESET}")
+                  f"{clabel} (strain {strain_str}){_RESET}")
         print()
 
     # ── Summary line ───────────────────────────────────────────────────
@@ -240,24 +256,25 @@ def print_next_steps(report) -> None:
     headline = report.headline_strain
     coverage = report.eq_coverage
     if judgment is not None:
-        jud_str = f"{judgment:.3f}"
+        jlabel   = _strain_label(judgment)
+        jud_str  = f"{judgment:.3f}"
         head_str = f"{headline:.3f}" if headline is not None else "n/a"
-        cov_pct = f"{coverage:.0%}" if coverage is not None else "n/a"
+        cov_pct  = f"{coverage:.0%}" if coverage is not None else "n/a"
         print(
-            f"  {_BOLD}Judgment Strain:{_RESET} {_BOLD}{jud_str}{_RESET}  "
-            f"{_GRAY}(CAI Strain {head_str}; EQ coverage {cov_pct}){_RESET}"
+            f"  {_BOLD}Judgment Strain: {jlabel}{_RESET}  "
+            f"{_GRAY}({jud_str}; CAI Strain {head_str}; EQ coverage {cov_pct}){_RESET}"
         )
         contested = report.contested_strain
         if contested is not None:
             print(
-                f"  {_GRAY}contested Strain:{_RESET}  {contested:.3f}  "
-                f"{_GRAY}(cases where annotators disagreed on equivalence){_RESET}"
+                f"  {_GRAY}contested: {_strain_label(contested)} ({contested:.3f})  "
+                f"(cases where annotators disagreed on equivalence){_RESET}"
             )
         truth = getattr(report, "truth_strain", None)
         if truth is not None:
             tcov = getattr(report, "truth_coverage", 0.0)
             print(
-                f"  {_BOLD}truth Strain:{_RESET}     {truth:.3f}  "
+                f"  {_GRAY}truth: {_RESET}{_strain_label(truth)} ({truth:.3f})  "
                 f"{_GRAY}(cases with a canonical answer; {tcov:.0%} truth coverage){_RESET}"
             )
         if report.ambiguous_count:
