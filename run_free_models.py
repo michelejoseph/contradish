@@ -433,6 +433,24 @@ def _legacy_domain_is_contaminated(prev: dict) -> bool:
     return flagged / len(details) > 0.3
 
 
+def _domain_is_undersampled(prev: dict) -> bool:
+    """True if too much of THIS domain was skipped for real (judge_error /
+    unparseable / etc), even though the post-fix schema correctly excluded
+    those cases from the strain average. A domain like ai_safety at
+    7 judged / 11 skipped is technically "not contaminated" -- the average
+    is honest about what it's an average OF -- but it's an average of 7
+    cases out of 18, which is too thin to trust or publish. Same 30%
+    threshold as the legacy contamination check, applied to the fraction of
+    cases that never got a real judged score at all.
+    """
+    judged = prev.get("judged", prev.get("total", 0))
+    skipped = prev.get("skipped_errors", 0)
+    denom = judged + skipped
+    if denom == 0:
+        return False
+    return skipped / denom > 0.3
+
+
 def run_model(name: str, cfg: dict, resume: bool = False, verbose: bool = True) -> dict:
     model_id = cfg["model_id"]
     safe_name = model_id.replace("/", "-")
@@ -461,9 +479,15 @@ def run_model(name: str, cfg: dict, resume: bool = False, verbose: bool = True) 
             prev = results_by_domain[domain]
             judged = prev.get("judged", prev.get("total", 0))
             contaminated = _legacy_domain_is_contaminated(prev)
-            if "error" in prev or not judged or contaminated:
-                reason = ("pre-fix run scored API-error text as consistency data"
-                          if contaminated else "previously had no judged cases -- not real data")
+            undersampled = _domain_is_undersampled(prev)
+            if "error" in prev or not judged or contaminated or undersampled:
+                if contaminated:
+                    reason = "pre-fix run scored API-error text as consistency data"
+                elif undersampled:
+                    skipped = prev.get("skipped_errors", 0)
+                    reason = f"only {judged}/{judged + skipped} cases judged -- too thin to trust"
+                else:
+                    reason = "previously had no judged cases -- not real data"
                 print(f"  RETRY {domain:<23} ({reason})")
             else:
                 s = prev.get("cai_strain", "?")
