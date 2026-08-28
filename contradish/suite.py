@@ -315,11 +315,39 @@ class Suite:
         total_calls = 1 + len(para_list)
         if verbose:
             print_progress(f"querying your app {total_calls}x")
-        inputs, outputs = self._runner.run_matrix(
+        inputs, outputs, call_errors = self._runner.run_matrix(
             app=self.app,
             original=tc.input,
             paraphrases=para_list,
         )
+
+        # 2b. Bail out of scoring if too much of this case's data is API
+        # errors rather than real answers. Judging error text for
+        # "consistency" produces plausible-looking but fabricated numbers
+        # (identical errors score as perfectly consistent, mixed errors as
+        # wildly inconsistent) -- neither says anything about the model.
+        n_errors = sum(1 for e in call_errors if e is not None)
+        original_errored = call_errors[0] is not None
+        if original_errored or n_errors > len(outputs) / 2:
+            if verbose:
+                print_progress(f"skipping -- {n_errors}/{len(outputs)} app calls failed")
+            sample_error = next((e for e in call_errors if e is not None), None)
+            return TestResult(
+                test_case=tc,
+                paraphrases=para_list,
+                outputs=outputs,
+                consistency_score=None,
+                contradiction_score=None,
+                risk=RiskLevel.LOW,
+                skipped=True,
+                skip_reason="api_errors",
+                n_errors=n_errors,
+                suggestion=(
+                    f"{n_errors}/{len(outputs)} app calls failed during this run "
+                    f"(e.g. {sample_error!r}) -- not scored. Fix the underlying "
+                    f"error and re-run this case before trusting any strain number for it."
+                ),
+            )
 
         # 3. Consistency
         if verbose:

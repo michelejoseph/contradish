@@ -77,18 +77,29 @@ def print_step(label: str, test_name: str, current: int, total: int) -> None:
 
 
 def print_report(report) -> None:
-    total  = len(report.results)
-    passed = len(report.passed)
-    failed = len(report.failed)
+    total   = len(report.results)
+    passed  = len(report.passed)
+    failed  = len(report.failed)
+    skipped = len(report.skipped)
 
     print()
 
+    def _print_skipped_line(result) -> None:
+        print(f"  {_GRAY}○  {result.test_case.name}  "
+              f"SKIPPED -- {result.n_errors}/{len(result.outputs)} app calls "
+              f"failed, not scored{_RESET}")
+
     # ── All clean ─────────────────────────────────────────────────────
     if failed == 0:
+        scored = total - skipped
         print(f"{_GREEN}{_BOLD}No CAI failures.{_RESET}  "
-              f"{_GRAY}All {total} rule{'s' if total != 1 else ''} stable.{_RESET}")
+              f"{_GRAY}{scored} of {total} rule{'s' if total != 1 else ''} stable"
+              f"{f', {skipped} skipped (app errors)' if skipped else ''}.{_RESET}")
         print()
         for result in report.results:
+            if result.skipped:
+                _print_skipped_line(result)
+                continue
             strain     = result.cai_strain
             strain_str = f"{strain:.2f}" if strain is not None else "n/a"
             slabel     = _strain_label(strain) if strain is not None else "unstable"
@@ -105,6 +116,12 @@ def print_report(report) -> None:
     # ── Each failing result ────────────────────────────────────────────
     for result in report.results:
         tc = result.test_case
+
+        if result.skipped:
+            _print_skipped_line(result)
+            print()
+            continue
+
         ok = result.passed(report.thresholds)
 
         score     = result.consistency_score

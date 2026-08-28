@@ -135,6 +135,17 @@ class TestResult:
     contradiction_score: Optional[float] = None   # 0–1, higher = more contradictions found
     risk:                RiskLevel = RiskLevel.LOW
 
+    # Set when this case was NOT scored because too many of the underlying
+    # app(...) calls failed (network error, rate limit, bad key, etc.) even
+    # after retries. When skipped=True, consistency_score/contradiction_score
+    # stay None on purpose -- the alternative (scoring the literal error text
+    # for "consistency") silently turns API outages into fabricated model
+    # behavior. skip_reason is a short machine-readable tag; n_errors is how
+    # many of the len(outputs) calls failed.
+    skipped:              bool = False
+    skip_reason:          Optional[str] = None
+    n_errors:             int = 0
+
     contradictions:      list[ContradictionPair] = field(default_factory=list)
     unstable_patterns:   list[str] = field(default_factory=list)   # human-readable diagnoses
     suggestion:          Optional[str] = None
@@ -269,12 +280,17 @@ class Report:
     eq_threshold: float = HEADLINE_EQ_THRESHOLD
 
     @property
+    def skipped(self) -> list[TestResult]:
+        """Cases excluded from scoring because too many app(...) calls failed."""
+        return [r for r in self.results if r.skipped]
+
+    @property
     def passed(self)  -> list[TestResult]:
-        return [r for r in self.results if     r.passed(self.thresholds)]
+        return [r for r in self.results if not r.skipped and     r.passed(self.thresholds)]
 
     @property
     def failed(self)  -> list[TestResult]:
-        return [r for r in self.results if not r.passed(self.thresholds)]
+        return [r for r in self.results if not r.skipped and not r.passed(self.thresholds)]
 
     @property
     def cai_score(self) -> Optional[float]:

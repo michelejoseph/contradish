@@ -14,6 +14,7 @@ extensible with private techniques that never appear in this file.
 """
 
 import random
+import time
 from typing import Callable, Optional
 
 from .llm import LLMClient
@@ -115,17 +116,58 @@ class Runner:
         app:         Callable[[str], str],
         original:    str,
         paraphrases: list[str],
-    ) -> tuple[list[str], list[str]]:
+        retries:     int = 3,
+    ) -> tuple[list[str], list[str], list[Optional[str]]]:
         """
         Call app on [original] + paraphrases.
-        Returns (inputs, outputs) as parallel lists.
+
+        Returns (inputs, outputs, errors) as parallel lists. errors[i] is
+        None when that call succeeded, otherwise the final exception text
+        (after retries were exhausted). outputs[i] still gets a human-readable
+        "[APP ERROR: ...]" placeholder when a call failed, so raw transcripts
+        stay readable -- but callers MUST use the errors list, not string-sniff
+        outputs, to decide whether a case's data is trustworthy: judging the
+        error text for "consistency" silently turns an outage into a fabricated
+        finding about the model.
+
+        A failed call is retried (with a short exponential backoff) when the
+        error looks transient -- rate limit, timeout, connection reset, 5xx.
+        Errors that don't look transient (bad API key, invalid model, etc.)
+        fail immediately without burning retries.
         """
         inputs  = [original] + paraphrases
-        outputs = []
+        outputs: list[str] = []
+        errors:  list[Optional[str]] = []
         for inp in inputs:
-            try:
-                out = app(inp)
+            out, err = self._call_with_retry(app, inp, retries=retries)
+            if err is None:
                 outputs.append(str(out).strip())
+                errors.append(None)
+            else:
+                outputs.append(f"[APP ERROR: {err}]")
+                errors.append(err)
+        return inputs, outputs, errors
+
+    @staticmethod
+    def _call_with_retry(
+        app:     Callable[[str], str],
+        inp:     str,
+        retries: int = 3,
+    ) -> tuple[Optional[str], Optional[str]]:
+        """Call app(inp), retrying transient-looking failures. Returns (result, error)."""
+        last_err: Optional[str] = None
+        transient_markers = (
+            "429", "rate", "limit", "timeout", "timed out",
+            "connection", "503", "502", "504", "overloaded", "unavailable",
+        )
+        for attempt in range(retries):
+            try:
+                return app(inp), None
             except Exception as e:
-                outputs.append(f"[APP ERROR: {e}]")
-        return inputs, outputs
+                last_err = str(e)
+                is_transient = any(m in last_err.lower() for m in transient_markers)
+                if attempt < retries - 1 and is_transient:
+                    time.sleep(min(2 ** attempt, 8))
+                    continue
+                break
+        return None, last_err
