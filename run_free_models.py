@@ -15,15 +15,27 @@ Run
 
     # One model only:
     python run_free_models.py --model oss120b
+    python run_free_models.py --model oss20b
     python run_free_models.py --model mistral
+    python run_free_models.py --model nemo
+    python run_free_models.py --model ministral8b
+
+    # Everything above, one after another:
+    python run_free_models.py --model all
 
     # Skip domains already done (safe to resume):
     python run_free_models.py --resume
 
+    # Check every model/judge endpoint is reachable before a long run:
+    python run_free_models.py --test-connection
+
 Output
 ------
     results/openai-gpt-oss-120b_<date>.json
+    results/openai-gpt-oss-20b_<date>.json
     results/mistral-small-latest_<date>.json
+    results/open-mistral-nemo_<date>.json
+    results/ministral-8b-latest_<date>.json
 
 When done, send those files back and the paper tables will be updated.
 """
@@ -79,6 +91,52 @@ MODELS = {
         "judge_provider": "groq",
         "req_delay":   1.1,   # Mistral free tier ~60 req/min
         "judge_req_delay": 2.2,   # judge is gpt-oss-120b/Groq -- pace at that provider's rate, not Mistral's
+    },
+    # Same family as oss120b, same account -- likely available since Groq
+    # typically ships gpt-oss-20b alongside gpt-oss-120b, but NOT yet
+    # confirmed against this specific account (which turned out to lack
+    # every Llama chat model despite those normally being on Groq's free
+    # tier). Run --test-connection before a full sweep to confirm.
+    "oss20b": {
+        "model_id":    "openai/gpt-oss-20b",
+        "provider":    "groq",
+        "base_url":    "https://api.groq.com/openai/v1",
+        "api_key":     GROQ_KEY,
+        "judge_model": "mistral-small-latest",
+        "judge_url":   "https://api.mistral.ai/v1",
+        "judge_key":   MISTRAL_KEY,
+        "judge_provider": "mistral",
+        "req_delay":   2.2,
+        "judge_req_delay": 1.1,
+    },
+    # open-mistral-nemo: Mistral's smaller open-weight model, on the same
+    # free tier as mistral-small-latest. Not yet confirmed against this
+    # account -- run --test-connection first.
+    "nemo": {
+        "model_id":    "open-mistral-nemo",
+        "provider":    "mistral",
+        "base_url":    "https://api.mistral.ai/v1",
+        "api_key":     MISTRAL_KEY,
+        "judge_model": "openai/gpt-oss-120b",
+        "judge_url":   "https://api.groq.com/openai/v1",
+        "judge_key":   GROQ_KEY,
+        "judge_provider": "groq",
+        "req_delay":   1.1,
+        "judge_req_delay": 2.2,
+    },
+    # ministral-8b-latest: Mistral's small/edge model, same free tier.
+    # Not yet confirmed against this account -- run --test-connection first.
+    "ministral8b": {
+        "model_id":    "ministral-8b-latest",
+        "provider":    "mistral",
+        "base_url":    "https://api.mistral.ai/v1",
+        "api_key":     MISTRAL_KEY,
+        "judge_model": "openai/gpt-oss-120b",
+        "judge_url":   "https://api.groq.com/openai/v1",
+        "judge_key":   GROQ_KEY,
+        "judge_provider": "groq",
+        "req_delay":   1.1,
+        "judge_req_delay": 2.2,
     },
 }
 
@@ -472,7 +530,7 @@ def test_connection() -> None:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", choices=["oss120b", "mistral", "both"], default="both")
+    parser.add_argument("--model", choices=list(MODELS.keys()) + ["both", "all"], default="all")
     parser.add_argument("--resume", action="store_true", help="skip already-completed domains")
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--test-connection", action="store_true",
@@ -488,7 +546,7 @@ def main():
         test_connection()
         return
 
-    to_run = ["oss120b", "mistral"] if args.model == "both" else [args.model]
+    to_run = list(MODELS.keys()) if args.model in ("both", "all") else [args.model]
     for name in to_run:
         run_model(name, MODELS[name], resume=args.resume, verbose=not args.quiet)
 
