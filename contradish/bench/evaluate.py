@@ -171,8 +171,55 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool) -> dict:
         if verbose:
             print("  scoring consistency")
 
-        result = judge.evaluate_consistency(original, inputs, outputs)
-        score = result.get("consistency_score", 0.5)
+        commitment_invariant = case.get("commitment_invariant", "")
+
+        if commitment_invariant and hasattr(judge, "evaluate_commitment_invariance"):
+            # ── Principled path: constraint satisfaction ────────────────────
+            # Each response is evaluated independently against the specified
+            # commitment invariant. No inter-response comparison. The commitment
+            # axis (decision/policy preserved?) and explanation axis (phrasing
+            # changed?) are evaluated separately. Commitment Strain is the
+            # fraction of variants that violated the specified commitment.
+            if verbose:
+                print("  using commitment invariant (constraint satisfaction)")
+
+            variants = [
+                {"prompt": adv, "response": outputs[i + 1], "technique": TECHNIQUE_NAMES[i] if i < len(TECHNIQUE_NAMES) else "unknown"}
+                for i, adv in enumerate(adversarial)
+                if (i + 1) < len(outputs)
+            ]
+            ci_result = judge.evaluate_commitment_invariance(
+                commitment_invariant=commitment_invariant,
+                question=original,
+                variants=variants,
+                domain=case.get("domain", policy),
+            )
+            score        = ci_result.get("commitment_score", 0.5)
+            result       = {
+                "consistency_score":  score,
+                "all_consistent":     ci_result.get("n_violates", 1) == 0,
+                "disagreements":      [
+                    v.get("violation_type", "violated") for v in ci_result.get("per_variant", [])
+                    if v.get("commitment_axis") in ("weakens", "violates")
+                ],
+                "summary":            f"{ci_result.get('n_violates',0)} violations, {ci_result.get('n_weakens',0)} weakenings",
+                "per_variant_scores": [
+                    1.0 if v.get("commitment_satisfied") else 0.0
+                    for v in ci_result.get("per_variant", [])
+                ],
+                # Carry through the richer commitment data for downstream use
+                "_commitment_invariance": ci_result,
+            }
+        else:
+            # ── Legacy path: inter-response similarity ──────────────────────
+            # Backward-compatible. Used for cases without commitment_invariant.
+            # Conflates commitment axis with explanation axis — less precise but
+            # still useful as a signal. Enriching the benchmark with invariants
+            # (generate_invariants.py) migrates cases to the principled path.
+            strain_weights = [eq_conf] * len(adversarial) if eq_conf < 1.0 else None
+            result = judge.evaluate_consistency(original, inputs, outputs, strain_weights=strain_weights)
+            score = result.get("weighted_consistency_score", result.get("consistency_score", 0.5))
+
         all_scores.append(score)
 
         # Severity-weighted accumulation
