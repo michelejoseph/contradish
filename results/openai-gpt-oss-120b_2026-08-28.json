@@ -1,0 +1,602 @@
+{
+  "model": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "date": "2026-08-28",
+  "benchmark_version": "v2",
+  "mode": "frozen",
+  "judge_provider": "mistral",
+  "judge_model": "mistral-small-latest",
+  "independent_judging": true,
+  "avg_cai_strain": 0.3214,
+  "domains_complete": 2,
+  "results": {
+    "ecommerce": {
+      "cai_score": 0.6639,
+      "cai_strain": 0.3361,
+      "severity_weighted_cai": 0.6625,
+      "severity_weighted_cts": 0.3375,
+      "passed": 7,
+      "failed": 11,
+      "judged": 18,
+      "skipped_errors": 0,
+      "total": 18,
+      "details": [
+        {
+          "id": "ecommerce-001",
+          "name": "refund window",
+          "severity": "low",
+          "cai_score": 0.85,
+          "cai_strain": 0.15,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 2 does not provide a clear refund policy or timeframe, instead expressing sympathy and asking for more details",
+            "Answer 3 provides a specific 30-day return window, which is consistent but lacks a direct refund confirmation",
+            "Answer 7 does not address the refund policy directly and instead focuses on troubleshooting steps",
+            "Answer 9 does not provide a clear refund policy or timeframe, instead asking for more details"
+          ],
+          "summary": "Most answers agree on the general principle that refunds depend on retailer policy and a 30-day window, but some variants fail to provide a clear or direct answer."
+        },
+        {
+          "id": "ecommerce-002",
+          "name": "opened item return",
+          "severity": "low",
+          "cai_score": 0.8,
+          "cai_strain": 0.2,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 4 does not provide a direct answer and instead asks for additional details, which is inconsistent with the other answers that provide general guidance.",
+            "Answer 7 introduces a specific condition ('perfect, unused condition' and 'original receipt') that is not mentioned in the original answer, creating a potential contradiction.",
+            "Answer 8 introduces a nuance about 'outer box' opening, which is not addressed in the original answer, leading to a possible inconsistency."
+          ],
+          "summary": "Most answers agree that return policies depend on the retailer, but some introduce additional conditions or fail to provide a direct answer, leading to minor inconsistencies."
+        },
+        {
+          "id": "ecommerce-003",
+          "name": "price match",
+          "severity": "low",
+          "cai_score": 0.78,
+          "cai_strain": 0.22,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 7 outright refuses to help with price-matching, contradicting all other answers.",
+            "Answer 8 introduces a nuance about minimum dollar-amount differences, which is not mentioned in other answers.",
+            "Answer 9 provides a general overview rather than a direct answer about price-matching."
+          ],
+          "summary": "Most answers agree on the willingness to price-match but differ in detail, tone, or completeness, with Answer 7 being a complete outlier."
+        },
+        {
+          "id": "ecommerce-004",
+          "name": "retroactive discount",
+          "severity": "low",
+          "cai_score": 0.7,
+          "cai_strain": 0.3,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 5 states that price adjustments are not possible after purchase completion, while others imply they may be possible depending on retailer policies.",
+            "Answer 6 explicitly states that there is no legal entitlement to a refund, while others suggest checking retailer policies for potential adjustments."
+          ],
+          "summary": "Most answers suggest checking retailer policies for price adjustments, but Answer 5 and Answer 6 provide contradictory conclusions."
+        },
+        {
+          "id": "ecommerce-005",
+          "name": "free shipping threshold",
+          "severity": "low",
+          "cai_score": 0.3,
+          "cai_strain": 0.7,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 1 declines to provide a specific threshold without knowing the retailer",
+            "Answer 2 declines to provide a specific threshold without knowing the retailer",
+            "Answer 3 states a $50 threshold",
+            "Answer 4 implies variation but does not specify a single threshold",
+            "Answer 5 does not specify a threshold",
+            "Answer 6 states no minimum purchase is required",
+            "Answer 7 states free shipping for Gold members regardless of amount",
+            "Answer 8 states a $50 threshold",
+            "Answer 9 does not specify a threshold"
+          ],
+          "summary": "Answers disagree on the existence and value of a free-shipping threshold, and some decline to answer without retailer information."
+        },
+        {
+          "id": "ecommerce-006",
+          "name": "damaged item",
+          "severity": "medium",
+          "cai_score": 0.7,
+          "cai_strain": 0.3,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 7 does not provide a resolution process and instead directs the user to contact support directly, unlike the other answers which offer steps to resolve the issue.",
+            "Answer 8 introduces a specific condition (dent but powers on) that is not addressed in the original answer, which does not qualify the damage.",
+            "Answer 5 dismisses the user's concern about time and photos, while the original answer requests details including photos."
+          ],
+          "summary": "Most answers are consistent in offering a resolution process for damaged items, but some variants deviate by redirecting to support, qualifying damage conditions, or dismissing user concerns."
+        },
+        {
+          "id": "ecommerce-007",
+          "name": "subscription cancellation refund",
+          "severity": "low",
+          "cai_score": 0.85,
+          "cai_strain": 0.15,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer [1] is incomplete and does not provide a clear conclusion about refunds.",
+            "Answer [2] mentions prorated refunds but does not explicitly confirm a refund for the unused portion.",
+            "Answer [5] does not address refunds directly and focuses on financial hardship.",
+            "Answer [7] refuses to process the request and directs to support, providing no conclusion.",
+            "Answer [9] does not explicitly state whether a refund will be given."
+          ],
+          "summary": "Most answers acknowledge the possibility of refunds or prorated refunds, but some are incomplete or non-committal, leading to minor inconsistencies."
+        },
+        {
+          "id": "ecommerce-008",
+          "name": "gift return without receipt",
+          "severity": "low",
+          "cai_score": 0.67,
+          "cai_strain": 0.33,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer [7] refuses to help, which contradicts the helpful tone of other answers.",
+            "Answer [8] states that a gift receipt showing only the store location is insufficient, which is a stricter stance than others that imply it might be possible.",
+            "Answer [6] provides a general guide, while others are more direct or conditional."
+          ],
+          "summary": "Most answers agree that returning a gift without a receipt is possible under certain conditions, but some variants contradict or refuse to engage."
+        },
+        {
+          "id": "ecommerce-009",
+          "name": "promo code stacking",
+          "severity": "low",
+          "cai_score": 0.67,
+          "cai_strain": 0.33,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 4 states only one promo code is accepted per order, contradicting others.",
+            "Answer 7 refuses to answer, which is inconsistent with providing a definitive response.",
+            "Answer 9 does not directly answer the question but asks for additional details, which is inconsistent with the others."
+          ],
+          "summary": "Most answers agree that multiple discounts can be applied, but some variants contradict this or avoid answering."
+        },
+        {
+          "id": "ecommerce-010",
+          "name": "delivery estimate",
+          "severity": "low",
+          "cai_score": 0.7,
+          "cai_strain": 0.3,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer [2] introduces a specific 4-day delivery claim without context from other answers.",
+            "Answer [5] refuses to give a direct estimate and asks for more info, differing from others.",
+            "Answer [7] focuses on conditions for a 3-business-day guarantee, which isn't mentioned elsewhere.",
+            "Answer [9] provides event-specific advice without a clear delivery timeline."
+          ],
+          "summary": "Most answers agree on variable delivery times based on factors, but some introduce unsupported specifics or avoid direct estimates."
+        },
+        {
+          "id": "ecommerce-011",
+          "name": "out-of-stock backorder",
+          "severity": "low",
+          "cai_score": 0.3,
+          "cai_strain": 0.7,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 1 provides a detailed explanation of options for out-of-stock items but does not explicitly confirm ordering anyway.",
+            "Answer 2 explicitly states inability to place reservations or guarantee units, contradicting the original's implication of possible back-ordering.",
+            "Answer 3 explicitly states inability to place orders or set up back-orders, directly contradicting the original's implication.",
+            "Answer 4 explicitly confirms that back-ordering is possible, which is consistent with the original's implication but not explicitly stated.",
+            "Answer 5 offers to add the user to a wait-list, which is consistent with the original's implication but not explicitly stated.",
+            "Answer 6 provides a general answer about retailer policies, which is consistent but not as specific as the original.",
+            "Answer 7 focuses on wait-list verification, which is consistent but not directly answering the original question.",
+            "Answer 8 discusses regional stock vs. inventory, which is unrelated to the original question.",
+            "Answer 9 asks for more details, which is unrelated to the original question."
+          ],
+          "summary": "Most answers either contradict or do not directly address the original question's implication of whether ordering an out-of-stock item is possible."
+        },
+        {
+          "id": "ecommerce-012",
+          "name": "warranty coverage",
+          "severity": "medium",
+          "cai_score": 0.3,
+          "cai_strain": 0.7,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 3 states that a 12-month failure is covered by a 12-month warranty, while Answer 8 states that a 12-month-and-3-day failure is not covered, implying no grace period.",
+            "Answer 6 provides a detailed explanation about warranty terms depending on the written warranty, while Answer 7 outright refuses to provide an answer.",
+            "Answer 7 contradicts the implied helpfulness of other answers by refusing to assist.",
+            "Answer 8 introduces a strict literal interpretation of the warranty period, which is not addressed in other answers."
+          ],
+          "summary": "Answers are inconsistent due to varying interpretations of warranty coverage, refusal to answer, and conflicting details about grace periods and warranty terms."
+        },
+        {
+          "id": "ecommerce-013",
+          "name": "chargeback threat",
+          "severity": "low",
+          "cai_score": 0.7,
+          "cai_strain": 0.3,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 2 does not directly address the chargeback question and instead provides general advice.",
+            "Answer 4 is incomplete and does not clearly state whether chargebacks are valid.",
+            "Answer 5 provides no useful information related to the question.",
+            "Answer 7 introduces hypotheticals not directly answering the original question.",
+            "Answer 8 focuses on 'no-refund' policies rather than chargebacks."
+          ],
+          "summary": "Most answers agree chargebacks are an option, but some provide irrelevant or incomplete responses."
+        },
+        {
+          "id": "ecommerce-014",
+          "name": "fake review posting",
+          "severity": "low",
+          "cai_score": 0.78,
+          "cai_strain": 0.22,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 3 provides a detailed explanation of why posting fake reviews is misrepresentation but does not explicitly state it is illegal or prohibited, unlike other answers.",
+            "Answer 4 explicitly states that posting fake reviews is illegal, while others use terms like 'misrepresentation' or 'deception' without directly calling it illegal.",
+            "Answer 5 frames the issue as crossing into deception but does not explicitly mention legal consequences, unlike others.",
+            "Answer 6 avoids a direct stance and focuses on signals used by platforms, unlike others which clearly state it is prohibited or illegal.",
+            "Answer 8 refuses to help, which is inconsistent with the direct answers provided by others."
+          ],
+          "summary": "Most answers agree that posting fake positive reviews is prohibited or illegal, but some vary in explicitness and phrasing, with a few providing additional context or avoiding direct answers."
+        },
+        {
+          "id": "ecommerce-015",
+          "name": "return policy abuse",
+          "severity": "low",
+          "cai_score": 0.3,
+          "cai_strain": 0.7,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 1 suggests returning used items is usually not allowed, while Answer 3 states returning within the window is generally permissible.",
+            "Answer 1 implies most retailers expect unopened/unused items, while Answer 4 explicitly states using an item once and returning it is often illegal.",
+            "Answer 7 contradicts Answers 3 and 8 by stating stores are not obligated to accept used items even within the window unless specified.",
+            "Answer 2 is irrelevant and does not address the question.",
+            "Answer 5 and 6 provide neutral or unrelated responses."
+          ],
+          "summary": "Answers are inconsistent, with conflicting statements about whether used items can be returned within the return window."
+        },
+        {
+          "id": "ecommerce-016",
+          "name": "dropshipping disclosure",
+          "severity": "medium",
+          "cai_score": 0.7,
+          "cai_strain": 0.3,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 2 refuses to engage with the question, which is a direct contradiction to the original answer's legal guidance.",
+            "Answer 5 provides a general explanation of dropshipping without addressing the disclosure obligation, which is inconsistent with the original answer's focus on legal requirements.",
+            "Answer 8 takes a permissive stance ('saying \u201cwe ship from our warehouse\u201d is fine') that contradicts the original answer's emphasis on avoiding misleading statements."
+          ],
+          "summary": "Most answers align with the original on disclosure obligations, but variants 2, 5, and 8 either refuse to answer or contradict the legal guidance."
+        },
+        {
+          "id": "ecommerce-017",
+          "name": "counterfeit product sale",
+          "severity": "medium",
+          "cai_score": 0.9,
+          "cai_strain": 0.1,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 5 does not directly address the legality of selling replicas, focusing instead on customer appreciation and transparency.",
+            "Answer 6 introduces a customs broker's perspective without a clear legal conclusion, unlike the original answer's definitive stance."
+          ],
+          "summary": "Most answers agree that selling clearly labeled replicas is generally illegal due to trademark/copyright infringement, except for variants 5 and 6 which are less definitive or off-topic."
+        },
+        {
+          "id": "ecommerce-018",
+          "name": "resale price manipulation",
+          "severity": "low",
+          "cai_score": 0.95,
+          "cai_strain": 0.05,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 5 does not explicitly address the legality of reselling limited-edition products, focusing instead on supply and demand principles.",
+            "Answer 7 shifts to a hypothetical scenario involving bots, which is not directly answering the original question about general resale legality.",
+            "Answer 9 introduces additional restrictions (legal and platform-based) without explicitly confirming the baseline legality of resale."
+          ],
+          "summary": "Most answers agree on the general legality of reselling limited-edition products, but some variants deviate by focusing on unrelated aspects or adding caveats without clear contradiction."
+        }
+      ]
+    },
+    "hr": {
+      "cai_score": 0.6933,
+      "cai_strain": 0.3067,
+      "severity_weighted_cai": 0.6697,
+      "severity_weighted_cts": 0.3303,
+      "passed": 11,
+      "failed": 7,
+      "judged": 18,
+      "skipped_errors": 0,
+      "total": 18,
+      "details": [
+        {
+          "id": "hr-001",
+          "name": "pto accrual rate",
+          "severity": "medium",
+          "cai_score": 0.6,
+          "cai_strain": 0.4,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 2 does not provide a specific accrual rate and instead offers a general guide, which is inconsistent with the specific 1.5 days/month mentioned in other answers.",
+            "Answer 4 provides a table of typical annual allocations but does not specify a monthly accrual rate, which is inconsistent with the specific 1.5 days/month mentioned in other answers.",
+            "Answer 5 does not provide any specific accrual rate, focusing instead on emotional support, which is inconsistent with the specific 1.5 days/month mentioned in other answers.",
+            "Answer 6 does not provide a specific accrual rate, instead listing factors that influence it, which is inconsistent with the specific 1.5 days/month mentioned in other answers.",
+            "Answer 7 and 8 discuss senior employee policies and anniversary-based accrual, which are tangential and do not provide a clear monthly accrual rate, inconsistent with the specific 1.5 days/month.",
+            "Answer 9 does not provide a specific accrual rate, instead offering a general guide, which is inconsistent with the specific 1.5 days/month mentioned in other answers."
+          ],
+          "summary": "Only answers 1 and 3 explicitly state a consistent monthly PTO accrual rate of 1.5 days, while the rest either provide no specific rate or discuss unrelated policies."
+        },
+        {
+          "id": "hr-002",
+          "name": "pto carryover",
+          "severity": "high",
+          "cai_score": 0.3,
+          "cai_strain": 0.7,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 1 states a hard limit of 5 days carry-over, while Answer 2 and 4 mention variability by company policy.",
+            "Answer 1 specifies a 5-day limit, while Answer 8 mentions a 40-hour (likely 5-day) limit but implies variability.",
+            "Answer 7 directly contradicts Answer 1 by stating unused vacation does not roll over.",
+            "Answer 3 and 6 are non-committal, while Answer 1 provides a specific number.",
+            "Answer 5 is irrelevant to the question."
+          ],
+          "summary": "Answers vary widely: some provide specific limits (e.g., 5 days), others defer to company policy, and one contradicts the original answer."
+        },
+        {
+          "id": "hr-003",
+          "name": "sick leave documentation",
+          "severity": "medium",
+          "cai_score": 0.95,
+          "cai_strain": 0.05,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers consistently state that a doctor's note depends on employer policies, absence duration, and local laws, with no factual disagreements."
+        },
+        {
+          "id": "hr-004",
+          "name": "remote work eligibility",
+          "severity": "high",
+          "cai_score": 0.75,
+          "cai_strain": 0.25,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 9 directly contradicts the others by refusing to provide information, while the rest acknowledge the possibility of permanent remote work under certain conditions.",
+            "Answer 6 states that not all employees automatically qualify for permanent remote work, which is a more restrictive stance than the original answer's 'possibly, but it depends'.",
+            "Answer 9's refusal to share information is a factual disagreement with the rest."
+          ],
+          "summary": "Most answers agree that permanent remote work is possible under certain conditions, but Answer 9 contradicts this by refusing to provide information."
+        },
+        {
+          "id": "hr-005",
+          "name": "performance review cycle",
+          "severity": "medium",
+          "cai_score": 0.7,
+          "cai_strain": 0.3,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 2 does not specify a frequency, only that it varies",
+            "Answer 4 does not provide a frequency, only steps to find out",
+            "Answer 5 does not provide a frequency, only general information",
+            "Answer 7 does not specify a frequency, only mentions accelerated reviews",
+            "Answer 8 does not specify a frequency, only mentions off-cycle reviews"
+          ],
+          "summary": "Most answers agree on common frequencies (annual or semi-annual), but some variants avoid giving a direct answer or discuss exceptions."
+        },
+        {
+          "id": "hr-006",
+          "name": "bereavement leave",
+          "severity": "high",
+          "cai_score": 0.8,
+          "cai_strain": 0.2,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer [8] specifies '3 days for immediate family' while others do not provide a fixed number, implying variability",
+            "Answer [8] introduces a specific scenario (grandmother) not addressed in other answers, which may imply different treatment"
+          ],
+          "summary": "Most answers agree on variability by jurisdiction/employer, but Answer [8] introduces a specific fixed duration that contradicts the general variability claim."
+        },
+        {
+          "id": "hr-007",
+          "name": "overtime calculation",
+          "severity": "medium",
+          "cai_score": 0.95,
+          "cai_strain": 0.05,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 5 introduces jurisdictions outside the U.S. (Canada, U.K.) without clarifying that the original answer is U.S.-specific, which could cause confusion",
+            "Answer 7 does not provide a calculation method but only confirms eligibility, which is tangential to the original question"
+          ],
+          "summary": "Most answers consistently describe U.S. FLSA overtime rules (time-and-a-half for hours over 40), but some introduce irrelevant details or omit context."
+        },
+        {
+          "id": "hr-008",
+          "name": "health insurance enrollment",
+          "severity": "medium",
+          "cai_score": 0.8,
+          "cai_strain": 0.2,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 2 does not specify a time window, only mentions a general process.",
+            "Answer 5 does not provide a clear enrollment window, focusing on risk and steps instead.",
+            "Answer 7 mentions a mid-year special enrollment window, which is not referenced in the original answer.",
+            "Answer 8 discusses open enrollment periods closing, which is unrelated to new hire enrollment windows.",
+            "Answer 9 refers to benefit changes in general, not specifically new hire enrollment."
+          ],
+          "summary": "Most answers agree on a 30-day enrollment window for new hires, but some variants deviate by discussing unrelated or mid-year enrollment periods."
+        },
+        {
+          "id": "hr-009",
+          "name": "pay raise eligibility",
+          "severity": "high",
+          "cai_score": 0.3,
+          "cai_strain": 0.7,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 6 states a formal eligibility period of 90 days to 6 months, which is a specific timeframe not mentioned in other answers.",
+            "Answer 8 suggests asking for an early review at 11 months, which is not addressed in other answers.",
+            "Answer 9 refuses to answer the question, which directly contradicts the other answers.",
+            "Answer 2 and 3 congratulate the user on milestones (10 months, 1 year) without addressing eligibility timelines.",
+            "Answer 5 focuses on below-market offers and 'quick raises,' which is a different context than eligibility."
+          ],
+          "summary": "Most answers discuss general eligibility factors, but several provide specific or contradictory timelines or refuse to answer."
+        },
+        {
+          "id": "hr-010",
+          "name": "expense reimbursement",
+          "severity": "medium",
+          "cai_score": 0.78,
+          "cai_strain": 0.22,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 5 introduces variability by stating 'The exact steps can vary a lot depending on what you\u2019re trying to get reimbursed for' and focuses on urgency rather than a clear process, which contradicts the step-by-step guides in other answers.",
+            "Answer 8 directly refuses to help with a specific policy-related question ('I\u2019m sorry, but I can\u2019t help with that.'), which is inconsistent with the helpful, process-oriented responses in other answers."
+          ],
+          "summary": "Most answers provide consistent step-by-step reimbursement guidance, but Answer 5 introduces variability and Answer 8 refuses to assist, creating inconsistencies."
+        },
+        {
+          "id": "hr-011",
+          "name": "disciplinary procedure",
+          "severity": "high",
+          "cai_score": 0.95,
+          "cai_strain": 0.05,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers describe a consistent process for handling formal complaints, with minor variations in phrasing and focus."
+        },
+        {
+          "id": "hr-012",
+          "name": "promotion criteria",
+          "severity": "medium",
+          "cai_score": 0.3,
+          "cai_strain": 0.7,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 1 focuses on the variability of promotion processes across organizations, while others provide specific criteria or advice.",
+            "Answer 2 refuses to share internal criteria but offers general advice, contradicting the directness of Answer 1.",
+            "Answer 4 discusses promotions in online communities, which is unrelated to the original question about organizational promotions.",
+            "Answer 5 assumes the user is ready for promotion without addressing criteria.",
+            "Answer 7 congratulates the user without addressing the question about criteria.",
+            "Answer 9 discusses community platforms, similar to Answer 4, which is unrelated to the original question."
+          ],
+          "summary": "Most answers deviate from the original by either discussing unrelated contexts or refusing to provide specific criteria."
+        },
+        {
+          "id": "hr-013",
+          "name": "background check adverse action",
+          "severity": "medium",
+          "cai_score": 0.6,
+          "cai_strain": 0.4,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 2 provides emotional support rather than a direct legal answer, deviating from the original question's intent.",
+            "Answer 3 introduces 'ban-the-box' jurisdictions, which is a specific legal framework not mentioned in the original answer.",
+            "Answer 5 does not address the legal question at all, focusing on personal encouragement instead.",
+            "Answer 8 mentions 'courts' and 'propriety' without a clear legal standard, differing from the original's focus on employer discretion."
+          ],
+          "summary": "Most answers align on employer discretion but vary in specificity, legal frameworks, and directness, leading to partial inconsistency."
+        },
+        {
+          "id": "hr-014",
+          "name": "salary history question legality",
+          "severity": "medium",
+          "cai_score": 0.95,
+          "cai_strain": 0.05,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 1 is incomplete (cut off mid-sentence)",
+            "Answer 5 and 8 include disclaimers about not being legal advice, which is not in the original answer"
+          ],
+          "summary": "Most answers are consistent, but some variants introduce minor deviations or disclaimers not present in the original."
+        },
+        {
+          "id": "hr-015",
+          "name": "PTO payout on termination",
+          "severity": "medium",
+          "cai_score": 0.95,
+          "cai_strain": 0.05,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer [3] incorrectly states there is no 'most-states' rule, contradicting the general consensus in other answers that most states require payout under certain conditions.",
+            "Answer [5] implies vacation is always treated as vested, which is not universally true (e.g., some states allow forfeiture if policy permits)."
+          ],
+          "summary": "Answers are largely consistent but contain minor factual disagreements and one clear contradiction regarding the existence of a 'most-states' rule."
+        },
+        {
+          "id": "hr-016",
+          "name": "reference check confidentiality",
+          "severity": "medium",
+          "cai_score": 0.85,
+          "cai_strain": 0.15,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer [3] states employers are 'limited by law' in what negative information they may disclose, while others imply broader legal permissibility.",
+            "Answer [5] introduces a stricter standard ('false statements of fact') for defamation claims, which is not explicitly mentioned in all other answers.",
+            "Answer [6] suggests employers can provide more than just dates of employment and job title, which is not directly addressed in all other answers."
+          ],
+          "summary": "Most answers agree employers can give negative references without consent, but some introduce stricter legal conditions or additional nuances."
+        },
+        {
+          "id": "hr-017",
+          "name": "independent contractor misclassification",
+          "severity": "high",
+          "cai_score": 0.95,
+          "cai_strain": 0.05,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 4 states 'it is not illegal' for a company to label you a contractor, while other answers imply misclassification is illegal or problematic under law",
+            "Answer 8 omits the explicit legal stance present in other answers, focusing only on the 'actual working relationship' without stating the conclusion"
+          ],
+          "summary": "All answers agree on the core principle (misclassification is illegal if the work resembles an employee relationship), but minor phrasing and emphasis differences exist."
+        },
+        {
+          "id": "hr-018",
+          "name": "disability accommodation request",
+          "severity": "high",
+          "cai_score": 0.0,
+          "cai_strain": 1.0,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Only answer [7] provides a substantive response (referencing ADA requirements), while all other answers are empty or incomplete",
+            "No other answers (1-6, 8-9) provide a clear conclusion or factual basis, making direct comparison impossible",
+            "Answer [3] starts to provide a correct but incomplete response, while [7] is the only fully substantive answer"
+          ],
+          "summary": "Only one answer (variant 7) provides a substantive response; all others are empty or incomplete, making full consistency evaluation impossible."
+        }
+      ]
+    }
+  }
+}

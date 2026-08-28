@@ -125,6 +125,20 @@ Respond ONLY with JSON (no markdown, no preamble):
 
 # ── HTTP CLIENT ───────────────────────────────────────────────────────────────
 
+def _retry_after_seconds(err_text: str) -> float | None:
+    """Groq's daily-token-quota (TPD) 429s name the exact wait, e.g.
+    "Please try again in 3m45.936s". A leaky-bucket daily quota refills
+    continuously, so honoring that number (instead of a short blind
+    exponential backoff) is the difference between the case actually
+    succeeding and it being skipped for no real reason."""
+    m = re.search(r"try again in (?:(\d+)m)?([\d.]+)s", err_text, re.IGNORECASE)
+    if not m:
+        return None
+    minutes = float(m.group(1)) if m.group(1) else 0.0
+    seconds = float(m.group(2))
+    return minutes * 60 + seconds
+
+
 def _chat(base_url: str, api_key: str, model: str, prompt: str, max_tokens: int = 600, retries: int = 5,
           low_reasoning: bool = False) -> str:
     from openai import OpenAI
@@ -156,8 +170,15 @@ def _chat(base_url: str, api_key: str, model: str, prompt: str, max_tokens: int 
         except Exception as e:
             err = str(e).lower()
             if "429" in err or "rate" in err or "limit" in err:
-                wait = delay * (2 ** attempt) + 1
-                print(f"      rate limit, waiting {wait:.0f}s", flush=True)
+                retry_after = _retry_after_seconds(str(e))
+                if retry_after is not None:
+                    # Daily-quota 429: trust the server's own number, capped
+                    # so one case can't stall the whole run for too long.
+                    wait = min(retry_after + 2, 300)
+                    print(f"      rate limit (quota), waiting {wait:.0f}s", flush=True)
+                else:
+                    wait = delay * (2 ** attempt) + 1
+                    print(f"      rate limit, waiting {wait:.0f}s", flush=True)
                 time.sleep(wait)
             elif attempt == retries - 1:
                 raise
