@@ -1,0 +1,16 @@
+{
+  "run_date": "2026-07-19",
+  "models": {
+    "gpt-4o": {
+      "model": "gpt-4o",
+      "provider": "openai",
+      "domains": {}
+    },
+    "gpt-4o-mini": {
+      "model": "gpt-4o-mini",
+      "provider": "openai",
+      "domains": {}
+    }
+  },
+  "summary": {}
+}

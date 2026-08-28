@@ -130,6 +130,22 @@ from .residual_truth import (
 )
 from .quickstart import analyze, QuickResult
 from .cdr        import generate_cdr
+from .session_consistency import (
+    SessionConsistencyProfiler,
+    SessionConsistencyReport,
+    SessionVarianceResult,
+    SessionSample,
+)
+from .ground_truth import (
+    GroundTruth,
+    GroundTruthPack,
+    GroundTruthAuditor,
+    AccuracyResult,
+    DriftQuality,
+    ReliabilityResult,
+    ReliabilityReport,
+    load_ground_truth_pack,
+)
 from .conviction import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .distinction import (
     DistinctionPair,
@@ -241,7 +257,7 @@ from .theorems import (
     TheoremResult,
 )
 
-__version__ = "1.27.0"
+__version__ = "1.28.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -326,6 +342,20 @@ __all__ = [
     "QuickResult",
     # cdr
     "generate_cdr",
+    # ground truth + reliability
+    "GroundTruth",
+    "GroundTruthPack",
+    "GroundTruthAuditor",
+    "AccuracyResult",
+    "DriftQuality",
+    "ReliabilityResult",
+    "ReliabilityReport",
+    "load_ground_truth_pack",
+    # session consistency
+    "SessionConsistencyProfiler",
+    "SessionConsistencyReport",
+    "SessionVarianceResult",
+    "SessionSample",
     # conviction
     "ConvictionProfiler",
     "ConvictionReport",

@@ -1,0 +1,36 @@
+{
+  "model": "gemini-1.5-pro",
+  "provider": "google",
+  "date": "2026-08-27",
+  "avg_cai_strain": null,
+  "domains_complete": 0,
+  "results": {
+    "ecommerce": {
+      "error": "failed"
+    },
+    "hr": {
+      "error": "failed"
+    },
+    "healthcare": {
+      "error": "failed"
+    },
+    "legal": {
+      "error": "failed"
+    },
+    "finance": {
+      "error": "failed"
+    },
+    "saas": {
+      "error": "failed"
+    },
+    "insurance": {
+      "error": "failed"
+    },
+    "education": {
+      "error": "failed"
+    },
+    "ai_safety": {
+      "error": "failed"
+    }
+  }
+}

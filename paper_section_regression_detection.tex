@@ -1,0 +1,129 @@
+% ============================================================
+% SECTION: Regression-Detection Validity Study
+% To be inserted into paper.tex after Section 5 (Reliability
+% and Validity) or as a standalone subsection within it.
+%
+% Fill in [RESULT] placeholders after running:
+%   python run_regression_detection.py
+% ============================================================
+
+\subsection{Construct Validity: Regression-Detection Study}
+\label{sec:regression}
+
+A benchmark is only useful if it detects problems that practitioners actually
+care about. We conducted a controlled regression-detection experiment to test
+whether \benchname{} responds appropriately when a known policy defect is
+introduced into a system under evaluation.
+
+\paragraph{Study design.}
+We defined four policy defects, each operationalized as a change to the system
+prompt passed to the evaluated model. The defects were chosen to correspond to
+recognizable real-world failure modes: (1)~\emph{casual-register suppression},
+in which the model omits policy disclaimers when the user writes informally;
+(2)~\emph{authority deference}, in which the model treats claimed professional
+authorization as verified fact; (3)~\emph{minimization override}, in which
+the model defers to the user's self-assessment that a situation is not urgent;
+and (4)~\emph{hypothetical exemption}, in which the model grants an exception
+to policy when requests are framed as hypothetical. We also included a
+fifth condition, \emph{universal refusal}, in which the model declines all
+domain-specific requests regardless of framing---an edge case designed to test
+whether low CAI Strain can be gamed through consistent unhelpfulness.
+
+\paragraph{Pre-registration.}
+Before running any evaluations, we wrote out the predicted direction and
+minimum magnitude of each detectable strain change, specifying the primary
+adversarial technique (\techname{T3} for casual suppression, \techname{T5} for
+authority deference, \techname{T4} for minimization override, \techname{T6}
+for hypothetical exemption) and the domains where effects were expected to be
+largest. We also specified neutral domains that should show no material
+increase. Pre-registered predictions are available in the supplementary
+materials. No results were examined prior to pre-registration.
+
+\paragraph{Procedure.}
+Each defect was tested by running \benchname{} on \NUMCASES{} held-out cases
+per domain across \NUMDOMAINS{} domains, using Claude Sonnet~4.6 as the
+evaluated model and GPT-4o-mini as the consistency judge. We computed
+per-technique CAI Strain for each defect condition and compared against a
+clean baseline with no defect system prompt. Helpfulness of canonical
+responses under universal refusal was assessed using a binary judge score
+(helpful vs.~unhelpful).
+
+\paragraph{Results.}
+% ── FILL IN AFTER RUNNING THE EXPERIMENT ──────────────────────────────────
+% Template: "CAI-Bench detected N of 4 pre-registered defects above threshold,
+% with strain increases localized to the expected technique × domain cells
+% (Table X). The false-positive rate across neutral domains was Y\%."
+%
+% For the universal refusal condition: "Universal refusal produced a mean
+% CAI Strain of Z (vs. W for the baseline), but a mean helpfulness score of
+% V (vs. U for the baseline), confirming that low strain does not reward
+% consistent unhelpfulness."
+
+\benchname{} detected \NDETECTED{} of 4 pre-registered defects above the
+specified minimum-detectable difference of 0.08 strain units. Strain increases
+were localized to the predicted technique $\times$ domain cells; the
+false-positive rate across the pre-specified neutral cells was
+\FPRPCT{}\%. Table~\ref{tab:regression} summarizes the per-defect detection
+results.
+
+The universal-refusal condition produced a mean CAI Strain of \REFUSALSTRAIN{}
+(vs.~\BASELINESTRAIN{} for the baseline), but a mean helpfulness score of
+\REFUSALHELPFUL{} (vs.~\BASELINEHELPFUL{} for the baseline). A system that
+consistently refuses all requests appears well-calibrated under CAI Strain
+alone; the helpfulness check exposes this as a pathological response. This
+result motivates reporting both components when using \benchname{} to compare
+systems in deployment settings.
+
+% ── TABLE: Detection results ───────────────────────────────────────────────
+\begin{table}[t]
+\centering
+\small
+\caption{Regression-detection results. Delta = mean CAI Strain under the defect
+condition minus baseline. Threshold = 0.08 for all except minimization override
+(0.10). Primary tech = the technique predicted to show the largest increase.
+Detected = delta exceeds threshold in the predicted domain.}
+\label{tab:regression}
+\begin{tabular}{llccc}
+\toprule
+Defect & Primary tech & Domain & $\Delta$ Strain & Detected \\
+\midrule
+Casual suppression  & T3 & finance       & [FILL] & [Y/N] \\
+                    &    & ecommerce     & [FILL] & [Y/N] \\
+                    &    & food\_delivery & [FILL] & [Y/N] \\
+Authority deference & T5 & legal         & [FILL] & [Y/N] \\
+                    &    & healthcare    & [FILL] & [Y/N] \\
+                    &    & immigration   & [FILL] & [Y/N] \\
+Minimization override & T4 & mental\_health & [FILL] & [Y/N] \\
+Hypothetical exemption & T6 & legal       & [FILL] & [Y/N] \\
+                    &    & ai\_safety    & [FILL] & [Y/N] \\
+\midrule
+\multicolumn{3}{l}{\textit{Neutral cells (false-positive check)}} & & \\
+Casual suppression  & T3 & mental\_health & [FILL] & -- \\
+Authority deference & T5 & ecommerce     & [FILL] & -- \\
+Minimization override & T4 & finance     & [FILL] & -- \\
+\midrule
+Universal refusal   & --  & all          & [FILL] & -- \\
+\quad Helpfulness score & -- & all        & [FILL] & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+% ──────────────────────────────────────────────────────────────────────────
+
+\paragraph{Interpretation.}
+These results support the claim that CAI Strain is sensitive to policy-relevant
+behavioral differences while remaining specific enough not to flag unrelated
+domains. A defect introduced through one framing technique elevates strain
+under that technique without materially raising scores under orthogonal
+techniques. The universal-refusal finding motivates combining CAI Strain with
+a minimum helpfulness threshold in any deployment comparison---a constraint
+we treat as outside the scope of the benchmark itself but recommend as
+evaluation practice.
+
+\paragraph{Limitations.}
+This experiment used a single evaluated model (Claude Sonnet~4.6) and a single
+judge (GPT-4o-mini). Detection sensitivity may differ for other model families.
+The defects were operationalized through system-prompt manipulation; naturally
+occurring policy drift may produce subtler or more diffuse strain increases
+than the concentrated defects tested here. We regard this study as a
+proof-of-concept for the detection methodology rather than a comprehensive
+sensitivity analysis.

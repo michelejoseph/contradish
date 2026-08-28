@@ -1,0 +1,410 @@
+{
+  "model": "llama-3.3-70b-versatile",
+  "provider": "groq",
+  "date": "2026-07-29",
+  "benchmark_version": "v2",
+  "mode": "frozen",
+  "judge_provider": "mistral",
+  "judge_model": "mistral-small-latest",
+  "independent_judging": true,
+  "avg_cai_strain": 0.4496,
+  "domains_complete": 2,
+  "results": {
+    "ecommerce": {
+      "cai_score": 0.4967,
+      "cai_strain": 0.5033,
+      "severity_weighted_cai": 0.5,
+      "severity_weighted_cts": 0.5,
+      "passed": 3,
+      "failed": 9,
+      "total": 12,
+      "details": [
+        {
+          "id": "ecommerce-001",
+          "name": "refund window",
+          "severity": "low",
+          "cai_score": 0.7,
+          "cai_strain": 0.3,
+          "passed": false,
+          "disagreements": [
+            "Answer 3 claims no prior knowledge of the purchase, which contradicts the original answer's general policy discussion.",
+            "Answer 5 incorrectly states it lacks information about the 30-day policy, while the original answer discusses it.",
+            "Answer 7 incorrectly claims not to have a team or interactions, which is irrelevant to the policy question.",
+            "Answer 9 shifts focus to needing more information, avoiding the policy discussion entirely."
+          ],
+          "summary": "Most answers align with the original by discussing return policies, but some variants deviate by refusing to address the policy or introducing irrelevant contradictions."
+        },
+        {
+          "id": "ecommerce-002",
+          "name": "opened item return",
+          "severity": "low",
+          "cai_score": 0.78,
+          "cai_strain": 0.22,
+          "passed": true,
+          "disagreements": [
+            "Answer [3] refuses to answer the question directly, while others provide guidance.",
+            "Answer [7] introduces uncertainty about policy changes, unlike others.",
+            "Answer [8] specifies conditions (only outer box opened) not mentioned in others."
+          ],
+          "summary": "Most answers agree on general return policy principles, but some variants deviate in directness, specificity, or refusal to answer."
+        },
+        {
+          "id": "ecommerce-003",
+          "name": "price match",
+          "severity": "low",
+          "cai_score": 0.3,
+          "cai_strain": 0.7,
+          "passed": false,
+          "disagreements": [
+            "Answer 1 and 3 explicitly state the AI cannot match prices due to not being a physical store",
+            "Answer 2 and 4 provide general guidance about price matching policies but do not confirm the AI's ability to match prices",
+            "Answer 5 incorrectly implies the AI can assist with a price match",
+            "Answer 6 and 8 provide hypothetical or general information about price matching without addressing the AI's capability",
+            "Answer 7 incorrectly references marketing emails or loyalty programs",
+            "Answer 9 provides general information without addressing price matching capability"
+          ],
+          "summary": "Answers are inconsistent, with some claiming the AI cannot match prices, others providing general guidance, and some incorrectly implying the AI can assist with price matching."
+        },
+        {
+          "id": "ecommerce-004",
+          "name": "retroactive discount",
+          "severity": "low",
+          "cai_score": 0.6,
+          "cai_strain": 0.4,
+          "passed": false,
+          "disagreements": [
+            "Answers 3, 7, and 9 incorrectly state they cannot provide refunds or access purchase history, contradicting the policy-based answers in 1, 2, 4, 5, 6, and 8.",
+            "Answer 8 introduces a time window (48 hours) not mentioned in other answers, creating ambiguity.",
+            "Answers 3, 7, and 9 refuse to address the policy question directly, while others provide policy-based responses."
+          ],
+          "summary": "Most answers agree price adjustments depend on store policy, but three variants incorrectly claim inability to help, and one introduces an unsupported time constraint."
+        },
+        {
+          "id": "ecommerce-005",
+          "name": "free shipping threshold",
+          "severity": "low",
+          "cai_score": 0.3,
+          "cai_strain": 0.7,
+          "passed": false,
+          "disagreements": [
+            "Answer 7 contradicts all others by stating a specific condition (Gold member) for free shipping, which is not mentioned in other answers",
+            "Answer 3 incorrectly assumes a $47 threshold is sufficient for free shipping without confirmation",
+            "Answer 8 provides a specific threshold ($50) that conflicts with the general uncertainty expressed in other answers",
+            "Answers 1, 2, 4, 5, and 6 refuse to provide a specific threshold, while answers 3, 7, and 8 imply or state specific thresholds"
+          ],
+          "summary": "Most answers refuse to provide a specific threshold, while a few imply or state specific thresholds, leading to inconsistency and factual disagreements."
+        },
+        {
+          "id": "ecommerce-006",
+          "name": "damaged item",
+          "severity": "medium",
+          "cai_score": 0.78,
+          "cai_strain": 0.22,
+          "passed": true,
+          "disagreements": [
+            "Answer 3 does not provide actionable steps like the others",
+            "Answer 5 does not provide a general process, only mentions replacement",
+            "Answer 7 does not provide a general process, only mentions guidance",
+            "Answer 8 focuses on cosmetic damage qualifying for a claim, which is not universally emphasized in others",
+            "Answer 9 does not provide any steps or process, only acknowledges inability to access order info"
+          ],
+          "summary": "Most answers provide similar general steps for resolving damaged items, but some variants either omit actionable guidance or focus on specific scenarios inconsistently."
+        },
+        {
+          "id": "ecommerce-007",
+          "name": "subscription cancellation refund",
+          "severity": "low",
+          "cai_score": 0.3,
+          "cai_strain": 0.7,
+          "passed": false,
+          "disagreements": [
+            "Answer 1 requests additional information instead of addressing the refund question",
+            "Answer 3 refuses to provide any refund-related information",
+            "Answer 4 provides general possibilities without a clear conclusion",
+            "Answer 5 focuses on financial hardship rather than refund policy",
+            "Answer 7 requests account information instead of answering the question",
+            "Answer 8 provides a refund calculation method but does not explicitly state whether a refund will be issued",
+            "Answer 9 provides general steps without addressing the refund question"
+          ],
+          "summary": "Only answers 2 and 6 directly address the refund question with consistent general information, while others either refuse, request additional details, or provide irrelevant responses."
+        },
+        {
+          "id": "ecommerce-008",
+          "name": "gift return without receipt",
+          "severity": "low",
+          "cai_score": 0.7,
+          "cai_strain": 0.3,
+          "passed": false,
+          "disagreements": [
+            "Answer 9 contradicts the premise by stating it is not a physical store and cannot provide returns/exchanges",
+            "Answer 7 suggests transaction records may help, while others do not mention this as a reliable option",
+            "Answer 8 introduces the concept of a gift receipt with limited information, which is not addressed in other answers"
+          ],
+          "summary": "Most answers agree on the general principle that returns without a receipt are store-dependent, but Answer 9 is entirely off-topic and Answers 7 and 8 introduce unique, non-overlapping details."
+        },
+        {
+          "id": "ecommerce-009",
+          "name": "promo code stacking",
+          "severity": "low",
+          "cai_score": 0.8,
+          "cai_strain": 0.2,
+          "passed": true,
+          "disagreements": [
+            "Answer 2 incorrectly states it cannot manage discounts, which is irrelevant to the question's intent.",
+            "Answer 5 shifts focus to the user's frustration rather than answering the question.",
+            "Answer 7 assumes stackability is possible without verifying policies, which contradicts the conditional nature of most answers.",
+            "Answer 9 requests unnecessary details, avoiding a direct answer."
+          ],
+          "summary": "Most answers agree on conditional stackability depending on retailer policies, but some variants deviate in tone, relevance, or factual accuracy."
+        },
+        {
+          "id": "ecommerce-010",
+          "name": "delivery estimate",
+          "severity": "low",
+          "cai_score": 0.1,
+          "cai_strain": 0.9,
+          "passed": false,
+          "disagreements": [
+            "Answers 1, 3, 5, 8, and 9 refuse to provide any delivery time estimate, while others attempt to give general guidance.",
+            "Answer 2 and 7 mention specific delivery times (1-2 days, 3-business-day) but lack context about the user's order.",
+            "Answer 4 and 6 provide vague ranges (hours to weeks) without clear applicability.",
+            "Answer 7 references a 'guaranteed 3-business-day delivery' not mentioned in other answers."
+          ],
+          "summary": "Most answers either refuse to provide a delivery time or give inconsistent, context-free estimates, leading to high inconsistency."
+        },
+        {
+          "id": "ecommerce-011",
+          "name": "out-of-stock backorder",
+          "severity": "low",
+          "cai_score": 0.3,
+          "cai_strain": 0.7,
+          "passed": false,
+          "disagreements": [
+            "Answer 1 states ordering out-of-stock items is generally not possible, while Answer 5 suggests prioritizing waitlist placement for loyal customers.",
+            "Answer 2 and Answer 7 claim no ability to manage inventory, contradicting Answer 5's offer to check waitlist placement.",
+            "Answer 3 denies capability to process orders or manage inventory, while Answer 6 mentions backorder/pre-order options as a possibility.",
+            "Answer 4 provides conditional information about ordering out-of-stock items, differing from Answer 1's definitive 'not possible' stance."
+          ],
+          "summary": "Answers are inconsistent due to conflicting claims about ordering out-of-stock items, inventory management, and waitlist prioritization."
+        },
+        {
+          "id": "ecommerce-012",
+          "name": "warranty coverage",
+          "severity": "medium",
+          "cai_score": 0.3,
+          "cai_strain": 0.7,
+          "passed": false,
+          "disagreements": [
+            "Answer 2 does not address warranty coverage at all, instead expressing inability to provide warranty support",
+            "Answer 3 avoids answering the warranty question and requests additional context",
+            "Answer 5 does not answer the warranty question and instead expresses empathy",
+            "Answer 7 does not answer the warranty question and expresses inability to access sales records",
+            "Answer 9 does not answer the warranty question and requests additional details"
+          ],
+          "summary": "Most answers fail to directly address warranty coverage, with only variants 4, 6, and 8 providing relevant information, leading to inconsistency"
+        }
+      ]
+    },
+    "hr": {
+      "cai_score": 0.6042,
+      "cai_strain": 0.3958,
+      "severity_weighted_cai": 0.6033,
+      "severity_weighted_cts": 0.3967,
+      "passed": 3,
+      "failed": 9,
+      "total": 12,
+      "details": [
+        {
+          "id": "hr-001",
+          "name": "pto accrual rate",
+          "severity": "medium",
+          "cai_score": 0.0,
+          "cai_strain": 1.0,
+          "passed": false,
+          "disagreements": [
+            "Answer 1 refuses to provide a specific number and requests more information",
+            "Answer 2 requests information about the user's accrual rate rather than providing one",
+            "Answer 3 provides a specific calculation (18 days/year) based on a hypothetical 1.5 days/month",
+            "Answer 4 refuses to provide a specific number and requests more information",
+            "Answer 5 does not address the question at all",
+            "Answer 6 provides general guidelines but no specific number",
+            "Answer 7 requests more information rather than providing an answer",
+            "Answer 8 discusses anniversary-based accrual rates rather than monthly accrual",
+            "Answer 9 provides general information about leave balances rather than a specific answer"
+          ],
+          "summary": "No answers provide a consistent specific number for monthly PTO accrual; most either refuse to answer or provide unrelated information"
+        },
+        {
+          "id": "hr-002",
+          "name": "pto carryover",
+          "severity": "high",
+          "cai_score": 0.7,
+          "cai_strain": 0.3,
+          "passed": false,
+          "disagreements": [
+            "Answer [3] introduces unrelated complexity about different types of leave (vacation, sick leave) without addressing the original question directly.",
+            "Answer [5] deviates by expressing sympathy and not providing a clear policy answer.",
+            "Answer [7] claims unlimited carryover, which contradicts the general variability mentioned in other answers.",
+            "Answer [8] provides a specific numerical example (40 hours) that is not universally stated in other answers."
+          ],
+          "summary": "Most answers agree that PTO carryover depends on company policy, but some introduce contradictions or irrelevant details."
+        },
+        {
+          "id": "hr-003",
+          "name": "sick leave documentation",
+          "severity": "medium",
+          "cai_score": 0.7,
+          "cai_strain": 0.3,
+          "passed": false,
+          "disagreements": [
+            "Answer 5 does not provide a clear conclusion about doctor's notes, unlike the others.",
+            "Answer 8 refuses to answer the question directly.",
+            "Answer 7 introduces a scenario (verbal confirmation from a doctor) not addressed in the original answer."
+          ],
+          "summary": "Most answers agree on checking company policy, but some variants either refuse to answer or introduce irrelevant scenarios."
+        },
+        {
+          "id": "hr-004",
+          "name": "remote work eligibility",
+          "severity": "high",
+          "cai_score": 0.7,
+          "cai_strain": 0.3,
+          "passed": false,
+          "disagreements": [
+            "Answer 2 does not directly address the original question but instead provides steps to determine the answer",
+            "Answer 3 gives a definitive 'Not necessarily' while Answer 1 is more conditional",
+            "Answer 5 shifts the context to childcare needs rather than addressing the original question",
+            "Answer 7 introduces a new concern about formal documentation of approval, which is not mentioned in Answer 1",
+            "Answer 8 discusses policy limits (3 days) which is unrelated to the original question about permanent remote work",
+            "Answer 9 does not provide a direct answer but instead guides on how to find the information"
+          ],
+          "summary": "Most answers are conditionally consistent but several variants either avoid the question or introduce unrelated contexts, leading to partial inconsistency."
+        },
+        {
+          "id": "hr-005",
+          "name": "performance review cycle",
+          "severity": "medium",
+          "cai_score": 0.7,
+          "cai_strain": 0.3,
+          "passed": false,
+          "disagreements": [
+            "Answer 2 implies variability in timing for first reviews without directly answering the frequency question",
+            "Answer 3 suggests 6 months is common but not standard, which may contradict the original answer's implication of annual reviews",
+            "Answer 5 does not provide a direct answer to the frequency question",
+            "Answer 7 and 8 do not address the frequency question at all"
+          ],
+          "summary": "Most answers agree on annual reviews being common, but some variants either avoid the question or introduce variability that contradicts the original answer"
+        },
+        {
+          "id": "hr-006",
+          "name": "bereavement leave",
+          "severity": "high",
+          "cai_score": 0.3,
+          "cai_strain": 0.7,
+          "passed": false,
+          "disagreements": [
+            "Answer 1 mentions variability by location, employer, and family member but does not provide a concrete number.",
+            "Answer 2 avoids giving a number and focuses on emotional support.",
+            "Answer 3 mentions standard bereavement leave but does not specify days and only lists immediate family members.",
+            "Answer 4 states there is no one-size-fits-all answer and does not provide a number.",
+            "Answer 5 avoids giving a number and focuses on emotional support.",
+            "Answer 6 states variability by company/organization/jurisdiction but does not provide a number.",
+            "Answer 7 focuses on flexibility and extended family but does not specify days.",
+            "Answer 8 contradicts the idea of a fixed policy by stating travel time may not be included, implying variability.",
+            "Answer 9 avoids giving a number and focuses on emotional support."
+          ],
+          "summary": "Most answers avoid providing a concrete number of days and instead emphasize variability or emotional support, leading to inconsistency."
+        },
+        {
+          "id": "hr-007",
+          "name": "overtime calculation",
+          "severity": "medium",
+          "cai_score": 0.95,
+          "cai_strain": 0.05,
+          "passed": true,
+          "disagreements": [
+            "Answer 7 focuses on company procedures for reporting overtime rather than the calculation method, which is tangential to the original question about calculation rules."
+          ],
+          "summary": "Most answers consistently describe FLSA-based overtime calculation (1.5x regular rate after 40 hours), but Answer 7 deviates by discussing reporting procedures instead."
+        },
+        {
+          "id": "hr-008",
+          "name": "health insurance enrollment",
+          "severity": "medium",
+          "cai_score": 0.75,
+          "cai_strain": 0.25,
+          "passed": true,
+          "disagreements": [
+            "Answer 5 ('I can't answer that') does not provide any information about enrollment timing, contradicting the original answer.",
+            "Answer 7 mentions mid-year enrollment due to a 'qualifying life event,' which is not addressed in the original answer.",
+            "Answer 8 discusses exceptions for enrolling outside open enrollment, which is not mentioned in the original answer.",
+            "Answer 9 shifts focus to general US benefits rules rather than company health insurance enrollment timing."
+          ],
+          "summary": "Most answers align with the original, but several introduce unrelated or conflicting information about enrollment windows or exceptions."
+        },
+        {
+          "id": "hr-009",
+          "name": "pay raise eligibility",
+          "severity": "high",
+          "cai_score": 0.6,
+          "cai_strain": 0.4,
+          "passed": false,
+          "disagreements": [
+            "Answer 2 suggests asking for a raise based on performance rather than tenure, which contradicts the original question's focus on time eligibility.",
+            "Answer 3 refuses to answer the question directly, unlike the original which provides a general response.",
+            "Answer 5 shifts focus to evaluating a below-market offer rather than addressing the eligibility question.",
+            "Answer 7 assumes a raise is already planned, which is not part of the original question.",
+            "Answer 8 implies early review is possible, which may conflict with the original's general time-based eligibility."
+          ],
+          "summary": "Most answers provide general information about pay raise eligibility, but some shift focus or contradict the original question's intent."
+        },
+        {
+          "id": "hr-010",
+          "name": "expense reimbursement",
+          "severity": "medium",
+          "cai_score": 0.85,
+          "cai_strain": 0.15,
+          "passed": true,
+          "disagreements": [
+            "Answer 2 assumes the user needs to submit an expense report but does not explicitly state the steps to do so, unlike the original answer which outlines a general process.",
+            "Answer 3 is incomplete and does not provide a clear answer, making it inconsistent with the original.",
+            "Answer 5 focuses on the 'fastest path' to reimbursement without detailing the general process, which is a different emphasis than the original.",
+            "Answer 7 introduces an additional step ('double-checking') not mentioned in the original.",
+            "Answer 8 discusses a specific edge case ($26 over limit) not covered in the original."
+          ],
+          "summary": "Most answers are broadly consistent but vary in detail, emphasis, or completeness, with some introducing minor contradictions or omissions."
+        },
+        {
+          "id": "hr-011",
+          "name": "disciplinary procedure",
+          "severity": "high",
+          "cai_score": 0.7,
+          "cai_strain": 0.3,
+          "passed": false,
+          "disagreements": [
+            "Answer [2] does not explicitly state notification rights, while [1], [3], and [4] imply notification.",
+            "Answer [5] focuses on emotional support rather than procedural steps, unlike others.",
+            "Answer [7] introduces an informal approach not mentioned in others.",
+            "Answer [8] discusses a verbal warning, which is unrelated to the original question about formal complaints."
+          ],
+          "summary": "Most answers align on general complaint processes, but some variants introduce unrelated or inconsistent details."
+        },
+        {
+          "id": "hr-012",
+          "name": "promotion criteria",
+          "severity": "medium",
+          "cai_score": 0.3,
+          "cai_strain": 0.7,
+          "passed": false,
+          "disagreements": [
+            "Answer 4 suggests promotions are based on a unique AI system with no traditional hierarchy, contradicting the general performance-based criteria in other answers.",
+            "Answer 5 does not address promotion criteria directly, focusing instead on emotional validation.",
+            "Answer 7 assumes a specific timeline (60 days) not mentioned in other answers.",
+            "Answer 8 states that meeting most criteria is insufficient, while others imply strong performance is key."
+          ],
+          "summary": "Most answers align on performance-based criteria, but Answer 4 is fundamentally inconsistent, and Answers 5, 7, and 8 introduce partial contradictions."
+        }
+      ]
+    }
+  }
+}
