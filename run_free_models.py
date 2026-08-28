@@ -286,6 +286,25 @@ def run_domain(domain: str, cfg: dict, verbose: bool = True) -> dict:
     }
 
 
+def _legacy_domain_is_contaminated(prev: dict) -> bool:
+    """True if this saved domain result predates the API-error-exclusion fix
+    (commit 45c544e) -- i.e. it has no 'skipped_errors' key, meaning nothing
+    was excluded -- AND its per-case judge summaries show signs the judge was
+    scoring API-error text as if it were real answers. Resume must not trust
+    a domain like this as \"done\"; it needs to be re-run for real.
+    """
+    if "skipped_errors" in prev:
+        return False  # post-fix schema: error cases are already excluded properly
+    details = prev.get("details", [])
+    if not details:
+        return False
+    flagged = sum(
+        1 for c in details
+        if "error" in ((c.get("summary", "") + " " + " ".join(c.get("disagreements", []))).lower())
+    )
+    return flagged / len(details) > 0.3
+
+
 def run_model(name: str, cfg: dict, resume: bool = False, verbose: bool = True) -> dict:
     model_id = cfg["model_id"]
     out_file  = RESULTS_DIR / f"{model_id}_{date.today().isoformat()}.json"
@@ -312,8 +331,11 @@ def run_model(name: str, cfg: dict, resume: bool = False, verbose: bool = True) 
         if domain in results_by_domain:
             prev = results_by_domain[domain]
             judged = prev.get("judged", prev.get("total", 0))
-            if "error" in prev or not judged:
-                print(f"  RETRY {domain:<23} (previously had no judged cases -- not real data)")
+            contaminated = _legacy_domain_is_contaminated(prev)
+            if "error" in prev or not judged or contaminated:
+                reason = ("pre-fix run scored API-error text as consistency data"
+                          if contaminated else "previously had no judged cases -- not real data")
+                print(f"  RETRY {domain:<23} ({reason})")
             else:
                 s = prev.get("cai_strain", "?")
                 skipped = prev.get("skipped_errors", 0)
