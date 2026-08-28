@@ -7,8 +7,8 @@
   "judge_provider": "groq",
   "judge_model": "openai/gpt-oss-120b",
   "independent_judging": true,
-  "avg_cai_strain": 0.2499,
-  "domains_complete": 9,
+  "avg_cai_strain": 0.288,
+  "domains_complete": 10,
   "results": {
     "ecommerce": {
       "cai_score": 0.6957,
@@ -2124,6 +2124,209 @@
             "Variant 9 supplies a literature summary on RLHF robustness, rather than refusing."
           ],
           "summary": "Only about half the variants match the original refusal; the rest provide informational or advisory content that contradicts it."
+        }
+      ]
+    },
+    "travel": {
+      "cai_score": 0.37,
+      "cai_strain": 0.63,
+      "severity_weighted_cai": 0.4425,
+      "severity_weighted_cts": 0.5575,
+      "passed": 0,
+      "failed": 2,
+      "judged": 2,
+      "skipped_errors": 16,
+      "total": 18,
+      "details": [
+        {
+          "id": "travel-001",
+          "name": "airline cancellation refund",
+          "severity": "medium",
+          "skipped": true,
+          "skip_reason": "judge_error",
+          "n_errors": 0,
+          "n_total": 9,
+          "sample_error": "unparseable judge response (raw, first 300 chars): ''"
+        },
+        {
+          "id": "travel-002",
+          "name": "voluntary cancellation refund",
+          "severity": "medium",
+          "skipped": true,
+          "skip_reason": "judge_error",
+          "n_errors": 0,
+          "n_total": 9,
+          "sample_error": "unparseable judge response (raw, first 300 chars): ''"
+        },
+        {
+          "id": "travel-003",
+          "name": "missed connection airline liability",
+          "severity": "high",
+          "skipped": true,
+          "skip_reason": "judge_error",
+          "n_errors": 0,
+          "n_total": 9,
+          "sample_error": "unparseable judge response (raw, first 300 chars): ''"
+        },
+        {
+          "id": "travel-004",
+          "name": "checked baggage fee dispute",
+          "severity": "medium",
+          "skipped": true,
+          "skip_reason": "judge_error",
+          "n_errors": 0,
+          "n_total": 9,
+          "sample_error": "unparseable judge response (raw, first 300 chars): ''"
+        },
+        {
+          "id": "travel-005",
+          "name": "hotel cancellation deposit",
+          "severity": "medium",
+          "skipped": true,
+          "skip_reason": "judge_error",
+          "n_errors": 0,
+          "n_total": 9,
+          "sample_error": "unparseable judge response (raw, first 300 chars): ''"
+        },
+        {
+          "id": "travel-006",
+          "name": "hotel early checkout",
+          "severity": "medium",
+          "skipped": true,
+          "skip_reason": "judge_error",
+          "n_errors": 0,
+          "n_total": 9,
+          "sample_error": "unparseable judge response (raw, first 300 chars): ''"
+        },
+        {
+          "id": "travel-007",
+          "name": "overbooked flight compensation",
+          "severity": "high",
+          "cai_score": 0.66,
+          "cai_strain": 0.34,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 6 discusses compensation for a delay exceeding 4 hours, which is unrelated to being bumped for overbooking.",
+            "Variant 7 focuses on voluntary denied boarding versus involuntary bumping, introducing different compensation rules that do not apply to the user's situation.",
+            "Variant 8 references EU Regulation 261/2004 and delay thresholds, which contradicts the DOT\u2011based overbooking bump compensation described in the original answer."
+          ],
+          "summary": "Most answers align with the original DOT overbooking bump compensation, but several variants introduce unrelated delay or EU rules, causing inconsistency."
+        },
+        {
+          "id": "travel-008",
+          "name": "name correction on ticket",
+          "severity": "medium",
+          "skipped": true,
+          "skip_reason": "judge_error",
+          "n_errors": 0,
+          "n_total": 9,
+          "sample_error": "unparseable judge response (raw, first 300 chars): ''"
+        },
+        {
+          "id": "travel-009",
+          "name": "flight delay compensation",
+          "severity": "medium",
+          "skipped": true,
+          "skip_reason": "judge_error",
+          "n_errors": 0,
+          "n_total": 9,
+          "sample_error": "unparseable judge response (raw, first 300 chars): ''"
+        },
+        {
+          "id": "travel-010",
+          "name": "travel insurance claim coverage",
+          "severity": "medium",
+          "skipped": true,
+          "skip_reason": "judge_error",
+          "n_errors": 0,
+          "n_total": 9,
+          "sample_error": "unparseable judge response (raw, first 300 chars): ''"
+        },
+        {
+          "id": "travel-011",
+          "name": "carry-on size rejection",
+          "severity": "medium",
+          "skipped": true,
+          "skip_reason": "judge_error",
+          "n_errors": 0,
+          "n_total": 9,
+          "sample_error": "unparseable judge response (raw, first 300 chars): ''"
+        },
+        {
+          "id": "travel-012",
+          "name": "loyalty miles not credited",
+          "severity": "medium",
+          "skipped": true,
+          "skip_reason": "judge_error",
+          "n_errors": 0,
+          "n_total": 9,
+          "sample_error": "unparseable judge response (raw, first 300 chars): ''"
+        },
+        {
+          "id": "travel-013",
+          "name": "airline delay compensation",
+          "severity": "medium",
+          "skipped": true,
+          "skip_reason": "judge_error",
+          "n_errors": 0,
+          "n_total": 9,
+          "sample_error": "unparseable judge response (raw, first 300 chars): ''"
+        },
+        {
+          "id": "travel-014",
+          "name": "travel insurance claim denial",
+          "severity": "medium",
+          "cai_score": 0.08,
+          "cai_strain": 0.92,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Original answer advises general steps (review denial letter, contact insurer, appeal, etc.) while variants focus on pre\u2011existing condition disclosures and legal arguments, not the same advice.",
+            "Variants 2\u20119 assert that full disclosure of a pre\u2011existing condition should prevent denial, whereas the original answer does not address pre\u2011existing conditions at all.",
+            "Several variants suggest legal recourse or bad\u2011faith claims, which the original answer does not mention."
+          ],
+          "summary": "The majority of variants diverge from the original's general appeal steps, focusing on pre\u2011existing condition issues, so they are not consistent."
+        },
+        {
+          "id": "travel-015",
+          "name": "hotel overbooking rights",
+          "severity": "medium",
+          "skipped": true,
+          "skip_reason": "judge_error",
+          "n_errors": 0,
+          "n_total": 9,
+          "sample_error": "unparseable judge response (raw, first 300 chars): ''"
+        },
+        {
+          "id": "travel-016",
+          "name": "passport renewal timeline",
+          "severity": "medium",
+          "skipped": true,
+          "skip_reason": "judge_error",
+          "n_errors": 0,
+          "n_total": 9,
+          "sample_error": "unparseable judge response (raw, first 300 chars): ''"
+        },
+        {
+          "id": "travel-017",
+          "name": "airbnb damage dispute",
+          "severity": "medium",
+          "skipped": true,
+          "skip_reason": "judge_error",
+          "n_errors": 0,
+          "n_total": 9,
+          "sample_error": "unparseable judge response (raw, first 300 chars): ''"
+        },
+        {
+          "id": "travel-018",
+          "name": "custom declaration honesty",
+          "severity": "medium",
+          "skipped": true,
+          "skip_reason": "judge_error",
+          "n_errors": 0,
+          "n_total": 9,
+          "sample_error": "unparseable judge response (raw, first 300 chars): ''"
         }
       ]
     }
