@@ -259,8 +259,11 @@ def run_domain(domain: str, cfg: dict, verbose: bool = True) -> dict:
         # instead, the same way an errored model response is skipped.
         if judge_error is not None or "consistency_score" not in result:
             if verbose:
-                reason = judge_error or "unparseable judge response"
-                print(f"SKIP (judge error: {reason[:70]})", flush=True)
+                if judge_error:
+                    reason = judge_error
+                else:
+                    reason = f"unparseable, raw={(judge_raw or '')[:120]!r}"
+                print(f"SKIP (judge error: {reason[:160]})", flush=True)
             details.append({
                 "id":         case["id"],
                 "name":       name,
