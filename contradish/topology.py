@@ -647,6 +647,104 @@ def topology_from_phi_star(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Expanding a single node
+# ─────────────────────────────────────────────────────────────────────────────
+
+def expand_node(
+    topo: "FailureTopologyMap",
+    node_id: str,
+    explorer,                       # PhiStarExplorer from phi_star.py
+    follow_up_question: Optional[str] = None,
+    max_children: int = 4,
+) -> "FailureTopologyMap":
+    """
+    Expand one node in an existing FailureTopologyMap by actually probing
+    what it depends on, instead of accepting the placeholder edge structure
+    topology_from_phi_star() falls back to when no real dependency
+    structure is supplied -- a linear chain in recurrence order, which is
+    an assumption, not something anyone asked the model about.
+
+    Runs a new Phi* exploration seeded by the node's own description (or an
+    explicit follow_up_question), clusters the result exactly the way
+    topology_from_phi_star() does, and wires the new clusters in as child
+    nodes with edges pointing INTO node_id -- source -> target still means
+    "commit to source before target", so a child (a sub-distinction this
+    junction depends on) precedes its parent. A cluster that turns out to
+    just restate the parent's own claim is skipped rather than added as a
+    degenerate self-referential child.
+
+    Mutates topo in place (nodes, edges, and the internal adjacency index
+    all get updated so critical_path(), sources()/sinks(), and
+    superspreader_influence() see the new structure immediately) and
+    returns it for chaining.
+
+    Args:
+        topo:               The map to grow. node_id must already be in it.
+        node_id:            Which existing node to expand.
+        explorer:           A PhiStarExplorer, already configured with the
+                            model_fn / extractor / similarity_fn you want
+                            used for this probe -- typically the same one
+                            that produced the original topology.
+        follow_up_question: What to ask to discover this node's
+                            dependencies. Defaults to a generic prompt built
+                            from the node's own description; pass your own
+                            for a sharper probe.
+        max_children:       Cap on how many new child nodes one expansion
+                            can add, so one call can't silently explode the
+                            graph.
+    """
+    if node_id not in topo.nodes:
+        raise KeyError(f"{node_id!r} is not a node in this topology")
+
+    parent = topo.nodes[node_id]
+    question = follow_up_question or (
+        f"What does the answer to this depend on: {parent.description}"
+    )
+
+    result = explorer.run(question=question, domain=parent.domain, model_label=topo.model)
+
+    new_nodes: dict = {}
+    new_edges: list = []
+    for i, cluster in enumerate(result.clusters):
+        if len(new_nodes) >= max_children:
+            break
+        # Skip a cluster that's really just the parent's own claim restated --
+        # that's not a new dependency, it's the same node found again.
+        if explorer.similarity_fn(cluster.claim, parent.description) >= explorer.similarity_threshold:
+            continue
+
+        child_id = f"{node_id}.child_{i}"
+        cai_strain = 1.0 - cluster.recurrence
+        reality_strain = (1.0 - cluster.stability) if cluster.stability is not None else 0.5
+        lw = cluster.recurrence
+
+        new_nodes[child_id] = ReasoningNode(
+            node_id=child_id,
+            description=cluster.claim[:80],
+            lambda_weight=lw,
+            cai_strain=cai_strain,
+            reality_strain=reality_strain,
+            domain=parent.domain,
+        )
+        new_edges.append(ReasoningEdge(source=child_id, target=node_id, propagation=0.7))
+
+    topo.nodes.update(new_nodes)
+    topo.edges.extend(new_edges)
+
+    # Rebuild the adjacency indexes the same way __init__ builds them, so
+    # every existing method (critical_path, sources/sinks, superspreader
+    # influence) sees the expansion immediately -- nothing about the rest
+    # of the map is touched.
+    topo._adj = defaultdict(list)
+    topo._radj = defaultdict(list)
+    for e in topo.edges:
+        topo._adj[e.source].append(e)
+        topo._radj[e.target].append(e)
+
+    return topo
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Optional: type alias import guard for phi_star
 # ─────────────────────────────────────────────────────────────────────────────
 from typing import TYPE_CHECKING, Optional
