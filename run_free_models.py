@@ -125,10 +125,24 @@ Respond ONLY with JSON (no markdown, no preamble):
 
 # ── HTTP CLIENT ───────────────────────────────────────────────────────────────
 
-def _chat(base_url: str, api_key: str, model: str, prompt: str, max_tokens: int = 600, retries: int = 5) -> str:
+def _chat(base_url: str, api_key: str, model: str, prompt: str, max_tokens: int = 600, retries: int = 5,
+          low_reasoning: bool = False) -> str:
     from openai import OpenAI
     client = OpenAI(api_key=api_key, base_url=base_url)
     delay = 2.0
+    # gpt-oss models spend part of max_tokens on internal reasoning before
+    # the final answer; on a judging call asking for structured JSON that
+    # reasoning can consume the whole budget, leaving message.content empty
+    # with no error at all. Ask for less reasoning ONLY when this call is
+    # explicitly marked as a judge/scoring call (low_reasoning=True) -- never
+    # for a call to a model that is itself the subject being benchmarked,
+    # where silently changing how much it reasons would change the thing
+    # being measured. reasoning_effort is GPT-OSS-specific; only send it to
+    # a gpt-oss model so a non-GPT-OSS endpoint (e.g. Mistral as judge)
+    # never sees an unrecognized parameter.
+    extra = {}
+    if low_reasoning and model.startswith("openai/gpt-oss"):
+        extra["reasoning_effort"] = "low"
     for attempt in range(retries):
         try:
             resp = client.chat.completions.create(
@@ -136,8 +150,9 @@ def _chat(base_url: str, api_key: str, model: str, prompt: str, max_tokens: int 
                 max_tokens=max_tokens,
                 messages=[{"role": "user", "content": prompt}],
                 timeout=60,
+                **extra,
             )
-            return resp.choices[0].message.content.strip()
+            return (resp.choices[0].message.content or "").strip()
         except Exception as e:
             err = str(e).lower()
             if "429" in err or "rate" in err or "limit" in err:
@@ -243,7 +258,7 @@ def run_domain(domain: str, cfg: dict, verbose: bool = True) -> dict:
         try:
             judge_raw = _chat(
                 cfg["judge_url"], cfg["judge_key"], cfg["judge_model"],
-                judge_prompt, max_tokens=700,
+                judge_prompt, max_tokens=700, low_reasoning=True,
             )
             result = _parse_json(judge_raw)
             time.sleep(cfg.get("judge_req_delay", cfg["req_delay"]))
