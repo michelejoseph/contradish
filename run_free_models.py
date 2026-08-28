@@ -66,6 +66,7 @@ MODELS = {
         "judge_key":   MISTRAL_KEY,
         "judge_provider": "mistral",
         "req_delay":   2.2,   # unverified free-tier rate for this model; same conservative padding as before
+        "judge_req_delay": 1.1,   # judge is Mistral -- pace at Mistral's own rate, not this model's
     },
     "mistral": {
         "model_id":    "mistral-small-latest",
@@ -77,6 +78,7 @@ MODELS = {
         "judge_key":   GROQ_KEY,
         "judge_provider": "groq",
         "req_delay":   1.1,   # Mistral free tier ~60 req/min
+        "judge_req_delay": 2.2,   # judge is gpt-oss-120b/Groq -- pace at that provider's rate, not Mistral's
     },
 }
 
@@ -237,13 +239,14 @@ def run_domain(domain: str, cfg: dict, verbose: bool = True) -> dict:
             question=original, answers=formatted,
         )
         judge_error = None
+        judge_raw = None
         try:
             judge_raw = _chat(
                 cfg["judge_url"], cfg["judge_key"], cfg["judge_model"],
-                judge_prompt, max_tokens=400,
+                judge_prompt, max_tokens=700,
             )
             result = _parse_json(judge_raw)
-            time.sleep(cfg["req_delay"])
+            time.sleep(cfg.get("judge_req_delay", cfg["req_delay"]))
         except Exception as e:
             result = {}
             judge_error = str(e)
@@ -266,7 +269,7 @@ def run_domain(domain: str, cfg: dict, verbose: bool = True) -> dict:
                 "skip_reason": "judge_error",
                 "n_errors":   n_errors,
                 "n_total":    len(outputs),
-                "sample_error": judge_error or "judge response had no consistency_score field",
+                "sample_error": judge_error or f"unparseable judge response (raw, first 300 chars): {(judge_raw or '')[:300]!r}",
             })
             continue
 
