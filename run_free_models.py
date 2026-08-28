@@ -14,7 +14,7 @@ Run
     python run_free_models.py
 
     # One model only:
-    python run_free_models.py --model llama
+    python run_free_models.py --model oss120b
     python run_free_models.py --model mistral
 
     # Skip domains already done (safe to resume):
@@ -22,7 +22,7 @@ Run
 
 Output
 ------
-    results/llama-3.3-70b-versatile_<date>.json
+    results/openai-gpt-oss-120b_<date>.json
     results/mistral-small-latest_<date>.json
 
 When done, send those files back and the paper tables will be updated.
@@ -52,8 +52,12 @@ if not GROQ_KEY or not MISTRAL_KEY:
 
 # ── MODELS ────────────────────────────────────────────────────────────────────
 MODELS = {
-    "llama": {
-        "model_id":    "llama-3.3-70b-versatile",
+    # llama-3.3-70b-versatile returns 404 model_not_found on this account's
+    # Groq key (confirmed via the console model picker: no Llama chat model
+    # is listed under this account at all, only llama-prompt-guard
+    # classifiers). openai/gpt-oss-120b is a model this account actually has.
+    "oss120b": {
+        "model_id":    "openai/gpt-oss-120b",
         "provider":    "groq",
         "base_url":    "https://api.groq.com/openai/v1",
         "api_key":     GROQ_KEY,
@@ -61,14 +65,14 @@ MODELS = {
         "judge_url":   "https://api.mistral.ai/v1",
         "judge_key":   MISTRAL_KEY,
         "judge_provider": "mistral",
-        "req_delay":   2.2,   # Groq free: ~30 req/min for 70B; 2.2s padding
+        "req_delay":   2.2,   # unverified free-tier rate for this model; same conservative padding as before
     },
     "mistral": {
         "model_id":    "mistral-small-latest",
         "provider":    "mistral",
         "base_url":    "https://api.mistral.ai/v1",
         "api_key":     MISTRAL_KEY,
-        "judge_model": "llama-3.3-70b-versatile",
+        "judge_model": "openai/gpt-oss-120b",
         "judge_url":   "https://api.groq.com/openai/v1",
         "judge_key":   GROQ_KEY,
         "judge_provider": "groq",
@@ -331,7 +335,8 @@ def _legacy_domain_is_contaminated(prev: dict) -> bool:
 
 def run_model(name: str, cfg: dict, resume: bool = False, verbose: bool = True) -> dict:
     model_id = cfg["model_id"]
-    out_file  = RESULTS_DIR / f"{model_id}_{date.today().isoformat()}.json"
+    safe_name = model_id.replace("/", "-")
+    out_file  = RESULTS_DIR / f"{safe_name}_{date.today().isoformat()}.json"
 
     # Load partial results if resuming
     existing = {}
@@ -425,7 +430,7 @@ def test_connection() -> None:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", choices=["llama", "mistral", "both"], default="both")
+    parser.add_argument("--model", choices=["oss120b", "mistral", "both"], default="both")
     parser.add_argument("--resume", action="store_true", help="skip already-completed domains")
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--test-connection", action="store_true",
@@ -441,7 +446,7 @@ def main():
         test_connection()
         return
 
-    to_run = ["llama", "mistral"] if args.model == "both" else [args.model]
+    to_run = ["oss120b", "mistral"] if args.model == "both" else [args.model]
     for name in to_run:
         run_model(name, MODELS[name], resume=args.resume, verbose=not args.quiet)
 
