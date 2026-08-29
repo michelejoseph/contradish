@@ -23,7 +23,10 @@ Run
     # Everything above, one after another:
     python run_free_models.py --model all
 
-    # Skip domains already done (safe to resume):
+    # Resume an interrupted run -- safe any time, any day. Skips domains
+    # that are fully judged; picks back up mid-domain (no wasted API calls
+    # on cases already judged) for anything left thin by a quota outage,
+    # including a domain that was interrupted on an earlier calendar day:
     python run_free_models.py --resume
 
     # Check every model/judge endpoint is reachable before a long run:
@@ -262,13 +265,25 @@ def _parse_json(raw: str) -> dict:
 
 # ── BENCHMARK LOGIC ───────────────────────────────────────────────────────────
 
-def run_domain(domain: str, cfg: dict, verbose: bool = True) -> dict:
+def run_domain(domain: str, cfg: dict, verbose: bool = True, prev_details: list = None,
+               on_progress=None) -> dict:
     path = BENCHMARK_DIR / f"{domain}.json"
     data = json.loads(path.read_text())
     cases = data["cases"]
 
+    # Cases carried over from an earlier, interrupted attempt at this domain.
+    # Only a case that was actually judged (has a real cai_score) is reused --
+    # a case that was previously skipped for api_errors/judge_error is exactly
+    # the kind of case a quota outage produces, so it's worth re-attempting
+    # rather than locking in as permanently missing.
+    prev_by_id = {d["id"]: d for d in (prev_details or []) if "id" in d}
+    n_cached = sum(1 for d in prev_by_id.values() if "cai_score" in d)
+
     if verbose:
-        print(f"    {domain} ({len(cases)} cases)", flush=True)
+        if n_cached:
+            print(f"    {domain} ({len(cases)} cases, {n_cached} already judged -- reusing, not re-running)", flush=True)
+        else:
+            print(f"    {domain} ({len(cases)} cases)", flush=True)
 
     all_scores, weighted_scores, weighted_weights = [], [], []
     details = []
@@ -279,6 +294,18 @@ def run_domain(domain: str, cfg: dict, verbose: bool = True) -> dict:
         adversarial = case["adversarial"]
         severity  = case.get("severity", "medium")
         weight    = SEVERITY_MULTIPLIERS.get(severity, 1.5)
+
+        cached = prev_by_id.get(case["id"])
+        if cached and "cai_score" in cached:
+            if verbose:
+                print(f"      [{i}/{len(cases)}] {name[:50]} CACHED strain={cached['cai_strain']:.3f}", flush=True)
+            details.append(cached)
+            all_scores.append(cached["cai_score"])
+            weighted_scores.append(cached["cai_score"] * weight)
+            weighted_weights.append(weight)
+            if on_progress:
+                on_progress(details)
+            continue
 
         if verbose:
             print(f"      [{i}/{len(cases)}] {name[:50]}", end=" ", flush=True)
@@ -321,6 +348,8 @@ def run_domain(domain: str, cfg: dict, verbose: bool = True) -> dict:
                 "n_total":    len(outputs),
                 "sample_error": error_texts[0] if error_texts else None,
             })
+            if on_progress:
+                on_progress(details)
             continue
 
         # Judge consistency
@@ -368,6 +397,8 @@ def run_domain(domain: str, cfg: dict, verbose: bool = True) -> dict:
                 "n_total":    len(outputs),
                 "sample_error": judge_error or f"unparseable judge response (raw, first 300 chars): {(judge_raw or '')[:300]!r}",
             })
+            if on_progress:
+                on_progress(details)
             continue
 
         score = float(result["consistency_score"])
@@ -393,7 +424,26 @@ def run_domain(domain: str, cfg: dict, verbose: bool = True) -> dict:
             "disagreements": result.get("disagreements", []),
             "summary":    result.get("summary", ""),
         })
+        if on_progress:
+            on_progress(details)
 
+    return _aggregate_domain(details, complete=True)
+
+
+def _aggregate_domain(details: list, complete: bool) -> dict:
+    """Roll a list of per-case detail dicts up into the same summary shape
+    run_domain() has always returned. Used both for the real return value
+    (complete=True, once every case in the domain has been attempted) and
+    for the mid-domain checkpoint saved after every single case
+    (complete=False) -- so a save made 6 cases into an 18-case domain is
+    clearly marked as not-finished, and resume knows to pick it back up
+    rather than mistaking a small, error-free sample for the whole thing.
+    """
+    all_scores       = [d["cai_score"] for d in details if "cai_score" in d]
+    weighted_scores  = [d["cai_score"] * SEVERITY_MULTIPLIERS.get(d.get("severity", "medium"), 1.5)
+                         for d in details if "cai_score" in d]
+    weighted_weights = [SEVERITY_MULTIPLIERS.get(d.get("severity", "medium"), 1.5)
+                         for d in details if "cai_score" in d]
     avg_score  = round(sum(all_scores) / len(all_scores), 4) if all_scores else None
     avg_strain = round(1 - avg_score, 4) if avg_score is not None else None
     sw_score   = round(sum(weighted_scores) / sum(weighted_weights), 4) if weighted_weights else None
@@ -410,6 +460,7 @@ def run_domain(domain: str, cfg: dict, verbose: bool = True) -> dict:
         "judged":         len(all_scores),
         "skipped_errors": n_skipped,
         "total":          len(details),
+        "complete":       complete,
         "details": details,
     }
 
@@ -454,17 +505,34 @@ def _domain_is_undersampled(prev: dict) -> bool:
 def run_model(name: str, cfg: dict, resume: bool = False, verbose: bool = True) -> dict:
     model_id = cfg["model_id"]
     safe_name = model_id.replace("/", "-")
-    out_file  = RESULTS_DIR / f"{safe_name}_{date.today().isoformat()}.json"
+    out_file  = RESULTS_DIR / f"{safe_name}.json"
 
     # Load partial results if resuming
     existing = {}
-    if resume and out_file.exists():
-        try:
-            prev = json.loads(out_file.read_text())
-            existing = prev.get("results", {})
+    if resume:
+        if out_file.exists():
+            try:
+                prev = json.loads(out_file.read_text())
+                existing = prev.get("results", {})
+            except Exception:
+                pass
+
+        # One-time migration from the old date-stamped filenames (see comment
+        # above run_model). Anything found here only adds to `existing`: a
+        # domain is replaced only by a version with strictly more judged
+        # cases, so this can't overwrite better data already loaded above.
+        for legacy in sorted(RESULTS_DIR.glob(f"{safe_name}_*.json")):
+            try:
+                legacy_results = json.loads(legacy.read_text()).get("results", {})
+            except Exception:
+                continue
+            for dom, dom_res in legacy_results.items():
+                cur = existing.get(dom)
+                if cur is None or (dom_res.get("judged") or 0) > (cur.get("judged") or 0):
+                    existing[dom] = dom_res
+
+        if existing:
             print(f"  resuming: {len(existing)} domains already done")
-        except Exception:
-            pass
 
     print(f"\n{'='*60}")
     print(f"  MODEL:  {model_id}  ({cfg['provider']})")
@@ -475,34 +543,58 @@ def run_model(name: str, cfg: dict, resume: bool = False, verbose: bool = True) 
     RESULTS_DIR.mkdir(exist_ok=True)
 
     for domain in DOMAINS:
+        prev_details = None
         if domain in results_by_domain:
             prev = results_by_domain[domain]
             judged = prev.get("judged", prev.get("total", 0))
             contaminated = _legacy_domain_is_contaminated(prev)
-            undersampled = _domain_is_undersampled(prev)
-            if "error" in prev or not judged or contaminated or undersampled:
+            interrupted = not prev.get("complete", True)  # missing key = pre-checkpoint save = complete
+            undersampled = (not interrupted) and _domain_is_undersampled(prev)
+            if "error" in prev or not judged or contaminated or undersampled or interrupted:
                 if contaminated:
-                    reason = "pre-fix run scored API-error text as consistency data"
+                    reason = "pre-fix run scored API-error text as consistency data -- restarting clean"
+                elif interrupted:
+                    done_so_far = len(prev.get("details", []))
+                    reason = f"interrupted last time after {done_so_far} cases ({judged} judged) -- resuming, not restarting"
+                    prev_details = prev.get("details", [])
                 elif undersampled:
                     skipped = prev.get("skipped_errors", 0)
-                    reason = f"only {judged}/{judged + skipped} cases judged -- too thin to trust"
+                    reason = f"only {judged}/{judged + skipped} cases judged -- resuming to fill in the rest"
+                    prev_details = prev.get("details", [])
                 else:
                     reason = "previously had no judged cases -- not real data"
-                print(f"  RETRY {domain:<23} ({reason})")
+                    prev_details = prev.get("details", [])
+                label = "RESUME" if prev_details and any("cai_score" in d for d in prev_details) else "RETRY "
+                print(f"  {label} {domain:<23} ({reason})")
             else:
                 s = prev.get("cai_strain", "?")
                 skipped = prev.get("skipped_errors", 0)
                 note = f", {skipped} skipped for errors" if skipped else ""
                 print(f"  SKIP {domain:<24} (done: strain={s}, {judged} judged{note})")
                 continue
+
+        def _checkpoint(details, _domain=domain):
+            # complete=False: this is a save made mid-domain, after however
+            # many cases have been attempted so far -- not the final result.
+            results_by_domain[_domain] = _aggregate_domain(details, complete=False)
+            _save(out_file, model_id, cfg, results_by_domain)
+
         try:
-            res = run_domain(domain, cfg, verbose=verbose)
+            res = run_domain(domain, cfg, verbose=verbose, prev_details=prev_details, on_progress=_checkpoint)
             results_by_domain[domain] = res
             # Save after each domain
             _save(out_file, model_id, cfg, results_by_domain)
         except Exception as e:
             print(f"  ERROR {domain}: {e}")
-            results_by_domain[domain] = {"error": str(e)}
+            # Keep whatever cases were already checkpointed for this domain
+            # (via _checkpoint above) instead of clobbering them with a bare
+            # error -- those judged cases are still real, reusable data.
+            partial = results_by_domain.get(domain)
+            if isinstance(partial, dict) and partial.get("details"):
+                partial["error"] = str(e)
+                results_by_domain[domain] = partial
+            else:
+                results_by_domain[domain] = {"error": str(e)}
             _save(out_file, model_id, cfg, results_by_domain)
 
     _save(out_file, model_id, cfg, results_by_domain)
