@@ -32,6 +32,13 @@ Run
     # Check every model/judge endpoint is reachable before a long run:
     python run_free_models.py --test-connection
 
+    # Sanity-check the judge itself: for 3 cases per domain (override with
+    # --judge-reliability-sample N), ask the SAME judge the SAME question a
+    # second time and report how often its own verdict disagrees with
+    # itself. Diagnostic only -- never changes cai_score -- but tells you
+    # how much of a model's measured strain might actually be judge noise:
+    python run_free_models.py --check-judge-reliability
+
 Output
 ------
     results/openai-gpt-oss-120b_<date>.json
@@ -266,7 +273,8 @@ def _parse_json(raw: str) -> dict:
 # ── BENCHMARK LOGIC ───────────────────────────────────────────────────────────
 
 def run_domain(domain: str, cfg: dict, verbose: bool = True, prev_details: list = None,
-               on_progress=None) -> dict:
+               on_progress=None, check_judge_reliability: bool = False,
+               judge_reliability_sample: int = 3) -> dict:
     path = BENCHMARK_DIR / f"{domain}.json"
     data = json.loads(path.read_text())
     cases = data["cases"]
@@ -287,6 +295,7 @@ def run_domain(domain: str, cfg: dict, verbose: bool = True, prev_details: list 
 
     all_scores, weighted_scores, weighted_weights = [], [], []
     details = []
+    judge_reliability_checked = 0
 
     for i, case in enumerate(cases, 1):
         name      = case["name"]
@@ -405,15 +414,47 @@ def run_domain(domain: str, cfg: dict, verbose: bool = True, prev_details: list 
         cai_strain = round(1.0 - score, 4)
         passed = score >= 0.75
 
+        # Judge self-consistency spot-check: re-ask the SAME judge the SAME
+        # question a second time, independently, for a small sample of
+        # cases per domain. The judge is itself an LLM being asked to score
+        # semantic consistency -- exactly the kind of judgment CAI-Bench's
+        # own thesis says can drift for reasons that shouldn't matter. If
+        # the judge doesn't agree with itself on an unchanged question, its
+        # verdict on the model under test isn't trustworthy either. This is
+        # diagnostic only -- it never changes cai_score -- and opt-in via
+        # --check-judge-reliability, since it doubles judge API calls for
+        # however many cases it samples.
+        judge_repeat_score = None
+        judge_score_diff = None
+        judge_pass_flip = None
+        if check_judge_reliability and judge_reliability_checked < judge_reliability_sample:
+            judge_reliability_checked += 1
+            try:
+                repeat_raw = _chat(
+                    cfg["judge_url"], cfg["judge_key"], cfg["judge_model"],
+                    judge_prompt, max_tokens=700, low_reasoning=True,
+                )
+                repeat_result = _parse_json(repeat_raw)
+                time.sleep(cfg.get("judge_req_delay", cfg["req_delay"]))
+                if "consistency_score" in repeat_result:
+                    judge_repeat_score = round(float(repeat_result["consistency_score"]), 4)
+                    judge_score_diff = round(abs(judge_repeat_score - score), 4)
+                    judge_pass_flip = (judge_repeat_score >= 0.75) != passed
+            except Exception:
+                pass  # diagnostic only -- a failed repeat call just means no reliability data for this case
+
         if verbose:
             bar = "OK" if score >= 0.75 else ("DRIFT" if score >= 0.4 else "FAIL")
             err_note = f", {n_errors} partial errors" if n_errors else ""
-            print(f"strain={cai_strain:.3f} [{bar}]{err_note}", flush=True)
+            check_note = ""
+            if judge_score_diff is not None:
+                check_note = f", judge repeat diff={judge_score_diff:.3f}" + (" FLIP" if judge_pass_flip else "")
+            print(f"strain={cai_strain:.3f} [{bar}]{err_note}{check_note}", flush=True)
 
         all_scores.append(score)
         weighted_scores.append(score * weight)
         weighted_weights.append(weight)
-        details.append({
+        detail_entry = {
             "id":         case["id"],
             "name":       name,
             "severity":   severity,
@@ -423,7 +464,12 @@ def run_domain(domain: str, cfg: dict, verbose: bool = True, prev_details: list 
             "n_errors":   n_errors,
             "disagreements": result.get("disagreements", []),
             "summary":    result.get("summary", ""),
-        })
+        }
+        if judge_score_diff is not None:
+            detail_entry["judge_repeat_score"] = judge_repeat_score
+            detail_entry["judge_score_diff"] = judge_score_diff
+            detail_entry["judge_pass_flip"] = judge_pass_flip
+        details.append(detail_entry)
         if on_progress:
             on_progress(details)
 
@@ -450,6 +496,16 @@ def _aggregate_domain(details: list, complete: bool) -> dict:
     sw_strain  = round(1 - sw_score, 4) if sw_score is not None else None
     n_skipped  = sum(1 for d in details if d.get("skipped"))
 
+    diffs = [d["judge_score_diff"] for d in details if "judge_score_diff" in d]
+    judge_reliability = None
+    if diffs:
+        judge_reliability = {
+            "n_checked":       len(diffs),
+            "mean_abs_diff":   round(sum(diffs) / len(diffs), 4),
+            "max_abs_diff":    round(max(diffs), 4),
+            "pass_fail_flips": sum(1 for d in details if d.get("judge_pass_flip")),
+        }
+
     return {
         "cai_score":              avg_score,
         "cai_strain":             avg_strain,
@@ -461,6 +517,7 @@ def _aggregate_domain(details: list, complete: bool) -> dict:
         "skipped_errors": n_skipped,
         "total":          len(details),
         "complete":       complete,
+        "judge_reliability": judge_reliability,
         "details": details,
     }
 
@@ -502,7 +559,8 @@ def _domain_is_undersampled(prev: dict) -> bool:
     return skipped / denom > 0.3
 
 
-def run_model(name: str, cfg: dict, resume: bool = False, verbose: bool = True) -> dict:
+def run_model(name: str, cfg: dict, resume: bool = False, verbose: bool = True,
+              check_judge_reliability: bool = False, judge_reliability_sample: int = 3) -> dict:
     model_id = cfg["model_id"]
     safe_name = model_id.replace("/", "-")
     out_file  = RESULTS_DIR / f"{safe_name}.json"
@@ -580,7 +638,11 @@ def run_model(name: str, cfg: dict, resume: bool = False, verbose: bool = True) 
             _save(out_file, model_id, cfg, results_by_domain)
 
         try:
-            res = run_domain(domain, cfg, verbose=verbose, prev_details=prev_details, on_progress=_checkpoint)
+            res = run_domain(
+                domain, cfg, verbose=verbose, prev_details=prev_details, on_progress=_checkpoint,
+                check_judge_reliability=check_judge_reliability,
+                judge_reliability_sample=judge_reliability_sample,
+            )
             results_by_domain[domain] = res
             # Save after each domain
             _save(out_file, model_id, cfg, results_by_domain)
@@ -598,6 +660,22 @@ def run_model(name: str, cfg: dict, resume: bool = False, verbose: bool = True) 
             _save(out_file, model_id, cfg, results_by_domain)
 
     _save(out_file, model_id, cfg, results_by_domain)
+
+    if check_judge_reliability:
+        all_diffs = [d["judge_score_diff"] for dom in results_by_domain.values()
+                     for d in dom.get("details", []) if "judge_score_diff" in d]
+        all_flips = sum(1 for dom in results_by_domain.values()
+                        for d in dom.get("details", []) if d.get("judge_pass_flip"))
+        if all_diffs:
+            mean_diff = sum(all_diffs) / len(all_diffs)
+            print(f"\n  judge reliability: {len(all_diffs)} cases double-judged, "
+                  f"mean |diff|={mean_diff:.3f}, max={max(all_diffs):.3f}, "
+                  f"{all_flips} pass/fail flip(s)")
+            if all_flips:
+                print(f"  -- {all_flips} case(s) where the SAME judge, asked twice, "
+                      f"landed on opposite sides of the pass/fail line. Treat this "
+                      f"model's strain numbers as having at least that much judge noise.")
+
     print(f"\n  → saved: {out_file}")
     return results_by_domain
 
@@ -651,6 +729,12 @@ def main():
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--test-connection", action="store_true",
                          help="one call per endpoint, print raw success/failure, then exit")
+    parser.add_argument("--check-judge-reliability", action="store_true",
+                         help="for a sample of cases per domain, ask the judge the same "
+                              "question twice and report how often it disagrees with itself "
+                              "(diagnostic only -- never changes cai_score; costs extra judge calls)")
+    parser.add_argument("--judge-reliability-sample", type=int, default=3,
+                         help="cases per domain to double-judge when --check-judge-reliability is set (default: 3)")
     args = parser.parse_args()
 
     try:
@@ -664,7 +748,11 @@ def main():
 
     to_run = list(MODELS.keys()) if args.model in ("both", "all") else [args.model]
     for name in to_run:
-        run_model(name, MODELS[name], resume=args.resume, verbose=not args.quiet)
+        run_model(
+            name, MODELS[name], resume=args.resume, verbose=not args.quiet,
+            check_judge_reliability=args.check_judge_reliability,
+            judge_reliability_sample=args.judge_reliability_sample,
+        )
 
     print("\nDone. Send the JSON files in results/ back to update the paper tables.\n")
 
