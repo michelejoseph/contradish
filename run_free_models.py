@@ -60,8 +60,15 @@ from datetime import date
 from pathlib import Path
 
 # ── KEYS (override with env vars if preferred) ────────────────────────────────
-GROQ_KEY    = os.environ.get("GROQ_API_KEY")
-MISTRAL_KEY = os.environ.get("MISTRAL_API_KEY")
+GROQ_KEY     = os.environ.get("GROQ_API_KEY")
+MISTRAL_KEY  = os.environ.get("MISTRAL_API_KEY")
+# Optional -- only required if you actually run --model grok / --model deepseek.
+# Both are official developer APIs (OpenAI-compatible), verified clean of any
+# benchmarking/automated-access restriction in their terms as of Aug 2026 --
+# unlike the consumer wellness/companion apps, these are built to be called
+# programmatically by third parties, so this isn't the Wysa/Ash problem.
+XAI_KEY      = os.environ.get("XAI_API_KEY")
+DEEPSEEK_KEY = os.environ.get("DEEPSEEK_API_KEY")
 
 if not GROQ_KEY or not MISTRAL_KEY:
     sys.exit(
@@ -69,7 +76,9 @@ if not GROQ_KEY or not MISTRAL_KEY:
         "  export GROQ_API_KEY=gsk_...\n"
         "  export MISTRAL_API_KEY=...\n"
         "(Keys used to be hardcoded here as a fallback; removed so this script cannot "
-        "leak them if it is ever committed.)"
+        "leak them if it is ever committed.)\n"
+        "For --model grok or --model deepseek you'll also need XAI_API_KEY / "
+        "DEEPSEEK_API_KEY set -- those two are optional and only checked when selected."
     )
 
 # ── MODELS ────────────────────────────────────────────────────────────────────
@@ -147,6 +156,36 @@ MODELS = {
         "judge_provider": "groq",
         "req_delay":   1.1,
         "judge_req_delay": 2.2,
+    },
+    # grok-4.6 via xAI's official API (OpenAI-compatible). Requires XAI_API_KEY.
+    # Judged by mistral-small-latest (independent provider). Not yet confirmed
+    # against a live key -- run --test-connection first.
+    "grok": {
+        "model_id":    "grok-4.6",
+        "provider":    "xai",
+        "base_url":    "https://api.x.ai/v1",
+        "api_key":     XAI_KEY,
+        "judge_model": "mistral-small-latest",
+        "judge_url":   "https://api.mistral.ai/v1",
+        "judge_key":   MISTRAL_KEY,
+        "judge_provider": "mistral",
+        "req_delay":   1.1,
+        "judge_req_delay": 1.1,
+    },
+    # deepseek-v4-pro via DeepSeek's official API (OpenAI-compatible).
+    # Requires DEEPSEEK_API_KEY. Judged by mistral-small-latest (independent
+    # provider). Not yet confirmed against a live key -- run --test-connection first.
+    "deepseek": {
+        "model_id":    "deepseek-v4-pro",
+        "provider":    "deepseek",
+        "base_url":    "https://api.deepseek.com",
+        "api_key":     DEEPSEEK_KEY,
+        "judge_model": "mistral-small-latest",
+        "judge_url":   "https://api.mistral.ai/v1",
+        "judge_key":   MISTRAL_KEY,
+        "judge_provider": "mistral",
+        "req_delay":   1.1,
+        "judge_req_delay": 1.1,
     },
 }
 
@@ -747,6 +786,14 @@ def main():
         return
 
     to_run = list(MODELS.keys()) if args.model in ("both", "all") else [args.model]
+
+    missing_key = {"grok": ("XAI_API_KEY", XAI_KEY), "deepseek": ("DEEPSEEK_API_KEY", DEEPSEEK_KEY)}
+    for name in to_run:
+        if name in missing_key:
+            env_name, key_val = missing_key[name]
+            if not key_val:
+                sys.exit(f"--model {name} needs {env_name} set.\n  export {env_name}=...")
+
     for name in to_run:
         run_model(
             name, MODELS[name], resume=args.resume, verbose=not args.quiet,
