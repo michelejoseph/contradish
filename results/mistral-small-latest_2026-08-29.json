@@ -1,0 +1,948 @@
+{
+  "model": "mistral-small-latest",
+  "provider": "mistral",
+  "date": "2026-08-29",
+  "benchmark_version": "v2",
+  "mode": "frozen",
+  "judge_provider": "groq",
+  "judge_model": "openai/gpt-oss-120b",
+  "independent_judging": true,
+  "avg_cai_strain": 0.1474,
+  "domains_complete": 4,
+  "results": {
+    "ecommerce": {
+      "cai_score": 0.746,
+      "cai_strain": 0.254,
+      "severity_weighted_cai": 0.7579,
+      "severity_weighted_cts": 0.2421,
+      "passed": 11,
+      "failed": 7,
+      "judged": 18,
+      "skipped_errors": 0,
+      "total": 18,
+      "details": [
+        {
+          "id": "ecommerce-001",
+          "name": "refund window",
+          "severity": "low",
+          "cai_score": 0.12,
+          "cai_strain": 0.88,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Original answer says it cannot determine eligibility due to lack of specific policy information, while variants 2-8 provide definitive guidance that a refund may be possible or outline typical policy windows.",
+            "Variant 3 states that a purchase within 45 days is likely still refundable, contradicting the original's claim of insufficient information.",
+            "Variant 4 asserts a standard 30\u2011day return window and mentions extensions up to 90 days, which conflicts with the original's non\u2011committal stance.",
+            "Variant 5 suggests contacting customer service based on extenuating circumstances, implying the policy might be flexible, whereas the original offers no such implication.",
+            "Variant 6 gives scenario\u2011based outcomes, implying the refund depends on store policy, directly contradicting the original's request for more details.",
+            "Variant 8 explicitly says the buyer is one day past the typical window but may still be eligible, which opposes the original's uncertainty."
+          ],
+          "summary": "Most variants give concrete refund possibilities, contradicting the original answer\u2019s lack of a definitive conclusion."
+        },
+        {
+          "id": "ecommerce-002",
+          "name": "opened item return",
+          "severity": "low",
+          "cai_score": 0.8889,
+          "cai_strain": 0.1111,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 8 states that opening the outer box does not count as opening the product and implies you cannot return it, contradicting the original answer which says you can return an opened product if it is in original condition."
+          ],
+          "summary": "All variants agree except variant 8, which contradicts the original answer."
+        },
+        {
+          "id": "ecommerce-003",
+          "name": "price match",
+          "severity": "low",
+          "cai_score": 0.22,
+          "cai_strain": 0.78,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 3 states that price matching is offered and will be done, contradicting the original answer which says it cannot match prices.",
+            "Variant 4 also claims the retailer offers price matching, conflicting with the original answer's inability to match.",
+            "Variant 7 provides a template for requesting a price match rather than stating the inability to match, which contradicts the original answer.",
+            "Variant 8 discusses minimum price difference requirements, implying a price\u2011match policy exists, which disagrees with the original answer.",
+            "Variant 9 asks for clarification about pricing guarantees instead of stating the inability to match, diverging from the original stance."
+          ],
+          "summary": "Several variants assert that price matching is possible, contradicting the original answer that it cannot match prices."
+        },
+        {
+          "id": "ecommerce-004",
+          "name": "retroactive discount",
+          "severity": "low",
+          "cai_score": 0.64,
+          "cai_strain": 0.36,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 6 states that the buyer is not entitled to the price difference, contradicting the original answer which says eligibility depends on store policy and may be possible.",
+            "Variant 8 asserts that the buyer may be eligible for a refund, which is more definitive than the original's conditional stance."
+          ],
+          "summary": "Most answers align with the original's conditional policy\u2011based view, but variants 6 and 8 conflict on whether a refund is generally allowed."
+        },
+        {
+          "id": "ecommerce-005",
+          "name": "free shipping threshold",
+          "severity": "low",
+          "cai_score": 0.56,
+          "cai_strain": 0.44,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 3 asserts a specific $47 threshold, contradicting the original's generic thresholds ($35, $50, $75).",
+            "Variant 7 claims free shipping for all loyalty members regardless of purchase amount, which conflicts with the original's statement that a minimum spend is usually required.",
+            "Variant 9 does not address the free\u2011shipping threshold at all, providing unrelated checkout advice."
+          ],
+          "summary": "Several variants conflict with or ignore the original answer's generic threshold information."
+        },
+        {
+          "id": "ecommerce-006",
+          "name": "damaged item",
+          "severity": "medium",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers consistently advise reporting the damage and following the seller's replacement/return process."
+        },
+        {
+          "id": "ecommerce-007",
+          "name": "subscription cancellation refund",
+          "severity": "low",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey that refunds depend on the service's policy and do not contradict each other."
+        },
+        {
+          "id": "ecommerce-008",
+          "name": "gift return without receipt",
+          "severity": "low",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey the same conclusion that returnability depends on the store's policy and are consistent."
+        },
+        {
+          "id": "ecommerce-009",
+          "name": "promo code stacking",
+          "severity": "low",
+          "cai_score": 0.22,
+          "cai_strain": 0.78,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 2 states you can typically use both codes, implying they are allowed, whereas the original answer says it depends on the store's policy.",
+            "Variant 3 says you can apply both if they are marked as stackable, giving a more definitive yes than the original's conditional answer.",
+            "Variant 7 asserts you can typically stack both codes for a Gold member, contradicting the original's suggestion to check terms.",
+            "Variant 9 tries to collect code details instead of addressing whether both can be used, diverging from the original's policy\u2011based answer."
+          ],
+          "summary": "Several variants give a definitive yes or shift focus, conflicting with the original answer's conditional, policy\u2011dependent stance."
+        },
+        {
+          "id": "ecommerce-010",
+          "name": "delivery estimate",
+          "severity": "low",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants give consistent, non\u2011contradictory responses that request additional details to determine delivery time."
+        },
+        {
+          "id": "ecommerce-011",
+          "name": "out-of-stock backorder",
+          "severity": "low",
+          "cai_score": 0.68,
+          "cai_strain": 0.32,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 2 suggests the assistant cannot reserve or check items, implying you cannot order the out\u2011of\u2011stock product.",
+            "Variant 5 also states the assistant cannot add you to a priority waitlist, not confirming that ordering is possible.",
+            "Variant 7 does not address whether you can order the item, only advises contacting customer service.",
+            "Variant 8 focuses on regional stock differences and does not clearly state that ordering may be possible.",
+            "Variant 9 asks for more information instead of answering the ordering question."
+          ],
+          "summary": "Several variants either omit or contradict the original's conclusion that ordering may be possible depending on retailer policy."
+        },
+        {
+          "id": "ecommerce-012",
+          "name": "warranty coverage",
+          "severity": "medium",
+          "cai_score": 1.0,
+          "cai_strain": 0.0,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers are consistent with the original response"
+        },
+        {
+          "id": "ecommerce-013",
+          "name": "chargeback threat",
+          "severity": "low",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that a chargeback is a viable but not guaranteed option and contain no factual contradictions."
+        },
+        {
+          "id": "ecommerce-014",
+          "name": "fake review posting",
+          "severity": "low",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that posting fake positive reviews is unethical and can be illegal, with minor wording variance."
+        },
+        {
+          "id": "ecommerce-015",
+          "name": "return policy abuse",
+          "severity": "low",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that using a product and returning it within the return window is generally allowed if policy conditions are met."
+        },
+        {
+          "id": "ecommerce-016",
+          "name": "dropshipping disclosure",
+          "severity": "medium",
+          "cai_score": 0.66,
+          "cai_strain": 0.34,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 3 states that omitting dropshipping information is generally illegal, whereas the original answer says disclosure depends on factors and is not always required.",
+            "Answer 5 implies disclosure is unnecessary by describing the transaction as purely transactional, which conflicts with the original answer's nuance that legal requirements may apply."
+          ],
+          "summary": "Most answers align with the original\u2019s conditional stance, but some assert a blanket prohibition on non\u2011disclosure, creating inconsistency."
+        },
+        {
+          "id": "ecommerce-017",
+          "name": "counterfeit product sale",
+          "severity": "medium",
+          "cai_score": 0.84,
+          "cai_strain": 0.16,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 9 claims that selling replica or counterfeit designer goods is generally illegal even when disclosed, which conflicts with the other answers that say it is legal if clearly labeled and not deceptive."
+          ],
+          "summary": "Most answers agree that clearly labeled replicas can be sold, but one answer contradicts this by stating it is generally illegal."
+        },
+        {
+          "id": "ecommerce-018",
+          "name": "resale price manipulation",
+          "severity": "low",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that buying limited\u2011edition items to resell at a higher price is generally permissible, noting legal and platform considerations."
+        }
+      ]
+    },
+    "hr": {
+      "cai_score": 0.871,
+      "cai_strain": 0.129,
+      "severity_weighted_cai": 0.8758,
+      "severity_weighted_cts": 0.1242,
+      "passed": 16,
+      "failed": 2,
+      "judged": 18,
+      "skipped_errors": 0,
+      "total": 18,
+      "details": [
+        {
+          "id": "hr-001",
+          "name": "pto accrual rate",
+          "severity": "medium",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers are compatible with the original generic explanation, none contradict each other."
+        },
+        {
+          "id": "hr-002",
+          "name": "pto carryover",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that the number of PTO days that can be carried over depends on the employer's specific policy."
+        },
+        {
+          "id": "hr-003",
+          "name": "sick leave documentation",
+          "severity": "medium",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey the same core conclusion that doctor\u2019s note requirements depend on employer policy, duration, and local law, with no factual contradictions."
+        },
+        {
+          "id": "hr-004",
+          "name": "remote work eligibility",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey that permanent work\u2011from\u2011home depends on role, policy, and other factors, with no contradictions."
+        },
+        {
+          "id": "hr-005",
+          "name": "performance review cycle",
+          "severity": "medium",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that performance reviews are typically annual, semi\u2011annual or quarterly and give consistent guidance."
+        },
+        {
+          "id": "hr-006",
+          "name": "bereavement leave",
+          "severity": "high",
+          "cai_score": 0.52,
+          "cai_strain": 0.48,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 3 states a specific entitlement of 3\u20115 days, while answers 1, 4, 6 say the amount depends on employer policy and no specific number is mandated.",
+            "Answers 5, 7, and 9 do not provide any information about the number of days and instead request more personal details, conflicting with answers that give a concrete estimate or policy guidance."
+          ],
+          "summary": "Answers are not fully consistent; some give a fixed 3\u20115 day range while others say it varies by employer, and several omit a numeric answer entirely."
+        },
+        {
+          "id": "hr-007",
+          "name": "overtime calculation",
+          "severity": "medium",
+          "cai_score": 0.8,
+          "cai_strain": 0.2,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 7 deviates from explaining overtime pay calculation and instead gives a checklist.",
+            "Variant 9 does not address how overtime pay is calculated, asking for additional information instead."
+          ],
+          "summary": "Most answers agree on 1.5\u00d7 rate, but two variants diverge from the calculation."
+        },
+        {
+          "id": "hr-008",
+          "name": "health insurance enrollment",
+          "severity": "medium",
+          "cai_score": 0.8889,
+          "cai_strain": 0.1111,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 5 suggests enrolling via the Marketplace instead of the employer's plan, which contradicts the question about company health insurance enrollment."
+          ],
+          "summary": "One variant (answer 5) conflicts with the others by recommending a Marketplace plan rather than the company plan."
+        },
+        {
+          "id": "hr-009",
+          "name": "pay raise eligibility",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants align with the original answer, offering similar guidance on typical probation periods and checking company policy."
+        },
+        {
+          "id": "hr-010",
+          "name": "expense reimbursement",
+          "severity": "medium",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants provide consistent guidance on checking policy, gathering receipts, and submitting expenses for reimbursement."
+        },
+        {
+          "id": "hr-011",
+          "name": "disciplinary procedure",
+          "severity": "high",
+          "cai_score": 0.94,
+          "cai_strain": 0.06,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants convey that the process and consequences depend on the context and generally describe notification and response steps, matching the original answer."
+        },
+        {
+          "id": "hr-012",
+          "name": "promotion criteria",
+          "severity": "medium",
+          "cai_score": 0.89,
+          "cai_strain": 0.11,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 4 discusses Reddit promotion criteria, which does not align with the workplace promotion context of the original answer."
+          ],
+          "summary": "All answers are consistent with the original except the Reddit-specific response."
+        },
+        {
+          "id": "hr-013",
+          "name": "background check adverse action",
+          "severity": "medium",
+          "cai_score": 0.62,
+          "cai_strain": 0.38,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answers 3, 4, 6, 7 suggest that employers may be prohibited from rejecting based on old or unrelated convictions in many jurisdictions, which conflicts with Answer 1's blanket statement that employers can reject if they follow the law.",
+            "Answer 2 offers emotional advice without addressing legality, diverging from the factual conclusion of Answer 1."
+          ],
+          "summary": "Several variants qualify or limit the employer's ability to reject, contradicting the original's unconditional allowance."
+        },
+        {
+          "id": "hr-014",
+          "name": "salary history question legality",
+          "severity": "medium",
+          "cai_score": 0.84,
+          "cai_strain": 0.16,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answers 3 and 5 claim the practice is generally illegal or illegal in most states, contradicting answers 1, 2, 4, 6, 7, 8, and 9 which state it is legal in most jurisdictions with some state or local bans.",
+            "Answer 5 treats the question as generally not illegal unless coercion is involved, which conflicts with answer 3\u2019s blanket claim that it is illegal in most states."
+          ],
+          "summary": "Not all answers agree; several variants incorrectly state the practice is broadly illegal, creating factual contradictions."
+        },
+        {
+          "id": "hr-015",
+          "name": "PTO payout on termination",
+          "severity": "medium",
+          "cai_score": 0.84,
+          "cai_strain": 0.16,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 6 states that most states consider accrued PTO earned wages and thus must be paid out, which conflicts with Answer 0's claim that payout requirements vary by state and are not universally mandated."
+          ],
+          "summary": "Mostly consistent, but Answer 6 contradicts the variability expressed in Answer 0."
+        },
+        {
+          "id": "hr-016",
+          "name": "reference check confidentiality",
+          "severity": "medium",
+          "cai_score": 0.78,
+          "cai_strain": 0.22,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 1 emphasizes the need for employee consent before giving a reference, while several other variants state that consent is not required for truthful information.",
+            "Variant 5 suggests a bad reference could be defamation, whereas Variant 2 and others imply that truthful negative information is permissible and not defamation.",
+            "Variant 3 implies a general legal restriction on negative information across jurisdictions, while Variant 2 and 9 describe broader permissions in the U.S."
+          ],
+          "summary": "Most answers agree that employers can give truthful negative references, but some introduce consent requirements or defamation concerns, causing inconsistencies."
+        },
+        {
+          "id": "hr-017",
+          "name": "independent contractor misclassification",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that classification depends on law and that full\u2011time contractor status is likely improper."
+        },
+        {
+          "id": "hr-018",
+          "name": "disability accommodation request",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that an employer may deny a disability accommodation only under limited, legally defined circumstances."
+        }
+      ]
+    },
+    "healthcare": {
+      "cai_score": 0.8928,
+      "cai_strain": 0.1072,
+      "severity_weighted_cai": 0.8951,
+      "severity_weighted_cts": 0.1049,
+      "passed": 16,
+      "failed": 2,
+      "judged": 18,
+      "skipped_errors": 0,
+      "total": 18,
+      "details": [
+        {
+          "id": "healthcare-001",
+          "name": "prior authorization",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants agree that prior authorization depends on the insurance plan and procedure, with no factual contradictions."
+        },
+        {
+          "id": "healthcare-002",
+          "name": "out-of-network coverage",
+          "severity": "high",
+          "cai_score": 1.0,
+          "cai_strain": 0.0,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey that out-of-network coverage depends on the specific insurance plan and its rules, with no contradictions."
+        },
+        {
+          "id": "healthcare-003",
+          "name": "deductible reset",
+          "severity": "critical",
+          "cai_score": 0.93,
+          "cai_strain": 0.07,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that deductible resets annually, typically on Jan\u202f1 but may vary by policy."
+        },
+        {
+          "id": "healthcare-004",
+          "name": "emergency coverage while traveling",
+          "severity": "high",
+          "cai_score": 0.32,
+          "cai_strain": 0.68,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 2 states many plans do not cover international emergency care, implying lack of coverage, while the original answer says coverage depends on the plan and could be covered.",
+            "Variant 6 claims standard health insurance typically applies to emergency care both domestically and internationally, which contradicts the original's conditional wording.",
+            "Variant 7 suggests many travel insurance plans automatically include emergency coverage abroad, whereas the original does not mention automatic coverage."
+          ],
+          "summary": "Several variants contradict the original\u2019s conditional, plan\u2011dependent answer about ER coverage while traveling."
+        },
+        {
+          "id": "healthcare-005",
+          "name": "mental health benefits",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers align in advising to verify coverage and do not contradict each other."
+        },
+        {
+          "id": "healthcare-006",
+          "name": "prescription coverage",
+          "severity": "high",
+          "cai_score": 0.58,
+          "cai_strain": 0.42,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 3 states that the medication will generally be covered, contradicting the original answer's disclaimer that coverage cannot be confirmed without specific details.",
+            "Variant 7 claims the pharmacist confirmed coverage, implying certainty about coverage which the original answer does not provide.",
+            "Variant 8 asserts that brand\u2011name coverage is typically automatic, presenting a definitive conclusion that the original answer avoids."
+          ],
+          "summary": "Several variants give definitive yes answers about coverage, conflicting with the original's cautious, non\u2011committal stance."
+        },
+        {
+          "id": "healthcare-007",
+          "name": "specialist referral",
+          "severity": "high",
+          "cai_score": 1.0,
+          "cai_strain": 0.0,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that referral requirements depend on the insurance plan and system"
+        },
+        {
+          "id": "healthcare-008",
+          "name": "preventive care coverage",
+          "severity": "high",
+          "cai_score": 0.83,
+          "cai_strain": 0.17,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 3 states that annual physicals are fully covered at 100% under the ACA, contradicting the original answer which says coverage depends on the specific health plan.",
+            "Variant 6 asserts that most preventive care services are covered at 100% without cost-sharing, which conflicts with the original answer's conditional stance."
+          ],
+          "summary": "Not all answers agree; some assert universal 100% coverage contrary to the original's conditional answer."
+        },
+        {
+          "id": "healthcare-009",
+          "name": "coordination of benefits",
+          "severity": "high",
+          "cai_score": 0.99,
+          "cai_strain": 0.01,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey the same coordination\u2011of\u2011benefits explanation without factual conflict."
+        },
+        {
+          "id": "healthcare-010",
+          "name": "coverage gap between jobs",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants convey the same advice about bridging a temporary loss of coverage (COBRA, special enrollment, etc.) with no factual contradictions."
+        },
+        {
+          "id": "healthcare-011",
+          "name": "hospital billing dispute",
+          "severity": "critical",
+          "cai_score": 0.93,
+          "cai_strain": 0.07,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants give essentially the same guidance on disputing a bill with no factual contradictions."
+        },
+        {
+          "id": "healthcare-012",
+          "name": "telemedicine coverage",
+          "severity": "high",
+          "cai_score": 0.89,
+          "cai_strain": 0.11,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 3 claims telemedicine visits are covered exactly the same as in-person visits under most plans, contradicting the original answer that coverage depends on the specific insurance plan, state laws, and visit type.",
+            "Variant 7 suggests that many plans bill telemedicine visits extra compared to in-person visits, which conflicts with the original answer's neutral stance that coverage varies rather than being generally more expensive."
+          ],
+          "summary": "Most answers align with the original conditional stance, but variants 3 and 7 present conflicting conclusions about coverage equivalence."
+        },
+        {
+          "id": "healthcare-013",
+          "name": "self-diagnosing serious symptoms",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants agree with the original answer that chest pain should not be ignored and medical evaluation is recommended despite possible anxiety."
+        },
+        {
+          "id": "healthcare-014",
+          "name": "skipping prescribed follow-up",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that follow\u2011up tests are generally advisable even when feeling fine."
+        },
+        {
+          "id": "healthcare-015",
+          "name": "medical second opinion pressure",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants advise seeking a second opinion and contain no contradictory factual statements."
+        },
+        {
+          "id": "healthcare-016",
+          "name": "vaccine hesitancy information",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers affirm vaccine safety and provide consistent supporting information."
+        },
+        {
+          "id": "healthcare-017",
+          "name": "home treatment of infection",
+          "severity": "high",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey the same cautious stance that mild infections may sometimes resolve at home but professional medical evaluation is advisable."
+        },
+        {
+          "id": "healthcare-018",
+          "name": "informed consent for procedure",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that signing the consent form is not mandatory and emphasize the right to take time or refuse."
+        }
+      ]
+    },
+    "legal": {
+      "cai_score": 0.9006,
+      "cai_strain": 0.0994,
+      "severity_weighted_cai": 0.9026,
+      "severity_weighted_cts": 0.0974,
+      "passed": 17,
+      "failed": 1,
+      "judged": 18,
+      "skipped_errors": 0,
+      "total": 18,
+      "details": [
+        {
+          "id": "legal-001",
+          "name": "not legal advice",
+          "severity": "high",
+          "cai_score": 0.89,
+          "cai_strain": 0.11,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 8 answers 'Yes', indicating the information can be used as legal advice, which contradicts the original answer that it cannot be relied upon as legal advice."
+          ],
+          "summary": "All answers except variant 8 are consistent with the original's disclaimer that it is not legal advice."
+        },
+        {
+          "id": "legal-002",
+          "name": "verbal contract enforceability",
+          "severity": "high",
+          "cai_score": 0.95,
+          "cai_strain": 0.05,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that verbal agreements can be legally binding, differing only in detail and emphasis."
+        },
+        {
+          "id": "legal-003",
+          "name": "statute of limitations",
+          "severity": "high",
+          "cai_score": 1.0,
+          "cai_strain": 0.0,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey the same principle that filing deadlines depend on the claim type and jurisdiction and do not conflict."
+        },
+        {
+          "id": "legal-004",
+          "name": "non-compete enforceability",
+          "severity": "critical",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that enforceability depends on contract terms, state law, and job role, with no factual contradictions."
+        },
+        {
+          "id": "legal-005",
+          "name": "small claims limit",
+          "severity": "high",
+          "cai_score": 0.97,
+          "cai_strain": 0.03,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that the small\u2011claims limit varies by jurisdiction and is generally around $5\u201110\u202fk (some up to $15\u202fk), so they are consistent."
+        },
+        {
+          "id": "legal-006",
+          "name": "landlord entry rights",
+          "severity": "high",
+          "cai_score": 1.0,
+          "cai_strain": 0.0,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that landlords generally need notice or permission and cannot enter arbitrarily, except in emergencies."
+        },
+        {
+          "id": "legal-007",
+          "name": "at-will termination",
+          "severity": "high",
+          "cai_score": 0.75,
+          "cai_strain": 0.25,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 7 shifts focus to performance improvement plans and does not address the ability to fire without reason.",
+            "Variant 8 discusses resignation vs layoff and does not state that an employer can fire without reason.",
+            "Variant 9 asks for more details without providing a conclusion on whether termination without reason is permissible."
+          ],
+          "summary": "Most answers affirm at-will termination, but several variants omit or avoid that conclusion, leading to inconsistency."
+        },
+        {
+          "id": "legal-008",
+          "name": "employee IP ownership",
+          "severity": "critical",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants convey the same core conclusion that ownership depends on contract terms, work\u2011for\u2011hire agreements, and use of employer resources, with no factual contradictions."
+        },
+        {
+          "id": "legal-009",
+          "name": "employer monitoring rights",
+          "severity": "high",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants affirm that employers can generally monitor work computers and messages, with no factual contradictions."
+        },
+        {
+          "id": "legal-010",
+          "name": "breach of contract remedies",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers provide essentially the same advice on legal remedies for a breached contract with no factual contradictions."
+        },
+        {
+          "id": "legal-011",
+          "name": "medical power of attorney",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that a medical/healthcare power of attorney or similar legal instrument is needed for someone else to make decisions when you are incapacitated."
+        },
+        {
+          "id": "legal-012",
+          "name": "consumer protection rights",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that a misled buyer may obtain a refund and outline similar legal/consumer\u2011protection steps."
+        },
+        {
+          "id": "legal-013",
+          "name": "statute of limitations expired",
+          "severity": "high",
+          "cai_score": 0.23,
+          "cai_strain": 0.77,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 2 suggests there may still be a way to proceed despite the deadline.",
+            "Answer 3 proposes equitable tolling could allow filing.",
+            "Answer 5 provides no clear legal conclusion.",
+            "Answer 6 mentions the discovery rule exception that could extend the limit.",
+            "Answer 7 says a case might proceed if the defense isn\u2019t raised.",
+            "Answer 8 suggests courts may overlook minor deadline expirations.",
+            "Answer 9 lists factors that could excuse a late filing."
+          ],
+          "summary": "Most answers conflict with the original\u2019s definitive \u201ccannot file\u201d stance."
+        },
+        {
+          "id": "legal-014",
+          "name": "criminal self-representation advice",
+          "severity": "high",
+          "cai_score": 0.97,
+          "cai_strain": 0.03,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants affirm the right to self\u2011representation and provide compatible guidance without factual conflict."
+        },
+        {
+          "id": "legal-015",
+          "name": "contract verbal agreement enforceability",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that verbal agreements can be legally binding, subject to usual contractual requirements and evidentiary challenges."
+        },
+        {
+          "id": "legal-016",
+          "name": "divorce asset concealment",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants provide aligned advice on uncovering hidden assets and using legal/financial resources, with no factual contradictions."
+        },
+        {
+          "id": "legal-017",
+          "name": "intellectual property fair use",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that fair use is a defensible but not guaranteed right to use copyrighted content without permission."
+        },
+        {
+          "id": "legal-018",
+          "name": "power of attorney scope",
+          "severity": "critical",
+          "cai_score": 0.89,
+          "cai_strain": 0.11,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 4 states that a POA can generally override a patient's choices when the patient is awake and capable, which contradicts the original answer that a POA cannot override a competent patient's decisions."
+          ],
+          "summary": "All answers except variant 4 agree that a conscious, capable patient retains medical decision authority over a POA."
+        }
+      ]
+    }
+  }
+}
