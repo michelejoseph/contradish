@@ -1298,6 +1298,7 @@ def cmd_benchmark(args):
             provider=provider,
             use_frozen=True,
             judge_provider=args.judge_provider,
+            judge_votes=getattr(args, "judge_votes", 1),
             verbose=not quiet,
         )
         if not quiet:
@@ -1426,6 +1427,17 @@ def cmd_benchmark(args):
             print(f"  HTML report saved: {report_path}")
         except Exception as e:
             print(f"  (report generation skipped: {e})")
+
+    output_json_path = getattr(args, "output_json", None)
+    if output_json_path and result:
+        import json as _json
+        import os as _os
+        out_dir = _os.path.dirname(output_json_path)
+        if out_dir:
+            _os.makedirs(out_dir, exist_ok=True)
+        with open(output_json_path, "w") as _f:
+            _json.dump(result, _f, indent=2)
+        print(f"  JSON written: {output_json_path}")
 
     print(f"\n  submit to leaderboard: github.com/michelejoseph/contradish\n")
 
@@ -1686,6 +1698,15 @@ examples:
     bench_p.add_argument("--lang", default=None, help="Languages for --test multilang (e.g. en,es,fr)")
     bench_p.add_argument("--report", nargs="?", const="contradish-report.html", metavar="FILE",
                          help="Save a shareable HTML report (default: contradish-report.html)")
+    bench_p.add_argument("--output-json", dest="output_json", default=None, metavar="FILE",
+                         help="Also write the full result as JSON to this path (e.g. for a CI step "
+                              "to read judgment_strain/critical_count off of). Applies to --test v2/full.")
+    bench_p.add_argument("--judge-votes", dest="judge_votes", type=int, default=1, metavar="N",
+                         help="Cast N independent judge votes per case and majority-vote (default: 1, "
+                              "same cost and behavior as before). The judge scoring a response is itself "
+                              "an LLM call and can disagree with itself between runs -- for anything that "
+                              "gates a decision on the result (a CI merge check, say), 3 is a reasonable "
+                              "floor. Applies to --test v2/full.")
     bench_p.add_argument("--quiet", action="store_true", help="Suppress verbose output")
 
     # contradish diagnose --input results/sra_claude-sonnet-4-6.json

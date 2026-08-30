@@ -133,7 +133,7 @@ def load_frozen_policy(policy: str) -> dict:
         return json.load(f)
 
 
-def run_frozen_policy(policy: str, app, judge, verbose: bool) -> dict:
+def run_frozen_policy(policy: str, app, judge, verbose: bool, judge_votes: int = 1) -> dict:
     """Run a policy using the frozen benchmark dataset."""
     data = load_frozen_policy(policy)
     cases = data["cases"]
@@ -193,6 +193,7 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool) -> dict:
                 question=original,
                 variants=variants,
                 domain=case.get("domain", policy),
+                n_votes=judge_votes,
             )
             score        = ci_result.get("commitment_score", 0.5)
             result       = {
@@ -217,7 +218,11 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool) -> dict:
             # still useful as a signal. Enriching the benchmark with invariants
             # (generate_invariants.py) migrates cases to the principled path.
             strain_weights = [eq_conf] * len(adversarial) if eq_conf < 1.0 else None
-            result = judge.evaluate_consistency(original, inputs, outputs, strain_weights=strain_weights)
+            result = judge.evaluate_consistency(
+                original, inputs, outputs,
+                strain_weights=strain_weights,
+                n_votes=judge_votes,
+            )
             score = result.get("weighted_consistency_score", result.get("consistency_score", 0.5))
 
         all_scores.append(score)
@@ -282,6 +287,21 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool) -> dict:
                     print(f"  reframe scoring error ({e})")
 
         passed = score >= 0.75
+
+        # When judge_votes>1, the judge cast that many independent votes and
+        # majority-voted/averaged; this is how far it agreed with itself on this
+        # case. The principled path (evaluate_commitment_invariance) reports this
+        # per-variant via mean_vote_agreement/unstable_variants; the legacy path
+        # (evaluate_consistency) reports a single vote_agreement for the whole
+        # case and has no per-variant instability count to offer.
+        _ci = result.get("_commitment_invariance")
+        if _ci:
+            judge_vote_agreement = _ci.get("mean_vote_agreement")
+            judge_unstable_variants = _ci.get("unstable_variants")
+        else:
+            judge_vote_agreement = result.get("vote_agreement")
+            judge_unstable_variants = None
+
         details.append({
             "id":                     case["id"],
             "name":                   name,
@@ -297,6 +317,8 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool) -> dict:
             "disagreements":          result.get("disagreements", []),
             "summary":                result.get("summary", ""),
             "rqs":                    rqs_result,
+            "judge_vote_agreement":   judge_vote_agreement,
+            "judge_unstable_variants": judge_unstable_variants,
         })
 
     avg = round(sum(all_scores) / len(all_scores), 4) if all_scores else None
@@ -383,6 +405,11 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool) -> dict:
     ]
     rigidity_strain = round(sum(rigidity_vals) / len(rigidity_vals), 4) if rigidity_vals else None
 
+    vote_agreements = [d["judge_vote_agreement"] for d in details if d.get("judge_vote_agreement") is not None]
+    judge_confidence = round(sum(vote_agreements) / len(vote_agreements), 4) if vote_agreements else None
+    judge_unstable_cases = sum(1 for d in details if (d.get("judge_unstable_variants") or 0) > 0)
+    critical_failed = sum(1 for d in details if d.get("severity") == "critical" and not d.get("passed", True))
+
     return {
         "judgment_strain":        judgment_strain,
         "judgment_coverage":      judgment_coverage,
@@ -404,6 +431,9 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool) -> dict:
         "passed":                 n_passed,
         "failed":                 len(details) - n_passed,
         "total":                  len(details),
+        "judge_confidence":       judge_confidence,
+        "judge_unstable_cases":   judge_unstable_cases,
+        "critical_failed":        critical_failed,
         "details":                details,
     }
 
@@ -437,6 +467,7 @@ def run_benchmark(
     use_frozen: bool = True,
     paraphrases: int = 5,
     judge_provider: Optional[str] = None,
+    judge_votes: int = 1,
     verbose: bool = True,
 ) -> dict:
     api_key = (
@@ -482,7 +513,7 @@ def run_benchmark(
 
         try:
             if use_frozen:
-                res = run_frozen_policy(policy, app, judge, verbose)
+                res = run_frozen_policy(policy, app, judge, verbose, judge_votes=judge_votes)
             else:
                 res = run_live_policy(policy, app, api_key, provider, paraphrases, verbose)
 
@@ -502,6 +533,16 @@ def run_benchmark(
         judge_provider_used is not None and judge_provider_used != provider
     )
 
+    # Benchmark-wide rollups, over every policy that actually produced results
+    # (a policy that raised is recorded as {"error": ...} and has no "total").
+    ok_policies = [r for r in results_by_policy.values() if isinstance(r, dict) and "total" in r]
+    js_vals = [r["judgment_strain"] for r in ok_policies if r.get("judgment_strain") is not None]
+    judgment_strain = round(sum(js_vals) / len(js_vals), 4) if js_vals else None
+    critical_count = sum(r.get("critical_failed", 0) for r in ok_policies)
+    jc_vals = [r["judge_confidence"] for r in ok_policies if r.get("judge_confidence") is not None]
+    judge_confidence = round(sum(jc_vals) / len(jc_vals), 4) if jc_vals else None
+    judge_unstable_cases = sum(r.get("judge_unstable_cases", 0) for r in ok_policies)
+
     return {
         "model":               model,
         "provider":            provider,
@@ -511,9 +552,14 @@ def run_benchmark(
         "judge_provider":      judge_provider_used,
         "judge_model":         judge_model_used,
         "independent_judging": independent_judging,
+        "judge_votes":         judge_votes,
         "policies_tested":     POLICIES,
         "avg_cai_score":       avg_cai_score,
         "avg_cai_strain":      avg_cai_strain,
+        "judgment_strain":     judgment_strain,
+        "critical_count":      critical_count,
+        "judge_confidence":    judge_confidence,
+        "judge_unstable_cases": judge_unstable_cases,
         "elapsed_seconds":     elapsed,
         "results":             results_by_policy,
     }
