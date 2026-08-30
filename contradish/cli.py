@@ -1103,6 +1103,46 @@ def cmd_compare(args):
     sys.exit(0)
 
 
+def cmd_calibrate(args):
+    """
+    Synthesize already-saved benchmark results into one Calibration Score
+    (stability x responsiveness, harmonic mean). Reads results/ only --
+    makes no API calls, runs no live app. See contradish/calibration.py
+    for the full rationale.
+    """
+    from pathlib import Path as _Path
+    from datetime import date as _date
+    from contradish.calibration import compute_calibration_score, print_calibration_report
+
+    use_json = getattr(args, "json", False)
+    result = compute_calibration_score(args.model, results_dir=args.results_dir)
+
+    if use_json:
+        print(json.dumps(result.to_dict(), indent=2))
+    else:
+        print_calibration_report(result)
+
+    if result.computable:
+        out_dir = _Path(args.results_dir)
+        out_dir.mkdir(exist_ok=True)
+        safe_model = args.model.replace("/", "-").replace(":", "-")
+        path = out_dir / f"calibration_{safe_model}_{_date.today()}.json"
+        with open(path, "w") as f:
+            json.dump(result.to_dict(), f, indent=2)
+        if not use_json:
+            print(f"  result saved: {path}\n")
+
+    if args.threshold is not None:
+        if not result.computable:
+            print(f"  FAIL: Calibration Score not computable, cannot evaluate --threshold {args.threshold}\n")
+            sys.exit(1)
+        if result.score < args.threshold:
+            print(f"  FAIL: Calibration Score {result.score:.4f} < threshold {args.threshold}\n")
+            sys.exit(1)
+
+    sys.exit(0)
+
+
 def cmd_diagnose(args):
     """
     Diagnose drift cases from a contradish result JSON and generate a repair package.
@@ -2168,6 +2208,28 @@ examples:
         help="Exit nonzero if overall strain exceeds this value. For CI gating.",
     )
 
+    # contradish calibrate --model claude-sonnet-4-6
+    cal_p = sub.add_parser(
+        "calibrate",
+        help="Synthesize saved results into one Calibration Score (stability x responsiveness, no API calls)",
+        description=(
+            "Reads already-saved results/ JSON files for a model (CAI/CAT/CL/PC/JRR/MT/WA "
+            "for stability, CI for responsiveness) and combines them into one Calibration "
+            "Score -- the harmonic mean of the two, so a model can't win by maxing out one "
+            "axis and ignoring the other. Makes no API calls; run `contradish benchmark "
+            "--test <x>` first to produce the underlying result files."
+        ),
+    )
+    cal_p.add_argument("--model", required=True, metavar="NAME",
+                       help="Model name exactly as recorded in the saved result files' 'model' field")
+    cal_p.add_argument("--results-dir", default="results", metavar="DIR", dest="results_dir",
+                       help="Directory to read/write result JSONs (default: results)")
+    cal_p.add_argument("--threshold", type=float, default=None, metavar="FLOAT",
+                       help="Exit nonzero if Calibration Score is below this (or not yet computable). For CI/CD gating.")
+    cal_p.add_argument("--json", action="store_true", default=False,
+                       help="Output report as JSON")
+
+
     args = parser.parse_args()
 
     if args.command == "benchmark":
@@ -2198,6 +2260,8 @@ examples:
         cmd_fairness(args)
     elif args.command == "analyze":
         cmd_quick(args)
+    elif args.command == "calibrate":
+        cmd_calibrate(args)
     elif getattr(args, "policy", None):
         cmd_policy(args)
     elif args.system_prompt or args.prompt_file:
