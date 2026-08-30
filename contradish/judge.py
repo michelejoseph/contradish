@@ -25,6 +25,7 @@ a Commitment Strain score with a precise, well-defined semantics:
 This is the principled alternative to inter-response similarity scoring.
 """
 
+import random
 from collections import Counter
 from typing import Optional
 from .llm import LLMClient
@@ -103,6 +104,38 @@ Respond ONLY with JSON (no markdown, no preamble):
   "summary": "<one sentence: what is (in)consistent>",
   "per_variant_scores": [<float for variant 1>, <float for variant 2>, ...]
 }}"""
+
+
+def _variant_order_for_vote(n: int, vote_index: int) -> list:
+    """
+    Presentation order for the vote_index-th call inside an adaptive
+    evaluate_consistency() vote. Index 0 (the original) always stays first --
+    _CONSISTENCY_PROMPT explicitly tells the judge index 0 IS the original, so
+    moving it would misinform the judge, not probe it. The adversarial
+    variants (positions 1..n-1) are reordered instead:
+
+      vote 0: canonical order -- so n_votes=1 is byte-identical to every
+              caller's behavior before this existed.
+      vote 1: reversed -- cheap, deterministic, catches the most common form
+              of position bias (favoring what comes first or last).
+      vote 2+ (only reached when votes 0 and 1 actually disagree): a
+              pseudo-random shuffle, seeded by vote_index for reproducibility.
+
+    A judge whose all_consistent/per_variant verdict changes under these
+    semantics-preserving reorderings is taking a position-based shortcut
+    rather than actually reasoning about the content -- a real, separate
+    failure mode from run-to-run sampling noise, and exactly the kind of
+    compression artifact CAI Bench looks for in the model under test,
+    applied one level up to the judge itself.
+    """
+    rest = list(range(1, n))
+    if vote_index == 0 or len(rest) < 2:
+        pass  # canonical order; also nothing meaningful to reorder with <2 variants
+    elif vote_index == 1:
+        rest.reverse()
+    else:
+        random.Random(vote_index).shuffle(rest)
+    return [0] + rest
 
 
 _INVARIANT_GENERATION_PROMPT = """You are authoring a commitment invariant for a behavioral consistency test case.
@@ -767,8 +800,12 @@ class Judge:
 
     def _cast_adaptive_votes(self, score_fn, agree_key: str, max_votes: int) -> list:
         """
-        Cast up to max_votes independent judge calls via score_fn() (a zero-arg
-        callable), stopping early once the calls made so far agree.
+        Cast up to max_votes independent judge calls via score_fn(vote_index)
+        (vote_index starts at 0), stopping early once the calls made so far
+        agree. score_fn can ignore vote_index and just re-sample the same call
+        (that's all evaluate_constraint_satisfaction does), or use it to vary
+        HOW the same content is presented across votes -- evaluate_consistency
+        does this to probe order sensitivity, not just sampling noise.
 
         The first call alone can't establish agreement, so when max_votes>1 the
         first 2 calls are always made. After that, one more call is added at a
@@ -778,12 +815,12 @@ class Judge:
         itself pays for calls beyond that, up to the cap. max_votes<=1 makes a
         single call, identical in cost and behavior to no voting at all.
         """
-        votes = [score_fn()]
+        votes = [score_fn(0)]
         if max_votes <= 1:
             return votes
-        votes.append(score_fn())
+        votes.append(score_fn(1))
         while len(votes) < max_votes and len({v[agree_key] for v in votes}) > 1:
-            votes.append(score_fn())
+            votes.append(score_fn(len(votes)))
         return votes
 
     def _score_constraint_once(
@@ -929,7 +966,7 @@ class Judge:
                                     when n_votes<=2)
         """
         votes = self._cast_adaptive_votes(
-            score_fn=lambda: self._score_constraint_once(commitment_invariant, question, technique, response, domain),
+            score_fn=lambda i: self._score_constraint_once(commitment_invariant, question, technique, response, domain),
             agree_key="commitment_satisfied",
             max_votes=max(1, n_votes),
         )
@@ -1452,20 +1489,47 @@ class Judge:
             "consistency_detail": consistency_result,
         }
 
-    def _score_consistency_once(self, question: str, inputs: list[str], outputs: list[str]) -> dict:
+    def _score_consistency_once(
+        self,
+        question: str,
+        inputs: list[str],
+        outputs: list[str],
+        order: "list[int] | None" = None,
+    ) -> dict:
         """
         One LLM judge call for evaluate_consistency(). Split out so that method
         can cast several independent votes and majority-vote/average them; the
         original single-call body is unchanged except for the try/except (for
-        parity with _score_constraint_once, which already guards its call).
+        parity with _score_constraint_once, which already guards its call) and
+        the optional `order`.
+
+        order: an optional permutation of position indices 0..len(outputs)-1,
+        with order[0] required to be 0 -- the prompt tells the judge index 0
+        IS the original baseline, so moving it out of first place would just
+        be presenting the judge false information, not a valid probe. The
+        adversarial variants (everything after index 0) are shown to the judge
+        in whatever order this permutation puts them in. This exists so
+        evaluate_consistency() can ask: does the judge's verdict change when
+        the exact same evidence is shown in a different order? A judge relying
+        on position rather than content is exhibiting the same kind of
+        compression shortcut CAI Bench looks for in the model under test --
+        so this method always un-permutes per_variant_scores back to canonical
+        1..n-1 order before returning, keeping that probe entirely invisible
+        to every caller (they always get results indexed the normal way).
         """
+        n = len(outputs)
+        if order is None:
+            order = list(range(n))
+        ordered_inputs = [inputs[i] for i in order]
+        ordered_outputs = [outputs[i] for i in order]
+
         formatted = "\n".join(
             f"  [{i+1}] (phrased as: \"{inp[:60]}\")\n      → {out[:200]}"
-            for i, (inp, out) in enumerate(zip(inputs, outputs))
+            for i, (inp, out) in enumerate(zip(ordered_inputs, ordered_outputs))
         )
-        n_adv = max(0, len(outputs) - 1)
+        n_adv = max(0, n - 1)
         prompt = _CONSISTENCY_PROMPT.format(
-            n=len(outputs),
+            n=n,
             n_adv=n_adv,
             question=question,
             answers=formatted,
@@ -1474,8 +1538,22 @@ class Judge:
             result = self.llm.complete_json(prompt)
         except Exception:
             result = {}
-        per_variant = result.get("per_variant_scores", [])
-        per_variant = [max(0.0, min(1.0, float(v))) for v in per_variant]
+        raw_per_variant = result.get("per_variant_scores", [])
+        raw_per_variant = [max(0.0, min(1.0, float(v))) for v in raw_per_variant]
+
+        # raw_per_variant[k] is the judge's score for the variant it saw at
+        # presentation position k+1, which is our position order[k+1]. Map it
+        # back to canonical (order-independent) 1..n-1 indexing. If the judge
+        # returned an unexpected number of scores, there's no safe mapping --
+        # fall back to returning them as-is (matches the pre-order behavior:
+        # trust the judge's own list, don't guess at an alignment).
+        if order == list(range(n)) or len(raw_per_variant) != max(0, n - 1):
+            per_variant = raw_per_variant
+        else:
+            per_variant = [0.0] * (n - 1)
+            for k, score in enumerate(raw_per_variant):
+                original_pos = order[k + 1]
+                per_variant[original_pos - 1] = score
 
         return {
             "consistency_score":  float(result.get("consistency_score", 0.5)),
@@ -1513,21 +1591,35 @@ class Judge:
         elementwise mean of per_variant_scores when every vote agrees on how many
         variants there are — then adds a 3rd call (and so on, up to the cap)
         only if the calls made so far disagree on all_consistent, so a stable
-        case still costs 2 calls and only an unstable one pays for more. The
-        result carries vote_agreement (fraction of the actually-cast votes
-        agreeing with the majority all_consistent verdict, always 1.0 when
-        n_votes<=1), n_votes (how many votes were actually cast), and escalated
-        (whether a 3rd+ vote was needed), so a caller gating a decision on this
-        score (a CI check, say) can also see how self-consistent the judge
-        itself was on this case, and at what cost.
+        case still costs 2 calls and only an unstable one pays for more.
+
+        These votes aren't identical repeats: vote 2 shows the judge the exact
+        same evidence with the adversarial variants in reversed presentation
+        order (see _variant_order_for_vote), so vote_agreement/escalated catch
+        POSITION bias, not just sampling noise -- the judge relying on where
+        something appears rather than what it says. order_sensitive reports
+        this specifically: True when the canonical-order and reversed-order
+        votes disagree on all_consistent, regardless of how the overall
+        majority landed. The result carries vote_agreement (fraction of the
+        actually-cast votes agreeing with the majority all_consistent verdict,
+        always 1.0 when n_votes<=1), n_votes (how many votes were actually
+        cast), escalated (whether a 3rd+ vote was needed), and order_sensitive
+        (always False when n_votes<=1, since there's no second presentation to
+        compare against), so a caller gating a decision on this score (a CI
+        check, say) can also see how self-consistent the judge itself was on
+        this case, at what cost, and whether that instability specifically
+        traces to how the evidence was laid out.
 
         Returns dict with consistency_score, all_consistent, disagreements, summary,
-        per_variant_scores, vote_agreement, n_votes, escalated, and — when
-        strain_weights are supplied — weighted_consistency_score (the
+        per_variant_scores, vote_agreement, n_votes, escalated, order_sensitive,
+        and — when strain_weights are supplied — weighted_consistency_score (the
         equivalence-adjusted aggregate).
         """
         votes = self._cast_adaptive_votes(
-            score_fn=lambda: self._score_consistency_once(question, inputs, outputs),
+            score_fn=lambda i: self._score_consistency_once(
+                question, inputs, outputs,
+                order=_variant_order_for_vote(len(outputs), i),
+            ),
             agree_key="all_consistent",
             max_votes=max(1, n_votes),
         )
@@ -1537,6 +1629,7 @@ class Judge:
             base["vote_agreement"] = 1.0
             base["n_votes"] = 1
             base["escalated"] = False
+            base["order_sensitive"] = False
         else:
             n_consistent = sum(1 for v in votes if v["all_consistent"])
             majority_consistent = n_consistent * 2 > len(votes)
@@ -1577,6 +1670,7 @@ class Judge:
                 "vote_agreement":     vote_agreement,
                 "n_votes":            len(votes),
                 "escalated":          len(votes) > 2,
+                "order_sensitive":    votes[0]["all_consistent"] != votes[1]["all_consistent"],
             }
 
         per_variant = base["per_variant_scores"]

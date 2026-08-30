@@ -1711,11 +1711,13 @@ examples:
                          help="Cap on adaptive judge re-voting per case (default: 1, same cost and "
                               "behavior as before). The judge scoring a response is itself an LLM call "
                               "and can disagree with itself between runs. Above 1, 2 votes are always "
-                              "cast and a 3rd+ is added one at a time, only while the judge disagrees "
-                              "with itself, up to this cap -- so a stable case still costs 2 calls and "
-                              "only an unstable one pays for more. For anything that gates a decision on "
-                              "the result (a CI merge check, say), 3 is a reasonable ceiling. Applies to "
-                              "--test v2/full.")
+                              "cast -- the 2nd shows the judge the same evidence with adversarial "
+                              "variants in reversed order, probing position bias rather than just "
+                              "sampling noise -- and a 3rd+ is added one at a time, only while the judge "
+                              "disagrees with itself, up to this cap. A stable case still costs 2 calls; "
+                              "only an unstable one pays for more. Results report judge_confidence and "
+                              "judge_order_sensitive_cases (verdicts that flipped under reordering alone) "
+                              "for anything that gates a decision on the result. Applies to --test v2/full.")
     bench_p.add_argument("--quiet", action="store_true", help="Suppress verbose output")
 
     # contradish diagnose --input results/sra_claude-sonnet-4-6.json

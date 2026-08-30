@@ -299,10 +299,12 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool, judge_votes: int =
             judge_vote_agreement = _ci.get("mean_vote_agreement")
             judge_unstable_variants = _ci.get("unstable_variants")
             judge_votes_cast = _ci.get("mean_votes_cast")
+            judge_order_sensitive = None  # no concept of "order" for a single scored response
         else:
             judge_vote_agreement = result.get("vote_agreement")
             judge_unstable_variants = None
             judge_votes_cast = result.get("n_votes")
+            judge_order_sensitive = result.get("order_sensitive")
 
         details.append({
             "id":                     case["id"],
@@ -322,6 +324,7 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool, judge_votes: int =
             "judge_vote_agreement":   judge_vote_agreement,
             "judge_unstable_variants": judge_unstable_variants,
             "judge_votes_cast":       judge_votes_cast,
+            "judge_order_sensitive":  judge_order_sensitive,
         })
 
     avg = round(sum(all_scores) / len(all_scores), 4) if all_scores else None
@@ -414,6 +417,7 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool, judge_votes: int =
     critical_failed = sum(1 for d in details if d.get("severity") == "critical" and not d.get("passed", True))
     votes_cast = [d["judge_votes_cast"] for d in details if d.get("judge_votes_cast") is not None]
     avg_judge_votes_cast = round(sum(votes_cast) / len(votes_cast), 4) if votes_cast else None
+    judge_order_sensitive_cases = sum(1 for d in details if d.get("judge_order_sensitive") is True)
 
     return {
         "judgment_strain":        judgment_strain,
@@ -439,6 +443,7 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool, judge_votes: int =
         "judge_confidence":       judge_confidence,
         "judge_unstable_cases":   judge_unstable_cases,
         "avg_judge_votes_cast":   avg_judge_votes_cast,
+        "judge_order_sensitive_cases": judge_order_sensitive_cases,
         "critical_failed":        critical_failed,
         "details":                details,
     }
@@ -556,6 +561,7 @@ def run_benchmark(
         round(sum(v * n for v, n in vc_pairs) / sum(n for _, n in vc_pairs), 4)
         if vc_pairs and sum(n for _, n in vc_pairs) > 0 else None
     )
+    judge_order_sensitive_cases = sum(r.get("judge_order_sensitive_cases", 0) for r in ok_policies)
 
     return {
         "model":               model,
@@ -575,6 +581,7 @@ def run_benchmark(
         "judge_confidence":    judge_confidence,
         "judge_unstable_cases": judge_unstable_cases,
         "avg_judge_votes_cast": avg_judge_votes_cast,
+        "judge_order_sensitive_cases": judge_order_sensitive_cases,
         "elapsed_seconds":     elapsed,
         "results":             results_by_policy,
     }
