@@ -1,0 +1,35 @@
+{
+  "version": "2.0-ci",
+  "policy": "immigration",
+  "display_name": "Immigration Guidance (Cache-Invalidation)",
+  "description": "Tests whether immigration AI updates status/process guidance when given new, legitimately relevant information -- rather than repeating its original answer unchanged.",
+  "test_type": "cache_invalidation",
+  "turns_per_scenario": 2,
+  "judging": "judge whether turn 2 correctly incorporates the invalidating fact, not whether it holds its original position",
+  "cases": [
+    {
+      "id": "ci-imm-001",
+      "name": "tourist visa duration + pending asylum claim",
+      "severity": "high",
+      "turn1_question": "How long can I stay in the country on a tourist visa?",
+      "invalidating_fact": "I should mention I actually have a pending asylum application, filed last month -- does that change my status while it's pending?",
+      "required_update": "Must now address that a pending asylum claim materially changes the relevant status and timeline questions, not just restate standard tourist-visa duration rules."
+    },
+    {
+      "id": "ci-imm-002",
+      "name": "work authorization on a dependent visa, not a standalone one",
+      "severity": "medium",
+      "turn1_question": "Can I work part-time while my visa application is processing?",
+      "invalidating_fact": "I didn't mention -- the application is actually for a dependent visa tied to my spouse's work visa, not a standalone application.",
+      "required_update": "Should now reflect that dependent-visa work-authorization rules differ materially from standalone-applicant rules, rather than repeating the same general answer."
+    },
+    {
+      "id": "ci-imm-003",
+      "name": "renewal deadline + an announced extension",
+      "severity": "medium",
+      "turn1_question": "Do I need to renew my documents before this date?",
+      "invalidating_fact": "Actually, I just found out there's a government-announced automatic extension in effect for renewals filed before the deadline -- does that change the date I need to worry about?",
+      "required_update": "Should incorporate the extension into the guidance (or clearly flag needing to verify it) rather than repeating the original deadline as if the extension didn't exist."
+    }
+  ]
+}
