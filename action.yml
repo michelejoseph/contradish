@@ -30,6 +30,10 @@ inputs:
     description: 'Provider for judge model (default: opposite of provider for independence)'
     required: false
     default: ''
+  judge_votes:
+    description: 'Cap on adaptive judge re-voting per case (default: 1, same cost and behavior as before). Above 1, the judge casts 2+ independent votes per case and majority-votes, catching sampling noise and judge position bias (a reordered-evidence re-vote), escalating past 2 only when they disagree. Recommended: 3 for a gate you actually trust.'
+    required: false
+    default: '1'
   anthropic_api_key:
     description: 'Anthropic API key (or set ANTHROPIC_API_KEY env var)'
     required: false
@@ -53,6 +57,12 @@ outputs:
   result_file:
     description: 'Path to the JSON result file'
     value: ${{ steps.run.outputs.result_file }}
+  judge_confidence:
+    description: 'Mean judge self-agreement across votes, 0-1 (only meaningful when judge_votes > 1)'
+    value: ${{ steps.run.outputs.judge_confidence }}
+  judge_order_sensitive_cases:
+    description: 'Count of cases where the judge disagreed with itself after variant reordering (only meaningful when judge_votes > 1)'
+    value: ${{ steps.run.outputs.judge_order_sensitive_cases }}
 
 runs:
   using: 'composite'
@@ -82,6 +92,7 @@ runs:
         if [ -n "${{ inputs.judge_provider }}" ]; then
           ARGS="$ARGS --judge-provider ${{ inputs.judge_provider }}"
         fi
+        ARGS="$ARGS --judge-votes ${{ inputs.judge_votes }}"
 
         contradish benchmark $ARGS --report contradish-report.html 2>&1 | tee benchmark-output.txt
 
@@ -93,6 +104,11 @@ runs:
         THRESHOLD=${{ inputs.threshold_strain }}
         STRAIN=$(python3 -c "import json; d=json.load(open('$RESULT_FILE')); print(next((d[k] for k in ('avg_cai_strain','avg_judgment_strain','cai_strain','judgment_strain') if isinstance(d.get(k),(int,float))),''))" 2>/dev/null) || STRAIN=""
 
+        JUDGE_CONFIDENCE=$(python3 -c "import json; d=json.load(open('$RESULT_FILE')); v=d.get('judge_confidence'); print(v if isinstance(v,(int,float)) else '')" 2>/dev/null) || JUDGE_CONFIDENCE=""
+        JUDGE_ORDER_SENSITIVE_CASES=$(python3 -c "import json; d=json.load(open('$RESULT_FILE')); v=d.get('judge_order_sensitive_cases'); print(v if isinstance(v,int) else '')" 2>/dev/null) || JUDGE_ORDER_SENSITIVE_CASES=""
+        echo "judge_confidence=$JUDGE_CONFIDENCE" >> $GITHUB_OUTPUT
+        echo "judge_order_sensitive_cases=$JUDGE_ORDER_SENSITIVE_CASES" >> $GITHUB_OUTPUT
+
         if [ -z "$STRAIN" ]; then
           echo "passed=false" >> $GITHUB_OUTPUT
           echo "contradish: could not read CAI Strain from '$RESULT_FILE'; failing the gate (fail-closed)."
@@ -100,6 +116,15 @@ runs:
         fi
 
         echo "strain=$STRAIN" >> $GITHUB_OUTPUT
+
+        if [ -n "$JUDGE_CONFIDENCE" ]; then
+          NOTE=""
+          if [ -n "$JUDGE_ORDER_SENSITIVE_CASES" ] && [ "$JUDGE_ORDER_SENSITIVE_CASES" != "0" ]; then
+            NOTE="; $JUDGE_ORDER_SENSITIVE_CASES order-sensitive case(s)"
+          fi
+          echo "contradish: judge confidence $JUDGE_CONFIDENCE (self-agreement across votes$NOTE)"
+        fi
+
         if python3 -c "import sys; sys.exit(0 if float('$STRAIN') <= float('$THRESHOLD') else 1)"; then
           echo "passed=true" >> $GITHUB_OUTPUT
           echo "contradish: CAI Strain $STRAIN <= threshold $THRESHOLD - PASSED"
