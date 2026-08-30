@@ -176,6 +176,20 @@ class TestResult:
     truth_score:  Optional[float] = None
     truth_strain: Optional[float] = None
 
+    # Judge self-reliability signal. Only meaningful when the Suite was built
+    # with judge_votes>1 -- otherwise these stay None (no voting happened).
+    # judge_vote_agreement: fraction of the judge's own votes that agreed with
+    #   its majority verdict on this case (1.0 = fully stable).
+    # judge_order_sensitive: True if the judge's verdict flipped specifically
+    #   because the same evidence was shown in a different order -- a
+    #   position-bias signal, not sampling noise. See Judge.evaluate_consistency.
+    # judge_votes_cast: how many judge calls were actually made for this case
+    #   (adaptive: 2 for a stable case, more only if the judge disagreed with
+    #   itself, up to the judge_votes cap).
+    judge_vote_agreement:  Optional[float] = None
+    judge_order_sensitive: Optional[bool]  = None
+    judge_votes_cast:      Optional[int]   = None
+
     @property
     def cai_score(self) -> Optional[float]:
         """
@@ -395,6 +409,28 @@ class Report:
             1 for r in self.results
             if getattr(r.test_case, "equivalence_confidence", 1.0) < CONTESTED_EQ_FLOOR
         )
+
+    @property
+    def judge_confidence(self) -> Optional[float]:
+        """
+        Mean of judge_vote_agreement across every case that was actually
+        voted on (None when this Suite was run with judge_votes<=1 -- there's
+        nothing to report). Low here means the judge itself was inconsistent
+        across repeated/reordered looks at the same evidence on multiple
+        cases -- treat the run as provisional, not just the individual cases.
+        """
+        vals = [r.judge_vote_agreement for r in self.results if r.judge_vote_agreement is not None]
+        return round(sum(vals) / len(vals), 3) if vals else None
+
+    @property
+    def judge_order_sensitive_cases(self) -> int:
+        """
+        Count of cases where the judge's verdict specifically flipped because
+        the same evidence was shown in a different order -- not because the
+        model's answers actually changed. These are the least trustworthy
+        results in the run: rerun them, don't just average over them.
+        """
+        return sum(1 for r in self.results if r.judge_order_sensitive is True)
 
     # ── Judgment Strain: the two-sided metric ──────────────────────────────────
     #
@@ -637,6 +673,8 @@ class Report:
             "cai_score":         self.cai_score,    # legacy alias (higher=better)
             "truth_strain":      self.truth_strain,    # None when no canonical anywhere
             "truth_coverage":    self.truth_coverage,
+            "judge_confidence":  self.judge_confidence,             # None unless judge_votes>1
+            "judge_order_sensitive_cases": self.judge_order_sensitive_cases,
             "total":             len(self.results),
             "passed":            len(self.passed),
             "failed":            len(self.failed),
@@ -655,6 +693,9 @@ class Report:
                     "tension_response_score": r.tension_response_score,
                     "reframe_score":          r.reframe_score,
                     "contradiction_score":    r.contradiction_score,
+                    "judge_vote_agreement":   r.judge_vote_agreement,
+                    "judge_order_sensitive":  r.judge_order_sensitive,
+                    "judge_votes_cast":       r.judge_votes_cast,
                     "risk":               r.risk.value,
                     "passed":             r.passed(self.thresholds),
                     "contradictions": [

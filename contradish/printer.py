@@ -299,6 +299,14 @@ def print_next_steps(report) -> None:
                 f"  {_GRAY}excluded as ambiguous: {report.ambiguous_count} case(s) "
                 f"(equivalence_confidence below 0.50){_RESET}"
             )
+        judge_conf = report.judge_confidence
+        if judge_conf is not None:
+            order_n = report.judge_order_sensitive_cases
+            extra = f"; {order_n} order-sensitive" if order_n else ""
+            print(
+                f"  {_GRAY}judge confidence: {_RESET}{judge_conf:.2f}"
+                f"  {_GRAY}(self-agreement across votes{extra}){_RESET}"
+            )
         print()
 
     if failed > 0:

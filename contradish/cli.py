@@ -107,6 +107,8 @@ def _output_sarif(report, output_path: str = "contradish.sarif") -> None:
             "properties": {
                 "cai_score": report.cai_score,
                 "failure_count": report.failure_count,
+                "judge_confidence": report.judge_confidence,
+                "judge_order_sensitive_cases": report.judge_order_sensitive_cases,
             },
         }],
     }
@@ -266,6 +268,7 @@ def cmd_policy(args):
         policy=policy_name,
         app=app,
         verbose=not use_json,
+        judge_votes=getattr(args, "judge_votes", 1),
     )
     report = suite.run(
         paraphrases = args.paraphrases,
@@ -432,6 +435,7 @@ def cmd_from_prompt(args):
         system_prompt=system_prompt,
         app=app,
         verbose=not use_json,
+        judge_votes=getattr(args, "judge_votes", 1),
     )
     report = suite.run(
         paraphrases = args.paraphrases,
@@ -1612,6 +1616,16 @@ examples:
         default=4,
         metavar="N",
         help="Test cases to run in parallel (default: 4). Pass 1 for strictly serial.",
+    )
+    parser.add_argument(
+        "--judge-votes", dest="judge_votes", type=int, default=1, metavar="N",
+        help="Cap on adaptive judge re-voting per case (default: 1, same cost and "
+             "behavior as before). Above 1, the judge casts 2+ independent votes per "
+             "case and majority-votes, catching both sampling noise and position bias "
+             "(the 2nd vote shows the same evidence with variants in reversed order), "
+             "escalating past 2 only when they disagree. Adds judge_confidence and "
+             "judge_order_sensitive_cases to the report. For anything that gates a "
+             "decision on the result (a CI merge check, say), 3 is a reasonable floor.",
     )
     parser.add_argument(
         "--json",

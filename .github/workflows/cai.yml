@@ -34,12 +34,20 @@ jobs:
         run: pip install "contradish[anthropic]"
 
       # Option A: policy pack (no app required — tests default LLM behavior)
+      #
+      # --judge-votes 3 makes the judge itself more trustworthy: it casts
+      # a 2nd vote with the evidence reordered (catches judge position
+      # bias) and escalates to a 3rd only if the first two disagree, then
+      # majority-votes. A CI gate is exactly the case where you want that
+      # — see judge_confidence / judge_order_sensitive_cases in the SARIF
+      # output's properties block.
       - name: Run CAI check (policy pack)
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           contradish --policy ecommerce \
             --threshold 0.80 \
+            --judge-votes 3 \
             --format sarif \
             --output contradish.sarif
 
@@ -54,6 +62,7 @@ jobs:
       #     contradish --policy ecommerce \
       #       --app mymodule:my_app \
       #       --threshold 0.80 \
+      #       --judge-votes 3 \
       #       --format sarif \
       #       --output contradish.sarif
 

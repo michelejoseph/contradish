@@ -50,6 +50,13 @@ class Suite:
         api_key:  Anthropic or OpenAI API key.
                   If omitted, reads ANTHROPIC_API_KEY or OPENAI_API_KEY from env.
         provider: "anthropic" or "openai". Auto-detected from key prefix if omitted.
+        judge_votes: Cap on adaptive judge re-voting per case (default 1, same cost
+                  and behavior as a plain single-call judge). Above 1, the judge
+                  casts 2+ independent votes per case and majority-votes -- catching
+                  both sampling noise and position bias (see Judge.evaluate_consistency)
+                  -- escalating past 2 only when they disagree. Results expose this via
+                  TestResult.judge_vote_agreement / judge_order_sensitive and
+                  Report.judge_confidence / judge_order_sensitive_cases.
 
     Example:
         from contradish import Suite, TestCase
@@ -67,14 +74,16 @@ class Suite:
 
     def __init__(
         self,
-        app:      Callable[[str], str],
-        api_key:  Optional[str] = None,
-        provider: Optional[str] = None,
+        app:         Callable[[str], str],
+        api_key:     Optional[str] = None,
+        provider:    Optional[str] = None,
+        judge_votes: int = 1,
     ):
         self.app        = app
         self._llm       = LLMClient(api_key=api_key, provider=provider)
         self._runner    = Runner(self._llm)
         self._judge     = Judge(self._llm)
+        self._judge_votes = judge_votes
         self._cases:    list[TestCase] = []
         self._thresholds: dict = {}
 
@@ -102,11 +111,12 @@ class Suite:
     @classmethod
     def from_policy(
         cls,
-        policy:   str,
-        app:      Callable[[str], str],
-        api_key:  Optional[str] = None,
-        provider: Optional[str] = None,
-        verbose:  bool = True,
+        policy:      str,
+        app:         Callable[[str], str],
+        api_key:     Optional[str] = None,
+        provider:    Optional[str] = None,
+        verbose:     bool = True,
+        judge_votes: int = 1,
     ) -> "Suite":
         """
         Load a prebuilt domain policy pack and build a Suite automatically.
@@ -138,7 +148,7 @@ class Suite:
 
         pack = load_policy(policy)
 
-        suite = cls(app=app, api_key=api_key, provider=provider)
+        suite = cls(app=app, api_key=api_key, provider=provider, judge_votes=judge_votes)
         for tc in pack.cases:
             suite.add(tc)
 
@@ -161,6 +171,7 @@ class Suite:
         provider:      Optional[str] = None,
         verbose:       bool = True,
         max_rules:     int  = 8,
+        judge_votes:   int  = 1,
     ) -> "Suite":
         """
         Extract rules from a system prompt and build a Suite automatically.
@@ -172,6 +183,8 @@ class Suite:
             provider:      Optional provider override.
             verbose:       Print extracted rules to stdout.
             max_rules:     Max number of rules to extract (default 8).
+            judge_votes:   Cap on adaptive judge re-voting per case (default 1).
+                           See Suite.__init__.
 
         Returns:
             Suite with test cases added, ready to run.
@@ -202,7 +215,7 @@ class Suite:
         except Exception:
             raw = []
 
-        suite = cls(app=app, api_key=api_key, provider=provider)
+        suite = cls(app=app, api_key=api_key, provider=provider, judge_votes=judge_votes)
 
         for item in raw[:max_rules]:
             if isinstance(item, dict) and item.get("input"):
@@ -356,8 +369,12 @@ class Suite:
             question=tc.input,
             inputs=inputs,
             outputs=outputs,
+            n_votes=self._judge_votes,
         )
         consistency_score = cons["consistency_score"]
+        judge_vote_agreement  = cons.get("vote_agreement")
+        judge_order_sensitive = cons.get("order_sensitive")
+        judge_votes_cast      = cons.get("n_votes")
 
         # 4. Contradiction detection (skip when score is very high: too expensive to check)
         if consistency_score >= 0.90:
@@ -463,6 +480,9 @@ class Suite:
             reframe_score=reframe_score,
             truth_score=truth_score,
             truth_strain=truth_strain,
+            judge_vote_agreement=judge_vote_agreement,
+            judge_order_sensitive=judge_order_sensitive,
+            judge_votes_cast=judge_votes_cast,
         )
 
     @staticmethod
