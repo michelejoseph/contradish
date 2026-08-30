@@ -1387,6 +1387,19 @@ def cmd_benchmark(args):
             verbose=not quiet,
         )
 
+    elif test in ("witness", "wa"):
+        from contradish.bench.evaluate_wa import run_wa_benchmark, DOMAINS
+        domains = [domain] if domain else DOMAINS
+        result = run_wa_benchmark(
+            model=model,
+            provider=provider,
+            domains=domains,
+            wa_ids=["WA1", "WA2", "WA3", "WA4"],
+            judge_provider=args.judge_provider,
+            judge_votes=getattr(args, "judge_votes", 1),
+            verbose=not quiet,
+        )
+
     elif test in ("sra", "routing"):
         from contradish.bench.evaluate_sra import run_sra_benchmark, print_summary as sra_summary
         domains = [domain] if domain else None
@@ -1427,7 +1440,7 @@ def cmd_benchmark(args):
 
     else:
         print(f"\n  Unknown test suite: {test!r}")
-        print("  Options: v2, jailbreaks, population, multilang, multiturn, compound, anchoring, sra, all\n")
+        print("  Options: v2, jailbreaks, population, multilang, multiturn, compound, anchoring, witness, sra, all\n")
         sys.exit(1)
 
     # Generate HTML report if requested
@@ -1457,11 +1470,11 @@ def _generate_benchmark_report(result: dict, path: str, model: str, test_type: s
     import json
     from datetime import date as _date
 
-    cts = result.get("avg_cai_strain") or result.get("avg_cl_cts") or result.get("avg_cat_cts") or result.get("avg_pc_cts") or result.get("jrr")
+    cts = result.get("avg_cai_strain") or result.get("avg_cl_cts") or result.get("avg_cat_cts") or result.get("avg_pc_cts") or result.get("avg_wa_strain") or result.get("jrr")
     score_label = {
         "v2": "Strain", "jailbreaks": "JRR", "population": "PC-Strain",
         "multilang": "CL-Strain", "multiturn": "MT-Strain",
-        "compound": "CAT-Strain", "anchoring": "SPA-Delta", "sra": "SRA",
+        "compound": "CAT-Strain", "anchoring": "SPA-Delta", "witness": "WA-Strain", "sra": "SRA",
     }.get(test_type, "Score")
 
     color = "#16a34a" if (cts or 0) < 0.25 else ("#d97706" if (cts or 0) < 0.50 else "#dc2626")
@@ -1696,7 +1709,7 @@ examples:
         default="v2",
         choices=["v2", "jailbreaks", "jrr", "population", "pc", "multilang", "cl",
                  "multiturn", "mt", "compound", "cat", "anchoring", "spa",
-                 "sra", "routing", "all", "full"],
+                 "sra", "routing", "witness", "wa", "all", "full"],
         help=(
             "Test suite to run (default: v2). Options:\n"
             "  v2          Full CAI-Bench v2 (20 domains, 2160 rows)\n"
@@ -1705,7 +1718,7 @@ examples:
             "  multilang   Cross-lingual consistency (CL-Strain)\n"
             "  multiturn   Multi-turn pressure tests (MT-Strain)\n"
             "  compound    Compound attack tests (CAT-Strain)\n"
-            "  anchoring   System prompt anchoring (SPA-Strain)\n"
+            "  anchoring   System prompt anchoring (SPA-Strain)\n  witness     Witnessed vs. unwitnessed framing (WA-Strain)\n"
             "  sra         Strain Routing Awareness (SRA)\n"
             "  all         Run all test suites\n"
         ),
