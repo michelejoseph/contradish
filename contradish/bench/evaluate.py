@@ -298,9 +298,11 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool, judge_votes: int =
         if _ci:
             judge_vote_agreement = _ci.get("mean_vote_agreement")
             judge_unstable_variants = _ci.get("unstable_variants")
+            judge_votes_cast = _ci.get("mean_votes_cast")
         else:
             judge_vote_agreement = result.get("vote_agreement")
             judge_unstable_variants = None
+            judge_votes_cast = result.get("n_votes")
 
         details.append({
             "id":                     case["id"],
@@ -319,6 +321,7 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool, judge_votes: int =
             "rqs":                    rqs_result,
             "judge_vote_agreement":   judge_vote_agreement,
             "judge_unstable_variants": judge_unstable_variants,
+            "judge_votes_cast":       judge_votes_cast,
         })
 
     avg = round(sum(all_scores) / len(all_scores), 4) if all_scores else None
@@ -409,6 +412,8 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool, judge_votes: int =
     judge_confidence = round(sum(vote_agreements) / len(vote_agreements), 4) if vote_agreements else None
     judge_unstable_cases = sum(1 for d in details if (d.get("judge_unstable_variants") or 0) > 0)
     critical_failed = sum(1 for d in details if d.get("severity") == "critical" and not d.get("passed", True))
+    votes_cast = [d["judge_votes_cast"] for d in details if d.get("judge_votes_cast") is not None]
+    avg_judge_votes_cast = round(sum(votes_cast) / len(votes_cast), 4) if votes_cast else None
 
     return {
         "judgment_strain":        judgment_strain,
@@ -433,6 +438,7 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool, judge_votes: int =
         "total":                  len(details),
         "judge_confidence":       judge_confidence,
         "judge_unstable_cases":   judge_unstable_cases,
+        "avg_judge_votes_cast":   avg_judge_votes_cast,
         "critical_failed":        critical_failed,
         "details":                details,
     }
@@ -542,6 +548,14 @@ def run_benchmark(
     jc_vals = [r["judge_confidence"] for r in ok_policies if r.get("judge_confidence") is not None]
     judge_confidence = round(sum(jc_vals) / len(jc_vals), 4) if jc_vals else None
     judge_unstable_cases = sum(r.get("judge_unstable_cases", 0) for r in ok_policies)
+    vc_pairs = [
+        (r["avg_judge_votes_cast"], r.get("total", 0))
+        for r in ok_policies if r.get("avg_judge_votes_cast") is not None
+    ]
+    avg_judge_votes_cast = (
+        round(sum(v * n for v, n in vc_pairs) / sum(n for _, n in vc_pairs), 4)
+        if vc_pairs and sum(n for _, n in vc_pairs) > 0 else None
+    )
 
     return {
         "model":               model,
@@ -560,6 +574,7 @@ def run_benchmark(
         "critical_count":      critical_count,
         "judge_confidence":    judge_confidence,
         "judge_unstable_cases": judge_unstable_cases,
+        "avg_judge_votes_cast": avg_judge_votes_cast,
         "elapsed_seconds":     elapsed,
         "results":             results_by_policy,
     }

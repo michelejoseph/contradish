@@ -1702,11 +1702,14 @@ examples:
                          help="Also write the full result as JSON to this path (e.g. for a CI step "
                               "to read judgment_strain/critical_count off of). Applies to --test v2/full.")
     bench_p.add_argument("--judge-votes", dest="judge_votes", type=int, default=1, metavar="N",
-                         help="Cast N independent judge votes per case and majority-vote (default: 1, "
-                              "same cost and behavior as before). The judge scoring a response is itself "
-                              "an LLM call and can disagree with itself between runs -- for anything that "
-                              "gates a decision on the result (a CI merge check, say), 3 is a reasonable "
-                              "floor. Applies to --test v2/full.")
+                         help="Cap on adaptive judge re-voting per case (default: 1, same cost and "
+                              "behavior as before). The judge scoring a response is itself an LLM call "
+                              "and can disagree with itself between runs. Above 1, 2 votes are always "
+                              "cast and a 3rd+ is added one at a time, only while the judge disagrees "
+                              "with itself, up to this cap -- so a stable case still costs 2 calls and "
+                              "only an unstable one pays for more. For anything that gates a decision on "
+                              "the result (a CI merge check, say), 3 is a reasonable ceiling. Applies to "
+                              "--test v2/full.")
     bench_p.add_argument("--quiet", action="store_true", help="Suppress verbose output")
 
     # contradish diagnose --input results/sra_claude-sonnet-4-6.json
