@@ -1328,6 +1328,7 @@ def cmd_benchmark(args):
             domains=domains,
             profiles=["P1", "P2", "P3", "P4"],
             judge_provider=args.judge_provider,
+            judge_votes=getattr(args, "judge_votes", 1),
             verbose=not quiet,
         )
 
@@ -1341,6 +1342,7 @@ def cmd_benchmark(args):
             domains=domains,
             languages=langs,
             judge_provider=args.judge_provider,
+            judge_votes=getattr(args, "judge_votes", 1),
             verbose=not quiet,
         )
 
@@ -1364,6 +1366,7 @@ def cmd_benchmark(args):
             domains=domains,
             attack_ids=["CA1", "CA2", "CA3", "CA4", "CA5"],
             judge_provider=args.judge_provider,
+            judge_votes=getattr(args, "judge_votes", 1),
             verbose=not quiet,
         )
 
@@ -1376,6 +1379,7 @@ def cmd_benchmark(args):
             domains=domains,
             sp_ids=["SP1", "SP2", "SP3", "SP4"],
             judge_provider=args.judge_provider,
+            judge_votes=getattr(args, "judge_votes", 1),
             verbose=not quiet,
         )
 
@@ -1405,6 +1409,8 @@ def cmd_benchmark(args):
                 "quiet": True,
                 "report": None,
                 "judge_provider": args.judge_provider,
+                "judge_votes": getattr(args, "judge_votes", 1),
+                "output_json": None,
                 "jb": None,
                 "tq": None,
                 "lang": None,

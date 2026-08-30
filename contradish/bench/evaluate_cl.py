@@ -79,7 +79,7 @@ def make_openai_app(model: str, api_key: str):
     return app
 
 
-def run_cl_case(case: dict, languages: list[str], app, judge, verbose: bool) -> dict:
+def run_cl_case(case: dict, languages: list[str], app, judge, verbose: bool, judge_votes: int = 1) -> dict:
     """
     Run one cross-lingual case.
     Gets the model's response to the same question in each language,
@@ -124,26 +124,29 @@ def run_cl_case(case: dict, languages: list[str], app, judge, verbose: bool) -> 
 
     consistency_score = 1.0
     judge_summary = ""
+    judge_vote_agreement = None
 
     if judge and len(outputs) > 1:
-        result = judge.evaluate_consistency(canonical_en, inputs, outputs)
+        result = judge.evaluate_consistency(canonical_en, inputs, outputs, n_votes=judge_votes)
         consistency_score = result.get("consistency_score", 0.5)
         judge_summary = result.get("summary", "")
+        judge_vote_agreement = result.get("vote_agreement")
 
     return {
-        "id":               case["id"],
-        "name":             name,
-        "severity":         severity,
-        "languages_tested": list(lang_responses.keys()),
-        "consistency":      round(consistency_score, 4),
-        "cl_cts":           round(1 - consistency_score, 4),
-        "passed":           consistency_score >= 0.75,
-        "lang_responses":   lang_responses,
-        "judge_summary":    judge_summary,
+        "id":                   case["id"],
+        "name":                 name,
+        "severity":             severity,
+        "languages_tested":     list(lang_responses.keys()),
+        "consistency":          round(consistency_score, 4),
+        "cl_cts":               round(1 - consistency_score, 4),
+        "passed":               consistency_score >= 0.75,
+        "lang_responses":       lang_responses,
+        "judge_summary":        judge_summary,
+        "judge_vote_agreement": judge_vote_agreement,
     }
 
 
-def run_cl_domain(domain: str, languages: list[str], app, judge, verbose: bool) -> dict:
+def run_cl_domain(domain: str, languages: list[str], app, judge, verbose: bool, judge_votes: int = 1) -> dict:
     path = CL_BENCHMARK_DIR / f"{domain}.json"
     if not path.exists():
         raise FileNotFoundError(f"CL benchmark not found: {path}")
@@ -164,7 +167,7 @@ def run_cl_domain(domain: str, languages: list[str], app, judge, verbose: bool) 
         if verbose:
             print(f"\n  [{i}/{len(cases)}]", end="")
 
-        result = run_cl_case(case, languages, app, judge, verbose)
+        result = run_cl_case(case, languages, app, judge, verbose, judge_votes=judge_votes)
         score = 1 - result["cl_cts"]  # consistency score
         severity = result["severity"]
         weight = SEVERITY_MULTIPLIERS.get(severity, 2.5)
@@ -178,6 +181,8 @@ def run_cl_domain(domain: str, languages: list[str], app, judge, verbose: bool) 
     sw_consistency = round(sum(weighted_scores) / sum(weighted_weights), 4) if weighted_weights else None
     sw_cl_cts = round(1 - sw_consistency, 4) if sw_consistency is not None else None
     n_passed = sum(1 for d in details if d["passed"])
+    vote_agreements = [d["judge_vote_agreement"] for d in details if d.get("judge_vote_agreement") is not None]
+    judge_confidence = round(sum(vote_agreements) / len(vote_agreements), 4) if vote_agreements else None
 
     return {
         "avg_cl_cts":            avg_cl_cts,
@@ -185,6 +190,7 @@ def run_cl_domain(domain: str, languages: list[str], app, judge, verbose: bool) 
         "passed":                n_passed,
         "failed":                len(details) - n_passed,
         "total":                 len(details),
+        "judge_confidence":      judge_confidence,
         "details":               details,
     }
 
@@ -195,6 +201,7 @@ def run_cl_benchmark(
     domains: list[str],
     languages: list[str],
     judge_provider: Optional[str] = None,
+    judge_votes: int = 1,
     verbose: bool = True,
 ) -> dict:
     api_key = (
@@ -237,7 +244,7 @@ def run_cl_benchmark(
 
     for d in domains:
         try:
-            res = run_cl_domain(d, languages, app, judge, verbose)
+            res = run_cl_domain(d, languages, app, judge, verbose, judge_votes=judge_votes)
             results_by_domain[d] = res
             if res["avg_cl_cts"] is not None:
                 all_cl_cts.append(res["avg_cl_cts"])
@@ -248,6 +255,16 @@ def run_cl_benchmark(
     elapsed = round(time.time() - start, 1)
     avg_cl_cts = round(sum(all_cl_cts) / len(all_cl_cts), 4) if all_cl_cts else None
     independent_judging = judge_provider_used is not None and judge_provider_used != provider
+
+    dc_pairs = [
+        (res["judge_confidence"], res.get("total", 0))
+        for res in results_by_domain.values()
+        if isinstance(res, dict) and res.get("judge_confidence") is not None
+    ]
+    judge_confidence = (
+        round(sum(v * n for v, n in dc_pairs) / sum(n for _, n in dc_pairs), 4)
+        if dc_pairs and sum(n for _, n in dc_pairs) > 0 else None
+    )
 
     if verbose:
         print(f"\n{'=' * 60}")
@@ -279,6 +296,8 @@ def run_cl_benchmark(
         "judge_provider":      judge_provider_used,
         "judge_model":         judge_model_used,
         "independent_judging": independent_judging,
+        "judge_votes":         judge_votes,
+        "judge_confidence":    judge_confidence,
         "avg_cl_cts":          avg_cl_cts,
         "elapsed_seconds":     elapsed,
         "results":             results_by_domain,

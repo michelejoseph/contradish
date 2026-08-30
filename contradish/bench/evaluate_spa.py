@@ -134,8 +134,10 @@ def make_openai_app(model: str, api_key: str, system_prompt: Optional[str]):
     return app
 
 
-def run_case_with_sp(case: dict, app, judge, verbose: bool) -> float:
-    """Run one case and return the consistency score (higher = more consistent)."""
+def run_case_with_sp(case: dict, app, judge, verbose: bool, judge_votes: int = 1) -> "tuple[float, float | None]":
+    """Run one case and return (consistency_score, judge_vote_agreement).
+    judge_vote_agreement is None when there's no judge (vote_agreement is only
+    meaningful when a judge call was actually made)."""
     original = case["original"]
     adversarial = case.get("adversarial", [])
     inputs = [original] + adversarial
@@ -148,9 +150,9 @@ def run_case_with_sp(case: dict, app, judge, verbose: bool) -> float:
             outputs.append(f"[APP ERROR: {e}]")
 
     if judge:
-        result = judge.evaluate_consistency(original, inputs, outputs)
-        return result.get("consistency_score", 0.5)
-    return 0.5
+        result = judge.evaluate_consistency(original, inputs, outputs, n_votes=judge_votes)
+        return result.get("consistency_score", 0.5), result.get("vote_agreement")
+    return 0.5, None
 
 
 def run_spa_domain(
@@ -161,6 +163,7 @@ def run_spa_domain(
     api_key: str,
     judge,
     verbose: bool,
+    judge_votes: int = 1,
 ) -> dict:
     path = BENCHMARK_DIR / f"{domain}.json"
     if not path.exists():
@@ -197,14 +200,17 @@ def run_spa_domain(
             print(f"\n    [{i}/{len(cases)}] {name} [{severity}]")
 
         case_sp_scores = {}
+        case_vote_agreements = []
         for sp_id, app in apps.items():
             if verbose:
                 desc = SP_DESCRIPTIONS.get(sp_id, sp_id)
                 print(f"      testing {sp_id} ({desc[:40]})...")
 
-            score = run_case_with_sp(case, app, judge, verbose)
+            score, vote_agreement = run_case_with_sp(case, app, judge, verbose, judge_votes=judge_votes)
             sp_scores[sp_id].append(score)
             case_sp_scores[sp_id] = round(score, 4)
+            if vote_agreement is not None:
+                case_vote_agreements.append(vote_agreement)
 
             time.sleep(0.3)
 
@@ -216,13 +222,14 @@ def run_spa_domain(
         }
 
         case_details.append({
-            "id":             case["id"],
-            "name":           name,
-            "severity":       severity,
-            "sp_scores":      case_sp_scores,
-            "sp_deltas":      case_deltas,
-            "baseline_score": baseline,
-            "best_sp":        max(case_sp_scores, key=lambda k: case_sp_scores[k]),
+            "id":               case["id"],
+            "name":             name,
+            "severity":         severity,
+            "sp_scores":        case_sp_scores,
+            "sp_deltas":        case_deltas,
+            "baseline_score":   baseline,
+            "best_sp":          max(case_sp_scores, key=lambda k: case_sp_scores[k]),
+            "judge_confidence": round(sum(case_vote_agreements) / len(case_vote_agreements), 4) if case_vote_agreements else None,
         })
 
     # Aggregate
@@ -246,11 +253,15 @@ def run_spa_domain(
                 "description":     SP_DESCRIPTIONS.get(sp_id, sp_id),
             }
 
+    domain_case_confidences = [d["judge_confidence"] for d in case_details if d.get("judge_confidence") is not None]
+    domain_judge_confidence = round(sum(domain_case_confidences) / len(domain_case_confidences), 4) if domain_case_confidences else None
+
     return {
         "baseline_cts":    baseline_cts,
         "baseline_avg":    round(baseline_avg, 4),
         "sp_results":      sp_results,
         "best_sp":         max(sp_results, key=lambda k: sp_results[k]["spa_delta"]) if sp_results else None,
+        "judge_confidence": domain_judge_confidence,
         "case_details":    case_details,
         "n_cases":         len(cases),
     }
@@ -262,6 +273,7 @@ def run_spa_benchmark(
     domains: list[str],
     sp_ids: list[str],
     judge_provider: Optional[str] = None,
+    judge_votes: int = 1,
     verbose: bool = True,
 ) -> dict:
     api_key = (
@@ -301,7 +313,7 @@ def run_spa_benchmark(
 
     for d in domains:
         try:
-            res = run_spa_domain(d, sp_ids, provider, model, api_key, judge, verbose)
+            res = run_spa_domain(d, sp_ids, provider, model, api_key, judge, verbose, judge_votes=judge_votes)
             results_by_domain[d] = res
         except Exception as e:
             print(f"  domain {d} failed: {e}")
@@ -309,6 +321,16 @@ def run_spa_benchmark(
 
     elapsed = round(time.time() - start, 1)
     independent_judging = judge_provider_used is not None and judge_provider_used != provider
+
+    dc_pairs = [
+        (res["judge_confidence"], res.get("n_cases", 0))
+        for res in results_by_domain.values()
+        if isinstance(res, dict) and res.get("judge_confidence") is not None
+    ]
+    judge_confidence = (
+        round(sum(v * n for v, n in dc_pairs) / sum(n for _, n in dc_pairs), 4)
+        if dc_pairs and sum(n for _, n in dc_pairs) > 0 else None
+    )
 
     # Aggregate SPA scores across domains
     overall_sp_deltas = {sp_id: [] for sp_id in sp_ids}
@@ -371,6 +393,8 @@ def run_spa_benchmark(
         "judge_provider":      judge_provider_used,
         "judge_model":         judge_model_used,
         "independent_judging": independent_judging,
+        "judge_votes":         judge_votes,
+        "judge_confidence":    judge_confidence,
         "avg_baseline_cts":    avg_baseline_cts,
         "overall_spa_delta":   overall_spa,
         "best_sp_overall":     best_sp_overall,
