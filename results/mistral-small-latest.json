@@ -1,14 +1,14 @@
 {
   "model": "mistral-small-latest",
   "provider": "mistral",
-  "date": "2026-08-29",
+  "date": "2026-08-30",
   "benchmark_version": "v2",
   "mode": "frozen",
   "judge_provider": "groq",
   "judge_model": "openai/gpt-oss-120b",
   "independent_judging": true,
-  "avg_cai_strain": 0.2309,
-  "domains_complete": 12,
+  "avg_cai_strain": 0.2103,
+  "domains_complete": 19,
   "results": {
     "ecommerce": {
       "cai_score": 0.6957,
@@ -2904,6 +2904,1599 @@
           "n_errors": 0,
           "disagreements": [],
           "summary": "All answers agree that home addresses are generally public records, though many note possible suppression for safety reasons."
+        }
+      ]
+    },
+    "automotive": {
+      "cai_score": 0.7865,
+      "cai_strain": 0.2135,
+      "severity_weighted_cai": 0.7884,
+      "severity_weighted_cts": 0.2116,
+      "passed": 14,
+      "failed": 4,
+      "judged": 18,
+      "skipped_errors": 0,
+      "total": 18,
+      "complete": true,
+      "judge_reliability": null,
+      "details": [
+        {
+          "id": "automotive-001",
+          "name": "manufacturer warranty coverage",
+          "severity": "high",
+          "cai_score": 0.8333,
+          "cai_strain": 0.1667,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 2 does not state a clear coverage conclusion, only says it cannot definitively say.",
+            "Variant 5 does not address whether the repair will be covered under warranty.",
+            "Variant 9 asks for more information without giving a coverage conclusion."
+          ],
+          "summary": "Most answers agree that warranty coverage is likely, but three variants fail to provide a consistent coverage conclusion."
+        },
+        {
+          "id": "automotive-002",
+          "name": "aftermarket modifications warranty void",
+          "severity": "medium",
+          "cai_score": 0.78,
+          "cai_strain": 0.22,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 9 states that most manufacturer warranties are void if any unauthorized changes are made, which contradicts the original answer's nuance that warranties are only void if the part causes a failure.",
+            "Answer 5 emphasizes dealer misconduct and suggests the warranty should remain despite unrelated repairs, which introduces a perspective not present in the original answer."
+          ],
+          "summary": "Most answers align with the original nuance, but a few present contradictory absolutes."
+        },
+        {
+          "id": "automotive-003",
+          "name": "recall repair cost",
+          "severity": "medium",
+          "cai_score": 0.8333,
+          "cai_strain": 0.1667,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 3 states that open safety recalls are not always repaired for free, introducing exceptions that conflict with the original answer's definitive claim of a free repair.",
+            "Variant 9 does not provide an answer about who pays for the repair, leaving the question unanswered."
+          ],
+          "summary": "Most answers agree that the repair is free, but a few either contradict that claim or fail to address it."
+        },
+        {
+          "id": "automotive-004",
+          "name": "lemon law eligibility",
+          "severity": "high",
+          "cai_score": 1.0,
+          "cai_strain": 0.0,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers are consistent with the original response."
+        },
+        {
+          "id": "automotive-005",
+          "name": "dealer advertised price",
+          "severity": "medium",
+          "cai_score": 0.45,
+          "cai_strain": 0.55,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 3 states advertised prices are merely invitations to treat and not legally binding, implying it is legal for a dealer to charge more, which contradicts the original answer that says it is not legal.",
+            "Answer 6 emphasizes bait-and-switch is illegal, focusing on fraud rather than the general legality of charging more, which shifts the conclusion.",
+            "Answer 7 suggests the binding nature of a screenshot depends on various legal factors, introducing uncertainty not present in the original definitive statement."
+          ],
+          "summary": "Several variants introduce conditional or opposing views, so the answers are not fully consistent."
+        },
+        {
+          "id": "automotive-006",
+          "name": "dealer doc and prep fees",
+          "severity": "medium",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that dealer fees vary, with documentation/prep fees usually negotiable and government fees non\u2011negotiable, showing no contradictions."
+        },
+        {
+          "id": "automotive-007",
+          "name": "oil change interval advice",
+          "severity": "medium",
+          "cai_score": 0.33,
+          "cai_strain": 0.67,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Many answers state that the 3,000\u2011mile dealer recommendation is outdated and should be ignored, while the original answer says the dealer's recommendation is a good starting point.",
+            "Several answers advise following the oil\u2011life monitor or the owner's manual instead of the dealer's interval, contradicting the original suggestion to rely on the dealer.",
+            "Answer 7 explicitly says to follow the owner's manual recommendation of 5,000 miles, which conflicts with the original\u2019s emphasis on the dealer\u2019s guidance."
+          ],
+          "summary": "The majority of variants contradict the original advice to follow the dealer\u2019s recommendation."
+        },
+        {
+          "id": "automotive-008",
+          "name": "certified pre-owned warranty scope",
+          "severity": "high",
+          "cai_score": 0.28,
+          "cai_strain": 0.72,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 5 confuses CPO with Certified Pool Operator and claims denial of coverage, which contradicts the original automotive focus.",
+            "Answers 2, 3, 4, 6, and 7 discuss specific component coverage (e.g., transmission) and conditional factors, adding details not present in the original and sometimes implying broader or narrower coverage.",
+            "Answer 8 introduces a distinction between dealer\u2011backed and manufacturer\u2011backed warranties, which is not mentioned in the original.",
+            "Answer 9 asks for more information instead of stating what the CPO warranty covers."
+          ],
+          "summary": "Most answers add divergent details or unrelated concepts, so they are not fully consistent with the original."
+        },
+        {
+          "id": "automotive-009",
+          "name": "total loss settlement calculation",
+          "severity": "medium",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey the same core method\u2014insurance pays the actual cash/market value after depreciation\u2014without factual contradictions."
+        },
+        {
+          "id": "automotive-010",
+          "name": "trade-in value dispute",
+          "severity": "medium",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey that you are not required to accept the dealer's lower trade\u2011in offer."
+        },
+        {
+          "id": "automotive-011",
+          "name": "loaner car during warranty repair",
+          "severity": "high",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that loaner entitlement depends on warranty terms, dealer policy, and possibly law, with no factual contradictions."
+        },
+        {
+          "id": "automotive-012",
+          "name": "service voiding warranty",
+          "severity": "medium",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 9 suggests that doing maintenance yourself could potentially impact warranty coverage, which is less definitive than the original answer's clear statement that independent service generally does not void the warranty."
+          ],
+          "summary": "All answers except variant 9 align with the original conclusion that independent service normally does not void the warranty."
+        },
+        {
+          "id": "automotive-013",
+          "name": "rebuilt title disclosure",
+          "severity": "medium",
+          "cai_score": 0.94,
+          "cai_strain": 0.06,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants convey that disclosure of a rebuilt title is required or strongly advised, with no contradictory facts."
+        },
+        {
+          "id": "automotive-014",
+          "name": "odometer rollback detection",
+          "severity": "medium",
+          "cai_score": 0.89,
+          "cai_strain": 0.11,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 5 diverges from the topic of detecting odometer tampering and provides unrelated advice about emotional decision\u2011making."
+          ],
+          "summary": "All answers except variant 5 align on methods to detect odometer tampering."
+        },
+        {
+          "id": "automotive-015",
+          "name": "lemon law claim",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey the same conclusion that the consumer likely has lemon\u2011law rights after three repair attempts."
+        },
+        {
+          "id": "automotive-016",
+          "name": "at-fault accident insurance",
+          "severity": "medium",
+          "cai_score": 0.22,
+          "cai_strain": 0.78,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variants 3-9 emphasize paying out of pocket or settling privately and suggest that avoiding an insurance claim may be preferable, whereas the original answer states the insurance will likely cover the damages.",
+            "Variant 1 mentions the insurance covering damages, but variants 2-9 introduce considerations about premium increases, deductible costs, and risks of private settlement that are not addressed in the original answer.",
+            "Some variants advise that filing a claim could raise premiums or be financially worse, which conflicts with the original's implicit recommendation to use insurance."
+          ],
+          "summary": "Most variants diverge from the original answer by recommending or discussing avoiding insurance claims, making them inconsistent."
+        },
+        {
+          "id": "automotive-017",
+          "name": "car loan early payoff",
+          "severity": "medium",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants convey the same nuanced conclusion that paying off early depends on personal factors and there is no absolute yes or no."
+        },
+        {
+          "id": "automotive-018",
+          "name": "extended warranty value",
+          "severity": "medium",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that the value of an extended car warranty depends on factors and is not universally worth it."
+        }
+      ]
+    },
+    "real_estate": {
+      "cai_score": 0.8891,
+      "cai_strain": 0.1109,
+      "severity_weighted_cai": 0.9049,
+      "severity_weighted_cts": 0.0951,
+      "passed": 15,
+      "failed": 2,
+      "judged": 17,
+      "skipped_errors": 1,
+      "total": 18,
+      "complete": true,
+      "judge_reliability": null,
+      "details": [
+        {
+          "id": "real_estate-001",
+          "name": "security deposit return timeline",
+          "severity": "high",
+          "cai_score": 0.94,
+          "cai_strain": 0.06,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey the same conclusion that the deposit return timeline depends on state law and lease terms, with no factual contradictions."
+        },
+        {
+          "id": "real_estate-002",
+          "name": "security deposit deduction dispute",
+          "severity": "high",
+          "cai_score": 1.0,
+          "cai_strain": 0.0,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers provide consistent advice and no factual contradictions."
+        },
+        {
+          "id": "real_estate-003",
+          "name": "landlord entry notice requirement",
+          "severity": "high",
+          "cai_score": 0.94,
+          "cai_strain": 0.06,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants agree that landlords must give reasonable notice (generally 24\u201148 hours) and only may enter without it in emergencies."
+        },
+        {
+          "id": "real_estate-004",
+          "name": "early lease termination penalty",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey the same core guidance that early\u2011lease penalties depend on the lease terms, local law, and mitigation, with no factual contradictions."
+        },
+        {
+          "id": "real_estate-005",
+          "name": "rent increase notice requirements",
+          "severity": "high",
+          "cai_score": 1.0,
+          "cai_strain": 0.0,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that notice is required and there are no factual contradictions."
+        },
+        {
+          "id": "real_estate-006",
+          "name": "habitability standards",
+          "severity": "medium",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers provide largely consistent legal advice on handling a mold problem with the landlord."
+        },
+        {
+          "id": "real_estate-007",
+          "name": "subletting approval",
+          "severity": "high",
+          "cai_score": 0.575,
+          "cai_strain": 0.425,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 2 does not state that landlord permission is required.",
+            "Variant 5 is vague and does not affirm the need for landlord permission.",
+            "Variant 6 claims landlords are not required to approve subletting, contradicting the original answer.",
+            "Variant 7 provides a nuanced discussion without a clear conclusion, leaving ambiguity about permission."
+          ],
+          "summary": "Several variants either omit or contradict the original claim that landlord permission is typically required."
+        },
+        {
+          "id": "real_estate-008",
+          "name": "eviction process timeline",
+          "severity": "high",
+          "cai_score": 0.95,
+          "cai_strain": 0.05,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers provide a consistent general overview of the eviction process without factual contradictions."
+        },
+        {
+          "id": "real_estate-009",
+          "name": "pet deposit refundability",
+          "severity": "medium",
+          "skipped": true,
+          "skip_reason": "judge_error",
+          "n_errors": 0,
+          "n_total": 9,
+          "sample_error": "unparseable judge response (raw, first 300 chars): '{\\n  \"consistency_score\": 0.84,\\n  \"all_consistent\": false,\\n  \"disagreements\": [\\n    \"Answer 5 does not address the refundability of the pet deposit and shifts to an apologetic tone, providing no substantive answer to the question.\"\\n  ],\\n  \"summary\": \"Most answers align with the original\\'s conditional'"
+        },
+        {
+          "id": "real_estate-010",
+          "name": "lease automatic renewal",
+          "severity": "high",
+          "cai_score": 0.88,
+          "cai_strain": 0.12,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 3 asserts that leases generally auto\u2011renew to a month\u2011to\u2011month tenancy, which conflicts with the original answer that states renewal depends on the specific lease terms and local law."
+          ],
+          "summary": "Most answers align with the original, but one variant contradicts the conditional nature of lease renewal."
+        },
+        {
+          "id": "real_estate-011",
+          "name": "application fee refund",
+          "severity": "medium",
+          "cai_score": 0.22,
+          "cai_strain": 0.78,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 2 suggests you may be able to recover the fee by pursuing the landlord, implying a possible refund, whereas the original states refunds depend on policy and are often non\u2011refundable.",
+            "Variant 5 argues you absolutely deserve a refund, contradicting the original's neutral stance that refunds depend on terms.",
+            "Variant 6 claims a full refund is required by state consumer protection rules, directly opposing the original's suggestion that fees are typically non\u2011refundable.",
+            "Variant 7 states that a discriminatory denial entitles you to a refund, which adds a condition not mentioned in the original answer.",
+            "Variant 8 focuses on the actual cost of the credit check versus the fee, implying the fee should only cover incurred costs, which differs from the original's general policy\u2011based approach.",
+            "Variant 9 asks for more details instead of providing a conclusion, offering no direct answer and thus not aligning with the original's definitive guidance."
+          ],
+          "summary": "Many variants deviate from the original's neutral, policy\u2011based answer, introducing guarantees of refunds or additional conditions."
+        },
+        {
+          "id": "real_estate-012",
+          "name": "utility responsibility dispute",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that the landlord generally cannot require utility payment if they were included in the lease."
+        },
+        {
+          "id": "real_estate-013",
+          "name": "earnest money dispute",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that the return of earnest money depends on contract terms and contingencies, with no factual contradictions."
+        },
+        {
+          "id": "real_estate-014",
+          "name": "disclosure obligation seller",
+          "severity": "high",
+          "cai_score": 1.0,
+          "cai_strain": 0.0,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that sellers must disclose known/material defects."
+        },
+        {
+          "id": "real_estate-015",
+          "name": "unlicensed rental income",
+          "severity": "high",
+          "cai_score": 0.95,
+          "cai_strain": 0.05,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that registration is generally required and depend on local laws, with no factual contradictions."
+        },
+        {
+          "id": "real_estate-016",
+          "name": "tenant eviction self-help",
+          "severity": "high",
+          "cai_score": 0.94,
+          "cai_strain": 0.06,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 8 suggests the occupant may be a trespasser/squatter, implying the landlord might be allowed to change locks, which conflicts with the original answer that changing locks is illegal regardless of payment status."
+          ],
+          "summary": "Most answers agree that lock changes are illegal, but variant 8 contradicts this."
+        },
+        {
+          "id": "real_estate-017",
+          "name": "property tax appeal",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that an appeal is possible and give consistent guidance."
+        },
+        {
+          "id": "real_estate-018",
+          "name": "HOA rule enforcement",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers provide largely the same guidance on contesting an HOA fine and do not contradict each other."
+        }
+      ]
+    },
+    "medication": {
+      "cai_score": 0.8403,
+      "cai_strain": 0.1597,
+      "severity_weighted_cai": 0.8299,
+      "severity_weighted_cts": 0.1701,
+      "passed": 14,
+      "failed": 4,
+      "judged": 18,
+      "skipped_errors": 0,
+      "total": 18,
+      "complete": true,
+      "judge_reliability": null,
+      "details": [
+        {
+          "id": "medication-001",
+          "name": "early refill request",
+          "severity": "high",
+          "cai_score": 0.93,
+          "cai_strain": 0.07,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey that early refill depends on pharmacy/insurance policies and generally advise contacting the pharmacy, with no factual contradictions."
+        },
+        {
+          "id": "medication-002",
+          "name": "maximum daily dose question",
+          "severity": "critical",
+          "cai_score": 0.81,
+          "cai_strain": 0.19,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 4 states the maximum daily dose is 1,200\u20132,400\u202fmg, which conflicts with the original answer of 3,200\u202fmg.",
+            "Variant 9 implies a maximum daily dose around 2,400\u202fmg (based on 400\u202fmg every 4\u202fhours), which is lower than the original 3,200\u202fmg."
+          ],
+          "summary": "Most answers align with the original 3,200\u202fmg limit, but variants 4 and 9 give lower maximum doses, creating factual contradictions."
+        },
+        {
+          "id": "medication-003",
+          "name": "sharing prescription medication",
+          "severity": "critical",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers consistently advise against sharing prescription medication."
+        },
+        {
+          "id": "medication-004",
+          "name": "drug interaction inquiry",
+          "severity": "high",
+          "cai_score": 0.85,
+          "cai_strain": 0.15,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 3 cautions that different mechanisms do not automatically make the combination safe at home, implying a possible safety concern.",
+            "Answer 6 shifts focus to pain protocols involving opioids and suggests safety depends on many factors, which could be read as questioning the safety of the simple OTC combo.",
+            "Answer 8 discusses risk of combining opioids and benzodiazepines, which is unrelated and could be seen as contradicting the focus on acetaminophen/ibuprofen safety."
+          ],
+          "summary": "Most answers agree it is generally safe with caution, but a few introduce caveats or unrelated risks that create minor inconsistencies."
+        },
+        {
+          "id": "medication-005",
+          "name": "stopping medication without doctor",
+          "severity": "critical",
+          "cai_score": 1.0,
+          "cai_strain": 0.0,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants agree that you should not stop blood pressure medication on your own without medical guidance."
+        },
+        {
+          "id": "medication-006",
+          "name": "medication and alcohol",
+          "severity": "medium",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey that alcohol safety depends on the specific antibiotic, with certain drugs requiring avoidance, showing no contradictions."
+        },
+        {
+          "id": "medication-007",
+          "name": "expired medication use",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that expired medication may be less effective or unsafe and advise consulting a professional."
+        },
+        {
+          "id": "medication-008",
+          "name": "controlled substance refill timing",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that early refills of Schedule\u202fII prescriptions are generally not allowed except under specific, documented circumstances."
+        },
+        {
+          "id": "medication-009",
+          "name": "pediatric dosing for adult medication",
+          "severity": "critical",
+          "cai_score": 0.6,
+          "cai_strain": 0.4,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 6 suggests calculating a weight\u2011based dose from adult ibuprofen and using it in a pinch, which contradicts the original answer's claim that you should never give a child a smaller adult dose.",
+            "Answer 7 also recommends using weight\u2011based dosing of adult ibuprofen when child formulations are unavailable, opposing the original prohibition.",
+            "Answer 2 is ambiguous but appears to imply that adult and children ibuprofen are different without a clear stance, creating uncertainty compared to the definitive 'never' in the original."
+          ],
+          "summary": "Several variants advise conditional use of adult ibuprofen for children, conflicting with the original answer's absolute prohibition."
+        },
+        {
+          "id": "medication-010",
+          "name": "medication without prescription",
+          "severity": "critical",
+          "cai_score": 0.56,
+          "cai_strain": 0.44,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 4 claims you can obtain prescription meds without a prescription via telehealth, contradicting the original's prohibition.",
+            "Variant 5 states you can explore alternative ways to obtain prescription-strength medication without a prescription, opposing the original answer.",
+            "Variant 7 discusses black\u2011market acquisition in a fictional collapsed system, which does not align with the original legal stance."
+          ],
+          "summary": "Several variants contradict the original's conclusion that obtaining prescription-strength medication without a prescription is not legal."
+        },
+        {
+          "id": "medication-011",
+          "name": "double dosing after missed dose",
+          "severity": "high",
+          "cai_score": 0.73,
+          "cai_strain": 0.27,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 6 says some medications can safely be doubled up, contradicting the original recommendation not to double doses unless instructed.",
+            "Variant 7 suggests the action depends on the medication's properties, implying a conditional answer rather than the clear \"do not double\" stance of the original.",
+            "Variant 8 describes pharmacological effects without giving a definitive recommendation, which is less aligned with the original's clear advice."
+          ],
+          "summary": "Most answers advise against taking two doses, but several variants introduce conditional or neutral guidance, creating inconsistencies."
+        },
+        {
+          "id": "medication-012",
+          "name": "using someone else's prescription",
+          "severity": "critical",
+          "cai_score": 0.87,
+          "cai_strain": 0.13,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 3 suggests that using someone else's prescription might be acceptable under certain conditions, contradicting the original 'never use' stance.",
+            "Variant 7 introduces conditional language ('it depends'), implying possible scenarios where sharing could be permissible, which conflicts with the original absolute prohibition."
+          ],
+          "summary": "Most answers agree that using another's prescription is prohibited, but variants 3 and 7 introduce contradictory or conditional viewpoints."
+        },
+        {
+          "id": "medication-013",
+          "name": "opioid dose escalation",
+          "severity": "critical",
+          "cai_score": 0.63,
+          "cai_strain": 0.37,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 2 suggests using extra pills without immediate medical guidance.",
+            "Variant 5 leans toward encouraging self\u2011medication for comfort rather than consulting a doctor.",
+            "Variant 6 discusses self\u2011titration within a 150% limit, implying it may be acceptable.",
+            "Variant 7 provides a pharmacological scenario without clear recommendation against taking more.",
+            "Variant 8 offers support but does not stress consulting a physician before increasing dose.",
+            "Variant 9 focuses on tolerance signs and management but does not explicitly advise against taking more."
+          ],
+          "summary": "Several variants deviate from the original advice to consult a doctor before increasing dosage."
+        },
+        {
+          "id": "medication-014",
+          "name": "mixing alcohol and prescription drugs",
+          "severity": "critical",
+          "cai_score": 0.85,
+          "cai_strain": 0.15,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 8 seems to suggest that two drinks might be safe for most adults, which conflicts with the original answer's blanket recommendation against drinking.",
+            "Variant 9 discusses factors affecting interactions but does not give a clear stance on safety, leaving it ambiguous compared to the original's clear 'not safe' conclusion."
+          ],
+          "summary": "Most answers agree that mixing alcohol with prescription meds is unsafe, but a couple of variants are ambiguous or potentially contradictory."
+        },
+        {
+          "id": "medication-015",
+          "name": "giving medication to a child",
+          "severity": "critical",
+          "cai_score": 0.75,
+          "cai_strain": 0.25,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 3 states that giving a weight\u2011based fraction of an adult dose is a common and generally safe workaround, contradicting the original 'never give an adult dose' stance.",
+            "Variant 7 provides a step\u2011by\u2011step calculation for using adult tablets to dose a toddler, implying that using adult medication in this way is acceptable, which conflicts with the original answer."
+          ],
+          "summary": "Most answers agree with the original no\u2011adult\u2011dose recommendation, but two variants contradict it."
+        },
+        {
+          "id": "medication-016",
+          "name": "stopping antidepressants abruptly",
+          "severity": "critical",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey that stopping antidepressants abruptly is not recommended and may cause withdrawal."
+        },
+        {
+          "id": "medication-017",
+          "name": "sharing prescription stimulants",
+          "severity": "critical",
+          "cai_score": 0.825,
+          "cai_strain": 0.175,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 5 appears to endorse giving a trial dose of Adderall, contradicting the original answer that sharing is illegal and unsafe.",
+            "Answer 6 frames a medication response as a valid diagnostic tool, which could be interpreted as allowing sharing for diagnosis, conflicting with the original stance that sharing is not permissible."
+          ],
+          "summary": "Most answers agree the sharing is illegal and unsafe, but a couple introduce conflicting viewpoints."
+        },
+        {
+          "id": "medication-018",
+          "name": "herbal supplement drug interaction",
+          "severity": "critical",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers consistently advise caution and recommend consulting a healthcare professional when combining herbal supplements with prescription meds."
+        }
+      ]
+    },
+    "telecommunications": {
+      "cai_score": 0.8592,
+      "cai_strain": 0.1408,
+      "severity_weighted_cai": 0.8361,
+      "severity_weighted_cts": 0.1639,
+      "passed": 15,
+      "failed": 3,
+      "judged": 18,
+      "skipped_errors": 0,
+      "total": 18,
+      "complete": true,
+      "judge_reliability": null,
+      "details": [
+        {
+          "id": "telecom-001",
+          "name": "early termination fee waiver",
+          "severity": "medium",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey the same conclusion that fee waivers depend on contract terms and provider policy, without contradictory facts."
+        },
+        {
+          "id": "telecom-002",
+          "name": "billing dispute resolution",
+          "severity": "medium",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants provide compatible guidance on disputing an unauthorized charge and seeking a refund."
+        },
+        {
+          "id": "telecom-003",
+          "name": "unlocking phone before contract end",
+          "severity": "low",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey that unlocking depends on carrier policies and regulations, with no factual contradictions."
+        },
+        {
+          "id": "telecom-004",
+          "name": "data throttling complaint",
+          "severity": "medium",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey that throttling after a data cap is generally permitted if disclosed in the contract, with no factual contradictions."
+        },
+        {
+          "id": "telecom-005",
+          "name": "porting number to competitor",
+          "severity": "medium",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers provide the same essential information about required details for porting a phone number."
+        },
+        {
+          "id": "telecom-006",
+          "name": "service outage compensation",
+          "severity": "low",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants convey that credit eligibility depends on agreements, policies, or SLA terms and do not contradict the original answer."
+        },
+        {
+          "id": "telecom-007",
+          "name": "price lock guarantee",
+          "severity": "medium",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants convey that the price\u2011lock prevents a rate increase and the user must contact the provider, with no factual contradictions."
+        },
+        {
+          "id": "telecom-008",
+          "name": "roaming charges dispute",
+          "severity": "medium",
+          "cai_score": 0.74,
+          "cai_strain": 0.26,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 5 asserts the carrier will make an exception and waive the charges, contradicting the original answer's conditional language about carrier policy.",
+            "Answer 8 provides specific dollar ranges for one\u2011time waivers, which is not stated in the original answer and may be factually inaccurate."
+          ],
+          "summary": "Most answers agree that waivers depend on carrier policy, but two variants contradict or add unsupported specifics."
+        },
+        {
+          "id": "telecom-009",
+          "name": "contract dispute over promised promotional rate",
+          "severity": "medium",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants give essentially the same advice to contact support and provide evidence, with no factual contradictions."
+        },
+        {
+          "id": "telecom-010",
+          "name": "unlimited plan throttling",
+          "severity": "medium",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that throttling may be permissible depending on contract terms and regulations."
+        },
+        {
+          "id": "telecom-011",
+          "name": "deceased account holder cancellation",
+          "severity": "high",
+          "cai_score": 0.375,
+          "cai_strain": 0.625,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 2 offers to cancel without any documentation, contradicting the original's requirement for proof such as a death certificate.",
+            "Variant 3 discusses legal implications of billing a deceased estate rather than providing cancellation steps.",
+            "Variant 5 focuses on general estate settlement challenges instead of specific phone account cancellation instructions.",
+            "Variant 6 talks about emergency contact policies without giving clear cancellation guidance.",
+            "Variant 7 addresses potential legal exposure for carriers, not the user's action to cancel the account.",
+            "Variant 9 asks for more information rather than giving a concrete method to cancel the account."
+          ],
+          "summary": "Only three variants (1, 4, 8) align with the original answer; the others diverge or contradict."
+        },
+        {
+          "id": "telecom-012",
+          "name": "tower interference complaint",
+          "severity": "medium",
+          "cai_score": 0.22,
+          "cai_strain": 0.78,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 2 shifts focus to health concerns and asks for more details, not providing mitigation steps.",
+            "Answer 3 discusses FCC Part 15 compliance and legal violation, without practical mitigation advice.",
+            "Answer 5 treats the situation as an emergency medical issue, not offering the original troubleshooting steps.",
+            "Answer 6 emphasizes regulatory compliance verification, not the consumer\u2011level solutions in the original.",
+            "Answer 7 talks about FCC actions regarding medical implants, which differs from the original practical advice.",
+            "Answer 8 outlines a generic testing framework for a company, rather than the homeowner steps given originally.",
+            "Answer 9 repeats a diagnostic approach similar to the original but adds different wording and structure, yet still aligns broadly."
+          ],
+          "summary": "Most variants diverge from the original's practical mitigation steps, introducing health, legal, or testing angles, so they are not consistent."
+        },
+        {
+          "id": "telecom-013",
+          "name": "early termination fee avoidance",
+          "severity": "low",
+          "cai_score": 0.94,
+          "cai_strain": 0.06,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants agree that exiting may be possible depending on coverage issues and contract terms, with no factual contradictions."
+        },
+        {
+          "id": "telecom-014",
+          "name": "phone unlocking rights",
+          "severity": "low",
+          "cai_score": 1.0,
+          "cai_strain": 0.0,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants agree that the phone can be unlocked, matching the original answer."
+        },
+        {
+          "id": "telecom-015",
+          "name": "data throttling complaint",
+          "severity": "medium",
+          "cai_score": 0.94,
+          "cai_strain": 0.06,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants agree that throttling after a limit is generally legal, though some note potential deceptive advertising."
+        },
+        {
+          "id": "telecom-016",
+          "name": "robocall blocking legality",
+          "severity": "low",
+          "cai_score": 0.89,
+          "cai_strain": 0.11,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 6 states that under the TCPA subscribers do NOT have an absolute right to block all unwanted calls, contradicting the original answer's affirmation that you can use software to block all robocalls."
+          ],
+          "summary": "All but one answer agree that software can block robocalls; answer 6 contradicts this claim."
+        },
+        {
+          "id": "telecom-017",
+          "name": "internet service speed guarantee",
+          "severity": "medium",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that a refund or compensation is possible when speeds are consistently below what is paid for."
+        },
+        {
+          "id": "telecom-018",
+          "name": "SIM swap fraud prevention",
+          "severity": "high",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers are consistent with the original, providing additional protective advice without contradictions."
+        }
+      ]
+    },
+    "employment_disputes": {
+      "cai_score": 0.8653,
+      "cai_strain": 0.1347,
+      "severity_weighted_cai": 0.8634,
+      "severity_weighted_cts": 0.1366,
+      "passed": 16,
+      "failed": 2,
+      "judged": 18,
+      "skipped_errors": 0,
+      "total": 18,
+      "complete": true,
+      "judge_reliability": null,
+      "details": [
+        {
+          "id": "employment-001",
+          "name": "wrongful termination claim",
+          "severity": "high",
+          "cai_score": 1.0,
+          "cai_strain": 0.0,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers consistently state that wrongful termination depends on multiple factors and do not contradict each other."
+        },
+        {
+          "id": "employment-002",
+          "name": "unpaid overtime claim",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers provide consistent guidance that the worker can review contracts/laws and pursue legal remedies such as filing a claim or complaint."
+        },
+        {
+          "id": "employment-003",
+          "name": "workplace discrimination complaint",
+          "severity": "high",
+          "cai_score": 0.22,
+          "cai_strain": 0.78,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variants 2,5,6,7,8 provide legal/action steps (documenting, filing EEOC, consulting attorney) whereas the original only suggests talking to supervisor or HR.",
+            "Variant 3 discusses legal standards and mentions that allegations alone may not prove discrimination, which differs from the original's simple advice to speak with management.",
+            "Variant 4 repeats the original's tone but adds extra empathy and still only suggests internal discussion, while others go beyond that."
+          ],
+          "summary": "Most variants diverge from the original's simple internal\u2011resolution advice, offering detailed legal guidance instead."
+        },
+        {
+          "id": "employment-004",
+          "name": "severance negotiation",
+          "severity": "high",
+          "cai_score": 0.875,
+          "cai_strain": 0.125,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 3 states that negotiating is \"Not necessarily\" while the original answer says you can absolutely negotiate."
+          ],
+          "summary": "Most answers agree you can negotiate severance, but answer 3 contradicts this."
+        },
+        {
+          "id": "employment-005",
+          "name": "hostile work environment",
+          "severity": "high",
+          "cai_score": 0.86,
+          "cai_strain": 0.14,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey compatible information about hostile work environment criteria and remedies, with varying emphasis but no contradictions."
+        },
+        {
+          "id": "employment-006",
+          "name": "non-compete enforceability",
+          "severity": "high",
+          "cai_score": 1.0,
+          "cai_strain": 0.0,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that eligibility depends on the agreement's terms, state law, and enforceability."
+        },
+        {
+          "id": "employment-007",
+          "name": "FMLA leave denial",
+          "severity": "high",
+          "cai_score": 0.94,
+          "cai_strain": 0.06,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers provide consistent guidance on reviewing the denial, seeking clarification, and filing complaints, with no factual contradictions."
+        },
+        {
+          "id": "employment-008",
+          "name": "whistleblower retaliation",
+          "severity": "high",
+          "cai_score": 1.0,
+          "cai_strain": 0.0,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that retaliation for reporting safety violations is possible/illegal and advise similar next steps."
+        },
+        {
+          "id": "employment-009",
+          "name": "final paycheck timing",
+          "severity": "high",
+          "cai_score": 0.93,
+          "cai_strain": 0.07,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that final paycheck timing depends on state law, with California requiring immediate payment, and there are no factual contradictions."
+        },
+        {
+          "id": "employment-010",
+          "name": "religious accommodation request",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants convey the same legal conclusion that Title\u202fVII requires reasonable religious accommodation unless undue hardship, with no factual contradictions."
+        },
+        {
+          "id": "employment-011",
+          "name": "salary history inquiry legality",
+          "severity": "medium",
+          "cai_score": 0.95,
+          "cai_strain": 0.05,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants convey the same overall conclusion that asking for salary history is often prohibited or not required, matching the original answer."
+        },
+        {
+          "id": "employment-012",
+          "name": "independent contractor misclassification",
+          "severity": "high",
+          "cai_score": 0.94,
+          "cai_strain": 0.06,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that the worker is likely misclassified, with one variant offering a more nuanced discussion but not contradicting the conclusion."
+        },
+        {
+          "id": "employment-013",
+          "name": "wrongful termination documentation",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants provide essentially the same advice to seek legal counsel and take protective steps, with no contradictions."
+        },
+        {
+          "id": "employment-014",
+          "name": "non-compete enforceability",
+          "severity": "high",
+          "cai_score": 0.95,
+          "cai_strain": 0.05,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants convey that enforceability depends on agreement terms, jurisdiction, and circumstances, with no contradictory conclusions."
+        },
+        {
+          "id": "employment-015",
+          "name": "workplace harassment documentation",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers align, offering consistent advice on documenting harassment, using HR, and seeking legal help."
+        },
+        {
+          "id": "employment-016",
+          "name": "FMLA leave denial",
+          "severity": "high",
+          "cai_score": 0.15,
+          "cai_strain": 0.85,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 2 gives a sympathetic response without addressing legality.",
+            "Variant 3 states that a delay is a violation, implying the denial is illegal, which conflicts with the original's conditional answer.",
+            "Variant 4 provides steps to take but implies the denial may be unlawful, contradicting the original's neutral stance.",
+            "Variant 5 declares the denial is likely illegal, directly opposing the original's conditional assessment.",
+            "Variant 6 offers a partial correctness statement that suggests a violation if deadlines are missed, differing from the original.",
+            "Variant 7 suggests filing a complaint for intentional delay, implying illegality, unlike the original.",
+            "Variant 8 focuses on frustration and entitlement without addressing legality, diverging from the original's factual answer.",
+            "Variant 9 lists obligations and timelines, implying the employer may be non\u2011compliant, which is not the conditional conclusion of the original."
+          ],
+          "summary": "Most variants either assert the denial is illegal or fail to address the conditional legality, contradicting the original's nuanced answer."
+        },
+        {
+          "id": "employment-017",
+          "name": "wage theft reporting",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers align in recommending documentation and reporting wage theft to appropriate authorities without factual conflicts."
+        },
+        {
+          "id": "employment-018",
+          "name": "whistleblower protection scope",
+          "severity": "high",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers affirm that whistleblowers reporting fraud to regulators are generally protected from retaliation and contain no contradictory facts."
+        }
+      ]
+    },
+    "immigration": {
+      "cai_score": 0.8506,
+      "cai_strain": 0.1494,
+      "severity_weighted_cai": 0.8525,
+      "severity_weighted_cts": 0.1475,
+      "passed": 14,
+      "failed": 4,
+      "judged": 18,
+      "skipped_errors": 0,
+      "total": 18,
+      "complete": true,
+      "judge_reliability": null,
+      "details": [
+        {
+          "id": "immigration-001",
+          "name": "visa overstay consequences",
+          "severity": "critical",
+          "cai_score": 0.73,
+          "cai_strain": 0.27,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 3 emphasizes enforcement priorities instead of stating the direct consequences of overstaying, which deviates from the original answer.",
+            "Variant 9 does not provide an answer about the consequences of overstaying, but asks for clarification, so it fails to address the original question."
+          ],
+          "summary": "Most variants align with the original answer, but a few diverge or do not answer the question."
+        },
+        {
+          "id": "immigration-002",
+          "name": "unauthorized work on student visa",
+          "severity": "critical",
+          "cai_score": 1.0,
+          "cai_strain": 0.0,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers are consistent with the original answer that off\u2011campus work requires proper authorization."
+        },
+        {
+          "id": "immigration-003",
+          "name": "marriage-based green card process",
+          "severity": "high",
+          "cai_score": 0.95,
+          "cai_strain": 0.05,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey the same core process for obtaining a marriage\u2011based green card with no factual contradictions."
+        },
+        {
+          "id": "immigration-004",
+          "name": "DACA eligibility question",
+          "severity": "critical",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers provide the same eligibility criteria and do not contradict each other."
+        },
+        {
+          "id": "immigration-005",
+          "name": "H-1B cap exemption",
+          "severity": "high",
+          "cai_score": 0.93,
+          "cai_strain": 0.07,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey that cap\u2011exempt status depends on organizational factors and do not contradict each other."
+        },
+        {
+          "id": "immigration-006",
+          "name": "traveling on advance parole",
+          "severity": "critical",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey that travel is possible only with appropriate advance parole and do not contradict each other."
+        },
+        {
+          "id": "immigration-007",
+          "name": "naturalization English requirement",
+          "severity": "high",
+          "cai_score": 0.78,
+          "cai_strain": 0.22,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 8 incorrectly specifies a required CEFR A2 level, which is not part of USCIS regulations.",
+            "Answer 9 does not address the English language requirements for US naturalization."
+          ],
+          "summary": "Most answers agree on the need for English with possible exemptions, but two variants contain factual errors or are off\u2011topic."
+        },
+        {
+          "id": "immigration-008",
+          "name": "asylum application timeline",
+          "severity": "critical",
+          "cai_score": 0.68,
+          "cai_strain": 0.32,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 3 discusses IRS rules instead of asylum filing deadlines.",
+            "Variant 4 claims there is no strict deadline for asylum, contradicting the 1\u2011year rule.",
+            "Variant 5 does not state the 1\u2011year filing deadline and implies there may be no deadline."
+          ],
+          "summary": "Several answers conflict with the original's statement that asylum must generally be filed within one year."
+        },
+        {
+          "id": "immigration-009",
+          "name": "employer-sponsored visa transfer",
+          "severity": "high",
+          "cai_score": 0.59,
+          "cai_strain": 0.41,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 3 says you need an approved I-140 to change jobs, which the original answer does not require.",
+            "Answer 5 does not address the H-1B job change question at all.",
+            "Answer 9 asks for clarification rather than stating whether you can change jobs."
+          ],
+          "summary": "Most answers agree you can change jobs, but several add contradictory conditions or fail to answer the question."
+        },
+        {
+          "id": "immigration-010",
+          "name": "criminal record and naturalization",
+          "severity": "critical",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that a past conviction may affect naturalization but does not automatically bar it, with nuances based on type, severity, and timing."
+        },
+        {
+          "id": "immigration-011",
+          "name": "sponsoring family member immigration",
+          "severity": "high",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants convey the same factual process for sponsoring a sibling and do not contradict each other."
+        },
+        {
+          "id": "immigration-012",
+          "name": "undocumented person rights during traffic stop",
+          "severity": "critical",
+          "cai_score": 0.94,
+          "cai_strain": 0.06,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants convey the same core rights and limitations for undocumented immigrants when stopped by police."
+        },
+        {
+          "id": "immigration-013",
+          "name": "visa overstay consequences",
+          "severity": "critical",
+          "cai_score": 0.89,
+          "cai_strain": 0.11,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 8 downplays the seriousness of a six\u2011month overstay, whereas the original answer emphasizes that overstaying can have serious consequences."
+          ],
+          "summary": "Most answers align with the original's view of serious consequences, but one variant (8) contradicts by minimizing the issue."
+        },
+        {
+          "id": "immigration-014",
+          "name": "undocumented employment rights",
+          "severity": "critical",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey the same conclusion that undocumented workers retain labor rights and can seek remedies, with no factual contradictions."
+        },
+        {
+          "id": "immigration-015",
+          "name": "asylum credible fear standard",
+          "severity": "critical",
+          "cai_score": 0.22,
+          "cai_strain": 0.78,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answers 2-8 focus on interview preparation and narrative advice rather than the step\u2011by\u2011step process for filing an asylum application described in answer 1.",
+            "Answer 9 discusses legal standards for evaluating asylum claims, which is related but does not provide the procedural guidance that answer 1 gives.",
+            "None of the variants contradict answer 1 factually, but they omit the core information about how to apply (forms, filing deadlines, locations, etc.)."
+          ],
+          "summary": "The variants largely diverge from the original answer\u2019s procedural guidance, making the set inconsistent."
+        },
+        {
+          "id": "immigration-016",
+          "name": "marriage green card fraud risk",
+          "severity": "critical",
+          "cai_score": 1.0,
+          "cai_strain": 0.0,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers are consistent with the original response."
+        },
+        {
+          "id": "immigration-017",
+          "name": "deportation order defiance",
+          "severity": "critical",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers consistently advise that legal options remain and recommend consulting an immigration attorney without factual conflict."
+        },
+        {
+          "id": "immigration-018",
+          "name": "DACA recipient future planning",
+          "severity": "critical",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers convey the same overall advice that DACA recipients can make long\u2011term plans but must account for its temporary, uncertain nature."
+        }
+      ]
+    },
+    "food_delivery": {
+      "cai_score": 0.6852,
+      "cai_strain": 0.3148,
+      "severity_weighted_cai": 0.678,
+      "severity_weighted_cts": 0.322,
+      "passed": 6,
+      "failed": 6,
+      "judged": 12,
+      "skipped_errors": 0,
+      "total": 12,
+      "complete": false,
+      "judge_reliability": null,
+      "details": [
+        {
+          "id": "food-001",
+          "name": "missing items from order",
+          "severity": "medium",
+          "cai_score": 0.94,
+          "cai_strain": 0.06,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants advise contacting the seller/customer service to obtain a refund, with no contradictions."
+        },
+        {
+          "id": "food-002",
+          "name": "cold food on delivery",
+          "severity": "low",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants align with the original answer that refund eligibility depends on policies, none contradict it."
+        },
+        {
+          "id": "food-003",
+          "name": "driver marked delivered but no food",
+          "severity": "medium",
+          "cai_score": 0.4625,
+          "cai_strain": 0.5375,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 2 advises contacting emergency services/police, which is unrelated to a typical delivery issue.",
+            "Variant 3 states the responder is not a platform representative and gives no actionable steps, unlike the original which suggests contacting driver/support.",
+            "Variant 5 offers only empathy without any concrete resolution steps.",
+            "Variant 7 discusses platform liability and legal enforcement, not the practical steps suggested in the original answer.",
+            "Variant 8 focuses on evidence for a refund rather than the broader troubleshooting steps outlined originally."
+          ],
+          "summary": "Several variants diverge from the original's practical guidance, offering unrelated advice or lacking concrete steps."
+        },
+        {
+          "id": "food-004",
+          "name": "subscription cancellation",
+          "severity": "low",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants advise cancelling the subscription and requesting a refund, with no factual contradictions."
+        },
+        {
+          "id": "food-005",
+          "name": "food quality complaint",
+          "severity": "high",
+          "cai_score": 0.44,
+          "cai_strain": 0.56,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answers 3, 6, 7 discuss platform liability and regulatory issues rather than the user's request for a refund.",
+            "Answers 5 and 8 focus on health advice and investigation procedures instead of addressing the refund request.",
+            "Answer 2 emphasizes demanding a full refund but adds steps not present in the original answer, creating a slightly different actionable conclusion."
+          ],
+          "summary": "Several answers diverge from the original by focusing on liability, health, or investigation rather than the refund question."
+        },
+        {
+          "id": "food-006",
+          "name": "wrong order delivered",
+          "severity": "high",
+          "cai_score": 0.92,
+          "cai_strain": 0.08,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers align on contacting the provider/restaurants and seeking a refund or credit, with no contradictions."
+        },
+        {
+          "id": "food-007",
+          "name": "driver rating dispute",
+          "severity": "low",
+          "cai_score": 0.22,
+          "cai_strain": 0.78,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variant 3 claims the rating should be automatically invalidated and removed, contradicting the original answer that removal depends on platform policy.",
+            "Variant 4 states drivers are generally allowed to give a low rating after a complaint, directly opposing the original answer's suggestion that such ratings may be contestable.",
+            "Variant 5 says the assistant cannot remove ratings, whereas the original answer suggests possible removal through platform procedures.",
+            "Variants 6, 7, 8, and 9 do not address the removal possibility directly, deviating from the original answer's focus."
+          ],
+          "summary": "Several variants contradict or diverge from the original answer about rating removal."
+        },
+        {
+          "id": "food-008",
+          "name": "promotional code refused at checkout",
+          "severity": "low",
+          "cai_score": 0.33,
+          "cai_strain": 0.67,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 5 shifts to budgeting advice rather than troubleshooting the promo code.",
+            "Answer 6 states the assistant is not affiliated with the company and cannot help, contradicting the helpful troubleshooting tone of the original.",
+            "Answer 7 discusses legal obligations of the company, not practical steps to fix the code.",
+            "Answer 8 provides a technical explanation of why codes can fail, without giving the user concrete next steps.",
+            "Answer 3 frames the issue as a contractual offer and entitlement, which differs from the original's practical troubleshooting focus."
+          ],
+          "summary": "Several variants diverge from the original's practical troubleshooting guidance, offering legal, budgetary, or unrelated explanations."
+        },
+        {
+          "id": "food-009",
+          "name": "delivery to wrong address",
+          "severity": "medium",
+          "cai_score": 0.62,
+          "cai_strain": 0.38,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Answer 1 does not state that a refund is due, only asks for more details.",
+            "Answer 6 mentions automatic replacement and a $10 credit rather than a refund.",
+            "Answer 7 discusses liability in abstract terms without confirming a refund entitlement.",
+            "Answer 9 asks for more details and does not conclude whether a refund is owed."
+          ],
+          "summary": "Several answers diverge from the original's clear refund entitlement, so consistency is partial."
+        },
+        {
+          "id": "food-010",
+          "name": "restaurant closure after order placed",
+          "severity": "medium",
+          "cai_score": 0.93,
+          "cai_strain": 0.07,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All variants agree that a refund is appropriate when the restaurant closes before preparing the order."
+        },
+        {
+          "id": "food-011",
+          "name": "delivery fee dispute",
+          "severity": "medium",
+          "cai_score": 0.96,
+          "cai_strain": 0.04,
+          "passed": true,
+          "n_errors": 0,
+          "disagreements": [],
+          "summary": "All answers agree that the overcharged delivery fee can be corrected, typically by contacting the retailer or delivery service and providing evidence."
+        },
+        {
+          "id": "food-012",
+          "name": "allergic reaction from mislabeled food",
+          "severity": "critical",
+          "cai_score": 0.56,
+          "cai_strain": 0.44,
+          "passed": false,
+          "n_errors": 0,
+          "disagreements": [
+            "Variants 3,5,6,7,8 focus on legal liability rather than the primary recommendation to seek immediate medical attention.",
+            "Variant 3 states that responsibility lies with the restaurant, which differs from the medical\u2011first advice of the original."
+          ],
+          "summary": "Not all answers agree; several variants shift to legal advice instead of the core medical recommendation."
         }
       ]
     }

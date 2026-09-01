@@ -22,6 +22,17 @@ Each commitment entry keeps the originating query and response as provenance.
     # ... run the agent through the Firewall or call check()/ingest over time ...
     ledger.verify()           # True while untouched
     ledger.audit_summary()    # counts, time span, contradiction rate, head hash
+
+To persist across runs instead of a single Python process:
+
+    ledger = CommitmentLedger.load(".contradish/ledger.json")
+    # ... record_commitment() / record_contradiction() / record_event() ...
+    ledger.save(".contradish/ledger.json")
+
+`contradish monitor` does exactly this by default (see --ledger / --no-ledger),
+so every run appends to one growing, tamper-evident record instead of a
+one-off snapshot. `contradish ledger show|verify|anchor` reads the same file
+from the command line without writing any Python.
 """
 
 from __future__ import annotations
@@ -30,17 +41,25 @@ import hashlib
 import json
 import time
 from dataclasses import dataclass, asdict
-from typing import List, Optional
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import List, Optional, Union
 
 _GENESIS = "0" * 64
+
+#: Default on-disk location for `contradish ledger` and `contradish monitor
+#: --ledger`. A dotfile next to `.contradish.yaml`, so a project accumulates
+#: one shared, growing audit trail unless a path is given explicitly.
+DEFAULT_LEDGER_PATH = ".contradish/ledger.json"
 
 
 @dataclass
 class LedgerEntry:
-    """One appended event: a commitment made or a contradiction observed."""
+    """One appended event: a commitment made, a contradiction observed, or any
+    other event a caller chooses to record (see record_event)."""
     seq:       int
     at:        float
-    type:      str          # "commitment" or "contradiction"
+    type:      str          # "commitment" | "contradiction" | caller-defined
     session:   str
     payload:   dict
     prev_hash: str
@@ -122,6 +141,14 @@ class CommitmentLedger:
         }
         return self._append("contradiction", session, payload)
 
+    def record_event(self, type_: str, session: str, payload: dict,
+                      at: Optional[float] = None) -> LedgerEntry:
+        """Append an arbitrary event under a caller-defined type, e.g. a
+        `contradish monitor` run summary, a benchmark run, a deploy marker.
+        Use record_commitment / record_contradiction for those two specific,
+        well-known shapes; use this for anything else you want on the record."""
+        return self._append(str(type_), session, dict(payload), at=at)
+
     def timeline(self, session: Optional[str] = None, type: Optional[str] = None) -> list:
         """Entries in append (time) order, optionally filtered by session and/or
         type ("commitment" | "contradiction")."""
@@ -150,12 +177,17 @@ class CommitmentLedger:
         entries = self.timeline(session)
         commits = [e for e in entries if e.type == "commitment"]
         contras = [e for e in entries if e.type == "contradiction"]
+        other_types: dict = {}
+        for e in entries:
+            if e.type not in ("commitment", "contradiction"):
+                other_types[e.type] = other_types.get(e.type, 0) + 1
         times = [e.at for e in entries]
         return {
             "entries":            len(entries),
             "commitments":        len(commits),
             "contradictions":     len(contras),
             "contradiction_rate": round(len(contras) / len(commits), 3) if commits else 0.0,
+            "other_event_types":  other_types,
             "first_at":           min(times) if times else None,
             "last_at":            max(times) if times else None,
             "verified":           self.verify(),
@@ -172,5 +204,38 @@ class CommitmentLedger:
         led._entries = [LedgerEntry.from_dict(x) for x in d.get("entries", [])]
         return led
 
+    def save(self, path: Union[str, Path] = DEFAULT_LEDGER_PATH) -> Path:
+        """Write the full chain to disk as JSON, creating parent directories
+        as needed. Loading it back with load() and calling verify() confirms
+        nothing between save and load was altered."""
+        p = Path(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(self.to_dict(), indent=2, sort_keys=True))
+        return p
 
-__all__ = ["CommitmentLedger", "LedgerEntry"]
+    @classmethod
+    def load(cls, path: Union[str, Path] = DEFAULT_LEDGER_PATH) -> "CommitmentLedger":
+        """Read a ledger back from disk. A missing file is not an error: it
+        means tracking hasn't started yet, so this returns a fresh, empty
+        ledger that save() will create the file for."""
+        p = Path(path)
+        if not p.exists():
+            return cls()
+        return cls.from_dict(json.loads(p.read_text()))
+
+    def anchor_text(self, label: Optional[str] = None) -> str:
+        """A short, copy-pasteable line that ties the current state of this
+        ledger to a point in time. Paste it somewhere you don't control and
+        can't quietly edit later: a git commit message, a support ticket
+        reply, a public post. If the chain is later found not to verify, or
+        the head hash on record doesn't match, the log was altered after
+        that anchor point. This needs no external service, only that
+        wherever you paste it is somewhere you don't unilaterally control."""
+        s = self.audit_summary()
+        when = datetime.fromtimestamp(s["last_at"], tz=timezone.utc).isoformat() if s["last_at"] else "n/a"
+        tag = f"[{label}] " if label else ""
+        return (f"{tag}contradish ledger anchor · {s['entries']} entries · "
+                f"head {s['head']} · as of {when}")
+
+
+__all__ = ["CommitmentLedger", "LedgerEntry", "DEFAULT_LEDGER_PATH"]

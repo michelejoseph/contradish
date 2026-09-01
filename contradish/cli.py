@@ -1215,6 +1215,63 @@ def cmd_diagnose(args):
         _sys.exit(1)
 
 
+def _record_monitor_to_ledger(args, analysis: dict) -> Optional[dict]:
+    """
+    Append this monitor run to the project's commitment ledger.
+
+    Each clean (non-drifted) cluster is recorded as a commitment: a topic
+    where the model held one consistent answer across real users. Each
+    hotspot is recorded as a contradiction: a topic where it didn't. That
+    makes audit_summary()'s contradiction_rate a real signal, the share of
+    observed topics that failed to hold, not just a hotspot count with
+    nothing to divide it by. One more event summarizes the run as a whole.
+
+    Returns the resulting audit_summary(), or None if ledger recording is
+    disabled or fails. A ledger problem should never take down a monitor run
+    that otherwise succeeded, so failures here are caught and reported, not
+    raised.
+    """
+    if getattr(args, "no_ledger", False):
+        return None
+    try:
+        from contradish.ledger import CommitmentLedger, DEFAULT_LEDGER_PATH
+        path = getattr(args, "ledger", None) or DEFAULT_LEDGER_PATH
+        ledger = CommitmentLedger.load(path)
+        session = analysis.get("log_path", "monitor")
+
+        for h in analysis.get("hotspots", []):
+            ledger.record_contradiction({
+                "new_claim":   h.get("example_drifted"),
+                "prior_claim": h.get("example_consistent"),
+                "explanation": f"{h.get('topic', 'untitled cluster')}: {h.get('summary', '')}".strip(": "),
+                "confidence":  h.get("cts"),
+            }, session=session)
+
+        for c in analysis.get("clean_clusters", []):
+            ledger.record_commitment({
+                "session": session,
+                "topic":   c.get("topic", "untitled cluster"),
+                "cts":     c.get("cts"),
+                "summary": c.get("summary", ""),
+                "example": c.get("example_output"),
+            })
+
+        ledger.record_event("monitor_run", session, {
+            "log_path":            analysis.get("log_path"),
+            "total_conversations": analysis.get("total_conversations"),
+            "clusters_scored":     analysis.get("clusters_scored"),
+            "drifted_clusters":    analysis.get("drifted_clusters"),
+            "drift_rate":          analysis.get("drift_rate"),
+            "avg_cts":             analysis.get("avg_cts"),
+        })
+
+        ledger.save(path)
+        return ledger.audit_summary()
+    except Exception as e:
+        print(f"  (ledger not updated: {e})")
+        return None
+
+
 def cmd_monitor(args):
     """
     Detect consistency failures in real production conversation logs.
@@ -1284,12 +1341,25 @@ def cmd_monitor(args):
     analysis["judge_provider"] = judge_provider
     analysis["judge_model"]    = judge_model
 
+    ledger_summary = _record_monitor_to_ledger(args, analysis)
+    if ledger_summary is not None:
+        analysis["ledger"] = ledger_summary
+
     if as_json:
         print(_json.dumps(analysis, indent=2))
         return
 
     if not quiet:
         print_monitor_summary(analysis, args.input)
+
+    if not quiet and ledger_summary is not None:
+        from contradish.ledger import DEFAULT_LEDGER_PATH as _DEFAULT_LEDGER_PATH
+        ledger_path = getattr(args, "ledger", None) or _DEFAULT_LEDGER_PATH
+        print(f"  ledger:    {ledger_path}  ({ledger_summary['entries']} entries, "
+              f"verified={ledger_summary['verified']})")
+        print(f"  head:      {ledger_summary['head'][:16]}...")
+        print(f"  (contradish ledger show / verify / anchor reads this file)")
+        print()
 
     out_path = getattr(args, "output", None)
     if not out_path:
@@ -1308,6 +1378,106 @@ def cmd_monitor(args):
     threshold  = getattr(args, "threshold", 0.30)
     if drift_rate > threshold:
         _sys.exit(1)
+
+
+def cmd_ledger(args):
+    """
+    Inspect, verify, or anchor the project's commitment ledger: the
+    hash-chained record `contradish monitor` builds up over time (see
+    contradish.ledger.CommitmentLedger). This command only reads and writes
+    that one JSON file; it never calls a model or costs an API request.
+    """
+    import json as _json
+    from contradish.ledger import CommitmentLedger, DEFAULT_LEDGER_PATH
+    from contradish.monitor import RED, GREEN, YELLOW, BOLD, DIM
+
+    path = getattr(args, "path", None) or DEFAULT_LEDGER_PATH
+    action = getattr(args, "action", "show")
+    as_json = getattr(args, "json", False)
+
+    ledger = CommitmentLedger.load(path)
+
+    if action == "init":
+        if len(ledger) > 0 and not getattr(args, "force", False):
+            print(f"\n  {path} already has {len(ledger)} entries. Nothing to do.")
+            print(f"  (pass --force to overwrite with an empty ledger)\n")
+            return
+        if getattr(args, "force", False):
+            ledger = CommitmentLedger()
+        ledger.save(path)
+        print(f"\n  ledger initialized: {path}")
+        print(f"  `contradish monitor --input logs.jsonl` will start appending to it.\n")
+        return
+
+    if action == "verify":
+        ok = ledger.verify()
+        summary = ledger.audit_summary()
+        if as_json:
+            print(_json.dumps(summary, indent=2))
+        else:
+            print()
+            if ok:
+                print(f"  {GREEN(BOLD('verified'))}  {path}  ({summary['entries']} entries intact, "
+                      f"head {summary['head'][:16]}...)")
+            else:
+                print(f"  {RED(BOLD('TAMPERED OR CORRUPTED'))}  {path}")
+                print(f"  {DIM('the chain does not reproduce its own stored hashes; ')}")
+                print(f"  {DIM('at least one entry was altered, reordered, or dropped after being written.')}")
+            print()
+        if not ok:
+            import sys as _sys
+            _sys.exit(1)
+        return
+
+    if action == "anchor":
+        label = getattr(args, "label", None)
+        text = ledger.anchor_text(label=label)
+        print(text)
+        return
+
+    # action == "show" (default)
+    summary = ledger.audit_summary()
+    if as_json:
+        print(_json.dumps(summary, indent=2))
+        return
+
+    print()
+    print(f"  {BOLD('contradish ledger')}  {DIM(path)}")
+    if summary["entries"] == 0:
+        print(f"  empty. run `contradish monitor --input logs.jsonl` to start recording,")
+        print(f"  or `contradish ledger init` to create the file explicitly.")
+        print()
+        return
+
+    v_color = GREEN if summary["verified"] else RED
+    print(f"  entries:        {summary['entries']}  "
+          f"({summary['commitments']} commitments, {summary['contradictions']} contradictions)")
+    if summary["other_event_types"]:
+        others = ", ".join(f"{k}={v}" for k, v in summary["other_event_types"].items())
+        print(f"  other events:   {others}")
+    print(f"  contradiction rate: {summary['contradiction_rate']:.1%}"
+          if summary["commitments"] else f"  contradiction rate: n/a (no commitments recorded)")
+    print(f"  span:           "
+          f"{_fmt_time(summary['first_at'])}  →  {_fmt_time(summary['last_at'])}")
+    print(f"  integrity:      {v_color(BOLD('verified') if summary['verified'] else BOLD('BROKEN'))}")
+    print(f"  head:           {summary['head']}")
+    print()
+    recent = ledger.timeline()[-5:]
+    if recent:
+        print(f"  {DIM('last 5 entries:')}")
+        for e in recent:
+            when = _fmt_time(e.at)
+            tag = {"commitment": "commit", "contradiction": "contra"}.get(e.type, e.type[:7]).ljust(7)
+            note = e.payload.get("explanation") or e.payload.get("topic") or e.payload.get("log_path") or ""
+            print(f"    #{e.seq:<4} {when}  {tag}  {DIM(str(note)[:70])}")
+        print()
+
+
+def _fmt_time(ts) -> str:
+    if ts is None:
+        return "n/a"
+    from datetime import datetime, timezone
+    return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
 
 def cmd_benchmark(args):
@@ -1638,6 +1808,11 @@ examples:
   # regression: compare baseline vs candidate (CI/CD gate)
   contradish compare evals.yaml --baseline mymodule:old_app --candidate mymodule:new_app
   contradish compare evals.yaml --baseline mymodule:old_app --candidate mymodule:new_app --threshold 0.80
+
+  # production monitoring, with a growing tamper-evident audit trail
+  contradish monitor --input logs.jsonl
+  contradish ledger show
+  contradish ledger verify
         """,
     )
 
@@ -1831,7 +2006,11 @@ examples:
             "Find drift hotspots in your actual production traffic.\n\n"
             "  contradish monitor --input logs.jsonl\n"
             "  contradish monitor --input logs.jsonl --min-cluster-size 3 --max 500\n"
-            "  contradish monitor --input logs.jsonl --threshold 0.25 --output results/monitor.json\n"
+            "  contradish monitor --input logs.jsonl --threshold 0.25 --output results/monitor.json\n\n"
+            "Every run also appends to .contradish/ledger.json by default (see\n"
+            "--ledger / --no-ledger, and `contradish ledger --help`), so repeated\n"
+            "runs build one hash-chained audit trail over time instead of a\n"
+            "one-off snapshot.\n"
         ),
     )
     mon_p.add_argument("--input", "-i", required=True, metavar="FILE",
@@ -1852,6 +2031,46 @@ examples:
                        help="Save full analysis JSON to this path")
     mon_p.add_argument("--quiet", action="store_true")
     mon_p.add_argument("--json", action="store_true", help="Print analysis JSON to stdout")
+    mon_p.add_argument("--ledger", default=None, metavar="FILE",
+                       help="Path to the commitment ledger this run appends to "
+                            "(default: .contradish/ledger.json). Each run adds "
+                            "one hash-chained entry per topic observed (a "
+                            "commitment if it held, a contradiction if it "
+                            "drifted) plus a run summary, so repeated monitor "
+                            "runs build one growing, tamper-evident record "
+                            "instead of a one-off snapshot.")
+    mon_p.add_argument("--no-ledger", dest="no_ledger", action="store_true",
+                       help="Skip ledger recording for this run.")
+
+    # contradish ledger show|verify|init|anchor
+    ledger_p = sub.add_parser(
+        "ledger",
+        help="Inspect, verify, or anchor the commitment ledger monitor runs build up.",
+        description=(
+            "Read the hash-chained record `contradish monitor` writes to over time. "
+            "Makes no model calls and costs no API request; it only reads and writes "
+            "one local JSON file.\n\n"
+            "  contradish ledger show\n"
+            "  contradish ledger verify\n"
+            "  contradish ledger anchor --label \"2026-08 audit\"\n"
+            "  contradish ledger init\n"
+        ),
+    )
+    ledger_p.add_argument("action", nargs="?", default="show",
+                          choices=["show", "verify", "init", "anchor"],
+                          help="show (default): summary + recent entries. verify: check "
+                               "chain integrity, exit 1 if broken. init: create an empty "
+                               "ledger file. anchor: print a copy-pasteable line binding "
+                               "the current head hash to this moment, for pasting "
+                               "somewhere you don't control (a commit message, a ticket).")
+    ledger_p.add_argument("--path", default=None, metavar="FILE",
+                          help="Ledger file path (default: .contradish/ledger.json)")
+    ledger_p.add_argument("--json", action="store_true",
+                          help="Print machine-readable JSON (show and verify only)")
+    ledger_p.add_argument("--label", default=None, metavar="TEXT",
+                          help="Optional label to include in `anchor` output")
+    ledger_p.add_argument("--force", action="store_true",
+                          help="With init: overwrite an existing non-empty ledger")
 
     # contradish init
     init_p = sub.add_parser("init", help="Interactive setup. Writes .contradish.yaml and optional GitHub Actions workflow.")
@@ -2236,6 +2455,8 @@ examples:
         cmd_benchmark(args)
     elif args.command == "monitor":
         cmd_monitor(args)
+    elif args.command == "ledger":
+        cmd_ledger(args)
     elif args.command == "diagnose":
         cmd_diagnose(args)
     elif args.command == "init":

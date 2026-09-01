@@ -78,6 +78,69 @@ def test_audit_summary():
     assert s["first_at"] is not None and s["last_at"] is not None
 
 
+def test_record_event_is_generic():
+    """record_event covers anything outside the commitment/contradiction
+    shape, e.g. the run summary `contradish monitor` appends."""
+    led = CommitmentLedger()
+    led.record_event("monitor_run", "session-1", {"drift_rate": 0.3, "total": 10})
+    assert len(led) == 1
+    assert led.verify() is True
+    s = led.audit_summary()
+    assert s["other_event_types"] == {"monitor_run": 1}
+    assert s["commitments"] == 0 and s["contradictions"] == 0
+
+
+def test_save_and_load_roundtrip():
+    import tempfile, os
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "sub", "ledger.json")
+        led = CommitmentLedger()
+        led.record_commitment(_commit("Refund window is 30 days"))
+        led.record_contradiction(_contra("Refund window is 30 days"), session="u1")
+        head = led.head()
+        saved = led.save(path)
+        assert saved.exists()
+
+        reloaded = CommitmentLedger.load(path)
+        assert reloaded.verify() is True
+        assert reloaded.head() == head
+        assert len(reloaded) == 2
+
+
+def test_load_missing_file_returns_empty_ledger():
+    import tempfile, os
+    with tempfile.TemporaryDirectory() as d:
+        led = CommitmentLedger.load(os.path.join(d, "does-not-exist.json"))
+        assert len(led) == 0
+        assert led.verify() is True
+
+
+def test_save_then_tamper_on_disk_breaks_verify():
+    import tempfile, os, json
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "ledger.json")
+        led = CommitmentLedger()
+        led.record_commitment(_commit("Refund window is 30 days"))
+        led.save(path)
+
+        raw = json.loads(open(path).read())
+        raw["entries"][0]["payload"]["claim"] = "Refund window is 14 days"
+        open(path, "w").write(json.dumps(raw))
+
+        reloaded = CommitmentLedger.load(path)
+        assert reloaded.verify() is False
+
+
+def test_anchor_text_contains_head_and_count():
+    led = CommitmentLedger()
+    led.record_commitment(_commit("a"))
+    led.record_commitment(_commit("b"))
+    text = led.anchor_text(label="weekly-audit")
+    assert "weekly-audit" in text
+    assert led.head() in text
+    assert "2 entries" in text
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     passed = 0

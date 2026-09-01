@@ -1,0 +1,15 @@
+{
+  "run_date": "2026-09-01",
+  "reality_strain_enabled": true,
+  "models": {
+    "claude-sonnet-4-6": {
+      "model": "claude-sonnet-4-6",
+      "provider": "anthropic",
+      "domains": {
+        "ecommerce": {
+          "cai_strain": 0.257,
+          "details": [
+            {
+              "name": "refund window",
+              "cai_strain": 0.18,
+              "passed": 
