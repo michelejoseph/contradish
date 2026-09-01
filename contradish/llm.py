@@ -65,9 +65,11 @@ class LLMClient:
         self,
         api_key:  Optional[str] = None,
         provider: Optional[str] = None,   # "anthropic" | "openai"
+        model:    Optional[str] = None,   # override judge_model for this instance
     ):
         self.provider, self.api_key = self._resolve(api_key, provider)
         self._client = self._build_client()
+        self._model_override = model
 
     # ------------------------------------------------------------------
     # Public
@@ -75,6 +77,8 @@ class LLMClient:
 
     @property
     def judge_model(self) -> str:
+        if self._model_override:
+            return self._model_override
         return self.ANTHROPIC_JUDGE_MODEL if self.provider == "anthropic" else self.OPENAI_JUDGE_MODEL
 
     @property

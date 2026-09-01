@@ -149,6 +149,50 @@ class TestLLMClient:
             client = LLMClient()
             assert client.provider == "anthropic"
 
+    def test_model_override_replaces_judge_model(self, monkeypatch):
+        """
+        Regression test for a real, previously-crashing bug: cli.py's
+        cmd_monitor, diagnose.py's analyze_result, and three bench/
+        evaluate_*.py modules all construct LLMClient(provider=..., model=...)
+        -- but until this fix, LLMClient.__init__ had no `model` parameter at
+        all, so every one of those six call sites raised
+        `TypeError: __init__() got an unexpected keyword argument 'model'`
+        immediately, before any network call. `contradish monitor`,
+        `contradish diagnose`, and the SRA/monitor/CSA benchmarks were
+        completely non-functional. Confirmed by reproducing the crash
+        against the pre-fix constructor before patching it.
+        """
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("OPENAI_API_KEY",    raising=False)
+        from contradish.llm import LLMClient
+        with patch("anthropic.Anthropic"):
+            client = LLMClient(api_key="sk-ant-fakekey", model="claude-opus-4-6")
+            assert client.judge_model == "claude-opus-4-6"
+
+    def test_model_override_does_not_affect_fast_model(self, monkeypatch):
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("OPENAI_API_KEY",    raising=False)
+        from contradish.llm import LLMClient
+        with patch("anthropic.Anthropic"):
+            client = LLMClient(api_key="sk-ant-fakekey", model="claude-opus-4-6")
+            assert client.fast_model == LLMClient.ANTHROPIC_FAST_MODEL
+
+    def test_no_model_override_keeps_provider_default(self, monkeypatch):
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("OPENAI_API_KEY",    raising=False)
+        from contradish.llm import LLMClient
+        with patch("anthropic.Anthropic"):
+            client = LLMClient(api_key="sk-ant-fakekey")
+            assert client.judge_model == LLMClient.ANTHROPIC_JUDGE_MODEL
+
+    def test_model_override_works_for_openai_provider_too(self, monkeypatch):
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("OPENAI_API_KEY",    raising=False)
+        from contradish.llm import LLMClient
+        with patch("openai.OpenAI"):
+            client = LLMClient(api_key="sk-fakekey", provider="openai", model="gpt-4o")
+            assert client.judge_model == "gpt-4o"
+
     def test_json_parsing_strips_fences(self):
         from contradish.llm import LLMClient
         raw = '```json\n{"score": 0.9}\n```'
