@@ -178,7 +178,7 @@ class TestPrinter:
         report = _make_report()
         print_report(report)
         out = capsys.readouterr().out
-        assert "contradish" in out.lower()
+        assert "cai" in out.lower()
 
     def test_print_report_shows_test_name(self, capsys):
         from contradish.printer import print_report
@@ -203,7 +203,8 @@ class TestPrinter:
         report = Report(results=[r])
         print_report(report)
         out = capsys.readouterr().out
-        assert "Contradiction" in out
+        assert "CAI FAILURE" in out
+        assert "A says 30 days; B says 60 days" in out
 
 
 # ─────────────────────────────────────────────────────────────
