@@ -26,19 +26,21 @@ cmd_* attribute on the cli module with a recorder, so main() never runs
 real command logic -- this file tests routing, not the handlers (those
 have their own test files already).
 
-REAL BUG found while writing these tests, flagged but NOT fixed here (see
-test_main_bare_system_prompt_argument_is_currently_broken for the full
+REAL BUG found while writing these tests, and fixed here (see
+test_main_dispatches_bare_system_prompt_to_cmd_from_prompt for the full
 writeup): the bare positional form of the CLI --
     contradish "You are a support agent. Refunds within 30 days only."
--- the very first example in the README's Quickstart -- currently crashes
-with argparse exit code 2. It's a real argparse limitation (subparsers'
+-- the very first example in the README's Quickstart -- used to crash
+with argparse exit code 2. It was a real argparse limitation (subparsers'
 nargs=PARSER positional always claims an unrecognized lone token before
 the fallback `system_prompt` positional gets a chance, regardless of
-declaration order), not a typo or a one-line fix -- correcting it means
-restructuring main()'s single-parser design, which deserves its own
-careful pass rather than a fix bundled into a test-coverage commit. The
-other two documented ways to pass a prompt (`--policy X` and `--prompt
-file.txt`) are unaffected and were verified working directly.
+declaration order), not a typo -- fixing it meant detecting that one
+ambiguous invocation shape before parser.parse_args() runs and routing it
+through a subparsers-free clone of the same bare-mode arguments (see
+`_add_bare_mode_args` and the pre-check in `main()`). The other two
+documented ways to pass a prompt (`--policy X` and `--prompt file.txt`)
+were never affected and continue to dispatch correctly, as do all 16
+real subcommands and the bare-no-args smoke test / help paths.
 
 Not covered (documented, not papered over): the trailing
 `if __name__ == "__main__": main()` two-line block -- see the comment at
@@ -456,28 +458,51 @@ def test_main_dispatches_policy_only_to_cmd_policy(monkeypatch):
     assert calls["args"].policy == "ecommerce"
 
 
-def test_main_bare_system_prompt_argument_is_currently_broken(monkeypatch):
-    # REAL BUG, found while writing this test, NOT fixed here (flagged to
-    # the user -- the fix requires restructuring main()'s single-parser
-    # design, out of scope for a test-coverage pass): the README's very
-    # first Quickstart line --
+def test_main_dispatches_bare_system_prompt_to_cmd_from_prompt(monkeypatch):
+    # REAL BUG, found while writing this test, and fixed as part of this
+    # "harden the core" pass: the README's very first Quickstart line --
     #     contradish "You are a support agent. Refunds within 30 days only."
-    # -- currently crashes. parser.add_subparsers(dest="command") is added
-    # to the top-level parser *alongside* the `system_prompt` positional
+    # -- used to crash. parser.add_subparsers(dest="command") is added to
+    # the top-level parser *alongside* the `system_prompt` positional
     # (nargs="?"), meant to catch exactly this bare-string invocation. But
     # argparse's positional-matching always lets the subparsers action
     # (nargs=PARSER, effectively "one-or-more, greedy") claim a lone
     # unrecognized token first, regardless of declaration order (verified:
     # swapping which is added first does not change this) -- so instead of
-    # falling through to `system_prompt`, argparse hard-errors with
-    # "invalid choice" and exits 2. The other two documented ways to pass a
-    # prompt -- `contradish --policy X` and `contradish --prompt file.txt`
-    # -- are unaffected (they're named options, not competing positionals)
-    # and both dispatch correctly; only the bare freeform-string form is
-    # broken. This test pins the actual current behavior.
+    # falling through to `system_prompt`, argparse hard-errored with
+    # "invalid choice" and exit 2. The fix: main() now checks, before
+    # calling parser.parse_args(), whether the first argv token is present,
+    # doesn't start with "-", and isn't one of the real subcommand names
+    # (sub.choices) -- exactly the ambiguous case -- and if so parses it
+    # with a subparsers-free clone of the same bare-mode options
+    # (_add_bare_mode_args) and dispatches straight to cmd_from_prompt.
+    # Every other invocation shape (a real subcommand, any --flag first, or
+    # no arguments at all) is untouched and still reaches
+    # parser.parse_args() exactly as before. The other two documented ways
+    # to pass a prompt -- `contradish --policy X` and `contradish --prompt
+    # file.txt` -- were never affected.
+    calls = {}
+    monkeypatch.setattr(
+        cli, "cmd_from_prompt",
+        lambda args: calls.update(name="cmd_from_prompt", args=args),
+    )
     for name in _ALL_CMD_NAMES:
+        if name == "cmd_from_prompt":
+            continue
         monkeypatch.setattr(cli, name, lambda args: pytest.fail("should not dispatch"))
     monkeypatch.setattr(sys, "argv", ["contradish", "You are a helpful assistant."])
+    cli.main()
+    assert calls["name"] == "cmd_from_prompt"
+    assert calls["args"].system_prompt == "You are a helpful assistant."
+    assert calls["args"].command is None
+
+
+def test_main_bare_system_prompt_starting_with_dash_is_not_misrouted(monkeypatch):
+    # A first token that starts with "-" is a flag, not a candidate for the
+    # bare-prompt fallback -- it should reach the normal parser (and, for
+    # an unknown flag, argparse's usual error), not be swallowed by the
+    # bare-mode pre-check.
+    monkeypatch.setattr(sys, "argv", ["contradish", "--this-flag-does-not-exist"])
     with pytest.raises(SystemExit) as exc_info:
         cli.main()
     assert exc_info.value.code == 2

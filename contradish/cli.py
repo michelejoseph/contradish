@@ -1776,6 +1776,117 @@ td{{padding:13px 14px}}
         f.write(html)
 
 
+def _add_bare_mode_args(p: argparse.ArgumentParser) -> None:
+    """
+    Register the "no subcommand" argument set: `contradish "prompt text"`,
+    `contradish --policy X`, `contradish --prompt file.txt`, and their
+    shared options (--app, --paraphrases, --report, etc.).
+
+    Factored out of main() so it can be applied to two different parsers:
+    the main parser (which also has subparsers registered on it, for
+    `contradish benchmark ...` and friends) and a second, subparsers-free
+    parser main() falls back to for the one case argparse can't route
+    correctly on the main parser -- see the comment above the
+    `sub.choices` check in main() for why.
+    """
+    p.add_argument(
+        "system_prompt",
+        nargs="?",
+        help="System prompt string to test directly",
+    )
+    p.add_argument(
+        "--prompt",
+        dest="prompt_file",
+        metavar="FILE",
+        help="Path to a file containing your system prompt",
+    )
+    p.add_argument(
+        "--policy",
+        metavar="PACK",
+        help=(
+            "Prebuilt domain test suite. No system prompt needed. "
+            "Options: ecommerce, hr, healthcare, legal"
+        ),
+    )
+    p.add_argument(
+        "--app",
+        metavar="MODULE:FUNCTION",
+        help="Your app callable. If omitted, uses your API key's LLM in demo mode.",
+    )
+    p.add_argument(
+        "--paraphrases",
+        type=int,
+        default=5,
+        metavar="N",
+        help="Number of paraphrases per test case (default: 5)",
+    )
+    p.add_argument(
+        "--concurrency",
+        type=int,
+        default=4,
+        metavar="N",
+        help="Test cases to run in parallel (default: 4). Pass 1 for strictly serial.",
+    )
+    p.add_argument(
+        "--judge-votes", dest="judge_votes", type=int, default=1, metavar="N",
+        help="Cap on adaptive judge re-voting per case (default: 1, same cost and "
+             "behavior as before). Above 1, the judge casts 2+ independent votes per "
+             "case and majority-votes, catching both sampling noise and position bias "
+             "(the 2nd vote shows the same evidence with variants in reversed order), "
+             "escalating past 2 only when they disagree. Adds judge_confidence and "
+             "judge_order_sensitive_cases to the report. For anything that gates a "
+             "decision on the result (a CI merge check, say), 3 is a reasonable floor.",
+    )
+    p.add_argument(
+        "--json",
+        action="store_true",
+        default=False,
+        help="Output report as JSON (shorthand for --format json).",
+    )
+    p.add_argument(
+        "--format",
+        choices=["terminal", "json", "sarif"],
+        default="terminal",
+        metavar="FORMAT",
+        help="Output format: terminal (default), json, sarif. SARIF is read by GitHub for PR annotations.",
+    )
+    p.add_argument(
+        "--output",
+        metavar="FILE",
+        default=None,
+        help="Output file path for --format sarif (default: contradish.sarif).",
+    )
+    p.add_argument(
+        "--threshold",
+        type=float,
+        default=None,
+        metavar="FLOAT",
+        help="Fail with exit code 1 if CAI Strain exceeds this value (e.g. 0.20). Lower is better.",
+    )
+    p.add_argument(
+        "--eq-threshold",
+        type=float,
+        default=0.80,
+        metavar="FLOAT",
+        dest="eq_threshold",
+        help=(
+            "Equivalence-confidence floor for headline_strain (default: 0.80). "
+            "Cases with EQ below this are reported as contested or excluded, not "
+            "counted toward the headline number. See BENCHMARK.md for details."
+        ),
+    )
+    p.add_argument(
+        "--report",
+        nargs="?",
+        const="contradish-report.html",
+        metavar="FILE",
+        help=(
+            "Save a shareable HTML report. "
+            "Defaults to contradish-report.html if no filename given."
+        ),
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="contradish",
@@ -1819,102 +1930,7 @@ examples:
     sub = parser.add_subparsers(dest="command")
 
     # Default: contradish "prompt" or contradish --prompt file.txt
-    parser.add_argument(
-        "system_prompt",
-        nargs="?",
-        help="System prompt string to test directly",
-    )
-    parser.add_argument(
-        "--prompt",
-        dest="prompt_file",
-        metavar="FILE",
-        help="Path to a file containing your system prompt",
-    )
-    parser.add_argument(
-        "--policy",
-        metavar="PACK",
-        help=(
-            "Prebuilt domain test suite. No system prompt needed. "
-            "Options: ecommerce, hr, healthcare, legal"
-        ),
-    )
-    parser.add_argument(
-        "--app",
-        metavar="MODULE:FUNCTION",
-        help="Your app callable. If omitted, uses your API key's LLM in demo mode.",
-    )
-    parser.add_argument(
-        "--paraphrases",
-        type=int,
-        default=5,
-        metavar="N",
-        help="Number of paraphrases per test case (default: 5)",
-    )
-    parser.add_argument(
-        "--concurrency",
-        type=int,
-        default=4,
-        metavar="N",
-        help="Test cases to run in parallel (default: 4). Pass 1 for strictly serial.",
-    )
-    parser.add_argument(
-        "--judge-votes", dest="judge_votes", type=int, default=1, metavar="N",
-        help="Cap on adaptive judge re-voting per case (default: 1, same cost and "
-             "behavior as before). Above 1, the judge casts 2+ independent votes per "
-             "case and majority-votes, catching both sampling noise and position bias "
-             "(the 2nd vote shows the same evidence with variants in reversed order), "
-             "escalating past 2 only when they disagree. Adds judge_confidence and "
-             "judge_order_sensitive_cases to the report. For anything that gates a "
-             "decision on the result (a CI merge check, say), 3 is a reasonable floor.",
-    )
-    parser.add_argument(
-        "--json",
-        action="store_true",
-        default=False,
-        help="Output report as JSON (shorthand for --format json).",
-    )
-    parser.add_argument(
-        "--format",
-        choices=["terminal", "json", "sarif"],
-        default="terminal",
-        metavar="FORMAT",
-        help="Output format: terminal (default), json, sarif. SARIF is read by GitHub for PR annotations.",
-    )
-    parser.add_argument(
-        "--output",
-        metavar="FILE",
-        default=None,
-        help="Output file path for --format sarif (default: contradish.sarif).",
-    )
-    parser.add_argument(
-        "--threshold",
-        type=float,
-        default=None,
-        metavar="FLOAT",
-        help="Fail with exit code 1 if CAI Strain exceeds this value (e.g. 0.20). Lower is better.",
-    )
-    parser.add_argument(
-        "--eq-threshold",
-        type=float,
-        default=0.80,
-        metavar="FLOAT",
-        dest="eq_threshold",
-        help=(
-            "Equivalence-confidence floor for headline_strain (default: 0.80). "
-            "Cases with EQ below this are reported as contested or excluded, not "
-            "counted toward the headline number. See BENCHMARK.md for details."
-        ),
-    )
-    parser.add_argument(
-        "--report",
-        nargs="?",
-        const="contradish-report.html",
-        metavar="FILE",
-        help=(
-            "Save a shareable HTML report. "
-            "Defaults to contradish-report.html if no filename given."
-        ),
-    )
+    _add_bare_mode_args(parser)
 
     # contradish benchmark --model claude-sonnet-4-6
     bench_p = sub.add_parser(
@@ -2448,6 +2464,29 @@ examples:
     cal_p.add_argument("--json", action="store_true", default=False,
                        help="Output report as JSON")
 
+    # `contradish "some system prompt"` -- a lone freeform positional, no
+    # subcommand -- is ambiguous to argparse once subparsers are registered
+    # on the same parser: parser.add_subparsers() adds a positional with
+    # nargs=PARSER ("one or more"), and argparse's positional matching lets
+    # it claim any unrecognized lone token before the fallback
+    # `system_prompt` positional (nargs='?') ever gets a chance, regardless
+    # of which was added first. The result: parser.parse_args() below would
+    # hard-error ("invalid choice") and exit 2 on exactly the invocation the
+    # README leads with. Detect that one case here -- a first token that
+    # isn't a flag and isn't one of the real subcommand names -- and parse
+    # it with a subparsers-free clone of the same bare-mode options instead
+    # of the full parser. Every other invocation shape (a real subcommand,
+    # any --flag first, or no arguments at all) is untouched and reaches
+    # parser.parse_args() exactly as before.
+    _argv = sys.argv[1:]
+    _first = _argv[0] if _argv else None
+    if _first is not None and not _first.startswith("-") and _first not in sub.choices:
+        bare_parser = argparse.ArgumentParser(prog="contradish", add_help=False)
+        _add_bare_mode_args(bare_parser)
+        args = bare_parser.parse_args(_argv)
+        args.command = None
+        cmd_from_prompt(args)
+        return
 
     args = parser.parse_args()
 
