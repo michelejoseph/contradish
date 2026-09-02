@@ -386,3 +386,60 @@ def test_fail_if_above_does_not_raise_when_candidate_unscored():
 def test_fail_if_above_default_threshold_is_quarter():
     r = _rr([_tr(consistency_score=0.9)], [_tr(consistency_score=0.9)])  # strain 0.1 < 0.25 default
     r.fail_if_above()  # must not raise
+
+
+def test_fail_if_below_does_not_raise_when_above_minimum():
+    r = _rr([_tr(consistency_score=0.9)], [_tr(consistency_score=0.9)])  # cai_score 0.9 >= 0.75
+    r.fail_if_below(consistency=0.75)  # must not raise
+
+
+def test_fail_if_below_raises_when_below_minimum():
+    r = _rr([_tr(consistency_score=0.9)], [_tr(consistency_score=0.5)])
+    with pytest.raises(AssertionError, match="CAI regression"):
+        r.fail_if_below(consistency=0.75)
+
+
+def test_fail_if_below_message_includes_labels_and_delta():
+    r = _rr([_tr(consistency_score=0.9)], [_tr(consistency_score=0.5)])
+    with pytest.raises(AssertionError) as exc_info:
+        r.fail_if_below(consistency=0.75)
+    msg = str(exc_info.value)
+    assert "pr" in msg and "prod" in msg
+    assert "Delta:" in msg
+
+
+def test_fail_if_below_default_threshold():
+    r = _rr([_tr(consistency_score=0.9)], [_tr(consistency_score=0.9)])
+    r.fail_if_below()  # 0.9 >= default 0.75, must not raise
+
+
+def test_regression_result_to_dict_shape():
+    tc = _tc(name="a case")
+    r = _rr([_tr(tc=tc, consistency_score=0.9)], [_tr(tc=tc, consistency_score=0.6)])
+    d = r.to_dict()
+    assert d["baseline_label"] == "prod"
+    assert d["candidate_label"] == "pr"
+    assert d["baseline_strain"] == r.baseline_report.cai_strain
+    assert d["candidate_strain"] == r.candidate_report.cai_strain
+    assert d["strain_delta"] == r.strain_delta
+    assert d["baseline_cai"] == r.baseline_report.cai_score
+    assert d["candidate_cai"] == r.candidate_report.cai_score
+    assert d["cai_delta"] == r.cai_delta
+    assert d["regressed"] == r.regressed
+    assert d["baseline"] == r.baseline_report.to_dict()
+    assert d["candidate"] == r.candidate_report.to_dict()
+
+
+def test_regression_result_str_shows_regression_status():
+    r = _rr([_tr(consistency_score=0.9)], [_tr(consistency_score=0.5)])
+    out = str(r)
+    assert "REGRESSION" in out
+    assert "prod" in out and "pr" in out
+
+
+def test_regression_result_str_shows_pass_status_and_na_when_no_delta():
+    r = _rr([], [_tr(consistency_score=0.9)])  # strain_delta None
+    out = str(r)
+    assert "PASS" in out
+    assert "N/A" in out
+    assert "n/a" in out
