@@ -155,7 +155,7 @@ def to_html(
     report,
     title:       Optional[str] = None,
     policy_name: Optional[str] = None,
-    version:     str           = "0.7.0",
+    version:     Optional[str] = None,
 ) -> str:
     """
     Generate a self-contained HTML report from a Report object.
@@ -164,18 +164,23 @@ def to_html(
         report:      A contradish Report.
         title:       Optional page title override.
         policy_name: Optional policy pack name to display in the header.
-        version:     contradish version string.
+        version:     contradish version string to print in the footer.
+                     Defaults to the installed contradish version.
 
     Returns:
         A complete HTML document as a string.
     """
-    from . import __version__
-    version = __version__
+    if version is None:
+        from . import __version__
+        version = __version__
 
     total   = len(report.results)
     passed  = len(report.passed)
     failed  = len(report.failed)
-    agg     = report.cai_score if hasattr(report, "cai_score") else 0.0
+    # cai_score / cai_strain are None on a Report with nothing scored yet
+    # (e.g. no results) -- fall back to 0.0 so _score_color/_score_label
+    # below don't crash comparing None to a float.
+    agg     = getattr(report, "cai_score", None) or 0.0
     strain  = report.cai_strain if hasattr(report, "cai_strain") else None
     ts      = datetime.datetime.now().strftime("%B %d, %Y at %H:%M")
 
