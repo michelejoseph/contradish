@@ -5,8 +5,7 @@ Run with: pytest tests/test_reconcile.py
 No API key required: reconciliation is pure (matches already-extracted claims).
 """
 from contradish.models import TestCase, TestResult, Report, RiskLevel
-from contradish.replay import ReplayReport, ReplayContradiction
-from contradish.reconcile import reconcile, ReconciliationReport, CommitmentMatch
+from contradish import ReplayReport, ReplayContradiction, reconcile, ReconciliationReport, CommitmentMatch
 from contradish.memory import Commitment
 from contradish.prompt_analyzer import (
     commitments_from_analysis, PromptAnalysis, PromptTension,

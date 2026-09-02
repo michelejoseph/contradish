@@ -71,7 +71,7 @@ def test_confident_wrong_does_not_fire_when_truthful():
 
 
 def test_truth_gate_rejects_consistency_win_that_lost_truth():
-    imp = sys.modules["contradish.improve"]
+    imp = sys.modules["contradish._improve"]
     suite_mod = sys.modules["contradish.suite"]
     repair_mod = sys.modules["contradish.repair"]
 

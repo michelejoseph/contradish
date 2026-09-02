@@ -43,11 +43,28 @@ Full docs: https://contradish.com
 import importlib as _importlib
 import warnings as _warnings
 
+# _improve.py / _reconcile.py / _replay.py are underscore-prefixed on disk
+# (unlike every other submodule here) because each one's main function is
+# re-exported under the exact same name as its own file -- `improve()` from
+# improve.py, `reconcile()` from reconcile.py, `replay()` from replay.py.
+# `from .improve import improve` would bind `contradish.improve` to the
+# *function*, silently clobbering the submodule reference the import system
+# had just set on the `contradish` package object as a side effect of
+# importing it -- so `contradish.improve.improve(...)` (attribute-chain
+# access into the submodule) would raise AttributeError, unpredictably,
+# depending on import order. There's no way to have one attribute slot be
+# both things at once. Renaming the files sidesteps the collision entirely:
+# `contradish.improve` is unambiguously the function (the documented,
+# tested usage -- see README), and the submodule, if you need it directly,
+# is `contradish._improve` (internal; `from contradish.improve import X`
+# does NOT work now that there is no contradish/improve.py -- use
+# `from contradish import improve` instead, or `contradish._improve` if you
+# specifically need submodule internals not exposed at the top level).
 from .suite        import Suite
 from .regression   import RegressionSuite
 from .firewall     import Firewall
 from .repair       import PromptRepair
-from .improve      import improve, improve_from_production, ImprovementResult
+from ._improve     import improve, improve_from_production, ImprovementResult
 from .findings     import findings_from, Finding
 from .models       import (
     TestCase,
@@ -82,7 +99,7 @@ from .memory       import (
     EmbeddingRelevance,
     openai_embedder,
 )
-from .replay       import (
+from ._replay      import (
     replay,
     replay_transcript,
     load_transcript,
@@ -90,7 +107,7 @@ from .replay       import (
     ReplayContradiction,
     ReplayTurn,
 )
-from .reconcile    import (
+from ._reconcile   import (
     reconcile,
     ReconciliationReport,
     CommitmentMatch,

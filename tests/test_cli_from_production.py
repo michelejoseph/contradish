@@ -7,18 +7,17 @@ tests cover only the CLI wiring: report loading, base-case threading, kinds
 selection, and the no-gaps exit path.
 """
 import argparse
-import importlib
 import json
 import os
 import tempfile
 
+import contradish._improve as improve_mod
 from contradish.cli import cmd_improve
 from contradish.models import TestCase, TestResult, Report, RiskLevel
-from contradish.replay import ReplayReport, ReplayContradiction
+from contradish import ReplayReport, ReplayContradiction
 
-# cmd_improve does a function-local `from contradish.improve import
+# cmd_improve does a function-local `from contradish._improve import
 # improve_from_production`, so patching this module attribute is enough.
-improve_mod = importlib.import_module("contradish.improve")
 
 
 # ── fixtures ────────────────────────────────────────────────────────────────

@@ -8,7 +8,7 @@ import json
 import os
 import tempfile
 
-from contradish.replay import (
+from contradish import (
     load_transcript,
     replay_transcript,
     replay,

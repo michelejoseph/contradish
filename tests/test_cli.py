@@ -11,7 +11,6 @@ tests/test_cli_from_production.py. cmd_* handlers exit via sys.exit(); tests
 catch SystemExit and assert on the code.
 """
 import argparse
-import importlib
 import json
 import os
 import sys
@@ -26,7 +25,7 @@ from contradish.cli import (
     cmd_judge_floor, cmd_prompt, cmd_replay,
 )
 from contradish.models import TestCase, TestResult, Report, ContradictionPair, RiskLevel
-from contradish.replay import ReplayReport, ReplayContradiction
+from contradish import ReplayReport, ReplayContradiction
 from contradish.fairness import FairnessAudit, CaseProfileResult
 from contradish.judge_calibration import JudgeCalibration
 from contradish.prompt_analyzer import PromptAnalysis, PromptTension
@@ -537,15 +536,12 @@ def test_replay_missing_transcript_exits_one(tmp_path, capsys):
 
 
 def test_replay_no_turns_found_exits_one(tmp_path, monkeypatch, capsys):
-    # NOTE: `import contradish.replay as replay_mod` does NOT work here --
-    # contradish/__init__.py does `from .replay import replay, ...`, which
-    # rebinds the `replay` attribute on the `contradish` package namespace to
-    # that function, shadowing the submodule. `contradish.replay` after
-    # `import contradish` is therefore the function, not the module (a real,
-    # reproducible package quirk, not a test artifact -- see the commit
-    # message). importlib.import_module reads sys.modules directly and
-    # sidesteps it, matching the existing pattern in test_cli_from_production.py.
-    replay_mod = importlib.import_module("contradish.replay")
+    # cmd_replay does a function-local `from contradish._replay import
+    # load_transcript, replay_transcript` -- contradish/replay.py was renamed
+    # to contradish/_replay.py precisely so this plain import (no importlib
+    # trick needed) unambiguously gets the submodule, not the re-exported
+    # `replay` function.
+    import contradish._replay as replay_mod
     p = tmp_path / "empty.jsonl"
     p.write_text("")
     monkeypatch.setattr(replay_mod, "load_transcript", lambda path: [])
@@ -555,15 +551,12 @@ def test_replay_no_turns_found_exits_one(tmp_path, monkeypatch, capsys):
 
 
 def test_replay_text_summary_and_max_contradictions_gate(tmp_path, monkeypatch, capsys):
-    # NOTE: `import contradish.replay as replay_mod` does NOT work here --
-    # contradish/__init__.py does `from .replay import replay, ...`, which
-    # rebinds the `replay` attribute on the `contradish` package namespace to
-    # that function, shadowing the submodule. `contradish.replay` after
-    # `import contradish` is therefore the function, not the module (a real,
-    # reproducible package quirk, not a test artifact -- see the commit
-    # message). importlib.import_module reads sys.modules directly and
-    # sidesteps it, matching the existing pattern in test_cli_from_production.py.
-    replay_mod = importlib.import_module("contradish.replay")
+    # cmd_replay does a function-local `from contradish._replay import
+    # load_transcript, replay_transcript` -- contradish/replay.py was renamed
+    # to contradish/_replay.py precisely so this plain import (no importlib
+    # trick needed) unambiguously gets the submodule, not the re-exported
+    # `replay` function.
+    import contradish._replay as replay_mod
     p = tmp_path / "log.jsonl"
     p.write_text('{"role": "user", "content": "hi"}\n')
     monkeypatch.setattr(replay_mod, "load_transcript", lambda path: [{"role": "user", "content": "hi"}])
@@ -575,15 +568,12 @@ def test_replay_text_summary_and_max_contradictions_gate(tmp_path, monkeypatch, 
 
 
 def test_replay_writes_output_file(tmp_path, monkeypatch, capsys):
-    # NOTE: `import contradish.replay as replay_mod` does NOT work here --
-    # contradish/__init__.py does `from .replay import replay, ...`, which
-    # rebinds the `replay` attribute on the `contradish` package namespace to
-    # that function, shadowing the submodule. `contradish.replay` after
-    # `import contradish` is therefore the function, not the module (a real,
-    # reproducible package quirk, not a test artifact -- see the commit
-    # message). importlib.import_module reads sys.modules directly and
-    # sidesteps it, matching the existing pattern in test_cli_from_production.py.
-    replay_mod = importlib.import_module("contradish.replay")
+    # cmd_replay does a function-local `from contradish._replay import
+    # load_transcript, replay_transcript` -- contradish/replay.py was renamed
+    # to contradish/_replay.py precisely so this plain import (no importlib
+    # trick needed) unambiguously gets the submodule, not the re-exported
+    # `replay` function.
+    import contradish._replay as replay_mod
     p = tmp_path / "log.jsonl"
     p.write_text('{"role": "user", "content": "hi"}\n')
     monkeypatch.setattr(replay_mod, "load_transcript", lambda path: [{"role": "user", "content": "hi"}])

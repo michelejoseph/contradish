@@ -1,6 +1,6 @@
 """
-Full test coverage for contradish/improve.py — the detect -> diagnose ->
-repair -> re-verify loop.
+Full test coverage for contradish/_improve.py (public API: contradish.improve)
+— the detect -> diagnose -> repair -> re-verify loop.
 
 improve() orchestrates two other modules (Suite, PromptRepair) via
 function-local imports (`from .suite import Suite`, `from .repair import
@@ -18,14 +18,13 @@ holdout baseline, if any -> holdout re-score of the winner, if any), so
 each scenario's assertions can be pinned to a specific, known Report rather
 than inferred from real LLM/Suite behavior.
 """
-import importlib
 import json
 from types import SimpleNamespace
 
 import pytest
 
 from contradish.models import ContradictionPair, Report, RepairResult, TestCase, TestResult
-from contradish.improve import (
+from contradish._improve import (
     ImprovementResult,
     _make_app_for_prompt,
     _resolve_cases,
@@ -35,31 +34,32 @@ from contradish.improve import (
     improve_from_production,
 )
 
-# NOTE on a real bug found while writing these tests (not a test-authoring
-# workaround): contradish/__init__.py does `from .improve import improve`
-# and `from .reconcile import reconcile` -- each re-export's NAME collides
-# with its own submodule's name, so the import statement's final binding
-# overwrites the submodule reference on the `contradish` package object.
-# sys.modules["contradish.improve"] / ["contradish.reconcile"] still hold
-# the real modules (so `from contradish.improve import X` works fine), but
-# ANY attribute-chain access through the package -- `contradish.improve.X`,
-# and critically also `import contradish.improve as m` (Python compiles a
-# dotted "import ... as" into an attribute *getattr* on the parent package,
-# not a sys.modules lookup) -- silently resolves to the re-exported
-# function instead of the module and raises AttributeError on further
-# attribute access. Only importlib.import_module("contradish.improve")
-# (or direct sys.modules indexing) reads sys.modules directly and gets the
-# real module. This is the same class of bug already documented (not
-# fixed) for `contradish.replay` earlier in this project's history -- see
-# test_improve_module_attribute_is_shadowed_by_reexport and
-# test_reconcile_module_attribute_is_shadowed_by_reexport below, and
-# _reset_fakes / the finetune and improve_from_production tests, which
-# route around it via importlib.import_module rather than patching through
-# the package attribute (a plain `import contradish.improve as x` does NOT
-# work around it, as demonstrated above).
+# NOTE on a real bug found while first writing these tests, since fixed:
+# contradish/__init__.py used to do `from .improve import improve` and
+# `from .reconcile import reconcile` -- each re-export's NAME collided with
+# its own submodule's name (improve.py's `improve` function vs. the
+# `contradish.improve` submodule), so the import statement's final binding
+# overwrote the submodule reference on the `contradish` package object.
+# `contradish.improve.<anything>` (attribute-chain access into the
+# submodule) raised AttributeError, even though `from contradish.improve
+# import improve` (a real import statement) worked fine -- and critically,
+# `import contradish.improve as m` did NOT dodge it either, since Python
+# compiles a dotted "import ... as" into an attribute getattr on the
+# already-imported parent package, not a sys.modules lookup.
+#
+# Fixed by renaming the files on disk (improve.py -> _improve.py,
+# reconcile.py -> _reconcile.py, replay.py -> _replay.py) so the collision
+# can't happen: `contradish.improve` is now unambiguously the re-exported
+# function (the documented public API, unchanged), and the submodule lives
+# at `contradish._improve`, a distinct attribute slot. See the comment
+# block in contradish/__init__.py above the _improve/_reconcile/_replay
+# imports for the full explanation, and the regression tests below
+# (renamed from "..._is_shadowed_by_its_own_reexport" to
+# "..._no_longer_shadowed...") which now assert the fix instead of pinning
+# the bug.
 
-improve_module = importlib.import_module("contradish.improve")
-reconcile_module = importlib.import_module("contradish.reconcile")
+import contradish._improve as improve_module
+import contradish._reconcile as reconcile_module
 
 
 # ── Fixture builders ────────────────────────────────────────────────────────
@@ -947,46 +947,49 @@ def test_improve_from_production_verbose_prints_repairing_over_message(monkeypat
     assert "repairing over 1 case(s) (0 supplied + 1 from production)" in out
 
 
-# ── Regression: package-attribute shadowing bug (documented, not fixed) ────
+# ── Regression: package-attribute shadowing bug (fixed) ─────────────────────
 #
-# See the module-level NOTE above. contradish/__init__.py's
-# `from .improve import improve` / `from .reconcile import reconcile`
-# re-exports shadow the submodule reference on the `contradish` package
-# object with the re-exported function, because the imported name is
-# identical to its own submodule's name. This means user code that does
-# `import contradish` and then reaches for `contradish.improve.<anything>`
-# or `contradish.reconcile.<anything>` as an attribute chain breaks, even
-# though `from contradish.improve import improve` (a real import
-# statement) works fine. Same bug class as the previously-documented
-# `contradish.replay` shadowing. These tests pin the current (buggy)
-# behavior so a future fix is a deliberate, visible change to this file.
+# See the module-level NOTE above. contradish/__init__.py used to do
+# `from .improve import improve` / `from .reconcile import reconcile`,
+# whose re-exports shadowed the submodule reference on the `contradish`
+# package object because the imported name was identical to its own
+# submodule's name -- `contradish.improve.<anything>` (attribute-chain
+# access into the submodule) raised AttributeError. Fixed by renaming the
+# files (improve.py -> _improve.py, reconcile.py -> _reconcile.py,
+# replay.py -> _replay.py), which removes the collision entirely: the
+# function and the submodule now live at different attribute names. These
+# tests now assert the fixed behavior rather than pinning the old bug.
 
-def test_improve_module_attribute_is_shadowed_by_its_own_reexport():
+def test_improve_attribute_is_the_function_not_shadowed():
     import contradish
     assert callable(contradish.improve)
-    with pytest.raises(AttributeError):
-        contradish.improve.improve  # the submodule is not reachable this way
+    assert contradish.improve is improve  # the documented top-level export
 
 
-def test_reconcile_module_attribute_is_shadowed_by_its_own_reexport():
+def test_improve_submodule_is_reachable_at_its_own_underscore_name():
+    import contradish
+    assert contradish._improve is improve_module
+    assert contradish._improve.improve is contradish.improve  # same function, both paths
+
+
+def test_reconcile_attribute_is_the_function_not_shadowed():
     import contradish
     assert callable(contradish.reconcile)
-    with pytest.raises(AttributeError):
-        contradish.reconcile.cases_from_reconciliation  # not reachable this way either
 
 
-def test_improve_submodule_is_still_reachable_via_real_import():
-    # The escape hatch: `from contradish.improve import X` (a real import
-    # statement) and importlib.import_module both read sys.modules
-    # directly and are unaffected. `import contradish.improve as x` is
-    # NOT a safe escape hatch here -- Python compiles that form into an
-    # attribute getattr on the already-imported `contradish` package,
-    # so it hits the exact same shadowing bug (see the module-level NOTE).
-    from contradish.improve import improve as improve_fn
-    from contradish.reconcile import cases_from_reconciliation
+def test_reconcile_submodule_is_reachable_at_its_own_underscore_name():
+    import contradish
+    assert contradish._reconcile is reconcile_module
+    assert callable(contradish._reconcile.cases_from_reconciliation)
+
+
+def test_improve_and_reconcile_both_importable_the_documented_way():
+    # The README's documented usage: `from contradish import improve` /
+    # `from contradish import reconcile`. No importlib workaround needed --
+    # this is exactly what broke before the fix (it used to require
+    # importlib.import_module to dodge the shadowing on the submodule
+    # side, though the top-level function import itself was never broken).
+    from contradish import improve as improve_fn
+    from contradish import cases_from_reconciliation
     assert callable(improve_fn)
     assert callable(cases_from_reconciliation)
-
-    import contradish.improve as shadowed  # noqa: this IS shadowed, on purpose
-    assert shadowed is not importlib.import_module("contradish.improve")
-    assert shadowed is improve_fn

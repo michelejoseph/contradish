@@ -513,9 +513,9 @@ def cmd_improve(args):
     if from_prod:
         # ── Closed loop: production gaps become benchmark cases, then repair ──
         # contradish improve --from-production bench.json replay.json ...
-        from contradish.improve import improve_from_production
+        from contradish._improve import improve_from_production
         from contradish.models import Report
-        from contradish.replay import ReplayReport
+        from contradish._replay import ReplayReport
 
         bench_path, replay_path = from_prod
         for label, path in (("benchmark report", bench_path),
@@ -568,7 +568,7 @@ def cmd_improve(args):
                 print(f"\n  {msg}\n")
             sys.exit(0)
     else:
-        from contradish.improve import improve
+        from contradish._improve import improve
 
         # Resolve cases: --policy NAME, --eval-file FILE, or error.
         cases_arg: object
@@ -919,7 +919,7 @@ def cmd_replay(args):
     reports where the assistant contradicted something it said earlier in the
     same session.
     """
-    from contradish.replay import load_transcript, replay_transcript
+    from contradish._replay import load_transcript, replay_transcript
 
     _check_api_key()
     use_json = getattr(args, "json", False)
@@ -977,9 +977,9 @@ def cmd_reconcile(args):
     never tested (the coverage gap), and the benchmark's coverage and
     predictive-validity numbers. Pure: no API call unless --embeddings is set.
     """
-    from contradish.reconcile import reconcile
+    from contradish._reconcile import reconcile
     from contradish.models import Report
-    from contradish.replay import ReplayReport
+    from contradish._replay import ReplayReport
 
     for label, path in (("benchmark report", args.report_file),
                         ("replay report", args.replay_file)):

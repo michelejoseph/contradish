@@ -634,7 +634,7 @@ def improve_from_production(
         benchmark missed (no validity or coverage gaps), so there is simply
         nothing new to repair.
     """
-    from .reconcile import reconcile, cases_from_reconciliation
+    from ._reconcile import reconcile, cases_from_reconciliation
 
     rec = reconcile(
         report, replay_report,

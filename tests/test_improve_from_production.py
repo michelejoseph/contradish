@@ -6,17 +6,13 @@ No API key required. cases_from_reconciliation is pure, and the
 improve_from_production test mocks the module-level improve() so no model is
 called.
 """
-import importlib
-
-# `contradish.improve` the attribute is the function (re-exported in __init__),
-# so grab the actual submodule object to monkeypatch its module-level improve().
-improve_mod = importlib.import_module("contradish.improve")
-from contradish.improve import improve_from_production
-from contradish.reconcile import (
+import contradish._improve as improve_mod  # the submodule, to monkeypatch its module-level improve()
+from contradish import (
+    improve_from_production,
     reconcile, cases_from_reconciliation, ReconciliationReport, CommitmentMatch,
+    ReplayReport, ReplayContradiction,
 )
 from contradish.models import TestCase, TestResult, Report, RiskLevel
-from contradish.replay import ReplayReport, ReplayContradiction
 
 
 # ── helpers (mirror test_reconcile.py) ──────────────────────────────────────
