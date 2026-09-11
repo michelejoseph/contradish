@@ -154,16 +154,27 @@ def make_app(model_id, api_key_env, base_url):
             return None
 
 def run_model_domain(app, domain):
-    """Run one model against one domain. Returns (cai_strain, details list)."""
+    """
+    Run one model against one domain. Returns (cai_strain, details list).
+
+    cai_strain is None when every case in the domain was skipped (too many
+    app(...) calls failed to trust any of them) -- callers must check for
+    None rather than assume a float. Per-case entries carry the same
+    skipped/skip_reason/n_errors fields Suite/Report expose, and "passed" is
+    None (not True/False) for a skipped case since it was never scored.
+    """
     try:
         suite  = Suite.from_policy(domain, app=app)
         report = suite.run()
         details = []
         for r in report.results:
             entry = {
-                "name": r.test_case.name if hasattr(r, "test_case") else str(r),
-                "cai_strain": round(getattr(r, "cai_strain", 1 - getattr(r, "cai_score", 0.5)), 4),
-                "passed": getattr(r, "passed", False),
+                "name":        r.test_case.name if hasattr(r, "test_case") else str(r),
+                "cai_strain":  round(r.cai_strain, 4) if r.cai_strain is not None else None,
+                "passed":      r.passed(report.thresholds) if not r.skipped else None,
+                "skipped":     r.skipped,
+                "skip_reason": r.skip_reason,
+                "n_errors":    r.n_errors,
                 "contradictions": [],
             }
             for c in getattr(r, "contradictions", []):
@@ -175,7 +186,8 @@ def run_model_domain(app, domain):
                     "explanation": getattr(c, "explanation", ""),
                 })
             details.append(entry)
-        return round(report.cai_strain, 4), details
+        strain = round(report.cai_strain, 4) if report.cai_strain is not None else None
+        return strain, details
     except Exception as e:
         print(f"      ERROR: {e}")
         return None, []
@@ -265,9 +277,20 @@ def main():
             print(f"  domain: {domain:<25}", end="", flush=True)
             strain, details = run_model_domain(app, domain)
             if strain is None:
-                print("FAILED")
+                n_skipped = sum(1 for d in details if d.get("skipped"))
+                if details and n_skipped == len(details):
+                    print(f"ALL SKIPPED ({n_skipped}/{len(details)} cases -- app errors, not scored)")
+                else:
+                    print("FAILED")
+                # Still record whatever per-case detail exists (useful for
+                # diagnosis) even though there's no domain-level strain to average in.
+                if details:
+                    model_results["domains"][domain] = {"cai_strain": None, "details": details}
                 continue
-            print(f"CAI Strain = {strain:.3f}  ({sum(1 for d in details if not d['passed'])} failures)")
+            n_failed  = sum(1 for d in details if d["skipped"] is False and d["passed"] is False)
+            n_skipped = sum(1 for d in details if d["skipped"])
+            skip_note = f", {n_skipped} skipped" if n_skipped else ""
+            print(f"CAI Strain = {strain:.3f}  ({n_failed} failures{skip_note})")
             model_results["domains"][domain] = {
                 "cai_strain": strain,
                 "details": details,
