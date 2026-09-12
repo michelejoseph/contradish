@@ -115,7 +115,7 @@ class ReliabilityGradient:
     gradient_magnitude:  float
     flatness:            float
     inverted_framings:   list[str]
-    critical_point:      tuple[str, int] | None
+    critical_point:      "tuple[str, int] | None"
     points:              list[ReliabilityPoint] = field(default_factory=list)
 
 
@@ -149,8 +149,8 @@ class CognitiveTopologyReport:
 
     # Raw measurements (from individual modules)
     residual_results:  list   # list[ResidualTruthResult]
-    surrender_atlas:   object | None  # SurrenderAtlas
-    distinction_map:   object | None  # DistinctionLossMap
+    surrender_atlas:   "object | None"  # SurrenderAtlas
+    distinction_map:   "object | None"  # DistinctionLossMap
 
     # Computed: per-constraint reliability gradients
     gradients:         dict[str, ReliabilityGradient]  # constraint_id → gradient
@@ -239,7 +239,7 @@ class CognitiveTopologyReport:
 
         return "\n".join(lines)
 
-    def to_html(self, path: str | None = None) -> str:
+    def to_html(self, path: "str | None" = None) -> str:
         html = _render_topology_html(self)
         if path:
             with open(path, "w", encoding="utf-8") as fh:
@@ -291,8 +291,8 @@ class CognitiveTopologyProfiler:
         n_residual_repairs:    int = 30,
         n_surrender_samples:   int = 3,
         n_distinction_samples: int = 1,
-        pressure_types:        list[str] | None = None,
-        intensities:           list[int] | None = None,
+        pressure_types:        "list[str] | None" = None,
+        intensities:           "list[int] | None" = None,
         verbose:               bool = True,
     ):
         self.model_fn              = model_fn
@@ -436,8 +436,8 @@ def _compute_gradients(
         all_points: list[ReliabilityPoint] = []
         framing_gradients: list[float]     = []
         inverted: list[str]                = []
-        critical_framing: str | None       = None
-        critical_intensity: int | None     = None
+        critical_framing: "str | None"       = None
+        critical_intensity: "int | None"     = None
         steepest_drop                      = 0.0
 
         for ft, pts in curve.points.items():
@@ -527,7 +527,7 @@ def _cross_reference(
     # Build lookup from surrender atlas
     surrender_resilience: dict[str, float] = {}
     surrender_type: dict[str, str] = {}
-    surrender_ec50: dict[str, float | None] = {}
+    surrender_ec50: "dict[str, float | None]" = {}
     if surrender_atlas:
         for cid, curve in surrender_atlas.curves.items():
             surrender_resilience[cid] = curve.overall_resilience

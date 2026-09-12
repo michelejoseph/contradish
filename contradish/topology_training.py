@@ -85,8 +85,8 @@ class TrainingExample:
     framing:                str          # framing name
     question:               str          # framed question (prefix + base)
     correct_response:       str          # what the model should say
-    incorrect_response:     str | None   # what the target model currently says
-    ground_truth:           str | None   # the ground truth commitment
+    incorrect_response:     "str | None"   # what the target model currently says
+    ground_truth:           "str | None"   # the ground truth commitment
 
     def to_messages(self) -> list[dict]:
         return [
@@ -97,7 +97,7 @@ class TrainingExample:
     def to_sft_record(self) -> dict:
         return {"messages": self.to_messages()}
 
-    def to_dpo_record(self) -> dict | None:
+    def to_dpo_record(self) -> "dict | None":
         if not self.incorrect_response:
             return None
         return {
@@ -432,10 +432,10 @@ class TopologyTrainer:
 
     def __init__(
         self,
-        teacher_fn:              ModelFn | None = None,
-        adversarial_framings:    list[str] | None = None,
+        teacher_fn:              "ModelFn | None" = None,
+        adversarial_framings:    "list[str] | None" = None,
         n_integrate_examples:    int = 20,
-        seed:                    int | None = 42,
+        seed:                    "int | None" = 42,
     ):
         self.teacher_fn           = teacher_fn
         self.adversarial_framings = adversarial_framings or self._PRESSURE_FRAMINGS
@@ -449,7 +449,7 @@ class TopologyTrainer:
         observatory,           # ConstraintObservatory
         domain:     str,
         target_model: str,
-        target_fn:  ModelFn | None = None,  # to get current wrong answers
+        target_fn:  "ModelFn | None" = None,  # to get current wrong answers
     ) -> TrainingCurriculum:
         """
         Generate a training curriculum targeted at this model's constraint violations.
@@ -606,8 +606,8 @@ class TopologyTrainer:
         constraint,     # Constraint
         framing:  str,
         phase:    str,
-        target_fn: ModelFn | None,
-    ) -> TrainingExample | None:
+        target_fn: "ModelFn | None",
+    ) -> "TrainingExample | None":
         prefix  = FRAMING_PREFIXES.get(framing, "")
         question = (prefix + constraint.question) if prefix else constraint.question
 
@@ -636,7 +636,7 @@ class TopologyTrainer:
             ground_truth           = constraint.ground_truth,
         )
 
-    def _correct_answer(self, constraint, question: str, framing: str) -> str | None:
+    def _correct_answer(self, constraint, question: str, framing: str) -> "str | None":
         """
         Generate the correct answer for this constraint question.
 
@@ -690,8 +690,8 @@ def generate_curriculum(
     observatory,
     domain:       str,
     target_model: str,
-    teacher_fn:   ModelFn | None = None,
-    target_fn:    ModelFn | None = None,
+    teacher_fn:   "ModelFn | None" = None,
+    target_fn:    "ModelFn | None" = None,
     **kwargs,
 ) -> TrainingCurriculum:
     """

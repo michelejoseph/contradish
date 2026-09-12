@@ -2273,7 +2273,7 @@ class Judge:
         gold_standard:        str,
         model_output:         str,
         critical_claim:       str = "",
-        disqualifying_claims: list[str] | None = None,
+        disqualifying_claims: "list[str] | None" = None,
     ) -> dict:
         """
         Score a single model output against a verified ground-truth answer.

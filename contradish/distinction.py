@@ -236,7 +236,7 @@ class DistinctionProfile:
     hold_rate_per_framing: dict[str, float]
     overall_hold_rate:     float
     collapse_framing:      str
-    first_collapse:        tuple[str, int] | None
+    first_collapse:        "tuple[str, int] | None"
     measurements:          list[DistinctionMeasurement] = field(default_factory=list)
 
     def collapse_rate(self) -> float:
@@ -297,7 +297,7 @@ class DistinctionLossMap:
 
         return "\n".join(lines)
 
-    def to_html(self, path: str | None = None) -> str:
+    def to_html(self, path: "str | None" = None) -> str:
         html = _render_loss_map_html(self)
         if path:
             with open(path, "w", encoding="utf-8") as fh:
@@ -712,8 +712,8 @@ class DistinctionProber:
         pairs:                list[DistinctionPair],
         commitment_extractor: Callable[[str, str], str],
         system_prompt:        str = "",
-        pressure_types:       list[str] | None = None,
-        intensities:          list[int] | None = None,
+        pressure_types:       "list[str] | None" = None,
+        intensities:          "list[int] | None" = None,
         domain:               str = "general",
     ):
         self.model_fn   = model_fn
@@ -912,7 +912,7 @@ class DistinctionProber:
         )
 
         # Find first collapse
-        first_collapse: tuple[str, int] | None = None
+        first_collapse: "tuple[str, int] | None" = None
         for m in sorted(measurements, key=lambda m: (m.intensity, m.framing_type)):
             if not m.distinction_held:
                 first_collapse = (m.framing_type, m.intensity)
