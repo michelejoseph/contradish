@@ -137,8 +137,8 @@ class SurrenderPoint:
     intensity:         int
     surrender_rate:    float          # 0.0–1.0
     n_samples:         int
-    example_surrender: str | None    # verbatim example of surrender, if any
-    example_hold:      str | None    # verbatim example of holding, if any
+    example_surrender: "str | None"    # verbatim example of surrender, if any
+    example_hold:      "str | None"    # verbatim example of holding, if any
 
 
 @dataclass
@@ -181,7 +181,7 @@ class SurrenderCurve:
     ground_truth:            str
     question:                str
     points:                  dict[str, list[SurrenderPoint]]
-    ec50:                    dict[str, float | None]
+    ec50:                    "dict[str, float | None]"
     resilience_per_framing:  dict[str, float]
     overall_resilience:      float
     most_vulnerable_framing: str
@@ -244,7 +244,7 @@ class SurrenderCurve:
 
     # ── HTML visualization ────────────────────────────────────────────────────
 
-    def to_html(self, path: str | None = None) -> str:
+    def to_html(self, path: "str | None" = None) -> str:
         html = _render_curve_html(self)
         if path:
             with open(path, "w", encoding="utf-8") as fh:
@@ -306,8 +306,8 @@ class SurrenderProfiler:
         surrender_detector:   Callable[[str, str], bool],
         ground_truth:         str = "",
         system_prompt:        str = "",
-        pressure_types:       list[str] | None = None,
-        intensities:          list[int] | None = None,
+        pressure_types:       "list[str] | None" = None,
+        intensities:          "list[int] | None" = None,
     ):
         self.model_fn             = model_fn
         self.constraint_id        = constraint_id
@@ -389,7 +389,7 @@ class SurrenderProfiler:
             points_by_type[framing_type] = pts
 
         # ── Compute derived metrics ────────────────────────────────────────────
-        ec50: dict[str, float | None]       = {}
+        ec50: "dict[str, float | None]"       = {}
         resilience: dict[str, float]        = {}
 
         for framing_type, pts in points_by_type.items():
@@ -465,7 +465,7 @@ class SurrenderAtlas:
 
         return "\n".join(lines)
 
-    def to_html(self, path: str | None = None) -> str:
+    def to_html(self, path: "str | None" = None) -> str:
         html = _render_atlas_html(self)
         if path:
             with open(path, "w", encoding="utf-8") as fh:
@@ -480,8 +480,8 @@ def profile_constraints(
     surrender_detector:   Callable[[str, str, str], bool],  # (commitment, ground_truth, constraint_id) -> bool
     domain:               str = "general",
     system_prompt:        str = "",
-    pressure_types:       list[str] | None = None,
-    intensities:          list[int] | None = None,
+    pressure_types:       "list[str] | None" = None,
+    intensities:          "list[int] | None" = None,
     n_samples:            int = 3,
     verbose:              bool = True,
 ) -> SurrenderAtlas:
@@ -548,7 +548,7 @@ def profile_constraints(
 
 # ── Math helpers ──────────────────────────────────────────────────────────────
 
-def _compute_ec50(points: list[tuple[int, float]]) -> float | None:
+def _compute_ec50(points: list[tuple[int, float]]) -> "float | None":
     """
     Estimate the intensity at which surrender rate crosses 50%.
     Uses linear interpolation between the two bracketing points.
