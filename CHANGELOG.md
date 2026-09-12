@@ -4,6 +4,31 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0 —
 earlier releases were not retroactively documented.
 
+## [1.30.0] - 2026-09-12
+
+Adds the resolution operator: `contradish distinguish` no longer only
+reports that a distinction collapsed, it can now search for why.
+
+### Added
+
+- **`contradish/resolution.py` -- the resolution operator.** For a
+  distinction a real model is observed to collapse, `discover_resolution()`
+  proposes candidate hidden variables that would make both sides of the
+  distinction correct at once, proves the winning candidate causal with a
+  real flip test (assert one pole, assert the opposite, check the answer
+  flips both ways -- `causal_effect_size`), and only reports the
+  distinction resolved if the resulting one-line system-prompt patch
+  measurably raises the hold rate on fresh, unconditioned probes
+  (`validated_hold_rate`). A candidate that passes the flip test but whose
+  patch doesn't help is reported honestly as unresolved, not shipped as a
+  guess. `discover_resolutions_for_loss_map()` runs it over every
+  sufficiently-collapsed pair in an existing `DistinctionLossMap` in one
+  call -- the natural follow-up to `DistinctionProber.measure()`. Wired
+  into the CLI as `contradish distinguish --resolve` (plus
+  `--resolve-collapse-threshold`, `--resolve-candidates`,
+  `--resolve-samples`), and exported from the top-level `contradish`
+  package alongside `DistinctionProber`.
+
 ## [1.29.0] — 2026-09-02
 
 "Harden the core" pass: fixed every known bug, closed the remaining test

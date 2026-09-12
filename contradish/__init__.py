@@ -11,6 +11,8 @@ Tools:
     Firewall          -- real-time contradiction detection in production
     PromptRepair      -- auto-generate and test improved prompt variants
     DistinctionProber -- Type I distinction-loss probing (contradish distinguish)
+    discover_resolution -- find and validate the hidden condition behind a
+                           collapsing distinction (contradish distinguish --resolve)
 
 Quickstart:
     pip install contradish
@@ -96,6 +98,10 @@ from .distinction  import (
     diff_distinction_reports,
     KBVMeasurement, KBVProfile, KBVReport, default_restatement_judge,
 )
+from .resolution   import (
+    ResolutionCandidate, ResolutionResult,
+    discover_resolution, discover_resolutions_for_loss_map,
+)
 from .memory       import (
     ConversationMemory,
     Commitment,
@@ -148,7 +154,7 @@ from .domains      import (
 from .conviction   import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .cdr          import generate_cdr
 
-__version__ = "1.29.0"
+__version__ = "1.30.0"
 __all__ = [
     "Suite",
     "RegressionSuite",

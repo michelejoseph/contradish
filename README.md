@@ -110,6 +110,13 @@ contradish distinguish --domain medication --app mymodule:my_app
 contradish distinguish --domain immigration --report --json
 ```
 
+**Fixing the distinctions that collapse (`contradish distinguish --resolve`).** Finding a collapsed distinction is not the same as knowing why it collapsed. `--resolve` proposes candidate hidden variables that could explain the collapse, proves the winning one is causal with a real flip test (assert the variable one way, assert the opposite, check the model's answer flips both ways), and only reports the distinction fixed if a one-line system-prompt patch measurably raises the hold rate on fresh, unconditioned probes. A candidate that looks plausible under the flip test but whose patch doesn't move the needle is reported unresolved, not shipped as a guess dressed up as a fix. See `contradish/resolution.py` for the full method and the research it operationalizes.
+
+```bash
+contradish distinguish --domain medication --app mymodule:my_app --resolve
+contradish distinguish --domain immigration --resolve --resolve-collapse-threshold 0.2 --json
+```
+
 ---
 
 ## Findings — the discovery layer

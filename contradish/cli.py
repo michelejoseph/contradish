@@ -937,6 +937,7 @@ def cmd_distinguish(args):
     from contradish.distinction import (
         DistinctionProber, BUILTIN_DISTINCTION_PAIRS, default_restatement_judge,
     )
+    from contradish.resolution import discover_resolutions_for_loss_map
     from contradish.llm import LLMClient
 
     _check_api_key()
@@ -1014,6 +1015,38 @@ def cmd_distinguish(args):
             print(f"  FAIL: overall KBV rate {kbv_report.overall_kbv_rate:.2f} "
                   f"exceeds threshold {kbv_threshold}.\n")
             sys.exit(1)
+
+    # -- resolution operator ------------------------------------------------
+    # Don't just report which distinctions collapsed: for every one that
+    # collapsed past --resolve-collapse-threshold, search for the hidden
+    # disambiguating condition, prove it's causal with a real flip test, and
+    # only report it resolved if a system-prompt patch measurably improves
+    # the hold rate. See contradish/resolution.py.
+    if getattr(args, "resolve", False):
+        results = discover_resolutions_for_loss_map(
+            loss_map              = loss_map,
+            pairs                 = pairs,
+            model_fn              = model_fn,
+            commitment_extractor  = extractor,
+            llm                   = llm,
+            collapse_threshold    = getattr(args, "resolve_collapse_threshold", 0.3),
+            n_candidates          = getattr(args, "resolve_candidates", 3),
+            validation_samples    = getattr(args, "resolve_samples", 2),
+            verbose               = not use_json,
+        )
+
+        if use_json:
+            print(json.dumps(
+                {"resolution_results": [r.to_dict() for r in results]}, indent=2,
+            ))
+        else:
+            if not results:
+                print("\n  RESOLUTION OPERATOR: no distinction collapsed past "
+                      f"--resolve-collapse-threshold "
+                      f"{getattr(args, 'resolve_collapse_threshold', 0.3)}; nothing to resolve.\n")
+            for r in results:
+                print(r.report())
+                print()
 
     sys.exit(0)
 
@@ -2566,6 +2599,24 @@ examples:
     dist_p.add_argument("--kbv-threshold", type=float, default=None, metavar="F", dest="kbv_threshold",
                         help="Exit nonzero if the overall KBV rate exceeds this. Implies --kbv. "
                              "For CI gating.")
+    dist_p.add_argument("--resolve", action="store_true", default=False,
+                        help="For every distinction that collapsed past "
+                             "--resolve-collapse-threshold, run the resolution operator: "
+                             "propose candidate hidden variables, prove one causal with a "
+                             "flip test, and validate a system-prompt patch, instead of only "
+                             "reporting that the distinction collapsed. See "
+                             "contradish/resolution.py.")
+    dist_p.add_argument("--resolve-collapse-threshold", type=float, default=0.3, metavar="F",
+                        dest="resolve_collapse_threshold",
+                        help="Only run the resolution operator on distinctions with at least "
+                             "this collapse rate. Default 0.3.")
+    dist_p.add_argument("--resolve-candidates", type=int, default=3, metavar="N",
+                        dest="resolve_candidates",
+                        help="Candidate hidden variables to propose per distinction. Default 3.")
+    dist_p.add_argument("--resolve-samples", type=int, default=2, metavar="N",
+                        dest="resolve_samples",
+                        help="Probes per candidate per direction, and per baseline/validation "
+                             "measurement. Default 2.")
     dist_p.add_argument("--json", action="store_true", default=False,
                         help="Output the loss map as JSON.")
 
