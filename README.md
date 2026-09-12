@@ -117,6 +117,13 @@ contradish distinguish --domain medication --app mymodule:my_app --resolve
 contradish distinguish --domain immigration --resolve --resolve-collapse-threshold 0.2 --json
 ```
 
+**How gracefully a fix degrades (`contradish distinguish --resolve --rate-distortion`).** A resolved distinction is not automatically a reliable one: real deployments almost never hand a model the hidden variable as a plain, fully-confirmed fact, they hand it a chart note that "suggests" something or a form field that's blank. `--rate-distortion` takes every distinction the resolution operator actually resolved and re-probes it across a graded ladder of certainty, from no information at all up to the fully-stated fact, measuring whether accuracy rises smoothly with the available information (graded) or only recovers once the last sentence is fully certain (threshold, i.e. brittle). It reports a Spearman correlation between certainty and accuracy, not just a label, so the claim is checkable. This is the black-box behavioral analog of an internal weight-level finding: on a hand-built transformer, collateral damage from narrow fine-tuning scaled monotonically with the bits of missing information about the disambiguating variable (pooled Spearman r=+0.96 vs. noise level). Nothing here re-proves that result generalizes to frontier-model fine-tuning; it tests the same shape of claim behaviorally, on a real model, today. See `contradish/rate_distortion.py`.
+
+```bash
+contradish distinguish --domain medication --app mymodule:my_app --resolve --rate-distortion
+contradish distinguish --domain immigration --resolve --rate-distortion --json
+```
+
 ---
 
 ## Findings — the discovery layer

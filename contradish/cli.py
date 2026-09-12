@@ -938,6 +938,7 @@ def cmd_distinguish(args):
         DistinctionProber, BUILTIN_DISTINCTION_PAIRS, default_restatement_judge,
     )
     from contradish.resolution import discover_resolutions_for_loss_map
+    from contradish.rate_distortion import measure_rate_distortion_for_resolution
     from contradish.llm import LLMClient
 
     _check_api_key()
@@ -1035,10 +1036,42 @@ def cmd_distinguish(args):
             verbose               = not use_json,
         )
 
+        # -- rate-distortion curve -------------------------------------------
+        # For every distinction the resolution operator actually resolved (a
+        # validated candidate exists), measure whether the model's accuracy
+        # rises gracefully as stated certainty about that candidate's
+        # disambiguating condition goes from nothing to a plain fact, or only
+        # recovers at the last, fully-stated rung. See
+        # contradish/rate_distortion.py.
+        rate_distortion_results = []
+        if getattr(args, "rate_distortion", False):
+            pairs_by_id = {p.pair_id: p for p in pairs}
+            for r in results:
+                if r.best is None:
+                    continue
+                pair_obj = pairs_by_id.get(r.pair_id)
+                if pair_obj is None:
+                    continue
+                curve = measure_rate_distortion_for_resolution(
+                    r,
+                    model_fn              = model_fn,
+                    commitment_extractor  = extractor,
+                    pair                  = pair_obj,
+                    validation_samples    = getattr(args, "resolve_samples", 2),
+                    verbose               = not use_json,
+                )
+                if curve is not None:
+                    rate_distortion_results.append(curve)
+
         if use_json:
             print(json.dumps(
                 {"resolution_results": [r.to_dict() for r in results]}, indent=2,
             ))
+            if getattr(args, "rate_distortion", False):
+                print(json.dumps(
+                    {"rate_distortion_results": [c.to_dict() for c in rate_distortion_results]},
+                    indent=2,
+                ))
         else:
             if not results:
                 print("\n  RESOLUTION OPERATOR: no distinction collapsed past "
@@ -1046,6 +1079,13 @@ def cmd_distinguish(args):
                       f"{getattr(args, 'resolve_collapse_threshold', 0.3)}; nothing to resolve.\n")
             for r in results:
                 print(r.report())
+                print()
+            if getattr(args, "rate_distortion", False) and not rate_distortion_results and results:
+                print("\n  RATE-DISTORTION CURVE: no resolved distinction to characterize "
+                      "(--rate-distortion requires at least one --resolve candidate to "
+                      "actually resolve).\n")
+            for c in rate_distortion_results:
+                print(c.report())
                 print()
 
     sys.exit(0)
@@ -2617,6 +2657,14 @@ examples:
                         dest="resolve_samples",
                         help="Probes per candidate per direction, and per baseline/validation "
                              "measurement. Default 2.")
+    dist_p.add_argument("--rate-distortion", action="store_true", default=False,
+                        dest="rate_distortion",
+                        help="Requires --resolve. For every distinction the resolution "
+                             "operator actually resolved, measure the rate-distortion curve: "
+                             "does accuracy rise gracefully as stated certainty about the "
+                             "disambiguating condition goes from nothing to a plain fact, or "
+                             "does it only recover at the last, fully-stated rung. See "
+                             "contradish/rate_distortion.py.")
     dist_p.add_argument("--json", action="store_true", default=False,
                         help="Output the loss map as JSON.")
 

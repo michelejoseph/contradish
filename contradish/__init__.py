@@ -13,6 +13,9 @@ Tools:
     DistinctionProber -- Type I distinction-loss probing (contradish distinguish)
     discover_resolution -- find and validate the hidden condition behind a
                            collapsing distinction (contradish distinguish --resolve)
+    measure_rate_distortion_for_resolution -- graded information->accuracy curve
+                           for a validated resolution candidate (contradish
+                           distinguish --resolve --rate-distortion)
 
 Quickstart:
     pip install contradish
@@ -102,6 +105,10 @@ from .resolution   import (
     ResolutionCandidate, ResolutionResult,
     discover_resolution, discover_resolutions_for_loss_map,
 )
+from .rate_distortion import (
+    RateDistortionPoint, RateDistortionCurveResult,
+    measure_rate_distortion_curve, measure_rate_distortion_for_resolution,
+)
 from .memory       import (
     ConversationMemory,
     Commitment,
@@ -154,7 +161,7 @@ from .domains      import (
 from .conviction   import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .cdr          import generate_cdr
 
-__version__ = "1.30.0"
+__version__ = "1.31.0"
 __all__ = [
     "Suite",
     "RegressionSuite",

@@ -4,6 +4,59 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0 —
 earlier releases were not retroactively documented.
 
+## [1.31.0] - 2026-09-12
+
+Adds the rate-distortion curve: the resolution operator's black-box,
+behavioral answer to whether a fix degrades gracefully or falls off a
+cliff as certainty about the hidden variable it depends on goes from
+nothing to a plain stated fact.
+
+### Added
+
+- **`contradish/rate_distortion.py` -- the information-graded resolution
+  curve.** For a distinction the resolution operator (`resolution.py`)
+  actually resolved, `measure_rate_distortion_curve()` re-probes it across
+  a 5-rung certainty ladder for the winning candidate's disambiguating
+  condition (no information, weak hint, moderate signal, strong signal,
+  full information stated as fact), measures accuracy at each rung, and
+  computes the Spearman rank correlation (implemented from scratch, no
+  external dependency, average-rank tie handling) between certainty and
+  accuracy. Classifies the result as "graded" (accuracy rises smoothly with
+  information -- correlation >= threshold), "threshold" (only recovers
+  near full certainty -- brittle: reliable with a stated fact, worthless
+  with a hedge), or "insensitive" (the candidate doesn't actually help,
+  even at full information -- an honest negative result, the
+  rate-distortion sibling of resolution.py's own "not resolved").
+  `measure_rate_distortion_for_resolution()` is the convenience wrapper
+  that runs it directly on an already-computed `ResolutionResult`. Wired
+  into the CLI as `contradish distinguish --resolve --rate-distortion`,
+  and exported from the top-level `contradish` package alongside
+  `discover_resolution`.
+- This module is the black-box behavioral analog of an internal
+  weight-level research result -- on a hand-built transformer, collateral
+  damage to an unrelated constraint from narrow fine-tuning scaled
+  monotonically with the bits of missing information about the hidden
+  disambiguating variable across a graded noisy channel (pooled Spearman
+  r=+0.96 vs. noise level, over 20 seeds per setting). That result
+  measured real weight-level damage under gradient descent; it is not
+  re-tested here, and nothing in this module proves it generalizes to how
+  frontier models are actually fine-tuned. What transfers, and what this
+  module actually tests, is the shape of the claim -- is degradation
+  graded or a cliff -- on a real, black-box model, using linguistic hedges
+  in place of an injected noisy channel. As far as the research pass
+  behind this module found, no eval/guardrail tool (Petri, PromptPex,
+  Giskard, TruLens-class tools, LMUnit) reports a graded information
+  curve for constraint resolution; they report a pass/fail or a single
+  score.
+- 15 new tests (`tests/test_rate_distortion.py`): the from-scratch
+  Spearman implementation (perfect correlation, ties, zero variance,
+  n < 2), all three curve shapes with deterministic mock models, the
+  `discover_resolution` wrapper's `None`-when-unresolved and
+  `ValueError`-when-no-pair behavior, and CLI end-to-end wiring. Full
+  suite: 1212 passed / 2 skipped, plus the same 11 pre-existing failures
+  from the earlier 1.30.0 release (missing optional `anthropic` package in
+  this environment) -- zero new regressions.
+
 ## [1.30.0] - 2026-09-12
 
 Adds the resolution operator: `contradish distinguish` no longer only
