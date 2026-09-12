@@ -31,8 +31,9 @@ anthropic = ["anthropic>=0.25.0"]
 openai    = ["openai>=1.0.0"]
 litellm   = ["litellm>=1.40.0"]
 redis     = ["redis>=4.0.0"]
-all       = ["anthropic>=0.25.0", "openai>=1.0.0", "litellm>=1.40.0", "redis>=4.0.0"]
-dev       = ["anthropic>=0.25.0", "openai>=1.0.0", "litellm>=1.40.0", "redis>=4.0.0", "pytest>=7.0", "pytest-mock"]
+schema    = ["jsonschema>=4.0.0"]
+all       = ["anthropic>=0.25.0", "openai>=1.0.0", "litellm>=1.40.0", "redis>=4.0.0", "jsonschema>=4.0.0"]
+dev       = ["anthropic>=0.25.0", "openai>=1.0.0", "litellm>=1.40.0", "redis>=4.0.0", "jsonschema>=4.0.0", "pytest>=7.0", "pytest-mock"]
 
 [project.urls]
 Homepage    = "https://contradish.com"

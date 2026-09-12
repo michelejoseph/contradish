@@ -54,6 +54,12 @@ from .surrender import PRESSURE_LEVELS, ALL_PRESSURE_TYPES, _esc, _FRAMING_COLOR
 
 ModelFn = Callable[[str, str], str]
 
+# Versions of the two published interchange formats this module emits (see
+# contradish/schema/README.md). A minor bump only ever adds an optional
+# field; a major bump is the only kind allowed to remove or repurpose one.
+DISTINCTION_REPORT_SCHEMA_VERSION = "1.0"
+DISTINCTION_DIFF_SCHEMA_VERSION   = "1.0"
+
 
 # ── Data structures ────────────────────────────────────────────────────────────
 
@@ -327,6 +333,7 @@ class DistinctionLossMap:
             profiles_out[pid] = entry
 
         return {
+            "schema_version": DISTINCTION_REPORT_SCHEMA_VERSION,
             "domain": self.domain,
             "n_distinctions": len(self.profiles),
             "most_fragile": self.most_fragile,
@@ -426,6 +433,7 @@ def diff_distinction_reports(
     )
 
     return {
+        "schema_version": DISTINCTION_DIFF_SCHEMA_VERSION,
         "baseline_label": baseline_label,
         "candidate_label": candidate_label,
         "domain": domain,

@@ -1315,6 +1315,62 @@ def cmd_calibrate(args):
     sys.exit(0)
 
 
+def cmd_schema(args):
+    """
+    Inspect and validate contradish's published JSON Schema interchange
+    formats (the Constraint Support Graph formats: distinction_report,
+    distinction_diff). These are plain, versioned .schema.json files under
+    contradish/schema/ -- readable by any tool in any language, not just
+    contradish -- published so a distinction report or diff can be emitted
+    or consumed as a standalone format. See contradish/schema/README.md.
+    """
+    from contradish.schema import list_schemas, load_schema, validate_against_schema
+
+    if args.list:
+        for name in list_schemas():
+            print(f"  {name}")
+        sys.exit(0)
+
+    if args.validate:
+        if not args.against:
+            print("\n  --validate FILE requires --against SCHEMA_NAME. "
+                  f"Available: {', '.join(list_schemas())}\n")
+            sys.exit(1)
+        if not os.path.exists(args.validate):
+            print(f"\n  file not found: {args.validate}\n")
+            sys.exit(1)
+        with open(args.validate) as f:
+            data = json.load(f)
+        try:
+            errors = validate_against_schema(data, args.against)
+        except (KeyError, ImportError) as e:
+            print(f"\n  {e}\n")
+            sys.exit(1)
+        if errors:
+            print(f"\n  INVALID against {args.against!r} ({len(errors)} error(s)):")
+            for err in errors:
+                print(f"    {err}")
+            print()
+            sys.exit(1)
+        print(f"\n  valid against {args.against!r}\n")
+        sys.exit(0)
+
+    if args.show:
+        try:
+            schema = load_schema(args.show)
+        except KeyError as e:
+            print(f"\n  {e}\n")
+            sys.exit(1)
+        print(json.dumps(schema, indent=2))
+        sys.exit(0)
+
+    print("\n  contradish schema needs one of:")
+    print("    --list                                   list published schema names")
+    print("    --show NAME                               print a schema's JSON Schema document")
+    print("    --validate FILE --against NAME            validate a JSON file against a schema\n")
+    sys.exit(1)
+
+
 def cmd_diagnose(args):
     """
     Diagnose drift cases from a contradish result JSON and generate a repair package.
@@ -2691,6 +2747,30 @@ examples:
     cal_p.add_argument("--json", action="store_true", default=False,
                        help="Output report as JSON")
 
+    # contradish schema -- inspect/validate the published interchange formats
+    schema_p = sub.add_parser(
+        "schema",
+        help="Inspect and validate contradish's published JSON Schema interchange formats (Constraint Support Graph).",
+        description=(
+            "distinction_report and distinction_diff are published as standalone, versioned "
+            ".schema.json files (contradish/schema/), not a private detail of the Python "
+            "package -- readable and vendorable by any tool in any language.\n\n"
+            "  contradish schema --list\n"
+            "  contradish schema --show distinction_report\n"
+            "  contradish schema --validate my_report.json --against distinction_report\n"
+        ),
+    )
+    schema_p.add_argument("--list", action="store_true", default=False,
+                          help="List published schema names.")
+    schema_p.add_argument("--show", metavar="NAME", default=None,
+                          help="Print a published schema's JSON Schema document.")
+    schema_p.add_argument("--validate", metavar="FILE", default=None,
+                          help="Validate a JSON file against a published schema. Requires "
+                               "--against and the optional jsonschema package "
+                               "(pip install \"contradish[schema]\").")
+    schema_p.add_argument("--against", metavar="NAME", default=None,
+                          help="Schema name to validate --validate FILE against.")
+
     # `contradish "some system prompt"` -- a lone freeform positional, no
     # subcommand -- is ambiguous to argparse once subparsers are registered
     # on the same parser: parser.add_subparsers() adds a positional with
@@ -2751,6 +2831,8 @@ examples:
         cmd_quick(args)
     elif args.command == "calibrate":
         cmd_calibrate(args)
+    elif args.command == "schema":
+        cmd_schema(args)
     elif getattr(args, "policy", None):
         cmd_policy(args)
     elif args.system_prompt or args.prompt_file:

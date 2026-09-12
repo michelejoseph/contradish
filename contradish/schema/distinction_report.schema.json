@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contradish.com/schema/distinction-report/1.0.json",
+  "title": "Contradish Distinction Report",
+  "description": "One domain's Constraint Support Graph as measured against a single model or app: which decision-relevant distinctions were probed, and how well each survived pressure framing. This is the payload `DistinctionLossMap.to_dict()` produces and `contradish distinguish --json` writes to disk. A distinction is a pair of situations a correct answer must tell apart (e.g. a Schedule II prescription vs. a routine refill); overall_hold_rate near 1.0 means the model kept answering them differently as required, near 0.0 means it collapsed them into one answer under pressure. Published so other eval tools and CI systems can emit or consume this format directly, without depending on the contradish package.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "domain",
+    "n_distinctions",
+    "most_fragile",
+    "most_resilient",
+    "framing_destructiveness",
+    "ranked_by_fragility",
+    "profiles"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Version of this schema the payload was written against, as \"<major>.<minor>\". A minor bump only ever adds an optional field; a major bump is the only kind allowed to remove or repurpose one.",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
+    "domain": {
+      "type": "string",
+      "description": "Name of the distinction-pair domain probed, e.g. \"medication\" or \"immigration\" for the built-in sets, or a caller-defined domain name for custom pairs."
+    },
+    "n_distinctions": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of distinction pairs in `profiles`."
+    },
+    "most_fragile": {
+      "type": "string",
+      "description": "pair_id of the distinction with the lowest overall_hold_rate."
+    },
+    "most_resilient": {
+      "type": "string",
+      "description": "pair_id of the distinction with the highest overall_hold_rate."
+    },
+    "framing_destructiveness": {
+      "type": "object",
+      "description": "Mean collapse rate (1 - hold_rate) per pressure-framing type, across all distinctions probed under that framing.",
+      "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
+    },
+    "ranked_by_fragility": {
+      "type": "array",
+      "description": "pair_ids ordered most-fragile (lowest overall_hold_rate) first.",
+      "items": { "type": "string" }
+    },
+    "profiles": {
+      "type": "object",
+      "description": "pair_id -> measurement profile for that distinction.",
+      "additionalProperties": { "$ref": "#/$defs/distinction_profile" }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "distinction_profile": {
+      "type": "object",
+      "required": [
+        "description", "label_a", "label_b",
+        "hold_rate_per_framing", "overall_hold_rate",
+        "collapse_rate", "collapse_framing", "first_collapse"
+      ],
+      "properties": {
+        "description": { "type": "string" },
+        "label_a": { "type": "string", "description": "Human label for state A of the distinction, e.g. \"healthy adult\"." },
+        "label_b": { "type": "string", "description": "Human label for state B of the distinction, e.g. \"adult with chronic kidney disease\"." },
+        "hold_rate_per_framing": {
+          "type": "object",
+          "description": "Fraction of pressure intensities the distinction survived, per framing type.",
+          "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "overall_hold_rate": {
+          "type": "number", "minimum": 0, "maximum": 1,
+          "description": "Mean hold rate across all framings and intensities probed. 1.0 = the distinction held under every pressure condition tested; 0.0 = it collapsed under all of them."
+        },
+        "collapse_rate": {
+          "type": "number", "minimum": 0, "maximum": 1,
+          "description": "1 - overall_hold_rate."
+        },
+        "collapse_framing": {
+          "type": "string",
+          "description": "Pressure-framing type under which this distinction collapses most."
+        },
+        "first_collapse": {
+          "description": "[framing_type, intensity] of the first observed collapse, or null if the distinction never collapsed.",
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "array",
+              "minItems": 2, "maxItems": 2,
+              "prefixItems": [
+                { "type": "string" },
+                { "type": "integer" }
+              ]
+            }
+          ]
+        },
+        "measurements": {
+          "type": "array",
+          "description": "Raw per-probe measurements. Present only when the report was generated with include_raw=True.",
+          "items": { "$ref": "#/$defs/measurement" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "measurement": {
+      "type": "object",
+      "required": [
+        "pair_id", "framing_type", "intensity", "framing_prefix",
+        "answer_a", "answer_b", "extracted_commit_a", "extracted_commit_b",
+        "distinction_held", "both_correct"
+      ],
+      "properties": {
+        "pair_id": { "type": "string" },
+        "framing_type": { "type": "string" },
+        "intensity": { "type": "integer" },
+        "framing_prefix": { "type": "string" },
+        "answer_a": { "type": "string" },
+        "answer_b": { "type": "string" },
+        "extracted_commit_a": { "type": "string" },
+        "extracted_commit_b": { "type": "string" },
+        "distinction_held": {
+          "type": "boolean",
+          "description": "True if the model gave different answers to A and B (the distinction was preserved)."
+        },
+        "both_correct": {
+          "type": "boolean",
+          "description": "True if both extracted commitments matched their expected answer."
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

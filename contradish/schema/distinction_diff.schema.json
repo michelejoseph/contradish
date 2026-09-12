@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contradish.com/schema/distinction-diff/1.0.json",
+  "title": "Contradish Distinction Diff",
+  "description": "A baseline-vs-candidate diff of two Contradish Distinction Reports (see distinction_report.schema.json), one per pair_id. Produced by diff_distinction_reports() and printed by `contradish compare --distinctions DOMAIN` (live apps) or `contradish compare --baseline-distinctions FILE --candidate-distinctions FILE` (two saved reports). The signal this format exists to carry is newly_collapsed: a distinction that held (>=0.80 hold rate) in baseline and collapsed (<0.50) in candidate, which is what a model swap or a fine-tuning/repair pass can introduce silently and which an ordinary consistency score will not show. Published so CI systems and other eval tools can gate on this format directly.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "baseline_label",
+    "candidate_label",
+    "domain",
+    "per_pair",
+    "regressed",
+    "newly_collapsed",
+    "summary"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Version of this schema the payload was written against, as \"<major>.<minor>\".",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
+    "baseline_label": { "type": "string" },
+    "candidate_label": { "type": "string" },
+    "domain": { "type": "string" },
+    "per_pair": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/pair_diff" }
+    },
+    "regressed": {
+      "type": "array",
+      "description": "pair_ids where candidate_hold_rate < baseline_hold_rate, however slightly. Includes ordinary noise-level drops -- see newly_collapsed for the signal worth gating a CI pipeline on.",
+      "items": { "type": "string" }
+    },
+    "newly_collapsed": {
+      "type": "array",
+      "description": "pair_ids that went from mostly-held (baseline_hold_rate >= 0.80) to mostly-collapsed (candidate_hold_rate < 0.50). The actionable regression signal.",
+      "items": { "type": "string" }
+    },
+    "summary": {
+      "type": "string",
+      "description": "One-line human-readable summary for stdout/CI logs."
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "pair_diff": {
+      "type": "object",
+      "required": [
+        "pair_id", "baseline_hold_rate", "candidate_hold_rate",
+        "delta", "regressed", "newly_collapsed"
+      ],
+      "properties": {
+        "pair_id": { "type": "string" },
+        "description": {
+          "description": "Human description of the distinction, or null if unavailable from either side.",
+          "oneOf": [{ "type": "null" }, { "type": "string" }]
+        },
+        "baseline_hold_rate": {
+          "description": "null when this pair_id wasn't present in the baseline report.",
+          "oneOf": [{ "type": "null" }, { "type": "number", "minimum": 0, "maximum": 1 }]
+        },
+        "candidate_hold_rate": {
+          "description": "null when this pair_id wasn't present in the candidate report.",
+          "oneOf": [{ "type": "null" }, { "type": "number", "minimum": 0, "maximum": 1 }]
+        },
+        "delta": {
+          "description": "candidate_hold_rate - baseline_hold_rate, rounded to 4 places. null when either side is null.",
+          "oneOf": [{ "type": "null" }, { "type": "number", "minimum": -1, "maximum": 1 }]
+        },
+        "regressed": { "type": "boolean" },
+        "newly_collapsed": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    }
+  }
+}
