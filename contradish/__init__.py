@@ -6,10 +6,11 @@ equivalent inputs. ML literature calls this drift; contradish names and scores i
 Returns CAI Strain per rule (0-1, lower = more consistent).
 
 Tools:
-    Suite           -- offline CAI Strain testing (run before deploy)
-    RegressionSuite -- compare baseline vs candidate for CI/CD gates
-    Firewall        -- real-time contradiction detection in production
-    PromptRepair    -- auto-generate and test improved prompt variants
+    Suite             -- offline CAI Strain testing (run before deploy)
+    RegressionSuite   -- compare baseline vs candidate for CI/CD gates
+    Firewall          -- real-time contradiction detection in production
+    PromptRepair      -- auto-generate and test improved prompt variants
+    DistinctionProber -- Type I distinction-loss probing (contradish distinguish)
 
 Quickstart:
     pip install contradish
@@ -89,6 +90,10 @@ from .prompt_analyzer import (
 )
 from .judge_calibration import measure_judge_floor, JudgeCalibration
 from .fairness     import audit_fairness, FairnessAudit, IdentityProfile
+from .distinction  import (
+    DistinctionPair, DistinctionProber, DistinctionLossMap,
+    DistinctionProfile, DistinctionMeasurement, BUILTIN_DISTINCTION_PAIRS,
+)
 from .memory       import (
     ConversationMemory,
     Commitment,
@@ -289,12 +294,6 @@ _EXPERIMENTAL_SYMBOLS = {
     "KeywordClaimExtractor":          ("residual_truth", "KeywordClaimExtractor"),
     "PatternIncompatibilityDetector": ("residual_truth", "PatternIncompatibilityDetector"),
     "ResidualTruthEngine":            ("residual_truth", "ResidualTruthEngine"),
-    # distinction.py
-    "DistinctionPair":        ("distinction", "DistinctionPair"),
-    "DistinctionMeasurement":  ("distinction", "DistinctionMeasurement"),
-    "DistinctionProfile":     ("distinction", "DistinctionProfile"),
-    "DistinctionLossMap":     ("distinction", "DistinctionLossMap"),
-    "DistinctionProber":      ("distinction", "DistinctionProber"),
     # surrender.py
     "SurrenderSample":    ("surrender", "SurrenderSample"),
     "SurrenderPoint":     ("surrender", "SurrenderPoint"),

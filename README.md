@@ -103,6 +103,13 @@ contradish fairness --policy ecommerce --app mymodule:my_app
 contradish judge-floor --judge-provider openai --judge-model gpt-4o
 ```
 
+**Which distinctions collapse (`contradish distinguish`).** CAI Strain measures Type II collapse: different answers to the same question, reworded. The opposite failure goes unmeasured just as often: the same answer given to two questions that describe genuinely different situations and require different answers (a healthy adult's ibuprofen dose is not a renal patient's dose). `distinguish` probes a set of these distinction pairs under the same pressure framings CAI Strain uses, and reports which distinctions hold and which collapse.
+
+```bash
+contradish distinguish --domain medication --app mymodule:my_app
+contradish distinguish --domain immigration --report --json
+```
+
 ---
 
 ## Findings — the discovery layer

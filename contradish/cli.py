@@ -226,6 +226,46 @@ def _make_demo_app(system_prompt: str):
     return demo_app, llm.provider
 
 
+def _default_commitment_extractor(llm):
+    """
+    Fallback commitment_extractor for `contradish distinguish` when the caller
+    doesn't supply their own. Asks the same configured judge model to state
+    an answer's substantive conclusion in a few words; two extractions are
+    then compared by exact text match.
+
+    Every other use of commitment_extractor in this codebase (surrender.py,
+    convergence.py, the examples) is a hand-written, domain-specific
+    function, because commitment extraction is inherently domain-specific.
+    This default exists so `contradish distinguish` works out of the box,
+    but it is a judge call and inherits the judge's own noise the same way
+    `contradish judge-floor` measures for the rest of the benchmark. Write
+    your own commitment_extractor(question, answer) for anything you plan
+    to rely on.
+    """
+    def extract(question: str, answer: str) -> str:
+        prompt = (
+            "State the single substantive conclusion or commitment this "
+            "answer makes, in 3-8 words, ignoring tone, hedging, and "
+            "phrasing. Respond with only the phrase, nothing else.\n\n"
+            f"Question: {question}\nAnswer: {answer}"
+        )
+        if llm.provider == "anthropic":
+            msg = llm._client.messages.create(
+                model=llm.fast_model,
+                max_tokens=32,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return msg.content[0].text.strip().lower()
+        else:
+            resp = llm._client.chat.completions.create(
+                model=llm.fast_model,
+                max_tokens=32,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return resp.choices[0].message.content.strip().lower()
+    return extract
+
+
 def cmd_policy(args):
     """Run a prebuilt domain policy pack. No system prompt required."""
     from contradish import Suite
@@ -903,6 +943,83 @@ def cmd_prompt(args):
         offenders = analysis.at_or_above(threshold)
         if offenders:
             print(f"  FAIL: {len(offenders)} tension(s) at or above {threshold} severity.\n")
+            sys.exit(1)
+
+    sys.exit(0)
+
+
+def cmd_distinguish(args):
+    """
+    Measure Type I distinction loss: does the model give the same answer to
+    two questions that describe genuinely different situations and require
+    different answers?
+
+    This is the complement to CAI Strain. CAI Strain measures Type II
+    collapse: different answers to the same underlying question, reworded.
+    A model can score well there while still failing here -- rigid
+    consistency and distinction-blindness are independent failure modes.
+    See contradish/distinction.py for the full definitions.
+    """
+    from contradish.distinction import DistinctionProber, BUILTIN_DISTINCTION_PAIRS
+    from contradish.llm import LLMClient
+
+    _check_api_key()
+    use_json = getattr(args, "json", False)
+
+    pairs = BUILTIN_DISTINCTION_PAIRS.get(args.domain)
+    if not pairs:
+        print(f"\n  No built-in distinction pairs for domain {args.domain!r}. "
+              f"Available: {', '.join(BUILTIN_DISTINCTION_PAIRS)}\n")
+        sys.exit(1)
+
+    if args.app:
+        app_fn = _load_callable(args.app)
+        provider = None
+    else:
+        demo_system = "You are a helpful assistant. Answer clearly and accurately."
+        app_fn, provider = _make_demo_app(demo_system)
+
+    def model_fn(system_prompt: str, question: str, _f=app_fn) -> str:
+        return _f(question)
+
+    llm = LLMClient()
+    extractor = _default_commitment_extractor(llm)
+
+    if not use_json:
+        print()
+        print(f"  probing {len(pairs)} distinction(s) in {args.domain}  "
+              f"({'your app' if args.app else 'demo mode: ' + (provider or '')})")
+        print()
+
+    prober = DistinctionProber(
+        model_fn=model_fn,
+        pairs=pairs,
+        commitment_extractor=extractor,
+        domain=args.domain,
+    )
+    loss_map = prober.measure(n_samples=getattr(args, "n_samples", 1), verbose=not use_json)
+
+    report_path = getattr(args, "report", None)
+    if report_path:
+        if not isinstance(report_path, str):
+            report_path = f"distinctions_{args.domain}.html"
+        loss_map.to_html(report_path)
+        if not use_json:
+            print(f"\n  report saved: {report_path}\n")
+
+    if use_json:
+        print(json.dumps(loss_map.to_dict(), indent=2))
+    else:
+        print(loss_map.report())
+        print()
+
+    threshold = getattr(args, "threshold", None)
+    if threshold is not None and loss_map.profiles:
+        worst = loss_map.profiles[loss_map.most_fragile]
+        worst_collapse = worst.collapse_rate()
+        if worst_collapse > threshold:
+            print(f"  FAIL: worst distinction collapse rate {worst_collapse:.2f} "
+                  f"({loss_map.most_fragile}) exceeds threshold {threshold}.\n")
             sys.exit(1)
 
     sys.exit(0)
@@ -2259,7 +2376,36 @@ examples:
     fair_p.add_argument("--json", action="store_true", default=False,
                         help="Output the audit as JSON.")
 
-    # contradish judge-floor — measure the judge's own CAI Strain
+    # contradish distinguish -- Type I distinction-loss probing
+    dist_p = sub.add_parser(
+        "distinguish",
+        help="Measure Type I distinction loss: does the model collapse two "
+             "genuinely different situations into the same answer?",
+        description=(
+            "The complement to CAI Strain. CAI Strain (the main benchmark) measures "
+            "Type II collapse: different answers to the same question, reworded. "
+            "This measures Type I collapse: the same answer given to two questions "
+            "that describe genuinely different situations and require different "
+            "answers, under pressure framing.\n\n"
+            "  contradish distinguish --domain medication --app mymodule:my_app\n"
+            "  contradish distinguish --domain immigration --report --json\n"
+        ),
+    )
+    dist_p.add_argument("--domain", choices=("medication", "immigration"), default="medication",
+                        help="Built-in distinction-pair set to probe (default: medication).")
+    dist_p.add_argument("--app", metavar="MODULE:FUNCTION", default=None,
+                        help="Your app callable. If omitted, runs the configured LLM in demo mode.")
+    dist_p.add_argument("--n-samples", type=int, default=1, metavar="N", dest="n_samples",
+                        help="Samples per (pair, framing, intensity). 1 is fast; 3+ for variance.")
+    dist_p.add_argument("--threshold", type=float, default=None, metavar="F",
+                        help="Exit nonzero if the most fragile distinction's collapse rate "
+                             "exceeds this. For CI gating.")
+    dist_p.add_argument("--report", nargs="?", const=True, default=False, metavar="FILE",
+                        help="Save the HTML loss map (default filename if none given).")
+    dist_p.add_argument("--json", action="store_true", default=False,
+                        help="Output the loss map as JSON.")
+
+    # contradish judge-floor -- measure the judge's own CAI Strain
     jf_p = sub.add_parser(
         "judge-floor",
         help="Measure the judge model's own consistency on a built-in known-truth set.",
@@ -2518,6 +2664,8 @@ examples:
         cmd_judge_floor(args)
     elif args.command == "fairness":
         cmd_fairness(args)
+    elif args.command == "distinguish":
+        cmd_distinguish(args)
     elif args.command == "analyze":
         cmd_quick(args)
     elif args.command == "calibrate":

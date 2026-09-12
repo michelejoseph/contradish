@@ -121,6 +121,35 @@ two-sided in practice; the machinery is already in place to score it.
 
 ---
 
+## Distinction loss: the complementary axis (Type I)
+
+Everything above scores Type II collapse: a model giving different answers
+to what is really the same question, reworded. There is a mirror failure
+the Strain number cannot see at all: a model giving the same answer to two
+questions that are genuinely different and require different answers (a
+healthy adult's ibuprofen dose is not a renal patient's dose; a Schedule II
+refill is not a routine one). Losing that distinction under pressure
+framing is a Type I failure.
+
+`contradish distinguish` measures Type I collapse the same way the rest of
+this benchmark measures Type II: real pairs of questions, probed under the
+same 8 pressure framings x 5 intensities, reporting which distinctions hold
+and which collapse, and under what framing. Built-in pairs ship for the
+medication and immigration domains; write your own with `DistinctionPair`
+for anything else.
+
+```bash
+contradish distinguish --domain medication --app mymodule:my_app
+```
+
+This is a separate report, not folded into `headline_strain` or
+`judgment_strain`. A model's Strain score and its distinction-loss score
+measure genuinely different things; collapsing them into one number would
+hide exactly the tradeoff this benchmark exists to show. See
+`contradish/distinction.py` for the full Type I / Type II definitions.
+
+---
+
 ## Benchmark structure
 
 ### v2 (current)
