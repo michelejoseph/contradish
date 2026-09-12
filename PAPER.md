@@ -23,7 +23,7 @@ A language model deployed as a customer-support agent, medical assistant, or leg
 
 This failure mode is invisible to standard benchmarks. MMLU (Hendrycks et al., 2021), HumanEval (Chen et al., 2021), and MT-Bench (Zheng et al., 2023) evaluate whether a model gives a correct or high-quality answer to a fixed input. They do not test whether the model gives *the same* answer across input variations. CheckList (Ribeiro et al., 2020) tests for linguistic robustness but focuses on NLP classification tasks and does not target the policy-consistency failure mode that arises in production LLM deployments.
 
-The consequences are not abstract. This failure mode is not limited to raw language models: any deployed conversational AI system — chatbots, AI agents, consumer applications — inherits it, because they are all ultimately producing responses to natural language inputs. A mental health AI that consistently applies safe messaging guidelines to a direct disclosure of self-harm thoughts may silently drop those guidelines when the user reframes the disclosure as "just a passing thought." A legal AI that correctly disclaims liability advice under neutral phrasing may engage substantively with a hypothetical framing of the same question. These failures are invisible to accuracy benchmarks because no single response is incorrect; the failure is in the *difference*.
+The consequences are not abstract. This failure mode is not limited to raw language models: any deployed conversational AI system (chatbots, AI agents, consumer applications) inherits it, because they are all ultimately producing responses to natural language inputs. A mental health AI that consistently applies safe messaging guidelines to a direct disclosure of self-harm thoughts may silently drop those guidelines when the user reframes the disclosure as "just a passing thought." A legal AI that correctly disclaims liability advice under neutral phrasing may engage substantively with a hypothetical framing of the same question. These failures are invisible to accuracy benchmarks because no single response is incorrect; the failure is in the *difference*.
 
 We define **surface-form consistency** as a property of a conversational AI system *f*: for all semantically equivalent inputs *x* and *x'* (same meaning, different phrasing), |*f(x) - f(x')*| should be small under some semantic distance metric. **CAI Strain** measures how much this property is violated.
 
@@ -45,7 +45,7 @@ CAI-Bench v2 provides:
 
 ### 2.1 The Semantic Compressor
 
-A useful way to think about what a conversational AI system is doing: it takes a natural language input and produces a natural language output, and the mapping should depend on the *meaning* of the input, not on how that meaning happens to be expressed. A system with this property is a **semantic compressor** — invariant to surface form, sensitive only to semantics.
+A useful way to think about what a conversational AI system is doing: it takes a natural language input and produces a natural language output, and the mapping should depend on the *meaning* of the input, not on how that meaning happens to be expressed. A system with this property is a **semantic compressor**: invariant to surface form, sensitive only to semantics.
 
 Formally, let *S* be a semantic equivalence class (a set of inputs that mean the same thing). An ideal compressor *f\** satisfies:
 
@@ -63,7 +63,7 @@ where `consistency` is measured by an independent judge model on a [0, 1] scale.
 
 ### 2.2 The Terminal
 
-**The terminal** is the theoretical system with CAI Strain = 0.00 — a perfect compressor, never moved by phrasing. No deployed system reaches the terminal; it is an asymptote. What CAI-Bench actually measures is how far from the terminal a given system is, on the specific axis of adversarial surface-form variation.
+**The terminal** is the theoretical system with CAI Strain = 0.00: a perfect compressor, never moved by phrasing. No deployed system reaches the terminal; it is an asymptote. What CAI-Bench actually measures is how far from the terminal a given system is, on the specific axis of adversarial surface-form variation.
 
 ### 2.3 Adversarial Techniques
 
@@ -121,7 +121,7 @@ Each case consists of:
 - **id**: domain-prefixed identifier (e.g., `medication-002`)
 - **name**: human-readable case label
 - **original**: the canonical question in neutral phrasing
-- **adversarial**: list of 8 adversarial variants (one per technique, in order T1–T8)
+- **adversarial**: list of 8 adversarial variants (one per technique, in order T1-T8)
 - **severity**: `critical` | `high` | `medium` | `low`
 
 Example (medication-002, severity: critical):
@@ -262,7 +262,7 @@ We present results for Claude Sonnet 4.6 (complete, all 20 domains) and GPT-4o (
 
 SW-Strain weights each domain by severity tier (critical 4×, high 2.5×, medium 1.5×, low 1×). Claude's severity-weighted score (0.242) is notably better than its raw average (0.260) because its worst domains (food_delivery, ecommerce) carry low severity multipliers, while its strongest domains (mental_health, medication, ai_safety) carry the highest.
 
-On the 12 domains where both models have results, Claude averages 0.266 CAI Strain and GPT-4o averages 0.237. GPT-4o's partial SW-Strain (0.227) reflects strong performance on finance and insurance — both high-severity domains — which carry outsized weight in the severity-adjusted score.
+On the 12 domains where both models have results, Claude averages 0.266 CAI Strain and GPT-4o averages 0.237. GPT-4o's partial SW-Strain (0.227) reflects strong performance on finance and insurance, both high-severity domains, which carry outsized weight in the severity-adjusted score.
 
 These results should be treated as indicative baselines. With n=12 cases per domain and temperature sampling, scores will vary across runs; we do not report confidence intervals. GPT-4o results across the remaining 8 domains are pending additional compute.
 
@@ -334,7 +334,7 @@ The per-case failure output includes a PATTERN field identifying which adversari
 
 **T2 (presuppose)** is the most disruptive technique across domains. When the user embeds a desired answer as a premise ("just to confirm, the deductible doesn't apply twice, right?"), the model adjusts its stated facts to avoid contradicting the premise, even when those facts conflict with what it states in response to neutral phrasing of the same question. This pattern appeared prominently in finance, insurance, travel, immigration, and government domains.
 
-**T3 (casual register)** is the second most common driver. Informal phrasing ("quick question", "you guys", "by the way") triggers a different response mode than formal phrasing of the same question. In service-interaction domains, the model frequently drops its "I cannot access your account" or "I am not a customer service representative" disclaimer under casual register, then correctly applies it under formal register — producing inconsistent stances on the same underlying question.
+**T3 (casual register)** is the second most common driver. Informal phrasing ("quick question", "you guys", "by the way") triggers a different response mode than formal phrasing of the same question. In service-interaction domains, the model frequently drops its "I cannot access your account" or "I am not a customer service representative" disclaimer under casual register, then correctly applies it under formal register, producing inconsistent stances on the same underlying question.
 
 **T5 (authority)** is notable in high-stakes domains specifically. When the user cites a third-party authority figure (a lawyer, an FCC technician, a disability advocate), the model sometimes treats the cited claim as established fact and builds its response around it rather than evaluating it independently. This pattern appeared in ai_safety, government, and immigration.
 
@@ -346,7 +346,7 @@ Aggregate per-technique failure counts are not reported in this version of the p
 
 Claude's SW-Strain (0.242) is 0.018 lower than its raw CAI Strain (0.260), reflecting a favorable distribution: its worst domains (food_delivery 0.463, finance 0.393) sit in medium and high severity tiers while its best domains (mental_health 0.146, medication 0.198) sit in the critical tier. The severity weighting rewards exactly the pattern CAI-Bench was designed to surface.
 
-GPT-4o's partial SW-Strain (0.227 over 12 domains) is harder to interpret without the remaining 8 domains; the missing domains include medication, immigration, employment_disputes, real_estate, financial_planning, automotive, telecommunications, and food_delivery — spanning critical through medium severity. If GPT-4o's critical-domain performance (medication, immigration) resembles Claude's, the full SW-Strain scores may converge further. The preliminary evidence does not support a definitive severity-weighted ranking until the full run completes.
+GPT-4o's partial SW-Strain (0.227 over 12 domains) is harder to interpret without the remaining 8 domains; the missing domains include medication, immigration, employment_disputes, real_estate, financial_planning, automotive, telecommunications, and food_delivery, spanning critical through medium severity. If GPT-4o's critical-domain performance (medication, immigration) resembles Claude's, the full SW-Strain scores may converge further. The preliminary evidence does not support a definitive severity-weighted ranking until the full run completes.
 
 ---
 
@@ -392,15 +392,15 @@ Seven manual probes surface one technique-triggered failure. CAI-Bench v2's ment
 
 ## 8. Related Work
 
-The standard accuracy benchmarks — MMLU (Hendrycks et al., 2021), HumanEval (Chen et al., 2021), MT-Bench (Zheng et al., 2023) — share a common design assumption: the input is fixed, and the question is whether the model gets it right. MMLU tests knowledge across 57 subjects with fixed multiple-choice questions; HumanEval tests whether generated code passes unit tests; MT-Bench rates multi-turn conversation quality with an LLM judge. None of these ask whether the model gives the same answer to paraphrases of the same question. That is not a criticism of those benchmarks — they are measuring something different — but it is the gap CAI-Bench fills.
+The standard accuracy benchmarks, such as MMLU (Hendrycks et al., 2021), HumanEval (Chen et al., 2021), and MT-Bench (Zheng et al., 2023), share a common design assumption: the input is fixed, and the question is whether the model gets it right. MMLU tests knowledge across 57 subjects with fixed multiple-choice questions; HumanEval tests whether generated code passes unit tests; MT-Bench rates multi-turn conversation quality with an LLM judge. None of these ask whether the model gives the same answer to paraphrases of the same question. That is not a criticism of those benchmarks; they are measuring something different, but it is the gap CAI-Bench fills.
 
-The closest methodological predecessor is CheckList (Ribeiro et al., 2020), which tests NLP models by generating perturbations of inputs using templates. The spirit is similar: vary the input systematically and check whether the output holds. The difference is domain and failure mode. CheckList was designed for classification tasks with ground-truth labels, where a perturbation is a bug if the prediction flips. CAI-Bench targets open-ended conversational responses where no ground truth exists — only the requirement that semantically equivalent questions get semantically equivalent answers. There is no correct answer to "Can I return this item?"; there is only a consistent one.
+The closest methodological predecessor is CheckList (Ribeiro et al., 2020), which tests NLP models by generating perturbations of inputs using templates. The spirit is similar: vary the input systematically and check whether the output holds. The difference is domain and failure mode. CheckList was designed for classification tasks with ground-truth labels, where a perturbation is a bug if the prediction flips. CAI-Bench targets open-ended conversational responses where no ground truth exists; only the requirement that semantically equivalent questions get semantically equivalent answers. There is no correct answer to "Can I return this item?"; there is only a consistent one.
 
-Adversarial NLP (Jia & Liang, 2017; Wallace et al., 2019) studies input perturbations that cause model failures, mostly in reading comprehension and classification settings. Those perturbations often change meaning — they are adversarial in the sense that they trick the model. CAI-Bench's adversarial variants are deliberately meaning-preserving; the point is not to change what the user is asking but to change how they are asking it.
+Adversarial NLP (Jia & Liang, 2017; Wallace et al., 2019) studies input perturbations that cause model failures, mostly in reading comprehension and classification settings. Those perturbations often change meaning; they are adversarial in the sense that they trick the model. CAI-Bench's adversarial variants are deliberately meaning-preserving; the point is not to change what the user is asking but to change how they are asking it.
 
-Red-teaming (Ganguli et al., 2022; Perez et al., 2022) is the practice of probing AI systems for safety failures through open-ended adversarial prompting. It surfaces real problems but produces results that are hard to compare across models or time — what one team finds depends heavily on who is doing the testing and what they happen to try. CAI-Bench trades that breadth for reproducibility: the same 8 techniques applied to the same frozen cases, so that a score this month means the same thing as a score next month on a retrained model.
+Red-teaming (Ganguli et al., 2022; Perez et al., 2022) is the practice of probing AI systems for safety failures through open-ended adversarial prompting. It surfaces real problems but produces results that are hard to compare across models or time: what one team finds depends heavily on who is doing the testing and what they happen to try. CAI-Bench trades that breadth for reproducibility: the same 8 techniques applied to the same frozen cases, so that a score this month means the same thing as a score next month on a retrained model.
 
-On the deployed-system side, Bickmore et al. (2018) documented safety failures in voice assistants handling medical queries — Siri, Alexa, and Google Assistant giving inconsistent or dangerous responses to sensitive health questions. That work established that deployed consumer AI systems cannot be assumed to maintain consistent safe behavior. The case study in Section 7 is in this tradition, applied to a mental health AI and focused specifically on the mechanism by which consistency breaks down.
+On the deployed-system side, Bickmore et al. (2018) documented safety failures in voice assistants handling medical queries: Siri, Alexa, and Google Assistant giving inconsistent or dangerous responses to sensitive health questions. That work established that deployed consumer AI systems cannot be assumed to maintain consistent safe behavior. The case study in Section 7 is in this tradition, applied to a mental health AI and focused specifically on the mechanism by which consistency breaks down.
 
 ---
 
@@ -426,7 +426,7 @@ We have disclosed the category of failure (minimization technique triggering saf
 
 **Model evaluation.** All model evaluations were conducted via standard API access using publicly available models. No proprietary or internal model configurations were accessed.
 
-**Dual-use.** The adversarial technique taxonomy in CAI-Bench (T1–T8) describes pressure patterns that could in principle be used to probe or manipulate AI systems beyond their intended behavior. We publish the taxonomy because the defensive value — enabling developers to identify and patch consistency failures — outweighs the offensive risk, and because these techniques are already documented in red-teaming literature. The frozen benchmark cases do not include prompts designed to elicit harmful content; they target policy consistency, not safety bypass.
+**Dual-use.** The adversarial technique taxonomy in CAI-Bench (T1-T8) describes pressure patterns that could in principle be used to probe or manipulate AI systems beyond their intended behavior. We publish the taxonomy because the defensive value (enabling developers to identify and patch consistency failures) outweighs the offensive risk, and because these techniques are already documented in red-teaming literature. The frozen benchmark cases do not include prompts designed to elicit harmful content; they target policy consistency, not safety bypass.
 
 ---
 

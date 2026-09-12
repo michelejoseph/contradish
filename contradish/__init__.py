@@ -161,7 +161,7 @@ from .domains      import (
 from .conviction   import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .cdr          import generate_cdr
 
-__version__ = "1.31.0"
+__version__ = "1.31.1"
 __all__ = [
     "Suite",
     "RegressionSuite",

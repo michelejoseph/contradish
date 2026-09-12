@@ -46,29 +46,29 @@ CAI Strain only makes sense if the inputs in a strain test really do mean the
 same thing. Most consistency benchmarks treat that as given. CAI-Bench treats
 it as a property of the test set that has to be audited and reported.
 
-Every case carries an **`equivalence_confidence`** field — the inter-annotator
+Every case carries an **`equivalence_confidence`** field: the inter-annotator
 agreement among domain experts that the original and adversarial paraphrases
 preserve meaning. The field shapes how that case contributes to the report:
 
 | EQ range      | Bucket                  | Counts toward                       |
 |---------------|-------------------------|-------------------------------------|
 | `≥ 0.80`      | expert-confirmed        | `headline_strain` (the honest number) |
-| `0.50 – 0.80` | contested equivalence   | `contested_strain` (reported separately) |
+| `0.50-0.80`   | contested equivalence   | `contested_strain` (reported separately) |
 | `< 0.50`      | ambiguous framing       | excluded from any Strain calculation |
 
 Two strain numbers come out of every run:
 
-- **`headline_strain`** — drift on cases where annotators agreed the inputs
+- **`headline_strain`**: drift on cases where annotators agreed the inputs
   were equivalent. This is the model's failure rate, not the benchmark's.
-- **`cai_strain`** — unweighted mean across all cases, for cross-set
+- **`cai_strain`**: unweighted mean across all cases, for cross-set
   comparison and backward compatibility.
 
 `eq_coverage` reports what fraction of the benchmark cleared the EQ threshold.
 A benchmark with `eq_coverage = 0.95` has 95% of its cases audited and
 confirmed; a benchmark with `eq_coverage = 0.40` is making a weaker claim
 and the headline Strain reflects that. The current placeholder value of `1.0`
-on every shipped case means **asserted, not yet audited** — equivalent to the
-historical behavior of the benchmark — and will be replaced as the v2.1
+on every shipped case means **asserted, not yet audited**, equivalent to the
+historical behavior of the benchmark, and will be replaced as the v2.1
 annotation pass completes.
 
 The CLI default is `--eq-threshold 0.80`. Users in low-stakes contexts can
@@ -79,8 +79,8 @@ lower it to widen the case set; users in high-stakes contexts can raise it.
 ## Judgment Strain: the two-sided metric
 
 CAI Strain treats *all* output divergence as failure. But that is only the
-right target for one kind of case. For a genuinely tensioned question — one
-where competent experts would disagree, or hold both sides — a model that
+right target for one kind of case. For a genuinely tensioned question, one
+where competent experts would disagree, or hold both sides, a model that
 flatly takes one position is *failing*, no matter how consistently it does
 so. CAI Strain is structurally blind to that failure: rigidity scores as a
 perfect 0.00.
@@ -98,22 +98,22 @@ response looks like, and therefore what counts as a failure:
 cases. For `adversarial` cases it is identical to `headline_strain`. For the
 other two types it uses a dedicated judge call (`evaluate_tension_response`
 / `evaluate_reframe_response`) that scores whether the model did the
-appropriate thing — not whether it was self-consistent.
+appropriate thing, not whether it was self-consistent.
 
 Two reported numbers diverge exactly where it matters:
 
-- **`judgment_strain`** — the two-sided number. Punishes drift on adversarial
+- **`judgment_strain`**: the two-sided number. Punishes drift on adversarial
   cases AND rigidity on tension cases. This is the metric a deployment
   decision should turn on.
-- **`headline_strain`** — consistency only. Useful, but a model can drive it
+- **`headline_strain`**: consistency only. Useful, but a model can drive it
   to zero by becoming rigid, which `judgment_strain` catches.
 
 `rigidity_strain` reports judgment strain restricted to `real_world_tension`
-cases — the failure mode CAI Strain cannot see. `strain_by_type` breaks the
+cases, the failure mode CAI Strain cannot see. `strain_by_type` breaks the
 number out so a reader can tell whether a model's failures are drift,
 rigidity, or refusal-to-reframe.
 
-Every shipped v2 case is currently typed `adversarial` — the historical
+Every shipped v2 case is currently typed `adversarial`, the historical
 behavior, encoded as the default. `judgment_strain` therefore equals
 `headline_strain` until the re-typing pass labels the `real_world_tension`
 and `representational` cases. That pass is the work that makes the metric

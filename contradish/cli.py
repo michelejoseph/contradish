@@ -653,7 +653,7 @@ def cmd_findings(args):
     with open(args.result_file) as f:
         data = json.load(f)
 
-    # Reconstruct a minimal Report from the JSON. Tolerant of older schemas —
+    # Reconstruct a minimal Report from the JSON. Tolerant of older schemas;
     # missing fields fall back to safe defaults so findings still runs cleanly.
     raw_results = data.get("results", []) or []
     results: list[TestResult] = []
@@ -707,7 +707,7 @@ def cmd_findings(args):
         sys.exit(0)
 
     if not fs:
-        print(f"\n  no findings — the result is structurally unremarkable, "
+        print(f"\n  no findings, the result is structurally unremarkable, "
               f"or there's not enough evidence to fire any detector cleanly.\n")
         sys.exit(0)
 
@@ -892,7 +892,7 @@ def cmd_prompt(args):
             print()
         else:
             print()
-            print(f"  contradish prompt — {analysis.summary()}")
+            print(f"  contradish prompt: {analysis.summary()}")
             print()
             for i, t in enumerate(analysis.tensions, 1):
                 print(f"  [{i}/{n}]  {t.summary()}")
@@ -1621,7 +1621,7 @@ def cmd_monitor(args):
     as_json = getattr(args, "json", False)
 
     if not quiet and not as_json:
-        print(f"\n  contradish monitor  —  {args.input}")
+        print(f"\n  contradish monitor: {args.input}")
         print(f"  judge: {judge_provider}/{judge_model}")
         print()
 
@@ -1802,7 +1802,7 @@ def _fmt_time(ts) -> str:
 
 def cmd_benchmark(args):
     """
-    Run the full CAI-Bench against any model — no app code needed.
+    Run the full CAI-Bench against any model, no app code needed.
     This is the one-command path: contradish benchmark --model claude-sonnet-4-6
     """
     import sys
@@ -2033,8 +2033,8 @@ def _generate_benchmark_report(result: dict, path: str, model: str, test_type: s
         d_sw  = res.get("severity_weighted_cts", "")
         f, t  = res.get("failed", ""), res.get("total", "")
         d_color = "#16a34a" if isinstance(d_cts, float) and d_cts < 0.25 else ("#d97706" if isinstance(d_cts, float) and d_cts < 0.50 else "#dc2626")
-        d_str = f"{d_cts:.3f}" if isinstance(d_cts, float) else "—"
-        sw_str = f"{d_sw:.3f}" if isinstance(d_sw, float) else "—"
+        d_str = f"{d_cts:.3f}" if isinstance(d_cts, float) else "n/a"
+        sw_str = f"{d_sw:.3f}" if isinstance(d_sw, float) else "n/a"
         rows += f"<tr><td>{domain}</td><td style='color:{d_color};font-weight:600'>{d_str}</td><td>{sw_str}</td><td>{f}/{t}</td></tr>\n"
 
     html = f"""<!DOCTYPE html>
@@ -2042,7 +2042,7 @@ def _generate_benchmark_report(result: dict, path: str, model: str, test_type: s
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>contradish — {model} — {score_label} report</title>
+<title>contradish | {model} | {score_label} report</title>
 <style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;color:#111;font-size:15px;line-height:1.6;padding:40px 24px;max-width:820px;margin:0 auto}}
@@ -2541,7 +2541,7 @@ examples:
     imp_p.add_argument("--holdout-frac", type=float, default=0.0, metavar="FRAC",
                        dest="holdout_frac",
                        help="Reserve this fraction of cases as a held-out set. The winner is selected on "
-                            "train but reported on holdout — the honest read of post-repair Strain. "
+                            "train but reported on holdout: the honest read of post-repair Strain. "
                             "Default 0.0 keeps legacy behavior. Try 0.3 for a meaningful split.")
     imp_p.add_argument("--seed", type=int, default=0, metavar="N",
                        help="Seed for the train/holdout shuffle (default: 0). Same seed = same split.")
@@ -2564,7 +2564,7 @@ examples:
     imp_p.add_argument("--report", nargs="?", const="contradish-report.html", metavar="FILE",
                        help="Save a shareable HTML report of the improved-prompt run")
 
-    # contradish findings <result.json> — re-mine an existing result for findings
+    # contradish findings <result.json>: re-mine an existing result for findings
     find_p = sub.add_parser(
         "findings",
         help="Re-mine a result JSON for findings (root causes, rigidity, stability reframe, severity skew)",
@@ -2574,7 +2574,7 @@ examples:
     find_p.add_argument("--json", action="store_true", default=False,
                         help="Output findings as JSON instead of formatted text.")
 
-    # contradish fairness — disparate-treatment audit across protected attributes
+    # contradish fairness: disparate-treatment audit across protected attributes
     fair_p = sub.add_parser(
         "fairness",
         help="Audit an app for disparate treatment across disclosed protected attributes.",
@@ -2691,7 +2691,7 @@ examples:
     jf_p.add_argument("--json", action="store_true", default=False,
                       help="Output calibration as JSON.")
 
-    # contradish prompt <file_or_inline> — static analysis of a system prompt
+    # contradish prompt <file_or_inline>: static analysis of a system prompt
     prompt_p = sub.add_parser(
         "prompt",
         help="Static analysis of a system prompt for internal contradictions (no model under test).",
@@ -2722,7 +2722,7 @@ examples:
     prompt_p.add_argument("--json", action="store_true", default=False,
                           help="Output analysis as JSON.")
 
-    # contradish replay <transcript> — offline contradiction audit over logs
+    # contradish replay <transcript>: offline contradiction audit over logs
     replay_p = sub.add_parser(
         "replay",
         help="Replay logged conversation transcripts and report cross-turn self-contradictions.",
@@ -2758,7 +2758,7 @@ examples:
     replay_p.add_argument("--json", action="store_true", default=False,
                           help="Print the replay report as JSON instead of formatted text.")
 
-    # contradish reconcile <report.json> <replay.json> — grade bench vs production
+    # contradish reconcile <report.json> <replay.json>: grade bench vs production
     rec_p = sub.add_parser(
         "reconcile",
         help="Reconcile a benchmark report against a replay report: surface the validity gap.",
@@ -2789,7 +2789,7 @@ examples:
     rec_p.add_argument("--json", action="store_true", default=False,
                        help="Print the reconciliation as JSON instead of formatted text.")
 
-    # contradish analyze — zero-config stability analysis (no API key for your own model)
+    # contradish analyze: zero-config stability analysis (no API key for your own model)
     analyze_p = sub.add_parser(
         "analyze",
         help=(
@@ -2800,7 +2800,7 @@ examples:
             "Contradiction-forced truth extraction. Run your model through 8 pressure "
             "framings per question and extract what it actually commits to vs. what "
             "only appears under emotional or authority pressure.\n\n"
-            "No API key needed to analyze your own model — the evaluator runs entirely "
+            "No API key needed to analyze your own model, the evaluator runs entirely "
             "offline. An API key is only required in demo mode (no --app).\n\n"
             "  contradish analyze --domain customer-service --app mymodule:my_fn\n"
             "  contradish analyze --domain medical --app mybot:chat --html report.html\n"

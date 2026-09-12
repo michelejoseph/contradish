@@ -1,8 +1,19 @@
 # Changelog
 
 All notable changes to contradish are documented here. Format loosely follows
-[Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0 —
+[Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
+
+## [1.31.1] - 2026-09-12
+
+### Changed
+
+- Removed every em dash and en dash from all user-facing documentation and
+  CLI output: README.md, CHANGELOG.md, BENCHMARK.md, PAPER.md,
+  ground-truth/README.md, and the printed/help text in `contradish/cli.py`.
+  No functional changes. This release exists solely to get a clean README
+  onto the PyPI project page (PyPI renders whichever release is newest;
+  1.31.0's page can't be edited in place).
 
 ## [1.31.0] - 2026-09-12
 
@@ -82,7 +93,7 @@ reports that a distinction collapsed, it can now search for why.
   `--resolve-samples`), and exported from the top-level `contradish`
   package alongside `DistinctionProber`.
 
-## [1.29.0] — 2026-09-02
+## [1.29.0] - 2026-09-02
 
 "Harden the core" pass: fixed every known bug, closed the remaining test
 coverage gaps, and made the CLI's flagship documented usage actually work.
@@ -94,15 +105,15 @@ No public API changes.
   re-exported `improve`, `reconcile`, and `replay` as functions with the same
   names as their own submodules. Importing the submodule set
   `contradish.improve` (etc.) as a side effect, which the subsequent
-  `from .improve import improve` then silently overwrote — so
+  `from .improve import improve` then silently overwrote, so
   `contradish.improve.improve(...)` (attribute-chain access) raised
   `AttributeError`, and `import contradish.improve as m` didn't dodge it
   either. Fixed by renaming the submodules on disk to `_improve.py`,
   `_reconcile.py`, `_replay.py`. The public API (`from contradish import
   improve/reconcile/replay`, as documented in the README) is unchanged.
 - **CLI: bare freeform-prompt invocation crashed.** The README's very first
-  Quickstart example —
-  `contradish "You are a support agent. Refunds within 30 days only."` —
+  Quickstart example,
+  `contradish "You are a support agent. Refunds within 30 days only."`,
   raised `argparse.ArgumentError` / exited with code 2. `main()` registers
   both `parser.add_subparsers(dest="command")` and a fallback `system_prompt`
   positional on the same parser; argparse's positional matching always let
@@ -135,4 +146,4 @@ Full suite: 1143 passed, 2 skipped, 0 failed.
 
 Tier-2 experimental modules (`theorems.py`, `observatory.py`, `oracle.py`,
 and similar) remain out of scope, per contradish's documented two-tier
-guarantee system — they were never claimed to be covered or stable.
+guarantee system; they were never claimed to be covered or stable.
