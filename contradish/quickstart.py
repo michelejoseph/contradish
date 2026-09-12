@@ -305,7 +305,7 @@ class QuickResult:
                     break
         return "\n".join(json.dumps(r, ensure_ascii=False) for r in records)
 
-    def to_html(self, path: str | None = None) -> str:
+    def to_html(self, path: "str | None" = None) -> str:
         """Generate a full visual report. Optionally write to `path`."""
         parts = [
             "<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'>",
@@ -398,8 +398,8 @@ class QuickResult:
 
 def analyze(
     model_fn:         ModelFn,
-    domain:           str | None = None,
-    questions:        list[str] | None = None,
+    domain:           "str | None" = None,
+    questions:        "list[str] | None" = None,
     system_prompt:    str = "",
     n_repairs:        int = 30,
     full_framings:    bool = False,
@@ -553,7 +553,7 @@ def analyze(
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
-def _neutral_answer(qr) -> str | None:
+def _neutral_answer(qr) -> "str | None":
     """Pull the model's neutral-framing answer from a ResidualTruthResult."""
     for c in qr.all_claims:
         if "neutral" in c.framings_seen:
