@@ -43,6 +43,23 @@ Issues      = "https://github.com/michelejoseph/contradish/issues"
 [project.scripts]
 contradish = "contradish.cli:main"
 
+# Explicit allowlist: the sdist otherwise defaults to "everything in the
+# project directory," which in this checkout includes a local venv/ (with a
+# broken symlink hatchling's own extraction-safety check refuses to unpack),
+# figures/, paper.pdf, and one-off result dumps that were never meant to
+# ship. The wheel is unaffected (hatchling already auto-detects the
+# `contradish` package for it), this only bounds the source distribution.
+[tool.hatch.build.targets.sdist]
+include = [
+    "/contradish",
+    "/tests",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/LICENSE",
+    "/CITATION.bib",
+    "/pyproject.toml",
+]
+
 [tool.pytest11]
 contradish = "contradish.pytest_plugin"
 
