@@ -228,42 +228,14 @@ def _make_demo_app(system_prompt: str):
 
 def _default_commitment_extractor(llm):
     """
-    Fallback commitment_extractor for `contradish distinguish` when the caller
-    doesn't supply their own. Asks the same configured judge model to state
-    an answer's substantive conclusion in a few words; two extractions are
-    then compared by exact text match.
-
-    Every other use of commitment_extractor in this codebase (surrender.py,
-    convergence.py, the examples) is a hand-written, domain-specific
-    function, because commitment extraction is inherently domain-specific.
-    This default exists so `contradish distinguish` works out of the box,
-    but it is a judge call and inherits the judge's own noise the same way
-    `contradish judge-floor` measures for the rest of the benchmark. Write
-    your own commitment_extractor(question, answer) for anything you plan
-    to rely on.
+    Fallback commitment_extractor for `contradish distinguish`,
+    `contradish compare --distinctions`, and `contradish improve
+    --distinctions` when the caller doesn't supply their own. Thin wrapper
+    around contradish.distinction.default_commitment_extractor -- see that
+    function's docstring for the full rationale.
     """
-    def extract(question: str, answer: str) -> str:
-        prompt = (
-            "State the single substantive conclusion or commitment this "
-            "answer makes, in 3-8 words, ignoring tone, hedging, and "
-            "phrasing. Respond with only the phrase, nothing else.\n\n"
-            f"Question: {question}\nAnswer: {answer}"
-        )
-        if llm.provider == "anthropic":
-            msg = llm._client.messages.create(
-                model=llm.fast_model,
-                max_tokens=32,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            return msg.content[0].text.strip().lower()
-        else:
-            resp = llm._client.chat.completions.create(
-                model=llm.fast_model,
-                max_tokens=32,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            return resp.choices[0].message.content.strip().lower()
-    return extract
+    from .distinction import default_commitment_extractor
+    return default_commitment_extractor(llm)
 
 
 def cmd_policy(args):
@@ -599,6 +571,7 @@ def cmd_improve(args):
             concurrency     = getattr(args, "concurrency", 4),
             holdout_frac    = getattr(args, "holdout_frac", 0.0),
             seed            = getattr(args, "seed", 0),
+            distinctions    = getattr(args, "distinctions", None),
         )
         if result is None:
             msg = "no validity or coverage gaps: production surfaced nothing the benchmark missed."
@@ -636,6 +609,7 @@ def cmd_improve(args):
             concurrency     = getattr(args, "concurrency", 4),
             holdout_frac    = getattr(args, "holdout_frac", 0.0),
             seed            = getattr(args, "seed", 0),
+            distinctions    = getattr(args, "distinctions", None),
         )
 
     if use_json:
@@ -2423,6 +2397,12 @@ examples:
                             "Default 0.0 keeps legacy behavior. Try 0.3 for a meaningful split.")
     imp_p.add_argument("--seed", type=int, default=0, metavar="N",
                        help="Seed for the train/holdout shuffle (default: 0). Same seed = same split.")
+    imp_p.add_argument("--distinctions", choices=("medication", "immigration"), default=None, metavar="DOMAIN",
+                       help="Also check whether this built-in distinction-pair domain survives the "
+                            "prompt rewrite: measure it against the baseline prompt and again against "
+                            "the winning improved prompt, and reject the improvement (target_met=False) "
+                            "if any distinction that held in baseline collapses in the improved prompt. "
+                            "A consistency win that quietly erases a real-world distinction is not a win.")
     imp_p.add_argument("--enable-finetune", action="store_true", default=False,
                        dest="enable_finetune",
                        help="Actually submit the fine-tuning job (only with --method finetune). "

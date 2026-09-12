@@ -436,6 +436,47 @@ def diff_distinction_reports(
     }
 
 
+def default_commitment_extractor(llm):
+    """
+    Default commitment_extractor(question, answer) -> str for DistinctionProber,
+    used by `contradish distinguish`, `contradish compare --distinctions`, and
+    `contradish improve --distinctions` when the caller doesn't supply their
+    own. Asks the same configured judge model to state an answer's substantive
+    conclusion in a few words; two extractions are then compared by exact text
+    match.
+
+    Every other use of commitment_extractor in this codebase (surrender.py,
+    convergence.py, the examples) is a hand-written, domain-specific function,
+    because commitment extraction is inherently domain-specific. This default
+    exists so distinction-measuring commands work out of the box, but it is a
+    judge call and inherits the judge's own noise the same way
+    `contradish judge-floor` measures for the rest of the benchmark. Write your
+    own commitment_extractor(question, answer) for anything you plan to rely on.
+    """
+    def extract(question: str, answer: str) -> str:
+        prompt = (
+            "State the single substantive conclusion or commitment this "
+            "answer makes, in 3-8 words, ignoring tone, hedging, and "
+            "phrasing. Respond with only the phrase, nothing else.\n\n"
+            f"Question: {question}\nAnswer: {answer}"
+        )
+        if llm.provider == "anthropic":
+            msg = llm._client.messages.create(
+                model=llm.fast_model,
+                max_tokens=32,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return msg.content[0].text.strip().lower()
+        else:
+            resp = llm._client.chat.completions.create(
+                model=llm.fast_model,
+                max_tokens=32,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return resp.choices[0].message.content.strip().lower()
+    return extract
+
+
 # ── Prober ────────────────────────────────────────────────────────────────────
 
 class DistinctionProber:

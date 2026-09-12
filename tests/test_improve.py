@@ -993,3 +993,191 @@ def test_improve_and_reconcile_both_importable_the_documented_way():
     from contradish import cases_from_reconciliation
     assert callable(improve_fn)
     assert callable(cases_from_reconciliation)
+
+
+# ── ImprovementResult.summary() / to_dict(): distinctions gate ─────────────
+
+def test_summary_shows_rejected_when_distinctions_regressed():
+    r = ImprovementResult(
+        baseline_strain=0.5, improved_strain=0.05, strain_delta=-0.45,
+        target_strain=0.10, target_met=False, method="prompt",
+        baseline_prompt="a", improved_prompt="b",
+        baseline_report=_report([_tr()]), improved_report=_report([_tr()]),
+        distinction_diff={"newly_collapsed": ["x"], "summary": "s"}, distinctions_regressed=True,
+    )
+    out = r.summary()
+    assert "REJECTED" in out
+    assert "x" in out
+
+
+def test_summary_shows_distinctions_summary_when_not_regressed():
+    r = ImprovementResult(
+        baseline_strain=0.5, improved_strain=0.2, strain_delta=-0.3,
+        target_strain=0.25, target_met=True, method="prompt",
+        baseline_prompt="a", improved_prompt="b",
+        baseline_report=_report([_tr()]), improved_report=_report([_tr()]),
+        distinction_diff={
+            "newly_collapsed": [],
+            "summary": "baseline_prompt vs improved_prompt  (medication)  pairs=1  regressed=0  newly_collapsed=0",
+        },
+        distinctions_regressed=False,
+    )
+    out = r.summary()
+    assert "pairs=1" in out
+
+
+def test_summary_omits_distinctions_section_when_none():
+    r = ImprovementResult(
+        baseline_strain=0.5, improved_strain=0.2, strain_delta=-0.3,
+        target_strain=0.25, target_met=True, method="prompt",
+        baseline_prompt="a", improved_prompt="b",
+        baseline_report=_report([_tr()]), improved_report=_report([_tr()]),
+    )
+    assert "collapsed" not in r.summary()
+
+
+def test_to_dict_includes_distinction_fields():
+    r = ImprovementResult(
+        baseline_strain=0.5, improved_strain=0.2, strain_delta=-0.3,
+        target_strain=0.25, target_met=True, method="prompt",
+        baseline_prompt="a", improved_prompt="b",
+        baseline_report=_report([_tr()]), improved_report=_report([_tr()]),
+        distinction_diff={"newly_collapsed": [], "summary": "s"}, distinctions_regressed=False,
+    )
+    d = r.to_dict()
+    assert d["distinction_diff"] == {"newly_collapsed": [], "summary": "s"}
+    assert d["distinctions_regressed"] is False
+
+
+# ── improve(): distinctions gate ────────────────────────────────────────────
+#
+# FakeDistinctionProber mirrors FakeSuite/FakePromptRepair above: queue-driven,
+# each .measure() call pops the next to_dict()-shaped payload off the class
+# queue, in the order improve()'s distinction gate calls it (baseline prompt
+# measured first, then the improved prompt). This tests the gate's wiring
+# (does it call DistinctionProber twice, diff the results, and force
+# target_met False on a collapse) without running real pressure-framing
+# probes -- diff_distinction_reports() itself is already covered directly in
+# tests/test_distinction.py.
+
+class FakeDistinctionProber:
+    queue: list = []
+    instances: list = []
+
+    def __init__(self, model_fn, pairs, commitment_extractor, domain="general", **kw):
+        self.model_fn = model_fn
+        self.pairs = pairs
+        self.domain = domain
+        FakeDistinctionProber.instances.append(self)
+
+    def measure(self, verbose=True):
+        data = FakeDistinctionProber.queue.pop(0)
+        return SimpleNamespace(to_dict=lambda: data)
+
+
+def _dist_payload(domain="medication", hold_rates=None):
+    hold_rates = hold_rates or {}
+    return {
+        "domain": domain,
+        "profiles": {
+            pid: {"overall_hold_rate": rate, "description": f"{pid} description"}
+            for pid, rate in hold_rates.items()
+        },
+    }
+
+
+def test_improve_distinctions_gate_rejects_when_a_distinction_collapses(monkeypatch):
+    monkeypatch.setattr("contradish.distinction.DistinctionProber", FakeDistinctionProber)
+    FakeDistinctionProber.queue = [
+        _dist_payload(hold_rates={"schedule_ii_vs_routine_refill": 0.9}),  # baseline: held
+        _dist_payload(hold_rates={"schedule_ii_vs_routine_refill": 0.2}),  # improved: collapsed
+    ]
+    baseline = _report([_tr(consistency_score=0.4)])
+    improved_result_report = _report([_tr(consistency_score=0.99)])
+    FakeSuite.queue = [baseline]
+    FakePromptRepair.variants = [_repair_result(
+        report=improved_result_report, original_cai_score=0.4, improved_cai_score=0.99,
+    )]
+    result = improve(
+        cases=[_tc()], system_prompt="p", target_strain=0.10, verbose=False,
+        distinctions="medication",
+    )
+    # CAI Strain target would be met (~0.01 <= 0.10), but a distinction that
+    # held in baseline collapsed in the improved prompt -> rejected.
+    assert result.distinctions_regressed is True
+    assert result.target_met is False
+    assert result.distinction_diff["newly_collapsed"] == ["schedule_ii_vs_routine_refill"]
+    assert len(FakeDistinctionProber.instances) == 2
+
+
+def test_improve_distinctions_gate_allows_when_nothing_collapses(monkeypatch):
+    monkeypatch.setattr("contradish.distinction.DistinctionProber", FakeDistinctionProber)
+    FakeDistinctionProber.queue = [
+        _dist_payload(hold_rates={"a": 0.9}),
+        _dist_payload(hold_rates={"a": 0.85}),  # ordinary drop, not a collapse
+    ]
+    baseline = _report([_tr(consistency_score=0.4)])
+    improved_result_report = _report([_tr(consistency_score=0.99)])
+    FakeSuite.queue = [baseline]
+    FakePromptRepair.variants = [_repair_result(
+        report=improved_result_report, original_cai_score=0.4, improved_cai_score=0.99,
+    )]
+    result = improve(
+        cases=[_tc()], system_prompt="p", target_strain=0.10, verbose=False,
+        distinctions="medication",
+    )
+    assert result.distinctions_regressed is False
+    assert result.target_met is True
+    assert result.distinction_diff is not None
+
+
+def test_improve_no_distinctions_gate_when_domain_not_passed():
+    baseline = _report([_tr(consistency_score=0.4)])
+    improved_result_report = _report([_tr(consistency_score=0.99)])
+    FakeSuite.queue = [baseline]
+    FakePromptRepair.variants = [_repair_result(
+        report=improved_result_report, original_cai_score=0.4, improved_cai_score=0.99,
+    )]
+    result = improve(cases=[_tc()], system_prompt="p", target_strain=0.10, verbose=False)
+    assert result.distinction_diff is None
+    assert result.distinctions_regressed is False
+    assert result.target_met is True
+
+
+def test_improve_unknown_distinctions_domain_warns_and_skips(capsys):
+    baseline = _report([_tr(consistency_score=0.4)])
+    improved_result_report = _report([_tr(consistency_score=0.99)])
+    FakeSuite.queue = [baseline]
+    FakePromptRepair.variants = [_repair_result(
+        report=improved_result_report, original_cai_score=0.4, improved_cai_score=0.99,
+    )]
+    result = improve(
+        cases=[_tc()], system_prompt="p", target_strain=0.10, verbose=True,
+        distinctions="not_a_real_domain",
+    )
+    out = capsys.readouterr().out
+    assert "no built-in distinction pairs for domain" in out
+    assert result.distinction_diff is None
+    assert result.distinctions_regressed is False
+    assert result.target_met is True
+
+
+def test_improve_verbose_prints_distinctions_rejection_message(monkeypatch, capsys):
+    monkeypatch.setattr("contradish.distinction.DistinctionProber", FakeDistinctionProber)
+    FakeDistinctionProber.queue = [
+        _dist_payload(hold_rates={"a": 0.9}),
+        _dist_payload(hold_rates={"a": 0.1}),
+    ]
+    baseline = _report([_tr(consistency_score=0.4)])
+    improved_result_report = _report([_tr(consistency_score=0.99)])
+    FakeSuite.queue = [baseline]
+    FakePromptRepair.variants = [_repair_result(
+        report=improved_result_report, original_cai_score=0.4, improved_cai_score=0.99,
+    )]
+    improve(
+        cases=[_tc()], system_prompt="p", target_strain=0.10, verbose=True,
+        distinctions="medication",
+    )
+    out = capsys.readouterr().out
+    assert "REJECTED: CAI Strain fell but" in out
+    assert "distinction(s) that held in the baseline prompt collapsed" in out

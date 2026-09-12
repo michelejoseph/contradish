@@ -111,6 +111,17 @@ class ImprovementResult:
     baseline_truth_strain: Optional[float] = None
     improved_truth_strain: Optional[float] = None
     truth_regressed:       bool            = False
+    # Distinction gate fields. Populated only when improve() is called with
+    # distinctions=DOMAIN (a key in contradish.distinction.BUILTIN_DISTINCTION_PAIRS).
+    # The integrity rule mirrors the truth gate above: a prompt rewrite that
+    # improves CAI Strain by quietly erasing a real-world distinction the
+    # baseline prompt used to maintain is not a win either. distinction_diff
+    # is the full diff_distinction_reports() payload (baseline prompt vs
+    # improved prompt); distinctions_regressed is True when any distinction
+    # that held in the baseline prompt collapsed in the improved one, and
+    # forces target_met False regardless of the CAI Strain improvement.
+    distinction_diff:       Optional[dict] = None
+    distinctions_regressed: bool           = False
 
     def summary(self) -> str:
         """One-line summary for stdout."""
@@ -128,10 +139,16 @@ class ImprovementResult:
             )
         elif self.improved_truth_strain is not None:
             truth = f"  [truth_strain {self.baseline_truth_strain:.3f} to {self.improved_truth_strain:.3f}]"
+        dist = ""
+        if self.distinctions_regressed:
+            collapsed = ", ".join(self.distinction_diff["newly_collapsed"]) if self.distinction_diff else ""
+            dist = f"  [REJECTED: distinction(s) collapsed: {collapsed}]"
+        elif self.distinction_diff is not None:
+            dist = f"  [{self.distinction_diff['summary']}]"
         return (
             f"CAI Strain {self.baseline_strain:.3f} → {self.improved_strain:.3f}  "
             f"({arrow} {abs(self.strain_delta):.3f} / {pct:.0f}% reduction)  "
-            f"[{hit}]  method={self.method}{scope}{truth}"
+            f"[{hit}]  method={self.method}{scope}{truth}{dist}"
         )
 
     def to_dict(self) -> dict:
@@ -153,6 +170,8 @@ class ImprovementResult:
             "baseline_truth_strain": self.baseline_truth_strain,
             "improved_truth_strain": self.improved_truth_strain,
             "truth_regressed":       self.truth_regressed,
+            "distinction_diff":       self.distinction_diff,
+            "distinctions_regressed": self.distinctions_regressed,
             "baseline_report":  self.baseline_report.to_dict(),
             "improved_report":  self.improved_report.to_dict(),
             "variant_strains":  [
@@ -287,6 +306,7 @@ def improve(
     concurrency:    int                  = 4,
     holdout_frac:   float                = 0.0,
     seed:           int                  = 0,
+    distinctions:   Optional[str]        = None,
 ) -> ImprovementResult:
     """
     Close the repair loop end-to-end.
@@ -331,6 +351,18 @@ def improve(
                          the train-on-test bias of the legacy path. Default 0.0
                          preserves prior behavior.
         seed:            Seed for the holdout shuffle so splits are reproducible.
+        distinctions:    Optional built-in distinction-pair domain (a key in
+                         contradish.distinction.BUILTIN_DISTINCTION_PAIRS, e.g.
+                         "medication" or "immigration"). When set, the domain's
+                         distinctions are measured against the baseline prompt
+                         and again against the winning improved prompt, and
+                         diffed. A prompt rewrite that improved CAI Strain by
+                         collapsing a distinction the baseline prompt held is
+                         rejected the same way the truth gate rejects a
+                         consistency win that cost truth: target_met is forced
+                         False and distinctions_regressed is set on the result.
+                         Default None is a no-op (no extra API calls, behavior
+                         unchanged).
 
     Returns:
         ImprovementResult with before/after CAI Strain, the improved prompt,
@@ -514,7 +546,73 @@ def improve(
     if baseline_truth is not None and improved_truth is not None:
         truth_regressed = improved_truth > baseline_truth + _TRUTH_TOLERANCE
 
-    target_met = (improved_strain <= target_strain) and not truth_regressed
+    # ── Distinction gate ─────────────────────────────────────────────────────────
+    # Same integrity rule as the truth gate above, aimed at a different way a
+    # prompt rewrite can quietly cheat: it can raise CAI Strain's headline
+    # consistency score while collapsing a real-world distinction the baseline
+    # prompt used to maintain (e.g. blurring "schedule II" and "routine
+    # refill" into one answer). Measure the domain's built-in distinctions
+    # against the baseline prompt and again against the winning improved
+    # prompt, and reject the win if any distinction that held in baseline
+    # collapsed in the improved prompt, the same "did optimizing the visible
+    # score weaken what actually supports it" question RegressionSuite's
+    # --distinctions flag asks across model swaps, asked here across a
+    # prompt rewrite instead.
+    distinction_diff = None
+    distinctions_regressed = False
+    if distinctions:
+        from .distinction import (
+            DistinctionProber, BUILTIN_DISTINCTION_PAIRS, diff_distinction_reports,
+            default_commitment_extractor,
+        )
+        pairs = BUILTIN_DISTINCTION_PAIRS.get(distinctions)
+        if not pairs:
+            if verbose:
+                print(
+                    f"  [improve] no built-in distinction pairs for domain "
+                    f"{distinctions!r}; skipping distinction check. Available: "
+                    f"{', '.join(BUILTIN_DISTINCTION_PAIRS)}"
+                )
+        else:
+            if verbose:
+                print(f"  [improve] checking {len(pairs)} distinction(s) in {distinctions!r} before/after repair")
+            from .llm import LLMClient
+            dist_llm  = LLMClient(api_key=api_key, provider=provider)
+            extractor = default_commitment_extractor(dist_llm)
+
+            def _baseline_dist_fn(system_prompt, question, _f=baseline_app):
+                return _f(question)
+
+            candidate_dist_app = _make_app_for_prompt(
+                system_prompt=improved_prompt, model=model, provider=provider, api_key=api_key,
+            )
+            def _candidate_dist_fn(system_prompt, question, _f=candidate_dist_app):
+                return _f(question)
+
+            baseline_dist_map = DistinctionProber(
+                model_fn=_baseline_dist_fn, pairs=pairs, commitment_extractor=extractor, domain=distinctions,
+            ).measure(verbose=verbose)
+            candidate_dist_map = DistinctionProber(
+                model_fn=_candidate_dist_fn, pairs=pairs, commitment_extractor=extractor, domain=distinctions,
+            ).measure(verbose=verbose)
+
+            distinction_diff = diff_distinction_reports(
+                baseline_dist_map.to_dict(), candidate_dist_map.to_dict(),
+                baseline_label="baseline_prompt", candidate_label="improved_prompt",
+            )
+            distinctions_regressed = bool(distinction_diff["newly_collapsed"])
+            if verbose:
+                print(f"  [improve] {distinction_diff['summary']}")
+                if distinctions_regressed:
+                    print(
+                        f"  [improve] REJECTED: CAI Strain fell but "
+                        f"{len(distinction_diff['newly_collapsed'])} distinction(s) that held in "
+                        f"the baseline prompt collapsed in the improved one: "
+                        f"{', '.join(distinction_diff['newly_collapsed'])}. A more consistent "
+                        f"prompt that quietly erases a real-world distinction is not an improvement."
+                    )
+
+    target_met = (improved_strain <= target_strain) and not truth_regressed and not distinctions_regressed
     if verbose and truth_regressed:
         print(
             f"  [improve] REJECTED: CAI Strain fell but truth_strain rose "
@@ -541,6 +639,8 @@ def improve(
         baseline_truth_strain = baseline_truth,
         improved_truth_strain = improved_truth,
         truth_regressed       = truth_regressed,
+        distinction_diff        = distinction_diff,
+        distinctions_regressed  = distinctions_regressed,
     )
 
     # ── 4. Fine-tune scaffold ───────────────────────────────────────────────────
