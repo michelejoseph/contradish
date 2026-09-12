@@ -623,12 +623,12 @@ class ResidualTruthEngine:
 
     def __init__(
         self,
-        claim_extractor: ClaimExtractor | None = None,
-        incompatibility_detector: IncompatibilityDetector | None = None,
+        claim_extractor: "ClaimExtractor | None" = None,
+        incompatibility_detector: "IncompatibilityDetector | None" = None,
         n_repairs: int = 60,
         similarity_threshold: float = 0.45,
         adaptive_scoring: bool = True,
-        seed: int | None = None,
+        seed: "int | None" = None,
     ):
         self.extractor    = claim_extractor or KeywordClaimExtractor()
         self.detector     = incompatibility_detector or PatternIncompatibilityDetector()
@@ -643,7 +643,7 @@ class ResidualTruthEngine:
         self,
         question:      str,
         model_fn:      ModelFn,
-        framings:      dict[str, str] | None = None,
+        framings:      "dict[str, str] | None" = None,
         system_prompt: str = "",
     ) -> ResidualTruthResult:
         """
@@ -870,7 +870,7 @@ class ResidualTruthEngine:
 
         return traces
 
-    def _canonical_trace(self, traces: list[RepairTrace]) -> RepairTrace | None:
+    def _canonical_trace(self, traces: list[RepairTrace]) -> "RepairTrace | None":
         """Return the trace with median length — most representative repair."""
         if not traces:
             return None
