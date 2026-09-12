@@ -94,6 +94,7 @@ from .distinction  import (
     DistinctionPair, DistinctionProber, DistinctionLossMap,
     DistinctionProfile, DistinctionMeasurement, BUILTIN_DISTINCTION_PAIRS,
     diff_distinction_reports,
+    KBVMeasurement, KBVProfile, KBVReport, default_restatement_judge,
 )
 from .memory       import (
     ConversationMemory,

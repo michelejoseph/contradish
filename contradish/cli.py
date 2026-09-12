@@ -934,7 +934,9 @@ def cmd_distinguish(args):
     consistency and distinction-blindness are independent failure modes.
     See contradish/distinction.py for the full definitions.
     """
-    from contradish.distinction import DistinctionProber, BUILTIN_DISTINCTION_PAIRS
+    from contradish.distinction import (
+        DistinctionProber, BUILTIN_DISTINCTION_PAIRS, default_restatement_judge,
+    )
     from contradish.llm import LLMClient
 
     _check_api_key()
@@ -994,6 +996,23 @@ def cmd_distinguish(args):
         if worst_collapse > threshold:
             print(f"  FAIL: worst distinction collapse rate {worst_collapse:.2f} "
                   f"({loss_map.most_fragile}) exceeds threshold {threshold}.\n")
+            sys.exit(1)
+
+    # ── knows-but-violates ───────────────────────────────────────────────────
+    kbv_threshold = getattr(args, "kbv_threshold", None)
+    if getattr(args, "kbv", False) or kbv_threshold is not None:
+        restatement_judge = default_restatement_judge(llm)
+        kbv_report = prober.measure_kbv(loss_map, restatement_judge=restatement_judge, verbose=not use_json)
+
+        if use_json:
+            print(json.dumps({"kbv_report": kbv_report.to_dict()}, indent=2))
+        else:
+            print(kbv_report.report())
+            print()
+
+        if kbv_threshold is not None and kbv_report.overall_kbv_rate > kbv_threshold:
+            print(f"  FAIL: overall KBV rate {kbv_report.overall_kbv_rate:.2f} "
+                  f"exceeds threshold {kbv_threshold}.\n")
             sys.exit(1)
 
     sys.exit(0)
@@ -2539,6 +2558,14 @@ examples:
                              "exceeds this. For CI gating.")
     dist_p.add_argument("--report", nargs="?", const=True, default=False, metavar="FILE",
                         help="Save the HTML loss map (default filename if none given).")
+    dist_p.add_argument("--kbv", action="store_true", default=False,
+                        help="Also measure knows-but-violates: for each pair, ask the model "
+                             "directly whether the two situations need different handling, "
+                             "and check whether it still failed to honor that under pressure "
+                             "anyway. See 'Models Recall What They Violate' (arXiv 2604.28031).")
+    dist_p.add_argument("--kbv-threshold", type=float, default=None, metavar="F", dest="kbv_threshold",
+                        help="Exit nonzero if the overall KBV rate exceeds this. Implies --kbv. "
+                             "For CI gating.")
     dist_p.add_argument("--json", action="store_true", default=False,
                         help="Output the loss map as JSON.")
 
