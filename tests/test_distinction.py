@@ -169,3 +169,162 @@ def test_cmd_distinguish_runs_end_to_end_with_mocked_llm(capsys):
     d = json.loads(out)
     assert d["domain"] == "medication"
     assert d["profiles"][d["most_fragile"]]["collapse_rate"] == 0.0
+
+
+# ── diff_distinction_reports ────────────────────────────────────────────────
+
+from contradish.distinction import diff_distinction_reports
+
+
+def _fake_report(domain, profiles):
+    """profiles: {pair_id: overall_hold_rate}"""
+    return {
+        "domain": domain,
+        "profiles": {
+            pid: {"description": f"desc {pid}", "overall_hold_rate": rate}
+            for pid, rate in profiles.items()
+        },
+    }
+
+
+def test_diff_flags_newly_collapsed_pair():
+    baseline = _fake_report("medication", {"a": 0.9, "b": 0.9})
+    candidate = _fake_report("medication", {"a": 0.9, "b": 0.2})
+    diff = diff_distinction_reports(baseline, candidate, "v1", "v2")
+    assert diff["newly_collapsed"] == ["b"]
+    assert "b" in diff["regressed"]
+    assert "a" not in diff["regressed"]
+    json.dumps(diff)
+
+
+def test_diff_ordinary_drop_is_regressed_but_not_newly_collapsed():
+    baseline = _fake_report("medication", {"a": 0.9})
+    candidate = _fake_report("medication", {"a": 0.75})
+    diff = diff_distinction_reports(baseline, candidate)
+    assert diff["regressed"] == ["a"]
+    assert diff["newly_collapsed"] == []
+
+
+def test_diff_improvement_is_not_regressed():
+    baseline = _fake_report("medication", {"a": 0.5})
+    candidate = _fake_report("medication", {"a": 0.9})
+    diff = diff_distinction_reports(baseline, candidate)
+    assert diff["regressed"] == []
+    assert diff["newly_collapsed"] == []
+
+
+def test_diff_pair_missing_from_one_side_has_none_delta():
+    baseline = _fake_report("medication", {"a": 0.9})
+    candidate = _fake_report("medication", {"a": 0.9, "b": 0.1})
+    diff = diff_distinction_reports(baseline, candidate)
+    row_b = next(r for r in diff["per_pair"] if r["pair_id"] == "b")
+    assert row_b["baseline_hold_rate"] is None
+    assert row_b["delta"] is None
+    assert row_b["regressed"] is False
+    assert row_b["newly_collapsed"] is False
+
+
+# ── `contradish compare` distinctions wiring ────────────────────────────────
+
+def test_compare_saved_distinction_reports_fails_on_newly_collapsed(tmp_path, capsys):
+    import contradish.cli as cli
+
+    baseline = _fake_report("medication", {"healthy_vs_renal_dosing": 0.9})
+    candidate = _fake_report("medication", {"healthy_vs_renal_dosing": 0.1})
+    b_path = tmp_path / "baseline.json"
+    c_path = tmp_path / "candidate.json"
+    b_path.write_text(json.dumps(baseline))
+    c_path.write_text(json.dumps(candidate))
+
+    class Args:
+        json = True
+        baseline_result = None
+        candidate_result = None
+        baseline_distinctions = str(b_path)
+        candidate_distinctions = str(c_path)
+        baseline_label = "v1"
+        candidate_label = "v2"
+        baseline_app = None
+        candidate_app = None
+        eval_file = None
+        threshold = 0.25
+        paraphrases = 5
+        distinctions = None
+
+    with pytest.raises(SystemExit) as exc:
+        cli.cmd_compare(Args())
+    assert exc.value.code == 1
+    printed = capsys.readouterr().out
+    json_part = printed.split("  FAIL:")[0]
+    out = json.loads(json_part)
+    assert out["distinction_diff"]["newly_collapsed"] == ["healthy_vs_renal_dosing"]
+
+
+def test_compare_live_distinctions_detects_regression_between_two_apps(tmp_path, capsys):
+    import contradish.cli as cli
+
+    def _holds(question):
+        return question
+
+    def _collapses(question):
+        return "same answer no matter what"
+
+    with patch("contradish.llm.LLMClient", _FakeLLM), \
+         patch.object(cli, "_check_api_key", lambda: None), \
+         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor):
+
+        class Args:
+            json = True
+            baseline_result = None
+            candidate_result = None
+            baseline_distinctions = None
+            candidate_distinctions = None
+            baseline_app = "tests.test_distinction:_holds_wrapper"
+            candidate_app = "tests.test_distinction:_collapses_wrapper"
+            eval_file = "__unused__"
+            baseline_label = "v1"
+            candidate_label = "v2"
+            threshold = 0.25
+            paraphrases = 5
+            distinctions = "medication"
+
+        # RegressionSuite.load/compare would need a real eval file and live
+        # judge calls; this test only exercises the distinctions path, so
+        # short-circuit the CAI-strain half exactly like an eval file with
+        # zero cases would (no regressions, no judge calls).
+        class _EmptyResult:
+            def to_dict(self):
+                return {}
+            def __str__(self):
+                return "empty"
+            def fail_if_above(self, strain):
+                pass
+
+        class _EmptySuite:
+            @staticmethod
+            def load(path):
+                return _EmptySuite()
+            def compare(self, **kw):
+                return _EmptyResult()
+
+        with patch("contradish.RegressionSuite", _EmptySuite, create=True):
+            with pytest.raises(SystemExit) as exc:
+                cli.cmd_compare(Args())
+
+    assert exc.value.code == 1
+    printed = capsys.readouterr().out
+    # two JSON objects are printed back to back (empty result dict, then the
+    # distinction diff), and a trailing FAIL line after that -- isolate the
+    # second JSON object between the two.
+    second_json_start = printed.index("}\n{") + 2
+    second_json_text = printed[second_json_start:].split("  FAIL:")[0]
+    dist_out = json.loads(second_json_text)
+    assert dist_out["distinction_diff"]["newly_collapsed"]
+
+
+def _holds_wrapper(question):
+    return question
+
+
+def _collapses_wrapper(question):
+    return "same answer no matter what"

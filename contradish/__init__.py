@@ -93,6 +93,7 @@ from .fairness     import audit_fairness, FairnessAudit, IdentityProfile
 from .distinction  import (
     DistinctionPair, DistinctionProber, DistinctionLossMap,
     DistinctionProfile, DistinctionMeasurement, BUILTIN_DISTINCTION_PAIRS,
+    diff_distinction_reports,
 )
 from .memory       import (
     ConversationMemory,

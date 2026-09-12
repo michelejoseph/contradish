@@ -1140,12 +1140,27 @@ def cmd_compare(args):
     from contradish.models import Report
 
     use_json = getattr(args, "json", False)
+    exit_code = 0
+    ran_something = False
+
+    def _print_distinction_diff(dist_diff):
+        if use_json:
+            print(json.dumps({"distinction_diff": dist_diff}, indent=2))
+        else:
+            print(f"\n  {dist_diff['summary']}")
+            if dist_diff["newly_collapsed"]:
+                print(f"  newly collapsed distinction(s) ({len(dist_diff['newly_collapsed'])}):")
+                for row in dist_diff["per_pair"]:
+                    if row["newly_collapsed"]:
+                        print(f"    {row['pair_id']}  {row['baseline_hold_rate']:.2f} -> {row['candidate_hold_rate']:.2f}")
+            print()
 
     # ── Path A: two saved result JSONs (no API calls, no live apps) ─────────
     baseline_result_path  = getattr(args, "baseline_result", None)
     candidate_result_path = getattr(args, "candidate_result", None)
 
     if baseline_result_path and candidate_result_path:
+        ran_something = True
         with open(baseline_result_path) as f:
             base_report = Report.from_dict(json.load(f))
         with open(candidate_result_path) as f:
@@ -1173,22 +1188,47 @@ def cmd_compare(args):
             if regressed:
                 print(f"\n  regressed cases ({len(regressed)}):")
                 for r in regressed:
-                    print(f"    {r['name']}  {r['baseline_strain']:.3f} → {r['candidate_strain']:.3f}  ({r['delta']:+.3f})")
+                    print(f"    {r['name']}  {r['baseline_strain']:.3f} -> {r['candidate_strain']:.3f}  ({r['delta']:+.3f})")
             print()
 
         try:
             result.fail_if_above(strain=args.threshold)
         except AssertionError as e:
             print(f"  FAIL: {e}\n")
-            sys.exit(1)
-        sys.exit(0)
+            exit_code = 1
+
+    # ── distinctions diff from two saved `contradish distinguish --json` files ──
+    baseline_dist_path  = getattr(args, "baseline_distinctions", None)
+    candidate_dist_path = getattr(args, "candidate_distinctions", None)
+
+    if baseline_dist_path and candidate_dist_path:
+        ran_something = True
+        from contradish.distinction import diff_distinction_reports
+        with open(baseline_dist_path) as f:
+            baseline_dist = json.load(f)
+        with open(candidate_dist_path) as f:
+            candidate_dist = json.load(f)
+        dist_diff = diff_distinction_reports(
+            baseline_dist, candidate_dist,
+            baseline_label  = args.baseline_label,
+            candidate_label = args.candidate_label,
+        )
+        _print_distinction_diff(dist_diff)
+        if dist_diff["newly_collapsed"]:
+            print(f"  FAIL: {len(dist_diff['newly_collapsed'])} distinction(s) newly collapsed "
+                  f"between {args.baseline_label} and {args.candidate_label}.\n")
+            exit_code = 1
+
+    if ran_something:
+        sys.exit(exit_code)
 
     # ── Path B: live --baseline/--candidate callables (legacy path) ─────────
     if not (args.baseline_app and args.candidate_app and args.eval_file):
         print("\n  contradish compare needs either:")
         print("    --baseline-result FILE --candidate-result FILE     (compare two saved JSONs)")
+        print("    --baseline-distinctions FILE --candidate-distinctions FILE  (diff two saved distinguish reports)")
         print("  or")
-        print("    EVAL_FILE --baseline MOD:FN --candidate MOD:FN     (live runs)\n")
+        print("    EVAL_FILE --baseline MOD:FN --candidate MOD:FN     (live runs, optionally with --distinctions DOMAIN)\n")
         sys.exit(1)
 
     _check_api_key()
@@ -1215,9 +1255,50 @@ def cmd_compare(args):
         result.fail_if_above(strain=args.threshold)
     except AssertionError as e:
         print(f"\n  FAIL: {e}\n")
-        sys.exit(1)
+        exit_code = 1
 
-    sys.exit(0)
+    # ── optional: live distinctions comparison, same baseline/candidate apps ──
+    domain = getattr(args, "distinctions", None)
+    if domain:
+        from contradish.distinction import DistinctionProber, BUILTIN_DISTINCTION_PAIRS, diff_distinction_reports
+        from contradish.llm import LLMClient
+
+        pairs = BUILTIN_DISTINCTION_PAIRS.get(domain)
+        if not pairs:
+            print(f"\n  No built-in distinction pairs for domain {domain!r}. "
+                  f"Available: {', '.join(BUILTIN_DISTINCTION_PAIRS)}\n")
+        else:
+            llm = LLMClient()
+            extractor = _default_commitment_extractor(llm)
+
+            def _baseline_fn(system_prompt, question, _f=baseline_app):
+                return _f(question)
+
+            def _candidate_fn(system_prompt, question, _f=candidate_app):
+                return _f(question)
+
+            if not use_json:
+                print(f"\n  probing {len(pairs)} distinction(s) in {domain} for {args.baseline_label} and {args.candidate_label}")
+
+            baseline_map = DistinctionProber(
+                model_fn=_baseline_fn, pairs=pairs, commitment_extractor=extractor, domain=domain,
+            ).measure(verbose=not use_json)
+            candidate_map = DistinctionProber(
+                model_fn=_candidate_fn, pairs=pairs, commitment_extractor=extractor, domain=domain,
+            ).measure(verbose=not use_json)
+
+            dist_diff = diff_distinction_reports(
+                baseline_map.to_dict(), candidate_map.to_dict(),
+                baseline_label  = args.baseline_label,
+                candidate_label = args.candidate_label,
+            )
+            _print_distinction_diff(dist_diff)
+            if dist_diff["newly_collapsed"]:
+                print(f"  FAIL: {len(dist_diff['newly_collapsed'])} distinction(s) newly collapsed "
+                      f"between {args.baseline_label} and {args.candidate_label}.\n")
+                exit_code = 1
+
+    sys.exit(exit_code)
 
 
 def cmd_calibrate(args):
@@ -2268,6 +2349,26 @@ examples:
                        help="Cases in parallel (default: 4). Pass 1 for serial.")
     cmp_p.add_argument("--json", action="store_true", default=False,
                        help="Output report as JSON")
+    cmp_p.add_argument("--baseline-distinctions",
+                       dest="baseline_distinctions",
+                       default=None,
+                       metavar="FILE",
+                       help="Path to a saved baseline `contradish distinguish --json` report. "
+                            "Diff two saved distinction reports (works alongside or instead of "
+                            "--baseline-result/--candidate-result).")
+    cmp_p.add_argument("--candidate-distinctions",
+                       dest="candidate_distinctions",
+                       default=None,
+                       metavar="FILE",
+                       help="Path to a saved candidate `contradish distinguish --json` report. "
+                            "Use with --baseline-distinctions.")
+    cmp_p.add_argument("--distinctions",
+                       choices=("medication", "immigration"),
+                       default=None,
+                       metavar="DOMAIN",
+                       help="With live --baseline/--candidate apps: also probe this built-in "
+                            "distinction-pair domain on both apps, and fail if any distinction "
+                            "that held in baseline collapses in candidate.")
 
     # contradish improve --policy ecommerce --model gpt-4o-mini --target-strain 0.15
     imp_p = sub.add_parser(
