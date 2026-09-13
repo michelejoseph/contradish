@@ -4,6 +4,54 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.32.0] - 2026-09-13
+
+### Added
+
+- **`contradish/sacrifice.py` -- distinction sacrifice under coherence
+  pressure.** `measure_sacrifice()` names and measures a specific failure
+  mode: a model knows a distinction (KBV's `declares_correctly`), loses it
+  under pressure (Type I collapse), and states the collapsed answer with
+  full, unhedged confidence (`default_hedge_judge`) rather than visibly
+  struggling. `sacrifice_rate <= kbv_rate <= collapse_rate` by construction.
+  Includes `SacrificeGradient` (onset intensity, whether the rate ramps
+  monotonically with pressure).
+
+- **`contradish/faithfulness.py` -- faithfulness score.** Truth-over-coherence
+  as a number: `faithfulness = relevant_sensitivity (Type I hold_rate) -
+  irrelevant_sensitivity (Type II cai_strain)`, computed from two
+  measurements this package already produces via
+  `predictive_validity.JUNCTION_CASE_MAP`, no new probing required. Range
+  [-1, 1]; negative values flag the "exactly backwards" signature (ignores
+  real distinctions, reacts to irrelevant wording).
+
+- **`contradish/witness.py` -- multi-witness convergence (`WitnessPanel`).**
+  A generic combinator wrapping >=2 independent judge/classifier callables
+  into one combined callable that only confirms a finding when all
+  witnesses agree, logging every disagreement (`ConvergenceReport`). Drops
+  into any judge slot in this package (`hedge_judge`, `restatement_judge`,
+  etc.) without that call site knowing convergence is happening.
+
+- **`contradish/provenance.py` -- Provenance Collapse.** A new failure mode:
+  a model is given a claim explicitly sourced as weak/unverified, then
+  asked a question inviting its use; collapse is using the claim's content
+  while stripping its sourcing, so the answer reads as fully warranted when
+  the actual basis was one unverified source. Ships with 3 built-in test
+  claims for the medication domain (`BUILTIN_PROVENANCE_CLAIMS`).
+
+- **Competing-explanations checks in `contradish/predictive_validity.py`.**
+  `PredictiveValidityReport.base_rate` / `.precision_lift` check whether
+  the sacrifice-rate signal beats a naive "always predict fail" baseline;
+  `pressure_specificity_verdict()` and `length_confound_check()` check
+  whether an observed effect tracks pressure intensity specifically or is
+  equally explained by a one-off fluke or by prompt length alone, reusing
+  data already collected -- no new model calls.
+
+- `BENCHMARK.md`: formal write-ups of all of the above, plus a "competing
+  explanations" table mapping each CAI variable (distinction sacrifice,
+  coherence pressure, KBV, predictive validity) to its most obvious
+  alternative explanation and whether/how this package checks for it.
+
 ## [1.31.1] - 2026-09-12
 
 ### Changed
