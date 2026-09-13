@@ -1,0 +1,72 @@
+## Judge-floor calibration for every judge role
+
+`contradish/judge_calibration.py` (`measure_judge_floor`, `contradish
+judge-floor`) already measured one judge role's own CAI Strain — the
+original consistency/equivalence judge — against a 24-item human-labeled
+calibration set, specifically so a skeptical reader can't say "the judge
+has its own drift and you never checked." That standard was never extended
+to the three judge roles added alongside sacrifice.py, KBV, and
+provenance.py: `default_restatement_judge`, `default_hedge_judge`,
+`default_usage_judge`. Each is a single LLM call asked to collapse a
+nuanced judgment into a clean yes/no under output-token pressure — reporting
+`sacrifice_rate` or provenance's `collapse_rate` without a floor number for
+the judge that produced them held the newest constructs to a *lower*
+evidentiary bar than the original CAI Strain. `contradish/judge_calibration_ext.py`
+closes that gap with the exact same method: ask the judge each item under
+several independently-worded rephrasings of the same judgment, and treat
+its self-agreement rate as `floor_strain`.
+
+```bash
+contradish judge-floor --judge-role hedge
+contradish judge-floor --judge-role restatement --judge-provider openai
+contradish judge-floor --judge-role usage --json
+```
+
+`default_commitment_extractor` is deliberately not calibrated this way — it
+returns free text, and "do two extracted strings agree" is a similarity
+question, not the same self-agreement measurement floor_strain uses
+elsewhere. Left open rather than faked with a metric that doesn't mean the
+same thing.
+
+---
+
+## Auditing the benchmark's own ground truth
+
+Requiring convergent, independently-witnessed evidence before crediting a
+model's answer, while resting the benchmark's *own* ground truth on one
+unwitnessed authoring pass, asks models to clear a bar the benchmark never
+held itself to. `BUILTIN_DISTINCTION_PAIRS`' `commit_a`/`commit_b` values
+and `judge_calibration.py`'s 24 `gold_equivalent` labels are both
+single-author artifacts — nobody had checked whether independent reviewers
+actually converge on them.
+
+`contradish/benchmark_ground_truth_audit.py` closes that gap the same way
+`witness.py` closes it for runtime judging: independent reviewer models
+(ideally different providers) each independently evaluate a piece of
+shipped ground truth — without being shown what the benchmark asserts —
+and the result reports where they converge, where they split, and, most
+importantly, where they *unanimously contradict* what's shipped:
+
+```python
+from contradish.distinction import BUILTIN_DISTINCTION_PAIRS
+from contradish.benchmark_ground_truth_audit import (
+    audit_distinction_pairs, default_pair_validity_judge,
+)
+
+reviewers = {
+    "anthropic_reviewer": default_pair_validity_judge(anthropic_llm),
+    "openai_reviewer":    default_pair_validity_judge(openai_llm),
+}
+report = audit_distinction_pairs(BUILTIN_DISTINCTION_PAIRS["medication"], reviewers)
+print(report.report())   # contradicted_item_ids is the worklist that matters most
+```
+
+This is explicitly an audit, not an auto-correction mechanism.
+`contradicted_item_ids` is a worklist for a human maintainer, never applied
+automatically to rewrite the pair or calibration data — treating model
+convergence as automatically authoritative would just relocate the
+single-witness problem instead of solving it. Not yet run against the full
+shipped dataset as of this writing; the module exists so that run can
+happen and be reported honestly, whatever it finds.
+
+---

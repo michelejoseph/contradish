@@ -802,20 +802,42 @@ def cmd_judge_floor(args):
     Every Strain number a benchmark reports is bounded above by the judge's
     own consistency. This command quantifies that floor so the leaderboard
     can report it honestly.
+
+    --judge-role selects which judge to calibrate: "equivalence" (default --
+    the original consistency/Strain judge) or one of the three roles added
+    alongside sacrifice.py/KBV/provenance.py: "restatement" (KBV's
+    default_restatement_judge), "hedge" (sacrifice.py's default_hedge_judge),
+    "usage" (provenance.py's default_usage_judge). See
+    contradish/judge_calibration_ext.py for why these are calibrated the
+    same way rather than left unchecked.
     """
     from contradish.judge_calibration import measure_judge_floor
 
     _check_api_key()
     use_json = getattr(args, "json", False)
+    judge_role = getattr(args, "judge_role", "equivalence") or "equivalence"
+
+    role_fn = {"equivalence": measure_judge_floor}
+    if judge_role != "equivalence":
+        from contradish.judge_calibration_ext import (
+            measure_hedge_judge_floor, measure_restatement_judge_floor, measure_usage_judge_floor,
+        )
+        role_fn.update({
+            "restatement": measure_restatement_judge_floor,
+            "hedge":       measure_hedge_judge_floor,
+            "usage":       measure_usage_judge_floor,
+        })
+    measure_fn = role_fn[judge_role]
 
     if not use_json:
         print()
-        print(f"  measuring judge floor: provider={args.judge_provider or '<auto>'} "
+        print(f"  measuring judge floor: role={judge_role} "
+              f"provider={args.judge_provider or '<auto>'} "
               f"model={args.judge_model or '<default>'}  "
               f"n_rephrasings={args.n_rephrasings}")
         print()
 
-    cal = measure_judge_floor(
+    cal = measure_fn(
         judge_provider = args.judge_provider,
         judge_model    = args.judge_model,
         n_rephrasings  = args.n_rephrasings,
@@ -2690,6 +2712,12 @@ examples:
                       help="Parallel pair evaluations (default: 4).")
     jf_p.add_argument("--json", action="store_true", default=False,
                       help="Output calibration as JSON.")
+    jf_p.add_argument("--judge-role", choices=("equivalence", "restatement", "hedge", "usage"),
+                      default="equivalence", dest="judge_role",
+                      help="Which judge role to calibrate: the original consistency judge "
+                           "(default), or one of the three added alongside sacrifice.py/KBV/"
+                           "provenance.py (restatement, hedge, usage). See "
+                           "contradish/judge_calibration_ext.py.")
 
     # contradish prompt <file_or_inline>: static analysis of a system prompt
     prompt_p = sub.add_parser(

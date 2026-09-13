@@ -1,0 +1,110 @@
+        return {
+            "domain": self.domain,
+            "n_distinctions": len(self.profiles),
+            "most_fragile": self.most_fragile,
+            "most_resilient": self.most_resilient,
+            "framing_destructiveness": {
+                k: round(v, 4) for k, v in self.framing_destructiveness.items()
+            },
+            "ranked_by_fragility": self.ranked_by_fragility,
+            "profiles": profiles_out,
+        }
+
+
+def diff_distinction_reports(
+    baseline: dict,
+    candidate: dict,
+    baseline_label: str = "baseline",
+    candidate_label: str = "candidate",
+) -> dict:
+    """
+    Diff two DistinctionLossMap.to_dict() payloads -- typically one saved
+    per model version via `contradish distinguish --json`, or two loss maps
+    measured live in the same run against a baseline and a candidate app.
+
+    This asks the same question `Report.diff()` already asks about CAI
+    Strain (did this change regress something), pointed at Type I
+    distinctions instead: did a distinction that used to hold now collapse.
+    That's the failure a model swap or a fine-tuning pass can introduce
+    silently, since nothing about it shows up in an ordinary consistency
+    score.
+
+    Returns a plain, JSON-serializable dict:
+        per_pair          -- one row per pair_id seen in either report:
+                              {pair_id, description, baseline_hold_rate,
+                              candidate_hold_rate, delta, regressed,
+                              newly_collapsed}
+        regressed         -- pair_ids where hold rate dropped at all
+        newly_collapsed   -- pair_ids that went from mostly-held (>=0.80
+                              hold rate) in baseline to mostly-collapsed
+                              (<0.50) in candidate -- the signal a CI gate
+                              should actually fail on, an ordinary drop is
+                              noise, a flip from held to collapsed is not
+        summary           -- one-line string for stdout/CI logs
+    """
+    b_profiles = baseline.get("profiles", {}) or {}
+    c_profiles = candidate.get("profiles", {}) or {}
+
+    pair_ids: list[str] = []
+    for pid in list(b_profiles) + list(c_profiles):
+        if pid not in pair_ids:
+            pair_ids.append(pid)
+
+    per_pair = []
+    regressed: list[str] = []
+    newly_collapsed: list[str] = []
+
+    for pid in pair_ids:
+        bp = b_profiles.get(pid)
+        cp = c_profiles.get(pid)
+        b_hold = bp.get("overall_hold_rate") if bp else None
+        c_hold = cp.get("overall_hold_rate") if cp else None
+
+        delta = None
+        if b_hold is not None and c_hold is not None:
+            delta = round(c_hold - b_hold, 4)
+
+        is_regressed = delta is not None and delta < 0
+        is_newly_collapsed = (
+            b_hold is not None and c_hold is not None
+            and b_hold >= 0.8 and c_hold < 0.5
+        )
+
+        description = None
+        if bp:
+            description = bp.get("description")
+        elif cp:
+            description = cp.get("description")
+
+        per_pair.append({
+            "pair_id": pid,
+            "description": description,
+            "baseline_hold_rate": b_hold,
+            "candidate_hold_rate": c_hold,
+            "delta": delta,
+            "regressed": is_regressed,
+            "newly_collapsed": is_newly_collapsed,
+        })
+        if is_regressed:
+            regressed.append(pid)
+        if is_newly_collapsed:
+            newly_collapsed.append(pid)
+
+    domain = candidate.get("domain") or baseline.get("domain") or "?"
+    summary = (
+        f"{baseline_label} vs {candidate_label}  ({domain})  "
+        f"pairs={len(pair_ids)}  regressed={len(regressed)}  "
+        f"newly_collapsed={len(newly_collapsed)}"
+    )
+
+    return {
+        "baseline_label": baseline_label,
+        "candidate_label": candidate_label,
+        "domain": domain,
+        "per_pair": per_pair,
+        "regressed": regressed,
+        "newly_collapsed": newly_collapsed,
+        "summary": summary,
+    }
+
+

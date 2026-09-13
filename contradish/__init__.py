@@ -101,6 +101,41 @@ from .distinction  import (
     diff_distinction_reports,
     KBVMeasurement, KBVProfile, KBVReport, default_restatement_judge,
 )
+from .sacrifice    import (
+    DistinctionSacrificeReport, DistinctionSacrificeProfile, SacrificeGradient,
+    SacrificeInstance, measure_sacrifice, default_hedge_judge,
+)
+from .faithfulness import FaithfulnessReport, FaithfulnessJunction, score_faithfulness
+from .provenance   import (
+    ProvenanceClaim, ProvenanceReport, ProvenanceProfile, ProvenanceMeasurement,
+    BUILTIN_PROVENANCE_CLAIMS, measure_provenance, default_usage_judge,
+)
+from .witness      import WitnessPanel, WitnessCall, ConvergenceReport, build_witnessed
+from .judge_calibration_ext import (
+    measure_hedge_judge_floor, measure_restatement_judge_floor, measure_usage_judge_floor,
+)
+from .benchmark_ground_truth_audit import (
+    GroundTruthAuditReport, GroundTruthItemVerdict,
+    audit_distinction_pairs, audit_calibration_gold,
+    default_pair_validity_judge, default_calibration_gold_judge,
+)
+from .predictive_validity import (
+    JUNCTION_CASE_MAP, CasePrediction, PredictiveValidityReport,
+    score_predictions, probe_call_budget, ground_truth_call_budget,
+    pressure_specificity_verdict, length_confound_check,
+)
+from .eval_awareness import (
+    EVAL_SIGNAL_FRAMINGS, EvalAwarenessInstance, EvalAwarenessReport,
+    measure_eval_awareness, measure_eval_awareness_batch,
+)
+from .format_fidelity import (
+    default_format_classifier, FormatFidelityInstance, FormatFidelityReport,
+    measure_format_fidelity, measure_format_fidelity_batch,
+)
+from .compliance_gap import (
+    default_word_limit_checker, ComplianceInstance, ComplianceGapReport,
+    score_compliance, measure_compliance_gap, measure_compliance_gap_batch,
+)
 from .resolution   import (
     ResolutionCandidate, ResolutionResult,
     discover_resolution, discover_resolutions_for_loss_map,
@@ -161,7 +196,7 @@ from .domains      import (
 from .conviction   import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .cdr          import generate_cdr
 
-__version__ = "1.31.1"
+__version__ = "1.34.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -197,6 +232,59 @@ __all__ = [
     "PromptTension",
     "measure_judge_floor",
     "JudgeCalibration",
+    "DistinctionSacrificeReport",
+    "DistinctionSacrificeProfile",
+    "SacrificeGradient",
+    "SacrificeInstance",
+    "measure_sacrifice",
+    "default_hedge_judge",
+    "FaithfulnessReport",
+    "FaithfulnessJunction",
+    "score_faithfulness",
+    "ProvenanceClaim",
+    "ProvenanceReport",
+    "ProvenanceProfile",
+    "ProvenanceMeasurement",
+    "BUILTIN_PROVENANCE_CLAIMS",
+    "measure_provenance",
+    "default_usage_judge",
+    "WitnessPanel",
+    "WitnessCall",
+    "ConvergenceReport",
+    "build_witnessed",
+    "measure_hedge_judge_floor",
+    "measure_restatement_judge_floor",
+    "measure_usage_judge_floor",
+    "GroundTruthAuditReport",
+    "GroundTruthItemVerdict",
+    "audit_distinction_pairs",
+    "audit_calibration_gold",
+    "default_pair_validity_judge",
+    "default_calibration_gold_judge",
+    "JUNCTION_CASE_MAP",
+    "CasePrediction",
+    "PredictiveValidityReport",
+    "score_predictions",
+    "probe_call_budget",
+    "ground_truth_call_budget",
+    "pressure_specificity_verdict",
+    "length_confound_check",
+    "EVAL_SIGNAL_FRAMINGS",
+    "EvalAwarenessInstance",
+    "EvalAwarenessReport",
+    "measure_eval_awareness",
+    "measure_eval_awareness_batch",
+    "default_format_classifier",
+    "FormatFidelityInstance",
+    "FormatFidelityReport",
+    "measure_format_fidelity",
+    "measure_format_fidelity_batch",
+    "default_word_limit_checker",
+    "ComplianceInstance",
+    "ComplianceGapReport",
+    "score_compliance",
+    "measure_compliance_gap",
+    "measure_compliance_gap_batch",
     "audit_fairness",
     "FairnessAudit",
     "IdentityProfile",

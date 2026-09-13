@@ -1,0 +1,13 @@
+        return {
+            "domain": self.domain,
+            "n_distinctions": len(self.profiles),
+            "most_fragile": self.most_fragile,
+            "most_resilient": self.most_resilient,
+            "framing_destructiveness": {
+                k: round(v, 4) for k, v in self.framing_destructiveness.items()
+            },
+            "ranked_by_fragility": self.ranked_by_fragility,
+            "profiles": profiles_out,
+        }
+
+

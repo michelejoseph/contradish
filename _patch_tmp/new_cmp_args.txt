@@ -1,0 +1,24 @@
+    cmp_p.add_argument("--json", action="store_true", default=False,
+                       help="Output report as JSON")
+    cmp_p.add_argument("--baseline-distinctions",
+                       dest="baseline_distinctions",
+                       default=None,
+                       metavar="FILE",
+                       help="Path to a saved baseline `contradish distinguish --json` report. "
+                            "Diff two saved distinction reports (works alongside or instead of "
+                            "--baseline-result/--candidate-result).")
+    cmp_p.add_argument("--candidate-distinctions",
+                       dest="candidate_distinctions",
+                       default=None,
+                       metavar="FILE",
+                       help="Path to a saved candidate `contradish distinguish --json` report. "
+                            "Use with --baseline-distinctions.")
+    cmp_p.add_argument("--distinctions",
+                       choices=("medication", "immigration"),
+                       default=None,
+                       metavar="DOMAIN",
+                       help="With live --baseline/--candidate apps: also probe this built-in "
+                            "distinction-pair domain on both apps, and fail if any distinction "
+                            "that held in baseline collapses in candidate.")
+
+    # contradish improve --policy ecommerce --model gpt-4o-mini --target-strain 0.15

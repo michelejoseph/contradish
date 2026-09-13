@@ -1,0 +1,22 @@
+
+Building a `WitnessPanel` by hand for every judge slot is enough extra code
+that, in practice, most call sites won't bother — which is exactly how the
+original single-judge defaults ended up unwitnessed in the first place.
+`build_witnessed()` collapses that friction to one line: given a judge
+factory (`default_hedge_judge`, `default_restatement_judge`,
+`default_usage_judge`) and >=2 `LLMClient`s, it returns a ready-to-use
+witnessed judge plus its panel:
+
+```python
+from contradish.witness import build_witnessed
+from contradish.sacrifice import default_hedge_judge
+
+hedge_judge, panel = build_witnessed(default_hedge_judge, [anthropic_llm, openai_llm])
+sacrifice_report = measure_sacrifice(pairs, loss_map, kbv_report, hedge_judge=hedge_judge)
+print(panel.convergence_report().summary())
+```
+
+`run_predictive_validity_study.py`'s live (non-`--dry-run`) path now builds
+its `restatement_judge` and `hedge_judge` this way automatically whenever a
+second provider's API key is available, and prints an explicit warning
+rather than silently proceeding single-judge when it isn't.

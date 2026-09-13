@@ -212,3 +212,90 @@ class WitnessPanel:
     def reset(self) -> None:
         """Clear recorded calls (e.g. between independent study runs reusing the same panel)."""
         self._calls = []
+
+    @property
+    def calls(self) -> list[WitnessCall]:
+        """
+        Read-only view of every call recorded so far, in order. Exposed so
+        callers that need per-item detail beyond the aggregate
+        ConvergenceReport (e.g. contradish/ground_truth_audit.py, which
+        needs to know exactly which item each call corresponds to) can walk
+        the same records convergence_report() summarizes, without reaching
+        into a private attribute.
+        """
+        return list(self._calls)
+
+
+def build_witnessed(
+    judge_factory: Callable[[Any], Callable[..., Any]],
+    llms: list,
+    names: Optional[list[str]] = None,
+    default_on_disagreement: Any = False,
+    require_unanimous: bool = True,
+) -> "tuple[Callable[..., Any], WitnessPanel]":
+    """
+    Convenience constructor: turn a single-LLM judge factory (the pattern
+    every default_* judge in this package follows -- default_hedge_judge(llm),
+    default_restatement_judge(llm), default_usage_judge(llm),
+    default_commitment_extractor(llm)) into a witnessed judge in one call,
+    instead of hand-building a WitnessPanel every time.
+
+    This exists because the honest default should be the easy path. Every
+    default_*_judge(llm) in this package is a single LLM call, and every one
+    of them is documented as "inherits the judge's own noise, write your own
+    for anything you plan to rely on" -- which nobody does in practice if
+    doing it right is more code than doing it wrong. build_witnessed makes
+    the witnessed version exactly as short as the unwitnessed one:
+
+        # unwitnessed (single point of failure):
+        hedge_judge = default_hedge_judge(llm)
+
+        # witnessed (requires >=2 independently chosen LLMClients, ideally
+        # different providers, so the two judges don't share a blind spot):
+        hedge_judge, panel = build_witnessed(default_hedge_judge, [anthropic_llm, openai_llm])
+
+    Args:
+        judge_factory: a function llm -> judge_fn, e.g. default_hedge_judge.
+        llms:          >=2 LLMClient-like objects to build one witness from
+                       each. Passing two clients for the SAME provider/model
+                       is allowed but defeats the purpose -- see the module
+                       docstring's note on independence vs. agreement.
+        names:         optional display names for the witnesses (for the
+                       ConvergenceReport); defaults to "<provider>:<model>"
+                       per llm, falling back to "<provider>" if no model
+                       attribute is found.
+        default_on_disagreement, require_unanimous: passed through to
+                       WitnessPanel.combine().
+
+    Returns:
+        (combined_judge_fn, panel) -- pass combined_judge_fn wherever the
+        single-witness judge would have gone; keep `panel` to call
+        panel.convergence_report() afterward.
+    """
+    if len(llms) < 2:
+        raise ValueError(
+            "build_witnessed needs >=2 LLMClient-like objects -- a single "
+            "one is exactly the unwitnessed default this function exists "
+            "to make easy to avoid."
+        )
+    if names is None:
+        names = []
+        for llm in llms:
+            provider = getattr(llm, "provider", "unknown")
+            model = getattr(llm, "judge_model", None) or getattr(llm, "fast_model", None)
+            names.append(f"{provider}:{model}" if model else str(provider))
+        # de-duplicate names (e.g. two llms with the same provider/model repr)
+        seen: dict[str, int] = {}
+        deduped = []
+        for n in names:
+            seen[n] = seen.get(n, 0) + 1
+            deduped.append(n if seen[n] == 1 else f"{n}#{seen[n]}")
+        names = deduped
+
+    witnesses = {name: judge_factory(llm) for name, llm in zip(names, llms)}
+    panel = WitnessPanel(witnesses=witnesses)
+    combined = panel.combine(
+        default_on_disagreement=default_on_disagreement,
+        require_unanimous=require_unanimous,
+    )
+    return combined, panel

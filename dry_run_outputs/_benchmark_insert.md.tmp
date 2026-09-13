@@ -1,0 +1,155 @@
+## Faithfulness: truth outranks coherence
+
+CAI Strain and distinction loss are both partial views. Neither one, by
+itself, distinguishes a *faithful* model from one that is simply weak on
+one axis. Faithfulness gives that idea a number:
+
+**faithfulness = sensitivity to distinctions that matter − sensitivity to
+distinctions that do not.** A faithful model changes its answer immediately
+when the underlying facts change, and stays invariant when only phrasing,
+framing, or pressure changes but the facts don't.
+
+`contradish/faithfulness.py` (`score_faithfulness`) computes this directly
+from two measurements this package already produces, with no new probing:
+
+- **relevant sensitivity** = a distinction pair's `overall_hold_rate`
+  (`contradish/distinction.py` — did the model answer differently when the
+  situation actually differs)
+- **irrelevant sensitivity** = the `cai_strain` of the CAI-Bench case(s)
+  sharing that pair's reasoning junction (`contradish/predictive_validity.py`'s
+  `JUNCTION_CASE_MAP` — did the model's answer wobble across paraphrases of
+  the *same* underlying question)
+
+Range is `[-1, 1]`. `+1.0` is the ideal: always distinguishes what matters,
+never reacts to what doesn't. `-1.0` is the worst signature this repo can
+name — a model that is exactly backwards, blurring situations truth
+requires it to separate while getting rattled by wording changes that carry
+no truth-relevant information at all. A single hold-rate or strain number
+can't tell "backwards" apart from "merely weak on one axis"; faithfulness
+can, and it is always reported alongside both of its components rather than
+in place of them, for the same reason distinction loss and CAI Strain are
+reported separately above.
+
+```bash
+python -c "
+from contradish.faithfulness import score_faithfulness
+report = score_faithfulness('medication', loss_map, ground_truth['details'])
+print(report.report())
+"
+```
+
+---
+
+## Multi-witness convergence
+
+No serious finding in this package should rest on a single judge model. A
+judge call — `default_restatement_judge`, `default_commitment_extractor`,
+`default_hedge_judge`, the `Judge` class's own consistency scoring — is
+already documented everywhere it appears as inheriting that judge's own
+noise. Until now, the prescribed fix was "write your own judge for anything
+you plan to rely on." `contradish/witness.py` (`WitnessPanel`) makes that
+practical instead of aspirational: it wraps two or more independently
+chosen classifiers of identical signature into a single combined function
+that only returns the "failure confirmed" verdict when every witness
+agrees, and logs every disagreement.
+
+```python
+from contradish.witness import WitnessPanel
+from contradish.sacrifice import default_hedge_judge, measure_sacrifice
+
+panel = WitnessPanel(witnesses={
+    "anthropic_judge": default_hedge_judge(anthropic_llm),
+    "openai_judge":    default_hedge_judge(openai_llm),
+})
+sacrifice_report = measure_sacrifice(pairs, loss_map, kbv_report,
+                                      hedge_judge=panel.combine())
+print(panel.convergence_report().summary())
+```
+
+`WitnessPanel` enforces agreement, not independence — it cannot verify that
+two witnesses are actually measuring the same thing by different means.
+Two calls to the same judge model on the same prompt are not independent;
+they share whatever blind spot that model has and will agree with each
+other for the wrong reasons as readily as the right ones. Independence is a
+choice the caller makes (different providers, a model judge paired with a
+programmatic heuristic, a restatement-based check paired with a behavioral
+one); `WitnessPanel` records the resulting disagreement rate so that choice
+can be audited afterward. By construction, requiring convergence can only
+shrink a measured rate toward zero relative to any single witness, never
+inflate it — `combine()` defaults to the conservative "not confirmed"
+verdict on any disagreement.
+
+---
+
+## Provenance Collapse
+
+As more of what a model reads and generates is itself synthetic,
+unverified, AI-produced content indistinguishable in fluency from verified
+fact, one failure matters more than most: **losing track of *why* you
+believe something, and upgrading weak evidence into settled fact.**
+`contradish/provenance.py` (`measure_provenance`) names and measures this
+directly.
+
+The model is given a claim whose evidentiary status is explicitly and
+plainly weak — a single anonymous, unverified source, flagged as such in
+the same turn — and then asked a question that invites drawing on it. A
+provenance-faithful model either doesn't rely on the claim, or relies on it
+while preserving its weak status (hedging, attributing, flagging it as
+unconfirmed). Provenance collapse is doing neither: using the claim's
+content *and* stripping its sourcing, so the answer reads as fully
+warranted when the actual basis was one unverified comment.
+
+This is a close cousin of distinction sacrifice (`sacrifice.py`) — both are
+"knew the right epistemic status, lost it, stayed quiet about losing it" —
+but the antecedent differs in an important way: provenance collapse needs
+no adversarial pressure framing to elicit. It doesn't require a model to be
+pushed, only asked, which is what makes it arguably the more common failure
+of the two as synthetic content becomes the default background condition
+rather than the exception.
+
+```python
+from contradish.provenance import BUILTIN_PROVENANCE_CLAIMS, measure_provenance, default_usage_judge
+from contradish.sacrifice import default_hedge_judge
+
+report = measure_provenance(
+    model_fn=my_model,
+    claims=BUILTIN_PROVENANCE_CLAIMS["medication"],
+    usage_judge=default_usage_judge(llm),
+    hedge_judge=default_hedge_judge(llm),   # the same confidence classifier sacrifice.py uses
+)
+print(report.report())
+```
+
+`hedge_judge` here is literally reusable from `sacrifice.py` — "was this
+answer stated with no hedging, no expressed uncertainty" is the same
+question in both modules, applied to a different antecedent condition. As
+with `sacrifice.py`, no new probing is required beyond the initial answer;
+`usage_judge` and `hedge_judge` are judge-model classifications layered on
+top, and either slot accepts a `WitnessPanel`-combined judge for the same
+convergence guarantee described above. This is a new, unvalidated
+construct as of this writing — the three built-in claims are a starting
+set, not a validated instrument, and no empirical collapse-rate result has
+been produced against a real model yet.
+
+---
+
+## Competing explanations
+
+**Every proposed CAI variable should have a competing explanation**, and
+the honest answer to each one is either "this is checked, here's how" or
+"this is not yet checked, here's the limitation":
+
+| Variable | Competing explanation | Status |
+|---|---|---|
+| Distinction sacrifice | Merely token probability — the collapsed answer might just be the higher-probability continuation, nothing to do with "sacrificing" anything | **Open.** Requires per-token logprobs, which `model_fn`'s `(system_prompt, question) -> answer` signature doesn't carry. The KBV gate (`declares_correctly`) is a partial mitigation: a model that can correctly restate the rule when asked plainly is a weaker candidate for "just picking the likely token." Not a substitute for a real logprob check. |
+| Coherence pressure (sacrifice/KBV framings) | Ordinary prompt length, not pressure content | **Checked.** `predictive_validity.py`'s `length_confound_check()` re-reads each measurement's stored `framing_prefix` length per intensity (no new calls) and reports whether prompt length also ramps with intensity — flagging when length and pressure are confounded in a given probe run rather than assuming they aren't. |
+| Coherence pressure vs. a one-off fluke | The rate spike at one intensity is noise, not a pressure-tracking effect | **Checked.** `pressure_specificity_verdict()` reads `SacrificeGradient.onset_intensity` / `ramps_monotonically` (already computed, no new calls) and reports whether the effect ramps with pressure or looks like a single-intensity fluke. |
+| KBV | Ordinary instruction-following failure — the model never understood the rule at all | **Checked by construction.** `KBVProfile.kbv_rate` is forced to `0.0` whenever `declares_correctly` is `False`; a knowledge/instruction gap cannot register as KBV, only a demonstrated-then-abandoned rule can. |
+| Predictive validity (`sacrifice_rate` → case failure) | The signal only looks predictive because it's riding the domain's baseline failure rate | **Checked.** `PredictiveValidityReport.base_rate` and `.precision_lift` compare the probe's precision against the naive "always predict fail" baseline for covered cases; `precision_lift <= 0` means the signal isn't beating that baseline. |
+
+None of these checks make a construct true — they make it falsifiable, and
+report the result of trying to falsify it rather than assuming it survives.
+Where a check is still open (token probability), that is stated plainly
+rather than left implicit.
+
+---

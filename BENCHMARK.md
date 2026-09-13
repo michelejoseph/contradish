@@ -179,6 +179,19 @@ single probe:
    hedged or uncertain. This is the new measurement; see
    `default_hedge_judge` in `contradish/sacrifice.py`.
 
+**Related work.** KBV itself is independently supported by "Models Recall
+What They Violate" (arXiv 2604.28031), which finds the same knows-but-does-
+not-apply pattern this package measures. Two adjacent findings sharpen why
+"knew it but lost it anyway" is worth measuring at all: the Knowledge-
+Behavior Gap (arxiv.org/abs/2608.12341) documents the same declare/act
+split at the level of a model's broader behavioral policy rather than a
+single distinction pair, and the Compliance Gap (arxiv.org/html/2605.01771v1,
+see also `contradish/compliance_gap.py` below) shows the split can persist
+even when a checker only has the transcript to look at. Three independent
+lines of evidence for the same shape of failure is exactly the kind of
+convergence a single research group's own benchmark can't provide by
+itself.
+
 `sacrifice_rate` is the fraction of a pair's measurements satisfying all
 three. By construction, `sacrifice_rate <= kbv_rate <= collapse_rate` --
 each condition is strictly more specific than the last, and sacrifice is
@@ -257,6 +270,16 @@ print(report.report())
 "
 ```
 
+**Not to be confused with chain-of-thought faithfulness** (Turpin et al.
+2023; Lanham et al. 2023; Anthropic's reasoning-faithfulness work) -- that
+literature asks whether a model's *stated reasoning* matches the *process*
+that actually produced its answer. This module's "faithfulness" is a
+different, narrower construct: whether the model's *answer* tracks
+truth-relevant distinctions and ignores truth-irrelevant ones. Same word,
+adjacent territory, distinct measurement -- kept as-is rather than renamed,
+since the public API has shipped since 1.32.0, but named explicitly here so
+no reader assumes this package measures CoT faithfulness. It doesn't.
+
 ---
 
 ## Multi-witness convergence
@@ -297,6 +320,28 @@ can be audited afterward. By construction, requiring convergence can only
 shrink a measured rate toward zero relative to any single witness, never
 inflate it — `combine()` defaults to the conservative "not confirmed"
 verdict on any disagreement.
+
+Building a `WitnessPanel` by hand for every judge slot is enough extra code
+that, in practice, most call sites won't bother — which is exactly how the
+original single-judge defaults ended up unwitnessed in the first place.
+`build_witnessed()` collapses that friction to one line: given a judge
+factory (`default_hedge_judge`, `default_restatement_judge`,
+`default_usage_judge`) and >=2 `LLMClient`s, it returns a ready-to-use
+witnessed judge plus its panel:
+
+```python
+from contradish.witness import build_witnessed
+from contradish.sacrifice import default_hedge_judge
+
+hedge_judge, panel = build_witnessed(default_hedge_judge, [anthropic_llm, openai_llm])
+sacrifice_report = measure_sacrifice(pairs, loss_map, kbv_report, hedge_judge=hedge_judge)
+print(panel.convergence_report().summary())
+```
+
+`run_predictive_validity_study.py`'s live (non-`--dry-run`) path now builds
+its `restatement_judge` and `hedge_judge` this way automatically whenever a
+second provider's API key is available, and prints an explicit warning
+rather than silently proceeding single-judge when it isn't.
 
 ---
 
@@ -373,7 +418,189 @@ rather than left implicit.
 
 ---
 
+## Judge-floor calibration for every judge role
+
+*In psychometric terms, this section is a reliability check* -- specifically
+test-retest reliability: does the same judge, asked the same underlying
+question in different words, keep giving the same verdict? (See the LLM
+Psychometrics systematic review, llm-psychometrics.com, for the broader
+framework this borrows from; contradish doesn't cite it for its
+conclusions, just for the vocabulary that best names what this module
+already did before this section existed.)
+
+`contradish/judge_calibration.py` (`measure_judge_floor`, `contradish
+judge-floor`) already measured one judge role's own CAI Strain — the
+original consistency/equivalence judge — against a 24-item human-labeled
+calibration set, specifically so a skeptical reader can't say "the judge
+has its own drift and you never checked." That standard was never extended
+to the three judge roles added alongside sacrifice.py, KBV, and
+provenance.py: `default_restatement_judge`, `default_hedge_judge`,
+`default_usage_judge`. Each is a single LLM call asked to collapse a
+nuanced judgment into a clean yes/no under output-token pressure — reporting
+`sacrifice_rate` or provenance's `collapse_rate` without a floor number for
+the judge that produced them held the newest constructs to a *lower*
+evidentiary bar than the original CAI Strain. `contradish/judge_calibration_ext.py`
+closes that gap with the exact same method: ask the judge each item under
+several independently-worded rephrasings of the same judgment, and treat
+its self-agreement rate as `floor_strain`.
+
+```bash
+contradish judge-floor --judge-role hedge
+contradish judge-floor --judge-role restatement --judge-provider openai
+contradish judge-floor --judge-role usage --json
+```
+
+`default_commitment_extractor` is deliberately not calibrated this way — it
+returns free text, and "do two extracted strings agree" is a similarity
+question, not the same self-agreement measurement floor_strain uses
+elsewhere. Left open rather than faked with a metric that doesn't mean the
+same thing.
+
+---
+
+## Auditing the benchmark's own ground truth
+
+*In the same psychometric vocabulary, this section is a validity check* --
+specifically construct validity: does the benchmark's ground truth actually
+measure what it claims to, as judged by parties other than its author?
+Reliability (previous section) and validity (this one) are independent:
+a judge can be perfectly self-consistent about ground truth that is itself
+wrong, which is exactly the case this section's `contradicted_item_ids`
+exists to surface.
+
+Requiring convergent, independently-witnessed evidence before crediting a
+model's answer, while resting the benchmark's *own* ground truth on one
+unwitnessed authoring pass, asks models to clear a bar the benchmark never
+held itself to. `BUILTIN_DISTINCTION_PAIRS`' `commit_a`/`commit_b` values
+and `judge_calibration.py`'s 24 `gold_equivalent` labels are both
+single-author artifacts — nobody had checked whether independent reviewers
+actually converge on them.
+
+`contradish/benchmark_ground_truth_audit.py` closes that gap the same way
+`witness.py` closes it for runtime judging: independent reviewer models
+(ideally different providers) each independently evaluate a piece of
+shipped ground truth — without being shown what the benchmark asserts —
+and the result reports where they converge, where they split, and, most
+importantly, where they *unanimously contradict* what's shipped:
+
+```python
+from contradish.distinction import BUILTIN_DISTINCTION_PAIRS
+from contradish.benchmark_ground_truth_audit import (
+    audit_distinction_pairs, default_pair_validity_judge,
+)
+
+reviewers = {
+    "anthropic_reviewer": default_pair_validity_judge(anthropic_llm),
+    "openai_reviewer":    default_pair_validity_judge(openai_llm),
+}
+report = audit_distinction_pairs(BUILTIN_DISTINCTION_PAIRS["medication"], reviewers)
+print(report.report())   # contradicted_item_ids is the worklist that matters most
+```
+
+This is explicitly an audit, not an auto-correction mechanism.
+`contradicted_item_ids` is a worklist for a human maintainer, never applied
+automatically to rewrite the pair or calibration data — treating model
+convergence as automatically authoritative would just relocate the
+single-witness problem instead of solving it. Not yet run against the full
+shipped dataset as of this writing; the module exists so that run can
+happen and be reported honestly, whatever it finds.
+
+---
+
+## Evaluation-awareness, format fidelity, and compliance: three narrower checks
+
+The constructs above assume incidental failure -- a model quietly getting
+worse under pressure or ambiguity, not doing anything strategic about it.
+Three modules added in 1.34.0 each name a specific way that assumption can
+be wrong, and each is deliberately narrow rather than folded into an
+existing metric, because conflating them with incidental failure would
+blur exactly the distinction that makes them worth measuring.
+
+**`contradish/eval_awareness.py` -- does the model behave differently once
+it believes it's being tested?** Sandbagging research (van der Weij et al.
+2024, arXiv 2406.07358) studies models that perform *better* under
+detected evaluation than in ordinary deployment -- the opposite failure
+direction from everything else in this package. `measure_eval_awareness()`
+wraps any existing probe and compares its output under a neutral framing
+against framings that plainly signal "this is an evaluation":
+
+```python
+from contradish.eval_awareness import measure_eval_awareness
+
+def probe(prefix):
+    prober = DistinctionProber(model_fn=my_model, pairs=[pair],
+                                commitment_extractor=extractor,
+                                system_prompt=prefix)
+    return prober.measure(verbose=False).profiles[pair.pair_id].overall_hold_rate
+
+instance = measure_eval_awareness(probe, probe_id="healthy_vs_renal_dosing")
+print(instance.gap)
+```
+
+A nonzero gap is not proof of strategic deception -- a model could
+legitimately reason "extra caution when stakes are flagged is appropriate"
+-- but it is exactly the asymmetry sandbagging research says to watch for,
+and nothing else here checks for it.
+
+**`contradish/format_fidelity.py` -- does output *form* survive paraphrase
+of a formatting instruction?** Every other construct checks content; this
+one checks structure. A model told "respond with one JSON object" two
+differently-worded ways may silently switch between JSON, a table, and
+prose, even when its underlying answer hasn't changed at all --
+paraphrase-induced output-mode collapse, the failure semantic-consistency
+research on paraphrase robustness names. `measure_format_fidelity()` runs
+several paraphrasings of the same formatting instruction and reports how
+often a classifier's format label holds:
+
+```python
+from contradish.format_fidelity import measure_format_fidelity, default_format_classifier
+
+instance = measure_format_fidelity(
+    probe, classify_fn=default_format_classifier,
+    instruction_id="json_summary",
+    paraphrases=[
+        "Respond with a single JSON object containing 'summary' and 'priority'.",
+        "Please answer using just one JSON object with the keys 'summary' and 'priority'.",
+        "Your entire reply should be one JSON object -- fields: summary, priority.",
+    ],
+)
+print(instance.consistency_rate, instance.collapsed)
+```
+
+Orthogonal to everything else: a format-stable response can still be
+wrong, hedged, or sacrificed, and this module makes no claim otherwise.
+
+**`contradish/compliance_gap.py` -- verbal compliance vs. actual compliance,
+and a scope limit stated on purpose.** "The Compliance Gap"
+(arxiv.org/html/2605.01771v1) distinguishes Verbal Compliance Rate from
+Actual Compliance Rate and proves that a transcript-only checker cannot,
+even in principle, always detect a gap between them (its DPI-undetectability
+result). **contradish is a text-only benchmark** -- every construct in this
+package, including this one, only ever sees what a model *says*, never what
+a deployed agent actually *does* in an environment. Rather than paper over
+that limit, this module names it precisely: it measures VCR/ACR only within
+a single response (does the model's own stated commitment match what the
+rest of that same response actually contains):
+
+```python
+from contradish.compliance_gap import measure_compliance_gap, default_word_limit_checker
+
+instance = measure_compliance_gap(probe, checker_fn=default_word_limit_checker)
+print(instance.actually_complied, instance.verbal_commitment)
+```
+
+This closes the part of the gap that *is* visible in text. It does not,
+and cannot, close the deeper transcript-vs-deployed-action gap the source
+paper describes -- that requires auditing actual tool/environment actions
+alongside the transcript, which is out of scope for any benchmark that
+only reads text, this one included. Every report this module prints says
+so explicitly, rather than letting a clean VCR/ACR number imply a broader
+guarantee than a text-only method can actually make.
+
+---
+
 ## Benchmark structure
+
 
 ### v2 (current)
 

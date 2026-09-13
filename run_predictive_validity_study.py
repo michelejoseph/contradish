@@ -172,6 +172,8 @@ def main():
 
         def hedge_judge(answer_text: str) -> bool:
             return True   # dry-run model's canned answers are always unhedged/confident
+
+        restatement_panel = hedge_panel = None
     else:
         from contradish.llm import LLMClient
         from contradish.judge import Judge
@@ -189,8 +191,38 @@ def main():
         )
         judge = Judge(llm)
         extractor = default_commitment_extractor(llm)
-        restatement_judge = default_restatement_judge(llm)
-        hedge_judge = default_hedge_judge(llm)
+
+        # ── Witness the restatement/hedge judges across BOTH providers when
+        # possible, instead of trusting a single judge model for sacrifice_rate
+        # and kbv_rate -- see contradish/witness.py's module docstring for why
+        # a single judge here is exactly the practice this package now argues
+        # against everywhere else. The second witness reuses the provider
+        # already required to run the model under test (args.provider), so no
+        # extra credentials are needed beyond what --provider already requires;
+        # it only activates if that resolves to a DIFFERENT provider than the
+        # primary judge (otherwise it's not an independent witness at all).
+        restatement_panel = hedge_panel = None
+        llm2 = None
+        try:
+            llm2 = LLMClient(provider=args.provider)
+            if llm2.provider == llm.provider:
+                raise ValueError(
+                    f"second witness resolved to '{llm2.provider}', same as the "
+                    f"primary judge -- no independent second provider key available"
+                )
+        except Exception as e:
+            print(f"        WARNING: running restatement_judge/hedge_judge with a SINGLE "
+                  f"judge ({llm.provider}) -- not witnessed ({e}). sacrifice_rate/kbv_rate "
+                  f"carry unmeasured single-judge noise; see contradish/witness.py.")
+
+        if llm2 is not None:
+            from contradish.witness import build_witnessed
+            restatement_judge, restatement_panel = build_witnessed(default_restatement_judge, [llm, llm2])
+            hedge_judge, hedge_panel = build_witnessed(default_hedge_judge, [llm, llm2])
+            print(f"        judges witnessed across providers: {llm.provider} + {llm2.provider}")
+        else:
+            restatement_judge = default_restatement_judge(llm)
+            hedge_judge = default_hedge_judge(llm)
 
     # ── 1. PROBE (cheap, runs first) ────────────────────────────────────────
     from contradish.distinction import DistinctionProber, BUILTIN_DISTINCTION_PAIRS
@@ -224,7 +256,16 @@ def main():
     )
     pair_signal_rates = {pid: prof.sacrifice_rate for pid, prof in sacrifice_report.profiles.items()}
     print(f"        sacrifice rates (knew it, lost it, stayed quiet -- the probe signal): {pair_signal_rates}")
-    print(f"        probe app calls actually made: {probe_counter.calls}\n")
+    print(f"        probe app calls actually made: {probe_counter.calls}")
+
+    witness_convergence = {}
+    if restatement_panel is not None:
+        rc = restatement_panel.convergence_report()
+        hc = hedge_panel.convergence_report()
+        print(f"        restatement_judge convergence: {rc.summary()}")
+        print(f"        hedge_judge convergence:       {hc.summary()}")
+        witness_convergence = {"restatement_judge": rc.to_dict(), "hedge_judge": hc.to_dict()}
+    print()
 
     print("        competing-explanation checks (no new calls -- re-reads of data already collected):")
     confound_checks = {}
@@ -286,6 +327,7 @@ def main():
             "pair_kbv_rates": pair_kbv_rates,
             "pair_sacrifice_rates": pair_signal_rates,
             "competing_explanation_checks": confound_checks,
+            "witness_convergence": witness_convergence,
             "junction_case_map": JUNCTION_CASE_MAP,
             "ground_truth_summary": {k: v for k, v in ground_truth.items() if k != "details"},
             "faithfulness": faithfulness_report.to_dict(),

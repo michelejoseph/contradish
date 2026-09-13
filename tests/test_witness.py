@@ -4,7 +4,7 @@ Tests for contradish.witness: multi-witness convergence.
 No API key required -- every witness here is a plain deterministic function,
 not a judge-model call.
 """
-from contradish.witness import WitnessPanel
+from contradish.witness import WitnessPanel, build_witnessed
 
 
 def test_requires_at_least_two_witnesses():
@@ -87,3 +87,59 @@ def test_combined_function_forwards_args_and_kwargs():
     combined = panel.combine()
     assert combined("some_pair", restatement="yes") is True
     assert combined("some_pair", restatement="no") is False
+
+
+def test_calls_property_returns_a_copy_not_the_live_list():
+    panel = WitnessPanel(witnesses={"a": lambda x: True, "b": lambda x: True})
+    combined = panel.combine()
+    combined("q")
+    calls = panel.calls
+    assert len(calls) == 1
+    calls.append("not a real call")   # mutating the returned list...
+    assert len(panel.calls) == 1      # ...must not affect the panel's own record
+
+
+# -- build_witnessed ----------------------------------------------------------
+
+class _FakeLLM:
+    def __init__(self, provider, verdict):
+        self.provider = provider
+        self.fast_model = "fake-fast"
+        self._verdict = verdict
+
+
+def _fake_judge_factory(llm):
+    """Mimics the shape of default_hedge_judge(llm) etc.: llm -> judge_fn."""
+    def judge(answer_text: str) -> bool:
+        return llm._verdict
+    return judge
+
+
+def test_build_witnessed_requires_at_least_two_llms():
+    try:
+        build_witnessed(_fake_judge_factory, [_FakeLLM("anthropic", True)])
+        assert False, "expected ValueError"
+    except ValueError:
+        pass
+
+
+def test_build_witnessed_agrees_when_underlying_judges_agree():
+    llms = [_FakeLLM("anthropic", True), _FakeLLM("openai", True)]
+    combined, panel = build_witnessed(_fake_judge_factory, llms)
+    assert combined("some answer") is True
+    report = panel.convergence_report()
+    assert report.n_disagreed == 0
+    assert set(report.witness_names) == {"anthropic:fake-fast", "openai:fake-fast"}
+
+
+def test_build_witnessed_disagrees_falls_back_to_default():
+    llms = [_FakeLLM("anthropic", True), _FakeLLM("openai", False)]
+    combined, panel = build_witnessed(_fake_judge_factory, llms, default_on_disagreement=False)
+    assert combined("some answer") is False
+    assert panel.convergence_report().n_disagreed == 1
+
+
+def test_build_witnessed_custom_names_are_used():
+    llms = [_FakeLLM("anthropic", True), _FakeLLM("openai", True)]
+    combined, panel = build_witnessed(_fake_judge_factory, llms, names=["reviewer_1", "reviewer_2"])
+    assert set(panel.witnesses) == {"reviewer_1", "reviewer_2"}

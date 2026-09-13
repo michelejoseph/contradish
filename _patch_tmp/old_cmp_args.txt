@@ -1,0 +1,4 @@
+    cmp_p.add_argument("--json", action="store_true", default=False,
+                       help="Output report as JSON")
+
+    # contradish improve --policy ecommerce --model gpt-4o-mini --target-strain 0.15

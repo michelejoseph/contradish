@@ -4,6 +4,114 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.34.0] - 2026-09-13
+
+### Added
+
+- **`contradish/eval_awareness.py` -- the Evaluation-Awareness Gap.** Every
+  construct shipped before this assumed failures are incidental (no
+  strategic behavior-shaping). Sandbagging research ("AI Sandbagging:
+  Language Models can Strategically Underperform on Evaluations", van der
+  Weij et al. 2024, arXiv 2406.07358) studies the opposite: a model that
+  behaves *differently*, and specifically better, once it detects it's
+  being tested. `measure_eval_awareness()`/`measure_eval_awareness_batch()`
+  wrap any existing probe (`probe_fn(prefix) -> float`) and compare its
+  output under a neutral framing vs. framings that explicitly signal "this
+  is an evaluation," reporting the gap. Architecture-agnostic: composes
+  with hold_rate, sacrifice_rate, kbv_rate, or a caller's own metric. A
+  nonzero gap is evidence-consistent-with, not proof of, strategic
+  deception -- the module says so in its own printed report.
+
+- **`contradish/format_fidelity.py` -- output-format collapse under
+  paraphrase.** All prior constructs check whether *content* survives
+  pressure; none checked whether output *form* survives paraphrase of a
+  formatting instruction (a model told "respond with one JSON object" two
+  different ways may silently switch between JSON, a table, and prose).
+  `measure_format_fidelity()` runs the same semantic instruction across
+  several paraphrasings and reports how consistently a classifier's format
+  label holds, via `default_format_classifier` (a coarse, deterministic,
+  API-free json/table/bulleted_list/numbered_list/single_word/prose
+  classifier) or a caller-supplied one. Orthogonal to every other
+  construct here: a stable-format response can still be wrong, sacrificed,
+  or hedged.
+
+- **`contradish/compliance_gap.py` -- verbal vs. actual compliance, and an
+  explicit scope limit.** "The Compliance Gap" (arxiv.org/html/2605.01771v1)
+  distinguishes Verbal Compliance Rate from Actual Compliance Rate and
+  proves a DPI-undetectability result: a transcript-only checker cannot,
+  even in principle, always detect a verbal/actual gap. contradish is a
+  text-only benchmark, so this module says that limitation out loud rather
+  than papering over it: it operationalizes VCR/ACR only within a single
+  response (does the model's own stated commitment match what the rest of
+  that same response actually contains), via `measure_compliance_gap()`
+  and the worked-example `default_word_limit_checker`. It does not, and
+  cannot, detect the deeper transcript-vs-deployed-action gap the source
+  paper describes -- every report it prints says so.
+
+### Fixed
+
+- **`contradish.__version__` had drifted from `pyproject.toml` since
+  1.32.0** (`__init__.py` still said `1.31.1` while `pyproject.toml` said
+  `1.33.0`) -- caught by `test_packaging.test_version_in_sync`, which
+  should have failed on this before now. Both now read `1.34.0`.
+
+### Documentation
+
+- Added related-work citations throughout `BENCHMARK.md`: the
+  Knowledge-Behavior Gap (arxiv.org/abs/2608.12341) and the Compliance Gap
+  (arxiv.org/html/2605.01771v1) alongside the existing "Models Recall What
+  They Violate" citation; an explicit disambiguation of this package's
+  `faithfulness.py` construct from chain-of-thought faithfulness
+  (Turpin/Lanham/Anthropic) -- same word, different measurement, no API
+  rename since 1.32.0 is public; and a psychometric reframing of
+  `judge_calibration.py`/`judge_calibration_ext.py` as reliability
+  (test-retest) and `benchmark_ground_truth_audit.py` as validity
+  (construct validity), citing the LLM Psychometrics systematic review.
+
+## [1.33.0] - 2026-09-13
+
+### Added
+
+- **`contradish/judge_calibration_ext.py` -- judge-floor calibration for
+  every judge role, not just the original one.** `judge_calibration.py`
+  measured the equivalence/consistency judge's own CAI Strain against a
+  24-item gold set; the three judge roles added alongside sacrifice.py, KBV,
+  and provenance.py (`default_restatement_judge`, `default_hedge_judge`,
+  `default_usage_judge`) had no floor measurement at all. This module
+  extends the same method (self-agreement across rephrased instructions on
+  a known-truth calibration set) to all three, with `measure_hedge_judge_floor`,
+  `measure_restatement_judge_floor`, and `measure_usage_judge_floor`. Wired
+  into the CLI: `contradish judge-floor --judge-role {hedge,restatement,usage}`.
+
+- **`contradish/witness.py`: `build_witnessed()`.** A one-call convenience
+  wrapper turning any single-LLM judge factory (`default_hedge_judge`, etc.)
+  plus >=2 `LLMClient`s into a witnessed judge and its `WitnessPanel`, so
+  the honest, multi-witnessed default is exactly as short as the unwitnessed
+  one. `run_predictive_validity_study.py`'s live path now uses it
+  automatically for `restatement_judge`/`hedge_judge` whenever a second
+  provider's API key is available, printing an explicit warning rather than
+  silently running single-judge when it isn't. Also added `WitnessPanel.calls`
+  (read-only view of every recorded call, for callers needing per-item detail).
+
+- **`contradish/benchmark_ground_truth_audit.py` -- audits the benchmark's
+  OWN ground truth, not a model's answers.** `BUILTIN_DISTINCTION_PAIRS`'
+  `commit_a`/`commit_b` values and `judge_calibration.py`'s 24
+  `gold_equivalent` labels were single-author artifacts nobody had checked
+  for independent-reviewer convergence. `audit_distinction_pairs()` and
+  `audit_calibration_gold()` run >=2 independent reviewer models over that
+  ground truth (via `WitnessPanel`) and report where they converge, where
+  they split, and -- the important case -- where they unanimously
+  *contradict* what's shipped (`contradicted_item_ids`), as a human-review
+  worklist rather than an auto-correction. Distinct from the pre-existing
+  `contradish/ground_truth.py`'s `GroundTruthAuditor`, which audits a
+  model's accuracy against known facts; this audits the benchmark's own
+  authored facts instead.
+
+- `BENCHMARK.md`: documented all of the above, including an addendum to
+  the multi-witness convergence section and two new sections
+  ("Judge-floor calibration for every judge role", "Auditing the
+  benchmark's own ground truth").
+
 ## [1.32.0] - 2026-09-13
 
 ### Added
