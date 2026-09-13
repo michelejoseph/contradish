@@ -158,6 +158,14 @@ from .decision_boundary import (
     BoundaryRecoveryResult, recover_boundary_from_observations, recover_boundary_via_binary_search,
     BoundaryDiscrepancyReport, quantify_boundary_discrepancy,
 )
+from .behavioral_mapping import (
+    CandidateVariable, default_candidate_pool,
+    ScreeningResult, screen_candidates,
+    BehavioralDependencyMap, build_behavioral_map,
+    NormativeStructure, default_normative_structure,
+    NormativeComparisonReport, compare_to_normative_structure,
+)
+from .behavioral_topology import topology_from_behavioral_map
 from .resolution   import (
     ResolutionCandidate, ResolutionResult,
     discover_resolution, discover_resolutions_for_loss_map,
@@ -218,7 +226,7 @@ from .domains      import (
 from .conviction   import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .cdr          import generate_cdr
 
-__version__ = "1.37.0"
+__version__ = "1.39.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -337,6 +345,17 @@ __all__ = [
     "recover_boundary_via_binary_search",
     "BoundaryDiscrepancyReport",
     "quantify_boundary_discrepancy",
+    "CandidateVariable",
+    "default_candidate_pool",
+    "ScreeningResult",
+    "screen_candidates",
+    "BehavioralDependencyMap",
+    "build_behavioral_map",
+    "NormativeStructure",
+    "default_normative_structure",
+    "NormativeComparisonReport",
+    "compare_to_normative_structure",
+    "topology_from_behavioral_map",
     "audit_fairness",
     "FairnessAudit",
     "IdentityProfile",

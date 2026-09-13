@@ -4,6 +4,63 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.39.0] - 2026-09-13
+
+### Added
+
+- **`contradish/behavioral_topology.py` -- an AI behavioral topology: the
+  structure governing when a model's answers change, not just whether it
+  answers correctly.** topology.py already had everything this needed --
+  its own docstring opens with almost exactly this framing -- but its only
+  constructor, `topology_from_phi_star()`, populated the graph from
+  self-report (asking a model what a claim depends on and clustering the
+  free-text answer). `topology_from_behavioral_map()` is the missing
+  constructor that feeds the SAME `FailureTopologyMap` /
+  `ReasoningNode` / `ReasoningEdge` -- reused completely unmodified -- from
+  behavioral_mapping.py's controlled-intervention measurements instead.
+  `cai_strain` is a deliberate reinterpretation, not a raw carry-over: 1.0
+  when a factor's four-cell classification is `missed` or `spurious` (the
+  dependency structure is WRONG), 0.0 for `tracked`/`invariant` (correct)
+  -- scoring wrongness of the dependency rather than raw movement, a
+  distinction topology_from_phi_star() had no way to make since
+  decision_relevance.py's R didn't exist yet. `reality_strain` reuses a
+  real measured quantity -- `abs(normalized_displacement)` from a factor's
+  `BoundaryDiscrepancyReport` -- when a boundary was recovered, instead of
+  a placeholder. A candidate that screened sensitive but has no entry in
+  the normative structure still becomes a node rather than vanishing.
+  Deliberately does NOT default to topology_from_phi_star()'s linear-chain
+  edge fallback, since independently-probed behavioral candidates have no
+  implied order. Because the result is an ordinary `FailureTopologyMap`,
+  `critical_path()`, `superspreader_influence()`, `certification_coverage()`,
+  `gini_coefficient`, and `topology_distance()` (cross-model/cross-time
+  structural comparison) all compose for free.
+
+## [1.38.0] - 2026-09-13
+
+### Added
+
+- **`contradish/behavioral_mapping.py` -- the practical method: discover,
+  map, compare.** Ties decision_relevance.py and decision_boundary.py
+  together with the one step neither had: discovering which variables to
+  even test, instead of requiring the factor set up front.
+  `screen_candidates()` runs a cheap, purely behavioral discovery pass
+  (never asks the model what it depends on -- that's topology.py's
+  self-report-based expand_node(); this perturbs and watches) over a
+  candidate pool seeded by default from prompt_analyzer.py's real
+  16-technique `KNOWN_TECHNIQUES` catalog, a strict superset of
+  decision_relevance.py's 8-factor default spec. `build_behavioral_map()`
+  feeds what screens positive into decision_relevance.py's
+  `score_dependency_structure()` (categorical) and reuses
+  decision_boundary.py's `recover_boundary_via_binary_search()` unmodified
+  (ordinal) to construct the behavioral dependency/decision-boundary map.
+  `compare_to_normative_structure()` scores that map against an
+  independently specified `NormativeStructure` (a `DecisionRelevanceSpec`
+  plus, optionally, per-factor `BoundaryLadder`s) -- and explicitly
+  surfaces `unspecified_sensitive_variables`: candidates that screened
+  behaviorally sensitive but have no entry at all in the normative
+  structure's R, a case score_dependency_structure() would otherwise
+  silently drop since it only iterates the factors it was given.
+
 ## [1.37.0] - 2026-09-13
 
 ### Added

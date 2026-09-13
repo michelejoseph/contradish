@@ -454,6 +454,132 @@ equivalence audit there) is the natural next step, not wiring into
 
 ---
 
+## Discover, map, compare: the practical method
+
+decision_relevance.py and decision_boundary.py both require a factor set
+handed to them in advance -- neither discovers which variables to even
+test. `contradish/behavioral_mapping.py` adds that missing first step and
+ties the other two together into one method:
+
+**Discover.** `screen_candidates()` runs a cheap, purely behavioral pass —
+one shared baseline query plus one probe per candidate, so total cost is
+`1 + n` queries regardless of how many turn out to matter — flagging which
+candidates move the decision at all. This is deliberately not the same
+kind of discovery `topology.py`'s `expand_node()` does: that asks the model
+what it depends on and clusters the free-text answer (a self-report); this
+module never asks, it perturbs and watches, in keeping with this package's
+standing position that behavior is the evidence that can't be talked
+around. The default candidate pool is seeded from
+`prompt_analyzer.py`'s real `KNOWN_TECHNIQUES` — 16 named pressure
+techniques, a strict superset of `decision_relevance.py`'s 8-factor
+default spec — so discovery can surface sensitivity to a technique the
+default spec never even considered (`roleplay`, `flattery`,
+`negation_trap`, and the other eight beyond the original set).
+
+**Map.** `build_behavioral_map()` only runs the expensive step —
+`decision_boundary.py`'s `recover_boundary_via_binary_search()`, reused
+unmodified — on candidates that screened sensitive AND were given an
+ordinal ladder; everything else contributes a plain 0.0/1.0 sensitivity
+value, already in the exact shape `decision_relevance.py`'s
+`score_dependency_structure()` expects.
+
+**Compare.** `compare_to_normative_structure()` takes a `NormativeStructure`
+(a `DecisionRelevanceSpec` — R — plus, optionally, a `BoundaryLadder` — B*
+— per ordinal factor) and reuses `score_dependency_structure()` and
+`quantify_boundary_discrepancy()` exactly as they already exist and are
+tested. The one thing it adds on top of simply calling both: a candidate
+that screened sensitive but has no entry anywhere in R is reported as
+`unspecified_sensitive_variables`, not silently dropped — which is what
+would otherwise happen, since `score_dependency_structure()` only ever
+iterates the factors it was handed, and a genuinely novel discovery (the
+model reacts to something nobody classified as relevant or irrelevant) is
+exactly the finding a bounded factor set has no way to represent on its
+own.
+
+```python
+from contradish.behavioral_mapping import (
+    default_candidate_pool, default_normative_structure,
+    build_behavioral_map, compare_to_normative_structure,
+)
+
+pool = default_candidate_pool()
+normative = default_normative_structure("medication-002", domain="medication")
+behavioral_map = build_behavioral_map(model_oracle, pool)
+report = compare_to_normative_structure(behavioral_map, normative)
+print(report.report())
+```
+
+As of 2026-09-13 this composes decision_relevance.py and
+decision_boundary.py exactly as they ship, adding only discovery and the
+unspecified-variable check on top -- it has not been run against a real
+model, and `default_normative_structure()` carries no boundaries (B*)
+until real `BoundaryLadder` content exists for a domain.
+
+---
+
+## An AI behavioral topology: the structure governing when answers change
+
+`topology.py` already exists to answer almost exactly this question — its
+own docstring opens with "WHY does a system fail where it fails? Not merely
+that it has high CAI Strain in some cases — but why those cases, and how
+they relate to each other." `FailureTopologyMap` already has a dependency
+graph, load-bearing weight, local strain, a critical path, superspreader
+detection, certification coverage, a Gini coefficient, and
+`topology_distance()` for comparing two systems structurally. None of that
+needed to be rebuilt for this.
+
+What was missing was the data source. `topology_from_phi_star()`, the only
+existing constructor, populates every node from Phi* self-report — asking
+a model what a claim depends on and clustering its free-text answer.
+`contradish/behavioral_topology.py` adds `topology_from_behavioral_map()`:
+the same `FailureTopologyMap`, `ReasoningNode`, `ReasoningEdge`, reused
+completely unmodified, fed instead from `behavioral_mapping.py`'s
+controlled-intervention measurements — from watching whether the decision
+actually changes, never from asking the model what it thinks it depends
+on.
+
+The mapping is a deliberate reinterpretation in one place: `cai_strain` is
+1.0 exactly when a factor's four-cell classification is `missed` or
+`spurious` (the model's dependency structure is wrong, in either
+direction), 0.0 for `tracked`/`invariant` (correct) — not raw sensitivity.
+A relevant factor the model correctly tracks does not read as "fragile"
+just because the answer moved; `topology_from_phi_star()` had no way to
+make this distinction, because `decision_relevance.py`'s R didn't exist
+when it was written. `reality_strain` reuses a real measured quantity —
+`abs(normalized_displacement)` from a `BoundaryDiscrepancyReport` — when a
+boundary was recovered for that factor, rather than a placeholder.
+`lambda_weight` defaults to a uniform 1.0 (0.5 for a discovered-but-
+unspecified variable), since no validated per-factor importance weighting
+exists anywhere in this package yet; pass `lambda_weights` to override, and
+`bench/evaluate.py`'s `SEVERITY_MULTIPLIERS` is a natural — not wired-in —
+source for one. No dependency edges are invented by default: independently
+probed candidates have no implied order, unlike Phi* clusters, which at
+least arrive in a recurrence sequence.
+
+```python
+from contradish.behavioral_mapping import (
+    default_candidate_pool, default_normative_structure,
+    build_behavioral_map, compare_to_normative_structure,
+)
+from contradish.behavioral_topology import topology_from_behavioral_map
+
+pool = default_candidate_pool()
+normative = default_normative_structure("medication-002", domain="medication")
+behavioral_map = build_behavioral_map(model_oracle, pool)
+comparison = compare_to_normative_structure(behavioral_map, normative)
+
+topo = topology_from_behavioral_map(comparison, model="my-model")
+print(topo.report())
+```
+
+Because the result is an ordinary `FailureTopologyMap`, everything already
+built on top of one — including `topology_distance()`, letting two
+behaviorally-measured topologies (two models, or the same model at two
+points in time) be compared structurally rather than only by aggregate
+strain — composes for free, with zero new code.
+
+---
+
 ## Multi-witness convergence
 
 No serious finding in this package should rest on a single judge model. A
