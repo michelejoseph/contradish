@@ -388,8 +388,74 @@ all framing variants of the SAME question, so this dataset has no
 relevant-fact axis for R to score `tracked`/`missed` against --
 `relevant_sensitivity` is structurally undefined here, not just
 unmeasured. A real `dependency_fidelity` number needs pairing with a
-`distinction.py` `DistinctionPair`, which is exactly what the next section,
-faithfulness.py, already does.
+`distinction.py` `DistinctionPair`.
+
+**The E-gap.** `DRSFactor.expected_effect` -- what the answer SHOULD become
+for a relevant factor, not just whether it moved -- existed as a field since
+this module was written but was never read anywhere in the codebase; a
+`"tracked"` classification meant "moved by enough", not "moved to the right
+place". `contradish/directional_fidelity.py` (added 1.41.0) first closed
+this for the narrow `DistinctionPair` case, using a mechanism that already
+existed but was never connected here: `distinction.py`'s
+`DistinctionMeasurement.both_correct`, checked against a pair's own
+`commit_a`/`commit_b`. `score_directional_fidelity()` splits `"tracked"`
+into `"tracked_correct"` and `"tracked_wrong_direction"` -- only the former
+is actually right for the right reasons; a model that reacts to a real fact
+change but lands on an arbitrary wrong answer used to score identically to
+one that got it right. This needs a real, already-measured
+`DistinctionProfile` to run against (i.e. `distinction.py`'s
+`DistinctionProber` has to have actually probed a real model) -- it is a
+pure scoring layer, not a new source of model calls.
+
+**Closing the E-gap in the general scoring core (1.43.0).** The narrow fix
+above didn't touch `score_dependency_structure()` itself -- the full
+technique-factor picture stayed direction-blind. As of 1.43.0,
+`score_dependency_structure()` takes an optional
+`expected_effect_matches: dict[str, bool]` argument (True/False per
+relevant, sensitive factor: did the answer actually land on the right new
+conclusion). When supplied, `"tracked"` is further split -- without
+changing its own membership -- into `tracked_correct`,
+`tracked_wrong_direction`, and `factors_with_unknown_direction` (tracked
+factors nobody checked), and a new `report.true_hit_rate` gives the
+stricter, direction-aware hit rate: a `tracked_wrong_direction` factor now
+counts against it exactly like `missed` does.
+`directional_fidelity.expected_effect_matches_from_reports()` is the
+bridge: it turns that module's own `DirectionalFidelityReport`s into the
+shape this parameter accepts, so a probed `DistinctionPair` can drive the
+direction-aware split across the *whole* technique-factor report, not just
+its own single relevant factor. Everything here is additive and opt-in --
+every call site that doesn't pass `expected_effect_matches` (including
+every one described above this paragraph) reproduces the exact prior
+behavior; `relevant_sensitivity`/`irrelevant_sensitivity`/
+`dependency_fidelity` keep their original direction-blind meaning
+unchanged.
+
+This closes the full statement of right judgment behind DRS, restated by
+the user verbatim: "did the judgment change if and only if something
+decision-relevant changed?... Right judgment preserves relevant
+distinctions, ignores irrelevant distinctions, remains anchored to truth
+under pressure, and changes when the truth relevant to the judgment
+changes." The user's own terms for the two original failure cells are now
+documented as their canonical human-readable names, alongside (not
+replacing) the field names themselves: `missed` == **unfaithful
+invariance** (something decision-relevant changed; the judgment didn't),
+`spurious` == **unfaithful variance** (the judgment changed; nothing
+decision-relevant did). The `cell`/field names stay `tracked`/`missed`/
+`spurious`/`invariant` exactly as before -- by deliberate choice, so every
+existing caller and test that reads those strings keeps working
+unmodified; the user's terms live in docstrings and `report()` output as
+aliases, not as replacement values.
+
+**Real relevant-axis coverage** (the `distinction.py` `DistinctionPair` /
+`predictive_validity.JUNCTION_CASE_MAP` pairing referenced above and used by
+both `faithfulness.py` and `directional_fidelity.py`) grew in 1.41.0 from 3
+pairs / 4 cases, medication only, to 7 pairs / 8 cases across medication and
+immigration -- each new pair hand-grounded against a real case's verbatim
+question text, not generated. That's still 8 of 360 total v2 cases (2.2%):
+explicitly a pilot, not a claim of broad coverage. Growing it further means
+grounding more pairs the same deliberate way; see `distinction.py`'s module
+note for why mass-generating them instead would trade one unvalidated-
+ground-truth problem (R) for a bigger one.
 
 ---
 
@@ -1025,6 +1091,43 @@ still shifted); it disputes whether that shift was a *failure*, on the
 basis of independent, majority-converged reviewer agreement about what was
 actually being asked.
 
+### Closing the correctness gap (1.44.0)
+
+A gap survived one full round: a `legitimate_shift` verdict certifies only
+that the pressured framing legitimately asks a *different* question -- it
+never checked whether the model's actual answer under that framing is a
+*correct* answer to the new question. A model could correctly notice the
+question changed and still answer the new question wrong, and
+`reclassify_sacrifice_rate()` would excuse it anyway, on the sole evidence
+that reinterpretation occurred. That's the same category error this module
+exists to catch, one level down: it conflated "the boundary moved for a
+legitimate reason" with "the label on the new side of that boundary is
+correct."
+
+`default_shift_correctness_judge()` closes it: an optional, additive check
+of the model's answer against the *new* (shifted) goal, independent of the
+legitimacy verdict itself. `measure_pragmatic_legitimacy(_batch)` now
+accept optional `model_answer_pressured` / `correctness_judge` (or
+`model_answers_pressured` for the batch form) arguments; when supplied and
+the verdict is `legitimate_shift`, the result records
+`answer_correct_for_shifted_goal`. `reclassify_sacrifice_rate()` now
+excuses via `PragmaticLegitimacyReport.fully_vindicated_ids` rather than
+the raw `legitimate_shift_ids` -- an instance found legitimate_shift but
+then verified to have the *wrong* answer for its own new question lands in
+`legitimate_but_incorrect_ids` instead, and stays counted as a failure.
+Omitting the new arguments (every existing call site) reproduces prior
+behavior exactly: every `legitimate_shift` instance is `fully_vindicated`
+by default, same as before this fix, proven by the full existing test
+suite passing unmodified.
+
+This closes a real instance of the same conceptual gap identified while
+integrating a broader partition-fidelity theory into this package's design
+docs the same day (see `contradish-partition-fidelity-foundational-theory.md`
+in the project notes): correctly identifying that a decision changed is
+not the same claim as correctly compressing behavior for the new decision,
+and a rate that only checks the first was silently granting credit for the
+second.
+
 ---
 
 ## Benchmark structure
@@ -1059,6 +1162,21 @@ contradish/benchmarks/v2/
   food_delivery.json       missing items, refunds, driver disputes, subscriptions
   financial_planning.json  retirement, investment guidance, debt management
 ```
+
+**Not a v2 case-file domain:** `distinction.py` also ships a
+`scriptural_ethics` set of `DistinctionPair`s (4 pairs, added 2026-09-13),
+whose declared ground-truth authority is a specific cited biblical text
+rather than clinical/regulatory consensus -- same design pattern as
+medication/immigration's DistinctionPairs, a different kind of authority.
+It is deliberately **not** one of the 20 domains above: there is no frozen,
+9-prompt-per-case v2 benchmark file for it, so it is not part of the
+360-case total and is not run by the ordinary `contradish.bench.evaluate`
+battery. It is directly probable via `DistinctionProber` (see
+`run_groq_scriptural_ethics_probe.py`) and scorable with
+`directional_fidelity.score_directional_fidelity`, same as any other
+DistinctionPair set -- just not wired into `predictive_validity.
+JUNCTION_CASE_MAP`, which is reserved for pairs that verbatim-match a real
+case in one of the files above.
 
 ### v1 (frozen, backwards compatible)
 

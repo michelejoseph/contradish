@@ -4,6 +4,252 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.45.0] - 2026-09-13
+
+### Changed
+
+- **Consolidation pass on the decision-relevance / directional-fidelity
+  cluster.** While auditing this cluster for duplicated logic (prompted by
+  a broader review of how many modules independently compute a
+  relevant/sensitive/correct classification -- `decision_relevance.py`,
+  `directional_fidelity.py`, `decision_boundary.py`, `behavioral_mapping.py`),
+  found that `decision_boundary.py` and `behavioral_mapping.py` were
+  already clean composition (`behavioral_mapping.compare_to_normative_
+  structure()` calls `score_dependency_structure()` and
+  `quantify_boundary_discrepancy()` directly, reimplementing neither) --
+  an earlier characterization of this cluster as "four independent
+  implementations of the same comparison" was an overstatement corrected
+  here. One real, narrow duplication did exist:
+  `directional_fidelity.score_directional_fidelity()` re-derived its own
+  relevant/sensitive/correct -> cell classification inline (a hand-rolled
+  `if sensitivity < threshold / elif directional_correctness >= threshold`
+  chain) instead of delegating to `decision_relevance.
+  score_dependency_structure()`, the one canonical implementation of that
+  predicate elsewhere in the package. Two independent implementations of
+  the same three-way classification could drift out of sync silently; now
+  there is exactly one, and `score_directional_fidelity()` builds a
+  single-factor `DecisionRelevanceSpec` and calls the canonical scorer
+  internally instead.
+  - **Zero behavior change**: output is bit-for-bit identical to the prior
+    inline logic for every input (the classification cases and their
+    boundary conditions map exactly onto `score_dependency_structure()`'s
+    existing relevant/sensitive/`expected_effect_matches` semantics). Proven
+    by the full pre-existing `test_directional_fidelity.py` (19 tests)
+    passing unmodified, plus `test_decision_relevance.py` (28),
+    `test_behavioral_mapping.py` (18), `test_decision_boundary.py` (22), and
+    `test_pragmatic_legitimacy.py` (23) as adjacency checks -- 110 tests,
+    zero regressions.
+  - No public API changes: `score_directional_fidelity()`'s signature,
+    `DirectionalFidelityReport`'s fields, and every other function in the
+    module are unchanged.
+
+## [1.44.0] - 2026-09-13
+
+### Fixed
+
+- **`pragmatic_legitimacy.reclassify_sacrifice_rate()` excused
+  `legitimate_shift` instances without ever checking whether the model's
+  answer was actually correct for the shifted question.** A
+  `legitimate_shift` verdict certifies only that the pressured framing
+  legitimately asks a *different* question (per independent reviewer
+  agreement) -- it never checked whether the model's actual answer under
+  that framing is a *correct* answer to the new question. A model could
+  correctly notice the question changed and still answer the new question
+  wrong, and the old logic excused it anyway on the sole evidence that
+  reinterpretation occurred: the same category error this module exists to
+  catch elsewhere ("the boundary moved for a legitimate reason" conflated
+  with "the label on the new side of that boundary is correct"),
+  discovered while cross-checking this package's pragmatic-legitimacy
+  machinery against a broader partition-fidelity theory pass the same day.
+  - **`default_shift_correctness_judge(llm)`** (new) -- an optional,
+    additive judge checking the model's answer against the shifted goal,
+    independent of the legitimacy verdict itself.
+  - **`measure_pragmatic_legitimacy()`** gained optional
+    `model_answer_pressured` / `correctness_judge` parameters;
+    **`measure_pragmatic_legitimacy_batch()`** gained the batch equivalents
+    (`model_answers_pressured` / `correctness_judge`). When supplied and the
+    verdict is `legitimate_shift`, the result now records
+    `answer_correct_for_shifted_goal`.
+  - **`PragmaticLegitimacyReport.fully_vindicated_ids`** (new) -- the set
+    `reclassify_sacrifice_rate()` now excuses, instead of the raw
+    `legitimate_shift_ids`: a legitimate_shift instance later verified to
+    have the *wrong* answer for its own new question is excluded and lands
+    in the new **`legitimate_but_incorrect_ids`** instead, still counted as
+    a failure.
+  - All new parameters and fields are optional and additive; every existing
+    call site (none of which could have supplied the new arguments before
+    they existed) reproduces its prior behavior exactly -- proven by the
+    full existing `test_pragmatic_legitimacy.py` suite (14 tests) passing
+    unmodified against this change. 9 new tests added alongside it (23
+    total in that file).
+
+## [1.43.0] - 2026-09-13
+
+### Added
+
+- **`decision_relevance.score_dependency_structure()` gained an optional
+  `expected_effect_matches: dict[str, bool]` parameter.** This closes the
+  second half of a user-specified "iff" for right judgment: "did the
+  judgment change if and only if something decision-relevant changed?...
+  Right judgment preserves relevant distinctions, ignores irrelevant
+  distinctions, remains anchored to truth under pressure, and changes when
+  the truth relevant to the judgment changes." The existing four-cell
+  classification (`tracked`/`missed`/`spurious`/`invariant`) already
+  answered "did it move" but not "did it move to the CORRECT new answer" --
+  a model that flipped to an arbitrary wrong conclusion under a relevant
+  factor scored identically to one that flipped to the right one. When a
+  caller now supplies `expected_effect_matches` (True/False per relevant,
+  sensitive factor), the `tracked` cell is further split, without changing
+  its own membership, into:
+    - `DependencyStructureReport.tracked_correct` -- relevant, sensitive,
+      AND landed on the correct answer.
+    - `DependencyStructureReport.tracked_wrong_direction` -- relevant,
+      sensitive, but landed on the WRONG answer. Not right judgment, but
+      also not `missed` or `spurious` -- a third, previously invisible way
+      to fail.
+    - `DependencyStructureReport.factors_with_unknown_direction` -- tracked
+      factors whose correctness was never checked (no entry supplied).
+  - **`DependencyStructureReport.true_hit_rate`** -- the stricter,
+    direction-aware hit rate this enables: of every relevant factor, what
+    fraction landed correctly (a `tracked_wrong_direction` factor counts
+    against it exactly like `missed` does). `None` unless
+    `expected_effect_matches` was actually supplied for that report --
+    matches the existing "don't silently compute a misleading number"
+    discipline already used for `unmeasured_factors`.
+  - **`DecisionRelevanceAudit.pooled_true_hit_rate`** and
+    **`.commitments_with_wrong_direction`** -- the same pooled-not-averaged
+    aggregation `aggregate_dependency_structure()` already does for the
+    other rates, extended to the new direction-aware ones.
+  - **`FactorClassification.matched_expected_effect: Optional[bool]`** --
+    the per-factor True/False/None (None = not `"tracked"`, or `"tracked"`
+    but no entry supplied) backing all of the above.
+  All new fields are additive and default-valued; `hit_rate`/
+  `false_alarm_rate`/`dependency_fidelity`/`tracked`/`missed`/`spurious`/
+  `invariant` and every other existing field's computation is completely
+  unchanged, and every call site that doesn't pass
+  `expected_effect_matches` reproduces prior behavior exactly (proven by
+  the full existing test suite passing unmodified against this change).
+- **`directional_fidelity.expected_effect_matches_from_reports()`** -- the
+  bridge that makes the above actually usable end to end: converts
+  `directional_fidelity.py`'s own `{pair_id: DirectionalFidelityReport}`
+  output into the `{factor_name: True/False}` shape
+  `expected_effect_matches` accepts (`"tracked_correct"` -> `True`,
+  `"tracked_wrong_direction"` -> `False`, `"missed"` -> omitted, since a
+  factor that never moved has no direction to report). A probed
+  `DistinctionPair` can now drive the direction-aware split in the full
+  technique-factor `score_dependency_structure()` report, not just its own
+  narrower pair-specific numbers.
+
+### Changed
+
+- User-specified terminology -- `missed == "unfaithful invariance"`
+  (something decision-relevant changed; the judgment didn't) and
+  `spurious == "unfaithful variance"` (the judgment changed; nothing
+  decision-relevant did) -- is now documented in `decision_relevance.py`'s
+  module docstring as the canonical human-readable names for those two
+  cells. Per the user's explicit choice, the underlying `cell` string
+  values and dataclass field names themselves are **unchanged**
+  (`tracked`/`missed`/`spurious`/`invariant` remain exactly as before) to
+  avoid breaking any existing consumer or test that reads them; the user's
+  terms are aliases in prose and `report()` output only.
+- `directional_fidelity.py`'s module docstring paragraph that previously
+  explained why `decision_relevance.py`'s scoring core was deliberately
+  left unmodified ("those are already load-bearing... Composing the two is
+  a caller's choice") is rewritten to describe the new composition path via
+  `expected_effect_matches_from_reports()`. `score_directional_fidelity()`/
+  `aggregate_directional_fidelity()` remain the right tool when only the
+  DistinctionPair-specific numbers are wanted on their own.
+
+## [1.42.0] - 2026-09-13
+
+### Added
+
+- **`BUILTIN_DISTINCTION_PAIRS["scriptural_ethics"]`** -- a third domain in
+  `distinction.py`, added at user request to explore a text-as-ground-truth
+  ("assume the Bible teaches truth, use it to make contradish better")
+  domain design. Four pairs (`exodus21_premeditated_vs_accidental_killing`,
+  `charity_needy_vs_enabling_idleness`, `sabbath_necessity_vs_routine_labor`,
+  `authority_justice_vs_personal_vengeance`), each chosen because the cited
+  passage draws the pair's A/B distinction explicitly in its own text
+  (Exodus 21:12-14, Deuteronomy 15:11 / 2 Thessalonians 3:10, Exodus 20:8-10
+  / Matthew 12:1-12, Romans 12:19 / 13:4) -- the same "ground truth traceable
+  to a citation, not asserted" discipline the medication/immigration pairs
+  already follow, applied to a declared textual authority instead of a
+  clinical/regulatory one. Deliberately excludes questions where mainstream
+  Christian traditions substantively disagree on the answer (divorce and
+  remarriage, the bounds of just war, Sabbath-keeping in general), to avoid
+  building on contested ground truth. See `distinction.py`'s inline note on
+  the domain for the full reasoning.
+- **`run_groq_scriptural_ethics_probe.py`** -- sibling to
+  `run_groq_distinction_probe.py`, same validated fixes (model-name
+  preflight, key-sanity check, rate-limit backoff, `reasoning_effort="low"`,
+  pair-aware classification extractor), pointed at the new domain's 4 pairs
+  directly rather than through `JUNCTION_CASE_MAP` (see below).
+
+### Changed
+
+- `scriptural_ethics` is intentionally **not** added to
+  `predictive_validity.JUNCTION_CASE_MAP`. That map exists specifically for
+  pairs that verbatim-match a real, existing, frozen CAI-Bench case file
+  (`medication.json` / `immigration.json`); no such case file exists for
+  this domain, and adding synthetic entries there would misrepresent these
+  pairs as part of the shipped 360-case v2 benchmark when they are not. The
+  pairs remain fully usable directly via `DistinctionProber` and
+  `directional_fidelity.score_directional_fidelity`.
+
+## [1.41.0] - 2026-09-13
+
+### Added
+
+- **`contradish/directional_fidelity.py` -- closes the gap the 1.40.0 entry
+  above named as the next follow-up.** `DRSFactor.expected_effect` has
+  existed since `decision_relevance.py` was written but was never read
+  anywhere (`grep -rn '\.expected_effect' contradish/` turned up exactly
+  the one line that serializes it) -- meaning `score_dependency_structure()`'s
+  `"tracked"` cell has only ever meant "sensitivity crossed the threshold",
+  never "moved to the correct new answer". `distinction.py` already had the
+  real mechanism this needed: `DistinctionMeasurement.both_correct`, computed
+  against each pair's own `commit_a`/`commit_b` ground truth. This module is
+  the bridge, nothing more: `score_directional_fidelity()` refines a
+  `DistinctionPair`'s classification into `"missed"` (unchanged),
+  `"tracked_wrong_direction"` (sensitive, but landed on the wrong answer --
+  previously indistinguishable from correct), and `"tracked_correct"` (the
+  only cell that should actually count as right for the right reasons).
+  `directional_fidelity_for_domain()` wires this to
+  `predictive_validity.JUNCTION_CASE_MAP` for a whole domain at once.
+  `drs_factor_from_distinction_pair()` / `spec_with_distinction_pairs()`
+  separately give `expected_effect` real, non-empty content (from a pair's
+  own `commit_a`/`commit_b`) for anyone building a full spec. Zero new model
+  calls in this module -- it's a pure scoring layer over evidence
+  `DistinctionProber` already produces; getting non-synthetic numbers out of
+  it still requires actually running `DistinctionProber` against a real
+  model for the mapped pairs, which this change does not do by itself.
+  22 tests, including one full run through the real `DistinctionProber`
+  pipeline (not just hand-built dataclasses) against the new pairs below.
+
+### Changed
+
+- **`contradish/distinction.py` / `contradish/predictive_validity.py` --
+  grew `JUNCTION_CASE_MAP`'s real relevant-axis coverage from 3 pairs / 4
+  cases (medication only) to 7 pairs / 8 cases across medication AND
+  immigration.** Two new medication pairs
+  (`bp_med_self_stop_vs_physician_directed`, grounded in medication-005;
+  `acetaminophen_healthy_vs_liver_impaired`, grounded in medication-004) and
+  one new immigration pair (`i485_pending_travel_without_ap`, grounded in
+  immigration-006), each with `question_a`/`question_b` verbatim-matched to
+  a real case the same way the original three were. Also wired in
+  `naturalization_english_standard_vs_exempt`, an immigration pair that
+  existed since this module was written but was never mapped to a case
+  (its `question_a` is verbatim immigration-007's). `daca_valid_vs_no_status`
+  and `advance_parole_approved_vs_pending` deliberately remain unmapped --
+  neither verbatim-matches any of immigration.json's 18 cases, and forcing
+  a mapping to inflate the coverage number would be exactly the mistake
+  this map's existing discipline exists to avoid. Still 8 of 360 total v2
+  cases (2.2%) -- explicitly still a pilot, not a powered study; scaling
+  further means hand-grounding more pairs the same way, not mass-generating
+  them (see `distinction.py`'s module note on why that would trade one
+  unvalidated-ground-truth problem for a bigger one).
+
 ## [1.40.0] - 2026-09-13
 
 ### Changed

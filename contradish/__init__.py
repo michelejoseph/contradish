@@ -143,7 +143,7 @@ from .compliance_gap import (
 )
 from .pragmatic_legitimacy import (
     PragmaticLegitimacyVerdict, PragmaticLegitimacyReport, AdjustedRateReport,
-    infer_rational_goal, default_legitimacy_reviewer,
+    infer_rational_goal, default_legitimacy_reviewer, default_shift_correctness_judge,
     measure_pragmatic_legitimacy, measure_pragmatic_legitimacy_batch,
     reclassify_sacrifice_rate,
 )
@@ -166,6 +166,12 @@ from .behavioral_mapping import (
     NormativeComparisonReport, compare_to_normative_structure,
 )
 from .behavioral_topology import topology_from_behavioral_map
+from .directional_fidelity import (
+    drs_factor_from_distinction_pair, spec_with_distinction_pairs,
+    DirectionalFidelityReport, score_directional_fidelity,
+    DirectionalFidelityAudit, aggregate_directional_fidelity,
+    directional_fidelity_for_domain,
+)
 from .resolution   import (
     ResolutionCandidate, ResolutionResult,
     discover_resolution, discover_resolutions_for_loss_map,
@@ -226,7 +232,7 @@ from .domains      import (
 from .conviction   import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .cdr          import generate_cdr
 
-__version__ = "1.40.0"
+__version__ = "1.45.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -328,6 +334,7 @@ __all__ = [
     "measure_pragmatic_legitimacy",
     "measure_pragmatic_legitimacy_batch",
     "reclassify_sacrifice_rate",
+    "default_shift_correctness_judge",
     "DRSFactor",
     "DecisionRelevanceSpec",
     "default_technique_drs",
@@ -356,6 +363,13 @@ __all__ = [
     "NormativeComparisonReport",
     "compare_to_normative_structure",
     "topology_from_behavioral_map",
+    "drs_factor_from_distinction_pair",
+    "spec_with_distinction_pairs",
+    "DirectionalFidelityReport",
+    "score_directional_fidelity",
+    "DirectionalFidelityAudit",
+    "aggregate_directional_fidelity",
+    "directional_fidelity_for_domain",
     "audit_fairness",
     "FairnessAudit",
     "IdentityProfile",

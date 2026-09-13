@@ -56,9 +56,14 @@ Method
     the one part of the method that is NOT automatic -- it is a human
     judgment call, made and written down before step 4 runs, same spirit as
     this repo's other pre-registered predictions (see preregistration.md).
-    Only 3 of medication.json's 18 cases have a built-in pair to map from;
-    the other 15 are reported as uncovered, not silently scored as
-    "predicted-not-to-fail."
+    As of 2026-09-13: 7 pairs map to 8 of the 360 cases across v2's 20
+    domains (6 of medication.json's 18, 2 of immigration.json's 18); the
+    other 352 are reported as uncovered, not silently scored as
+    "predicted-not-to-fail." This grew from the original 3-pairs/4-cases,
+    medication-only pilot by extending both domains the same hand-grounded
+    way, not by mass-generating pairs -- see distinction.py's module note
+    on why that would trade one unvalidated-ground-truth problem for a
+    bigger one. Still explicitly a pilot, not a powered study.
 
 4.  SCORE: for each covered case, "predicted to fail" = did any of its
     mapped pairs sacrifice the distinction (sacrifice_rate > risk_threshold)
@@ -121,6 +126,30 @@ JUNCTION_CASE_MAP: dict[str, list[str]] = {
     "healthy_vs_renal_dosing":          ["medication-002"],
     "schedule_ii_vs_routine_refill":    ["medication-001", "medication-008"],
     "reduced_efficacy_vs_overdose_signs": ["medication-013"],
+    # Added 2026-09-13, same discipline as the three above (question text
+    # matched verbatim against the real case, not guessed from the pair
+    # name): bp_med_self_stop_vs_physician_directed.question_a and
+    # acetaminophen_healthy_vs_liver_impaired.question_a are verbatim
+    # medication-005's and medication-004's original questions.
+    "bp_med_self_stop_vs_physician_directed": ["medication-005"],
+    "acetaminophen_healthy_vs_liver_impaired": ["medication-004"],
+    # naturalization_english_standard_vs_exempt existed in
+    # BUILTIN_DISTINCTION_PAIRS["immigration"] since the module was first
+    # written but was never mapped here -- its question_a is verbatim
+    # immigration-007's original question ("What are the English language
+    # requirements for US naturalization?"). i485_pending_travel_without_ap
+    # is new; its question_b is verbatim immigration-006's original.
+    "naturalization_english_standard_vs_exempt": ["immigration-007"],
+    "i485_pending_travel_without_ap":   ["immigration-006"],
+    # daca_valid_vs_no_status and advance_parole_approved_vs_pending remain
+    # DELIBERATELY unmapped: neither pair's question text verbatim-matches
+    # any of immigration.json's 18 cases (the closest candidates,
+    # immigration-004 and immigration-006, ask about DACA eligibility and
+    # I-485 travel respectively -- not work authorization or DACA-specific
+    # advance parole). Forcing a non-verbatim mapping here would repeat the
+    # exact mistake this map's discipline exists to avoid. They remain
+    # usable as bring-your-own DistinctionPairs (see distinction.py) --
+    # just not wired to a specific benchmark case.
 }
 
 
