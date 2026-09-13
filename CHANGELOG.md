@@ -4,6 +4,39 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.37.0] - 2026-09-13
+
+### Added
+
+- **`contradish/decision_boundary.py` -- Decision Boundary Recovery (DBR):
+  specify the legitimate decision boundary, experimentally recover the
+  model's behavioral one, quantify the discrepancy.** Every existing
+  sensitivity measurement in this package is categorical (is factor F
+  relevant, does the answer differ between two hand-picked states). Nothing
+  before this module LOCATED anything on an ordered semantic dimension.
+  `BoundaryLadder` names the legitimate boundary `B*` -- the rung index
+  along an ordered intervention ladder (e.g. "days early requesting a
+  refill": 0..10) where the correct decision changes -- honestly flagged as
+  authored content with no existing `TECHNIQUE_NAMES`-style constant to seed
+  it from (nothing in `policies/*.py` currently encodes a numeric threshold;
+  `illustrative_ladder()` ships a clearly-labeled synthetic example only,
+  not a validated domain claim). `recover_boundary_via_binary_search()`
+  recovers the model's actual behavioral boundary `B_M` in O(log n) queries
+  via controlled semantic interventions (an oracle callable, same
+  swappable-judge pattern as `default_hedge_judge`), with a local check
+  (verified computationally to be a genuinely informative probe, not a
+  tautological one) that catches a meaningful share of oscillation right
+  around the boundary without claiming a full monotonicity guarantee;
+  `recover_boundary_from_observations()` is the honest zero-assumptions
+  version for an already-completed full sweep. A model that never shows a
+  clean single transition gets `regime` = `unstable` / `always_a` /
+  `always_b` / `insufficient_data` rather than a forced number.
+  `quantify_boundary_discrepancy()` computes `Delta = B_M - B*`: signed
+  displacement in rungs, a normalized version for cross-domain comparison,
+  and a direction (`shifted_toward_a` / `shifted_toward_b` / `exact`) --
+  deliberately not labeled "conservative"/"permissive", since which
+  direction is safer depends on domain context this module doesn't have.
+
 ## [1.36.0] - 2026-09-13
 
 ### Added

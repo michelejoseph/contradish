@@ -386,6 +386,74 @@ natural next step.
 
 ---
 
+## Decision Boundary Recovery: locating the boundary, not just naming the factor
+
+DRS (above) asks a categorical question per factor: relevant or not, and did
+the model react. It has no way to say WHERE, on an ordered dimension, the
+correct decision actually changes, or where the model's decision actually
+changes — only whether the model reacted to a rhetorical technique at all.
+`contradish/decision_boundary.py` adds that: a controlled-intervention
+boundary-finding procedure, the same experimental logic classic
+psychophysics staircase methods use to locate a perceptual threshold,
+applied to a model's decision along a real ordered semantic ladder (e.g.
+"days early requesting a refill": 0, 1, ..., 10).
+
+`BoundaryLadder` states the legitimate boundary `B*` explicitly — the rung
+where the correct decision changes. This is authored content, not derived
+from any existing constant: nothing in `policies/*.py` currently encodes a
+numeric threshold (`expected_traits` there are qualitative), so a real `B*`
+needs the same kind of deliberate authoring, ideally reviewed, that the
+equivalence-audit CSVs needed before their numbers meant anything (see
+"Equivalence is measured, not asserted" above). `illustrative_ladder()`
+ships one synthetic, clearly-labeled example for tests — not a claim about
+any real domain.
+
+`recover_boundary_via_binary_search()` recovers the model's actual
+behavioral boundary `B_M` in O(log n) queries against an oracle callable
+(the same swappable-judge pattern as `default_hedge_judge` elsewhere).
+Its local `verify` check queries one rung past each side of the candidate
+boundary — checking the boundary rung itself, or the one immediately
+before it, would be tautological, since the search's own termination
+guarantees those are already consistent; the informative checks are one
+step further out, confirmed by direct computation to catch a real share of
+local anomalies rather than being dead code. A model that doesn't show a
+single clean transition is reported as `unstable` / `always_a` / `always_b`
+rather than forced into a boundary that doesn't exist.
+
+`quantify_boundary_discrepancy()` computes `Delta = B_M - B*`: signed
+displacement in rungs, normalized for cross-ladder comparison, and a
+direction (`shifted_toward_a` / `shifted_toward_b` / `exact`). The
+direction is deliberately not labeled "conservative" or "permissive" —
+which side is the safer one depends on what decision_a/decision_b mean for
+a given commitment, which this module has no way to know; it reports the
+geometric fact and leaves the judgment call to whoever has the domain
+context to make it.
+
+```python
+from contradish.decision_boundary import (
+    BoundaryLadder, recover_boundary_via_binary_search, quantify_boundary_discrepancy,
+)
+
+ladder = BoundaryLadder(
+    commitment_id="medication-early-refill", domain="medication",
+    dimension="days_early", rungs=list(range(11)),
+    decision_a="approve", decision_b="deny",
+    legitimate_boundary_index=3,   # authored, reviewed -- not shipped by this module
+)
+recovery = recover_boundary_via_binary_search(model_oracle, len(ladder.rungs),
+                                               ladder.decision_a, ladder.decision_b)
+print(quantify_boundary_discrepancy(ladder, recovery).report())
+```
+
+As of 2026-09-13, no real `BoundaryLadder` content exists for any
+contradish domain — this is a tested recovery-and-discrepancy engine
+without live data yet. Authoring a reviewed `B*` for even one real
+commitment (medication is the natural first candidate, given the completed
+equivalence audit there) is the natural next step, not wiring into
+`bench/evaluate.py`.
+
+---
+
 ## Multi-witness convergence
 
 No serious finding in this package should rest on a single judge model. A

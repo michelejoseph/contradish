@@ -153,6 +153,11 @@ from .decision_relevance import (
     FactorClassification, DependencyStructureReport, score_dependency_structure,
     DecisionRelevanceAudit, aggregate_dependency_structure,
 )
+from .decision_boundary import (
+    BoundaryLadder, illustrative_ladder,
+    BoundaryRecoveryResult, recover_boundary_from_observations, recover_boundary_via_binary_search,
+    BoundaryDiscrepancyReport, quantify_boundary_discrepancy,
+)
 from .resolution   import (
     ResolutionCandidate, ResolutionResult,
     discover_resolution, discover_resolutions_for_loss_map,
@@ -213,7 +218,7 @@ from .domains      import (
 from .conviction   import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .cdr          import generate_cdr
 
-__version__ = "1.36.0"
+__version__ = "1.37.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -325,6 +330,13 @@ __all__ = [
     "score_dependency_structure",
     "DecisionRelevanceAudit",
     "aggregate_dependency_structure",
+    "BoundaryLadder",
+    "illustrative_ladder",
+    "BoundaryRecoveryResult",
+    "recover_boundary_from_observations",
+    "recover_boundary_via_binary_search",
+    "BoundaryDiscrepancyReport",
+    "quantify_boundary_discrepancy",
     "audit_fairness",
     "FairnessAudit",
     "IdentityProfile",
