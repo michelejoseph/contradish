@@ -4,6 +4,113 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.36.0] - 2026-09-13
+
+### Added
+
+- **`contradish/decision_relevance.py` -- the Decision-Relevance
+  Specification (DRS), the object every existing sensitivity measurement in
+  this package was implicitly checking against but never stated explicitly.**
+  bench/evaluate.py's technique_scores, distinction.py's hold_rate, and
+  faithfulness.py's subtraction of the two all measure SENSITIVITY (did the
+  answer change). None of them, before this module, represented as a
+  first-class object which factors SHOULD move a decision and which
+  shouldn't. `DecisionRelevanceSpec` names that: `R: factor -> {relevant,
+  irrelevant, conditional}` per commitment, with `default_technique_drs()`
+  seeding it from the real 8-technique `TECHNIQUE_NAMES` set and the
+  relevance defaults already implicit in judge.py's own
+  `_TRANSFORMATION_VALIDATOR_PROMPT` guidance (seven techniques irrelevant,
+  `authority` conditional on verified credentials). `score_dependency_
+  structure()` crosses R against a measured sensitivity profile to classify
+  every factor into one of four cells: tracked (relevant+sensitive, the
+  correct case), missed (relevant+insensitive -- distinction loss's
+  failure mode), spurious (irrelevant+sensitive -- CAI Strain's failure
+  mode, now broken out per technique instead of pooled), and invariant
+  (irrelevant+insensitive -- correct, and not named anywhere else in this
+  package before this addition). `sensitivity_from_consistency_score()`
+  bridges directly from bench/evaluate.py's already-computed
+  technique_scores, so DRS scoring runs as a pure post-hoc layer over data
+  contradish already collects -- zero new model calls for a first working
+  pass. Proven, not just asserted: subtracting the pooled hit rate and
+  false-alarm rate this module computes is exactly Youden's J (Youden 1950),
+  which means faithfulness.py's existing score is the two-factor degenerate
+  case of a DRS score, and faithfulness.py's SDT decomposition
+  (`compute_sdt_decomposition`/`classify_sdt_pattern`) is reused here
+  directly rather than reimplemented -- this module is the general form
+  faithfulness.py was always a special case of.
+  `aggregate_dependency_structure()` pools tracked/missed/spurious/invariant
+  counts across many commitments (pooled, not averaged-of-averages, for the
+  same reason judge_calibration_ext.py's domain-stratification note gives).
+
+## [1.35.0] - 2026-09-13
+
+### Added
+
+- **`contradish/pragmatic_legitimacy.py` -- is a pressure-induced answer
+  shift a genuine failure, or a legitimate pragmatic reinterpretation?**
+  Every pressure-based construct in this package (sacrifice.py, Type I loss,
+  CAI Strain itself) assumes a "pressure" framing changes only HOW a
+  question is dressed up, never WHAT is being asked. Gricean pragmatics and
+  the Rational Speech Act framework deny that: a cooperative listener's
+  sense of what's being asked is itself a function of context and stakes,
+  so an answer that shifts under a stakes-signaling framing may be correctly
+  tracking a different implicit question, not eroding a distinction. This
+  module operationalizes the objection instead of leaving it as a caveat:
+  `infer_rational_goal()` asks an independent LLM what a rational listener
+  would take a framing's implicit goal to be, `default_legitimacy_reviewer()`
+  asks independent reviewers whether two framings' inferred goals differ
+  enough to justify different answers, and `reclassify_sacrifice_rate()`
+  recomputes an existing rate (sacrifice_rate or similar) after excusing
+  instances reviewers converged were legitimate pragmatic shifts. This is
+  the one module in this package that changes a headline number based on a
+  purely theoretical objection, deliberately: the alternative was shipping a
+  metric this package's own research review found conflates two different
+  things and calling it one.
+
+### Changed
+
+- **`contradish/benchmark_ground_truth_audit.py`: ground-truth audits now
+  feed back into scoring, narrowly.** Perspectivist annotation methodology
+  ("Truth Is a Lie: Crowd Truth and the Seven Myths of Human Annotation",
+  Aroyo & Welty; "Beyond Consensus: Perspectivist Modeling and Evaluation of
+  Annotator Disagreement in NLP", arXiv 2601.09065) argues forced consensus
+  over genuinely contested items destroys information rather than resolving
+  it. `exclude_indeterminate_pairs()` recomputes a rate (kbv_rate,
+  sacrifice_rate, or similar) after excluding pairs this package's own
+  ground-truth audit found disputed or contradicted -- not by rewriting the
+  pair (still never auto-applied, see the module's original docstring), but
+  by declining to let an indeterminate item count for or against a model's
+  score at all, the same way standard item-analysis practice drops
+  low-inter-rater-reliability items from a scale. `DeterminacyAdjustedRateReport`
+  also reports `benchmark_determinacy_rate` -- how much of what was audited
+  even has a reviewer-agreed determinate answer, a different and arguably
+  prior question to "how much of it is correct."
+
+- **`contradish/faithfulness.py`: Signal Detection Theory decomposition.**
+  `faithfulness = relevant_sensitivity - irrelevant_sensitivity` treats both
+  terms as one axis. SDT -- applied directly to LLM behavior in "LLMs as
+  Signal Detectors: Sensitivity, Bias, and the Temperature-Criterion
+  Analogy" (arXiv 2603.14893) and "Do LLMs Know What They Know? Measuring
+  Metacognitive Efficiency with Signal Detection Theory" (arXiv 2603.25112)
+  -- treats the same two rates as orthogonal: sensitivity (d', can the model
+  discriminate the two conditions at all) and criterion (c, where its
+  response threshold sits, independent of discrimination ability).
+  `compute_sdt_decomposition()` adds `sensitivity_d_prime`/`criterion` to
+  every `FaithfulnessJunction`, and `classify_sdt_pattern()` gives a coarse
+  label distinguishing a genuine discrimination collapse from a criterion
+  shift -- two failures a single subtraction cannot tell apart, and which
+  call for different fixes.
+
+- **`contradish/judge_calibration_ext.py`: domain-stratified floor_strain.**
+  `floor_strain` pools every domain into one scalar, which is exactly the
+  classical-test-theory unidimensionality assumption the LLM Psychometrics
+  systematic review (already cited for this module) flags as often false.
+  `score_calibration_votes_by_domain()` reports floor_strain per domain plus
+  a `_heterogeneity` figure (max minus min across domains) surfacing
+  whether pooling was hiding real unevenness in judge reliability. Additive
+  only -- `measure_*_judge_floor()`'s existing pooled return value is
+  unchanged.
+
 ## [1.34.0] - 2026-09-13
 
 ### Added

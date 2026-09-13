@@ -105,7 +105,10 @@ from .sacrifice    import (
     DistinctionSacrificeReport, DistinctionSacrificeProfile, SacrificeGradient,
     SacrificeInstance, measure_sacrifice, default_hedge_judge,
 )
-from .faithfulness import FaithfulnessReport, FaithfulnessJunction, score_faithfulness
+from .faithfulness import (
+    FaithfulnessReport, FaithfulnessJunction, score_faithfulness,
+    compute_sdt_decomposition, classify_sdt_pattern,
+)
 from .provenance   import (
     ProvenanceClaim, ProvenanceReport, ProvenanceProfile, ProvenanceMeasurement,
     BUILTIN_PROVENANCE_CLAIMS, measure_provenance, default_usage_judge,
@@ -113,11 +116,13 @@ from .provenance   import (
 from .witness      import WitnessPanel, WitnessCall, ConvergenceReport, build_witnessed
 from .judge_calibration_ext import (
     measure_hedge_judge_floor, measure_restatement_judge_floor, measure_usage_judge_floor,
+    score_calibration_votes_by_domain,
 )
 from .benchmark_ground_truth_audit import (
     GroundTruthAuditReport, GroundTruthItemVerdict,
     audit_distinction_pairs, audit_calibration_gold,
     default_pair_validity_judge, default_calibration_gold_judge,
+    DeterminacyAdjustedRateReport, exclude_indeterminate_pairs,
 )
 from .predictive_validity import (
     JUNCTION_CASE_MAP, CasePrediction, PredictiveValidityReport,
@@ -135,6 +140,18 @@ from .format_fidelity import (
 from .compliance_gap import (
     default_word_limit_checker, ComplianceInstance, ComplianceGapReport,
     score_compliance, measure_compliance_gap, measure_compliance_gap_batch,
+)
+from .pragmatic_legitimacy import (
+    PragmaticLegitimacyVerdict, PragmaticLegitimacyReport, AdjustedRateReport,
+    infer_rational_goal, default_legitimacy_reviewer,
+    measure_pragmatic_legitimacy, measure_pragmatic_legitimacy_batch,
+    reclassify_sacrifice_rate,
+)
+from .decision_relevance import (
+    DRSFactor, DecisionRelevanceSpec, default_technique_drs,
+    sensitivity_from_consistency_score, sensitivity_profile_from_technique_scores,
+    FactorClassification, DependencyStructureReport, score_dependency_structure,
+    DecisionRelevanceAudit, aggregate_dependency_structure,
 )
 from .resolution   import (
     ResolutionCandidate, ResolutionResult,
@@ -196,7 +213,7 @@ from .domains      import (
 from .conviction   import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .cdr          import generate_cdr
 
-__version__ = "1.34.0"
+__version__ = "1.36.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -241,6 +258,8 @@ __all__ = [
     "FaithfulnessReport",
     "FaithfulnessJunction",
     "score_faithfulness",
+    "compute_sdt_decomposition",
+    "classify_sdt_pattern",
     "ProvenanceClaim",
     "ProvenanceReport",
     "ProvenanceProfile",
@@ -255,12 +274,15 @@ __all__ = [
     "measure_hedge_judge_floor",
     "measure_restatement_judge_floor",
     "measure_usage_judge_floor",
+    "score_calibration_votes_by_domain",
     "GroundTruthAuditReport",
     "GroundTruthItemVerdict",
     "audit_distinction_pairs",
     "audit_calibration_gold",
     "default_pair_validity_judge",
     "default_calibration_gold_judge",
+    "DeterminacyAdjustedRateReport",
+    "exclude_indeterminate_pairs",
     "JUNCTION_CASE_MAP",
     "CasePrediction",
     "PredictiveValidityReport",
@@ -285,6 +307,24 @@ __all__ = [
     "score_compliance",
     "measure_compliance_gap",
     "measure_compliance_gap_batch",
+    "PragmaticLegitimacyVerdict",
+    "PragmaticLegitimacyReport",
+    "AdjustedRateReport",
+    "infer_rational_goal",
+    "default_legitimacy_reviewer",
+    "measure_pragmatic_legitimacy",
+    "measure_pragmatic_legitimacy_batch",
+    "reclassify_sacrifice_rate",
+    "DRSFactor",
+    "DecisionRelevanceSpec",
+    "default_technique_drs",
+    "sensitivity_from_consistency_score",
+    "sensitivity_profile_from_technique_scores",
+    "FactorClassification",
+    "DependencyStructureReport",
+    "score_dependency_structure",
+    "DecisionRelevanceAudit",
+    "aggregate_dependency_structure",
     "audit_fairness",
     "FairnessAudit",
     "IdentityProfile",

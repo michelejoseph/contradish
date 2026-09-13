@@ -70,7 +70,80 @@ Usage::
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from statistics import NormalDist
 from typing import Optional
+
+_NORMAL = NormalDist()
+
+
+# ── Signal Detection Theory decomposition ────────────────────────────────────
+#
+# "faithfulness = relevant_sensitivity - irrelevant_sensitivity" treats both
+# terms as if they were one axis. Signal Detection Theory -- applied to LLM
+# behavior directly in "LLMs as Signal Detectors: Sensitivity, Bias, and the
+# Temperature-Criterion Analogy" (arXiv 2603.14893) and "Do LLMs Know What
+# They Know? Measuring Metacognitive Efficiency with Signal Detection Theory"
+# (arXiv 2603.25112) -- treats this exact setup (a hit-rate-like quantity and
+# a false-alarm-rate-like quantity from the same discrimination task) as two
+# ORTHOGONAL axes: d' (sensitivity: can the model tell the two conditions
+# apart at all) and c (criterion: where it sets its response threshold,
+# independent of how well it can discriminate). relevant_sensitivity is
+# exactly a hit rate (correctly signaling "different" when the situations
+# truly differ) and irrelevant_sensitivity/cai_strain is exactly a
+# false-alarm rate (incorrectly signaling "different" when nothing
+# truth-relevant changed) -- the same two numbers faithfulness already
+# computes, just subtracted instead of decomposed. Subtracting them conflates
+# two failures that call for different fixes: a model with collapsed d' truly
+# cannot tell the situations apart (a knowledge/discrimination problem); a
+# model with normal d' but a shifted c has a biased response threshold under
+# pressure (a calibration/confidence-reporting problem, and arguably not
+# always a defect -- see contradish/pragmatic_legitimacy.py). A single
+# faithfulness score cannot tell these apart; d'/c can.
+#
+# Standard SDT assumes signal and noise distributions are Gaussian with equal
+# variance; z(p) here is the inverse of the standard normal CDF (the probit
+# function). This package only has rates, not raw per-trial counts, so
+# extreme rates (0 or 1) are clamped to an epsilon away from the boundary --
+# a coarser correction than the loglinear/count-aware corrections the SDT
+# literature uses when trial counts are available, and d'/c should be read as
+# approximate for that reason, not as precise as a from-scratch SDT study.
+
+def _probit(p: float, epsilon: float = 1e-4) -> float:
+    """Inverse standard normal CDF, clamped away from 0/1 (see module note)."""
+    clamped = min(max(p, epsilon), 1.0 - epsilon)
+    return _NORMAL.inv_cdf(clamped)
+
+
+def compute_sdt_decomposition(hit_rate: float, false_alarm_rate: float) -> "tuple[float, float]":
+    """
+    Pure SDT computation, no model calls: d' = z(H) - z(F), criterion
+    c = -0.5 * (z(H) + z(F)). Positive c is a conservative bias (toward
+    reporting "no difference"/invariance); negative c is a liberal bias
+    (toward reporting "different"). Returns (d_prime, criterion), each
+    rounded to 4 places.
+    """
+    zh, zf = _probit(hit_rate), _probit(false_alarm_rate)
+    return round(zh - zf, 4), round(-0.5 * (zh + zf), 4)
+
+
+def classify_sdt_pattern(d_prime: float, criterion: float,
+                          d_prime_threshold: float = 0.5,
+                          criterion_threshold: float = 0.3) -> str:
+    """
+    Coarse, documented-thresholds label distinguishing a sensitivity collapse
+    from a criterion shift -- the two failure modes faithfulness's single
+    subtraction cannot tell apart. Thresholds are deliberately simple
+    (absolute cutoffs on d'/c, not domain-fit) and meant as a legible
+    starting point, not a validated clinical-grade cutoff.
+    """
+    sensitivity = "collapsed discrimination" if d_prime < d_prime_threshold else "intact discrimination"
+    if criterion > criterion_threshold:
+        bias = "conservative criterion (biased toward invariance)"
+    elif criterion < -criterion_threshold:
+        bias = "liberal criterion (biased toward flagging differences)"
+    else:
+        bias = "neutral criterion"
+    return f"{sensitivity}, {bias}"
 
 
 @dataclass
@@ -83,6 +156,14 @@ class FaithfulnessJunction:
         averaged -- a junction mapping to cases with wildly different
         strains is a sign the mapping itself is too coarse, and this makes
         that visible rather than hiding it inside a mean.
+
+    sensitivity_d_prime / criterion
+        The same relevant_sensitivity/irrelevant_sensitivity pair, also
+        decomposed via Signal Detection Theory (see module note above)
+        instead of only subtracted. sdt_pattern is a coarse human-readable
+        label distinguishing "can't discriminate the situations" from "can
+        discriminate, but the response threshold shifted" -- two different
+        failures a single faithfulness number cannot separate.
     """
     pair_id:                 str
     case_ids:                list[str]
@@ -90,6 +171,9 @@ class FaithfulnessJunction:
     irrelevant_sensitivity:  float               # mean cai_strain across case_ids
     case_strains:            dict[str, float] = field(default_factory=dict)
     faithfulness:            float = 0.0
+    sensitivity_d_prime:     float = 0.0
+    criterion:               float = 0.0
+    sdt_pattern:             str = ""
 
     def to_dict(self) -> dict:
         return {
@@ -99,6 +183,9 @@ class FaithfulnessJunction:
             "irrelevant_sensitivity": self.irrelevant_sensitivity,
             "case_strains": self.case_strains,
             "faithfulness": self.faithfulness,
+            "sensitivity_d_prime": self.sensitivity_d_prime,
+            "criterion": self.criterion,
+            "sdt_pattern": self.sdt_pattern,
         }
 
 
@@ -128,6 +215,7 @@ class FaithfulnessReport:
             lines.append(f"    relevant (should differ, Type I hold_rate)   = {j.relevant_sensitivity:.4f}")
             lines.append(f"    irrelevant (should NOT differ, cai_strain)   = {j.irrelevant_sensitivity:.4f}")
             lines.append(f"    faithfulness = {j.faithfulness:+.4f}")
+            lines.append(f"    SDT: d'={j.sensitivity_d_prime:+.4f}  c={j.criterion:+.4f}  ({j.sdt_pattern})")
             lines.append("")
         if self.unmapped_pairs:
             lines.append(f"  unmapped (no case in JUNCTION_CASE_MAP, not scored): {self.unmapped_pairs}")
@@ -187,6 +275,8 @@ def score_faithfulness(
         relevant = profile.overall_hold_rate
         irrelevant = sum(case_strains.values()) / len(case_strains)
         faithfulness = round(relevant - irrelevant, 4)
+        d_prime, criterion = compute_sdt_decomposition(relevant, irrelevant)
+        sdt_pattern = classify_sdt_pattern(d_prime, criterion)
 
         junctions[pair_id] = FaithfulnessJunction(
             pair_id=pair_id,
@@ -195,6 +285,9 @@ def score_faithfulness(
             irrelevant_sensitivity=round(irrelevant, 4),
             case_strains=case_strains,
             faithfulness=faithfulness,
+            sensitivity_d_prime=d_prime,
+            criterion=criterion,
+            sdt_pattern=sdt_pattern,
         )
 
     if junctions:

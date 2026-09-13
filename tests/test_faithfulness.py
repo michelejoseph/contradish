@@ -7,7 +7,11 @@ custom junction_case_map is passed explicitly so the test doesn't depend on
 the real medication.json content.
 """
 from contradish.distinction import DistinctionLossMap, DistinctionProfile
-from contradish.faithfulness import score_faithfulness
+from contradish.faithfulness import (
+    classify_sdt_pattern,
+    compute_sdt_decomposition,
+    score_faithfulness,
+)
 
 
 def _make_loss_map(overall_hold_rate: float, pair_id: str = "test_pair") -> DistinctionLossMap:
@@ -87,3 +91,59 @@ def test_defaults_to_real_junction_case_map_when_none_passed():
     report = score_faithfulness("medication", loss_map, details)
     assert "healthy_vs_renal_dosing" in report.junctions
     assert report.junctions["healthy_vs_renal_dosing"].case_ids == ["medication-002"]
+
+
+# ── Signal Detection Theory decomposition ────────────────────────────────────
+
+def test_perfect_hit_zero_false_alarm_gives_large_positive_d_prime():
+    d_prime, criterion = compute_sdt_decomposition(hit_rate=1.0, false_alarm_rate=0.0)
+    assert d_prime > 5.0   # near-boundary rates clamped, but strongly separated
+    assert isinstance(criterion, float)
+
+
+def test_equal_hit_and_false_alarm_gives_zero_d_prime():
+    """If the model is exactly as likely to say 'different' whether or not
+    the situations truly differ, it has zero discrimination ability --
+    d' should be ~0 regardless of the (shared) response level."""
+    d_prime, _ = compute_sdt_decomposition(hit_rate=0.7, false_alarm_rate=0.7)
+    assert d_prime == 0.0
+
+
+def test_symmetric_rates_give_zero_criterion():
+    """H and F symmetric around 0.5 (e.g. 0.8 and 0.2) is the unbiased case
+    for a threshold sitting exactly between the two distributions' means."""
+    _, criterion = compute_sdt_decomposition(hit_rate=0.8, false_alarm_rate=0.2)
+    assert abs(criterion) < 1e-9
+
+
+def test_high_hit_low_false_alarm_gives_positive_d_prime():
+    d_prime, _ = compute_sdt_decomposition(hit_rate=0.9, false_alarm_rate=0.1)
+    assert d_prime > 0
+
+
+def test_classify_sdt_pattern_labels_collapsed_discrimination():
+    label = classify_sdt_pattern(d_prime=0.1, criterion=0.0)
+    assert "collapsed discrimination" in label
+    assert "neutral criterion" in label
+
+
+def test_classify_sdt_pattern_labels_intact_discrimination_conservative_bias():
+    label = classify_sdt_pattern(d_prime=2.0, criterion=0.5)
+    assert "intact discrimination" in label
+    assert "conservative criterion" in label
+
+
+def test_classify_sdt_pattern_labels_liberal_bias():
+    label = classify_sdt_pattern(d_prime=2.0, criterion=-0.5)
+    assert "liberal criterion" in label
+
+
+def test_score_faithfulness_populates_sdt_fields_on_junction():
+    loss_map = _make_loss_map(overall_hold_rate=0.9)
+    details = [{"id": "case-1", "cai_strain": 0.1, "passed": True}]
+    report = score_faithfulness("test", loss_map, details, junction_case_map={"test_pair": ["case-1"]})
+    j = report.junctions["test_pair"]
+    assert isinstance(j.sensitivity_d_prime, float)
+    assert isinstance(j.criterion, float)
+    assert isinstance(j.sdt_pattern, str) and j.sdt_pattern
+    assert "SDT:" in report.report()

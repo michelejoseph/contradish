@@ -66,10 +66,22 @@ Two strain numbers come out of every run:
 `eq_coverage` reports what fraction of the benchmark cleared the EQ threshold.
 A benchmark with `eq_coverage = 0.95` has 95% of its cases audited and
 confirmed; a benchmark with `eq_coverage = 0.40` is making a weaker claim
-and the headline Strain reflects that. The current placeholder value of `1.0`
-on every shipped case means **asserted, not yet audited**, equivalent to the
-historical behavior of the benchmark, and will be replaced as the v2.1
-annotation pass completes.
+and the headline Strain reflects that. The placeholder value of `1.0` on
+every shipped case means **asserted, not yet audited**, equivalent to the
+historical behavior of the benchmark, and is being replaced domain by domain
+as the v2.1 annotation pass (`equivalence-audit/`) completes.
+
+**Status as of 2026-09-13:** `v2/medication.json` has one completed
+independent annotator pass (of the 2-3 `equivalence-audit/INSTRUCTIONS.md`
+calls for) run through `compute_equivalence_confidence.py` — 14 of 18 cases
+now carry a real EQ in `[0.75, 0.875]` (never a clean `1.0`: every case had
+at least one variant an annotator flagged as introducing a legitimately new
+circumstance) and 4 cases dropped to `0.75`, contested. This is real signal,
+not noise: with only one annotator so far it's a single judgment, not yet a
+genuine inter-annotator confidence, so a second and third independent pass
+on medication is still what closes this out properly. `v2/immigration.json`
+and every other domain (`v1`, `v2_ci`, `v2_mt`, and the rest) remain on the
+`1.0` placeholder, unaudited.
 
 The CLI default is `--eq-threshold 0.80`. Users in low-stakes contexts can
 lower it to widen the case set; users in high-stakes contexts can raise it.
@@ -280,6 +292,98 @@ adjacent territory, distinct measurement -- kept as-is rather than renamed,
 since the public API has shipped since 1.32.0, but named explicitly here so
 no reader assumes this package measures CoT faithfulness. It doesn't.
 
+**Subtracting relevant and irrelevant sensitivity treats them as one axis.**
+Signal Detection Theory treats them as two orthogonal ones -- sensitivity
+(d': can the model discriminate the two conditions at all) and criterion
+(c: where its response threshold sits, independent of discrimination
+ability) -- see "LLMs as Signal Detectors: Sensitivity, Bias, and the
+Temperature-Criterion Analogy" (arXiv 2603.14893) and "Do LLMs Know What
+They Know? Measuring Metacognitive Efficiency with Signal Detection
+Theory" (arXiv 2603.25112). `compute_sdt_decomposition()` computes both
+from the exact same two rates faithfulness already has, and
+`classify_sdt_pattern()` labels the result -- distinguishing "the model
+genuinely can't tell these situations apart" (collapsed d') from "the
+model can tell them apart, but its response threshold shifted under
+pressure" (shifted c, which is arguably not always a defect; see
+`contradish/pragmatic_legitimacy.py` below). A single faithfulness number
+cannot separate these two failures. `FaithfulnessJunction.sensitivity_d_prime` /
+`.criterion` / `.sdt_pattern` are populated automatically by
+`score_faithfulness()` — no separate call needed.
+
+---
+
+## Decision-Relevance Specification (DRS): what should this AI be sensitive to?
+
+Every sensitivity measurement above -- technique_scores, hold_rate,
+faithfulness's subtraction of the two -- checks whether the model's answer
+moved. None of them, on their own, state what SHOULD have moved it. That
+missing object is named explicitly in `contradish/decision_relevance.py`:
+
+    DRS(C) = (R, E)   over a named factor decomposition of commitment C's
+                       input space
+
+`R` maps each factor to `relevant`, `irrelevant`, or `conditional` (relevant
+only when a stated condition holds). `default_technique_drs()` seeds `R`
+from the real 8-technique set in `bench/evaluate.py`
+(`emotional`, `presuppose`, `casual`, `sympathy`, `authority`,
+`hypothetical`, `boundary`, `indirect`), using the relevance defaults
+already implicit in `judge.py`'s own transformation-validator guidance:
+seven techniques are pressure/framing and should never move the answer;
+`authority` is `conditional` -- irrelevant unless the system has verified,
+checkable credentials to adapt to.
+
+`score_dependency_structure()` crosses `R` against a measured sensitivity
+profile (bridged directly from `technique_scores` via
+`sensitivity_from_consistency_score()` — zero new model calls) to classify
+every factor into one of four cells:
+
+| | sensitive | insensitive |
+|---|---|---|
+| **relevant** | tracked (correct) | **missed** (distinction loss's failure mode) |
+| **irrelevant** | **spurious** (CAI Strain's failure mode, per-factor) | invariant (correct — unnamed anywhere else in this package) |
+
+The pooled hit rate (tracked / (tracked+missed)) and false-alarm rate
+(spurious / (spurious+invariant)) are exactly faithfulness's
+`relevant_sensitivity` and `irrelevant_sensitivity`. Subtracting them is
+Youden's J statistic / informedness (Youden, W.J. 1950, "Index for rating
+diagnostic tests," *Cancer* 3(1):32–35) — which means `faithfulness.py`'s
+existing score IS a DRS score, computed over the degenerate two-factor case
+{fact, framing}. `score_dependency_structure()` reuses
+`compute_sdt_decomposition()` / `classify_sdt_pattern()` from
+`faithfulness.py` rather than reimplementing them, because the SDT view one
+level up is the same computation. `aggregate_dependency_structure()` pools
+tracked/missed/spurious/invariant counts across many commitments (pooled
+counts, not averaged per-commitment rates, for the same reason
+`judge_calibration_ext.py`'s domain-stratification note gives against naive
+pooling the other direction).
+
+The result is that "sensitivity to distinctions that matter, invariance to
+distinctions that don't" stops being a slogan computed from whichever two
+numbers happened to already exist, and becomes a scored comparison against
+a stated specification of what should have mattered in the first place:
+
+    "What is this AI actually sensitive to, and is that what it should be
+    sensitive to?"
+
+```python
+from contradish.decision_relevance import (
+    default_technique_drs, sensitivity_profile_from_technique_scores,
+    score_dependency_structure,
+)
+
+spec = default_technique_drs("medication-002", domain="medication")
+profile = sensitivity_profile_from_technique_scores(case["technique_scores"])
+report = score_dependency_structure(spec, profile)
+print(report.report())
+```
+
+As of 2026-09-13, `decision_relevance.py` is a pure post-hoc scoring layer
+only — it has not yet been wired into `bench/evaluate.py`'s default output,
+so no published CAI Strain number currently carries a `dependency_fidelity`
+alongside it. The bridge function exists and is tested; wiring it into the
+main pipeline (per-case, using each case's real `technique_scores`) is the
+natural next step.
+
 ---
 
 ## Multi-witness convergence
@@ -456,6 +560,16 @@ question, not the same self-agreement measurement floor_strain uses
 elsewhere. Left open rather than faked with a metric that doesn't mean the
 same thing.
 
+**A single pooled `floor_strain` assumes one unidimensional trait** — the
+same classical-test-theory assumption the LLM Psychometrics review already
+cited here flags as often false: a judge can be reliable on one domain and
+not another, and pooling hides exactly that. `score_calibration_votes_by_domain()`
+reports `floor_strain` per domain plus a `_heterogeneity` figure (max minus
+min across domains) that is `0.0` when pooling wasn't hiding anything and
+larger when it was. Additive only — it doesn't change what
+`measure_*_judge_floor()` returns, it exposes what that pooled number was
+averaging over.
+
 ---
 
 ## Auditing the benchmark's own ground truth
@@ -504,6 +618,41 @@ convergence as automatically authoritative would just relocate the
 single-witness problem instead of solving it. Not yet run against the full
 shipped dataset as of this writing; the module exists so that run can
 happen and be reported honestly, whatever it finds.
+
+**Forcing every audited item toward convergence can itself be a mistake.**
+Perspectivist annotation methodology ("Truth Is a Lie: Crowd Truth and the
+Seven Myths of Human Annotation", Aroyo & Welty; "Beyond Consensus:
+Perspectivist Modeling and Evaluation of Annotator Disagreement in NLP",
+arXiv 2601.09065) argues that disagreement among reviewers is often not
+noise to be resolved but data about genuine ambiguity — and that treating
+it as noise quietly encodes whichever side happened to be the majority as
+"truth." Some `BUILTIN_DISTINCTION_PAIRS` items may have no single
+determinate answer at all, and scoring a model's `kbv_rate` or
+`sacrifice_rate` against one holds that model to a standard this
+benchmark's own reviewers couldn't meet. `exclude_indeterminate_pairs()`
+recomputes a rate after dropping pairs this audit found disputed or
+contradicted from BOTH numerator and denominator — never rewriting the
+pair itself (still never auto-applied, same standard as above), only
+declining to let an indeterminate item count for or against a model at
+all, the same way standard psychometric item analysis drops
+low-inter-rater-reliability items from a scale:
+
+```python
+from contradish.benchmark_ground_truth_audit import exclude_indeterminate_pairs
+
+adjusted = exclude_indeterminate_pairs(
+    flagged_pair_ids=kbv_report.knew_it_but_violated_ids,
+    n_total_pairs=len(BUILTIN_DISTINCTION_PAIRS["medication"]),
+    audit_report=report,
+    metric_name="kbv_rate",
+)
+print(adjusted.report())   # also reports benchmark_determinacy_rate
+```
+
+`DeterminacyAdjustedRateReport.benchmark_determinacy_rate` (the audit's own
+`convergence_rate`, carried through) answers a different and arguably
+prior question than "how much of the ground truth is correct": how much of
+it even has a reviewer-agreed determinate answer at all.
 
 ---
 
@@ -599,7 +748,86 @@ guarantee than a text-only method can actually make.
 
 ---
 
+## Pragmatic legitimacy: is a pressure-induced shift a failure at all?
+
+Every pressure-based construct above -- distinction sacrifice, Type I loss,
+CAI Strain itself -- rests on a premise that has gone unstated until now:
+a "pressure" framing changes only *how* a question is dressed up, never
+*what* is being asked, so any resulting change in the model's substantive
+answer counts as erosion of a distinction it should have held. Gricean
+pragmatics and the Rational Speech Act framework (see "A practical
+introduction to the Rational Speech Act modeling framework", Scontras et
+al., arXiv 2105.09867) deny that premise directly: what a cooperative
+listener takes a question to be asking is itself a function of context and
+stakes. A "you MUST be certain, lives are on the line" framing may not be
+dressing up the same question in urgent language -- to a rational listener
+applying Grice's maxim of Relevance, it may be asking a subtly different
+question, one a cooperative, non-deceptive speaker could legitimately
+answer differently without contradicting itself at all.
+
+This isn't a minor caveat, because if even some fraction of what
+`sacrifice_rate` currently scores as failure is actually a model correctly
+tracking a pragmatically-shifted question, that rate is systematically
+inflated -- and no amount of witness convergence or judge-floor calibration
+fixes it, since the problem isn't judge noise. It's that "lost the
+distinction" and "correctly inferred a different implicit question" look
+identical from the outside.
+
+`contradish/pragmatic_legitimacy.py` operationalizes the distinction rather
+than leaving it philosophical:
+
+1. `infer_rational_goal()` asks an independent LLM, shown only one framing,
+   what a rational, cooperative listener would take its implicit
+   goal/question to be.
+2. `default_legitimacy_reviewer()` asks one or more independent reviewers
+   whether the neutral and pressured framings' inferred goals differ
+   enough that a cooperative, truthful speaker could legitimately give
+   different substantive answers to each -- deliberately using MAJORITY
+   vote (`score_legitimacy_votes`), not the unanimity `benchmark_ground_truth_audit.py`
+   requires, because whether a shift is pragmatically legitimate is an
+   interpretive judgment call domain experts can reasonably split on, not
+   a fact pattern.
+3. `reclassify_sacrifice_rate()` is the part that actually matters: it
+   recomputes an existing rate after excusing instances reviewers
+   converged were legitimate pragmatic shifts.
+
+```python
+from contradish.pragmatic_legitimacy import (
+    infer_rational_goal, default_legitimacy_reviewer,
+    measure_pragmatic_legitimacy_batch, reclassify_sacrifice_rate,
+)
+
+goals = {
+    iid: (infer_rational_goal(llm, neutral), infer_rational_goal(llm, pressured))
+    for iid, (neutral, pressured) in sacrifice_instance_framings.items()
+}
+legitimacy_report = measure_pragmatic_legitimacy_batch(
+    goals,
+    reviewer_judges={
+        "anthropic": default_legitimacy_reviewer(anthropic_llm),
+        "openai": default_legitimacy_reviewer(openai_llm),
+    },
+)
+adjusted = reclassify_sacrifice_rate(
+    sacrifice_report.sacrifice_rate, list(sacrifice_instance_framings), legitimacy_report,
+)
+print(adjusted.report())
+```
+
+This is the one module in this package that changes a headline number
+based on a purely theoretical objection, deliberately: the alternative was
+shipping a metric this package's own research review found conflates two
+different things -- genuine consistency failure and legitimate pragmatic
+context-sensitivity -- and calling it one. As with the ground-truth audit
+above, this never rewrites what actually happened (the model's answer
+still shifted); it disputes whether that shift was a *failure*, on the
+basis of independent, majority-converged reviewer agreement about what was
+actually being asked.
+
+---
+
 ## Benchmark structure
+
 
 
 ### v2 (current)

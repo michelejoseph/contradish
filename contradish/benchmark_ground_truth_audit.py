@@ -280,8 +280,132 @@ def audit_calibration_gold(reviewer_judges: dict[str, Callable]) -> GroundTruthA
     return _audit("judge_floor_calibration", _CALIBRATION_PAIRS, item_ids, reviewer_judges)
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Perspectivist scoring adjustment -- disagreement as data, not noise to force
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# "Truth Is a Lie: Crowd Truth and the Seven Myths of Human Annotation" (Aroyo
+# & Welty) and the more recent "Beyond Consensus: Perspectivist Modeling and
+# Evaluation of Annotator Disagreement in NLP" (arXiv 2601.09065) both argue
+# that forced consensus over genuinely contested items destroys information
+# and quietly encodes whichever side happened to be the majority as "truth."
+# Applied here: some of BUILTIN_DISTINCTION_PAIRS may have no single
+# determinate answer at all -- independent reviewers splitting on a pair isn't
+# necessarily evidence the pair (or the model being scored against it) is
+# wrong, it may be evidence the item is irreducibly ambiguous. Penalizing a
+# model's kbv_rate or sacrifice_rate using a pair the benchmark's OWN
+# reviewers can't agree has a determinate answer holds that model to a
+# standard the ground truth itself doesn't meet.
+#
+# This is deliberately NOT auto-correction (see module docstring above,
+# "explicitly an audit, not an auto-correction mechanism") -- it never
+# rewrites a pair's commit_a/commit_b. It changes something narrower and
+# safer: whether an indeterminate pair is allowed to count against (or for) a
+# model's rate at all. Excluding low-inter-rater-reliability items from a
+# scale is standard psychometric item-analysis practice; this applies the
+# same practice to contradish's own benchmark items.
+
+@dataclass
+class DeterminacyAdjustedRateReport:
+    """The output of exclude_indeterminate_pairs()."""
+    metric_name:                str
+    raw_rate:                   Optional[float]
+    adjusted_rate:               Optional[float]
+    n_total:                     int
+    n_excluded:                  int
+    excluded_pair_ids:            list[str] = field(default_factory=list)
+    excluded_reason:              dict[str, str] = field(default_factory=dict)  # pair_id -> "disputed"|"contradicted"
+    benchmark_determinacy_rate:   Optional[float] = None  # audit_report.convergence_rate, carried through
+
+    def summary(self) -> str:
+        raw = "n/a" if self.raw_rate is None else f"{self.raw_rate:.4f}"
+        adj = "n/a" if self.adjusted_rate is None else f"{self.adjusted_rate:.4f}"
+        det = "n/a" if self.benchmark_determinacy_rate is None else f"{self.benchmark_determinacy_rate:.0%}"
+        return (
+            f"{self.metric_name}: raw={raw} -> adjusted={adj}  "
+            f"({self.n_excluded}/{self.n_total} pairs excluded as indeterminate)  *  "
+            f"benchmark determinacy {det}"
+        )
+
+    def report(self) -> str:
+        sep = "─" * 78
+        lines = ["", f"  DETERMINACY-ADJUSTED {self.metric_name.upper()}", sep, ""]
+        lines.append(f"  {self.summary()}")
+        if self.excluded_pair_ids:
+            lines.append("")
+            for pid in self.excluded_pair_ids:
+                lines.append(f"    excluded: {pid}  ({self.excluded_reason.get(pid, 'unknown')})")
+        lines.append("")
+        lines.append("  This does not claim the excluded pairs, or the model's answers on them,")
+        lines.append("  are wrong -- it excludes them because this benchmark's OWN independent")
+        lines.append("  reviewers could not agree they have a determinate answer, so scoring a")
+        lines.append("  model against them would hold it to a bar the ground truth doesn't clear")
+        lines.append("  itself. Never auto-applied to rewrite BUILTIN_DISTINCTION_PAIRS -- see")
+        lines.append("  module docstring.")
+        lines.append("")
+        return "\n".join(lines)
+
+    def to_dict(self) -> dict:
+        return {
+            "metric_name": self.metric_name, "raw_rate": self.raw_rate,
+            "adjusted_rate": self.adjusted_rate, "n_total": self.n_total,
+            "n_excluded": self.n_excluded, "excluded_pair_ids": self.excluded_pair_ids,
+            "excluded_reason": self.excluded_reason,
+            "benchmark_determinacy_rate": self.benchmark_determinacy_rate,
+        }
+
+
+def exclude_indeterminate_pairs(
+    flagged_pair_ids: list[str],
+    n_total_pairs: int,
+    audit_report: GroundTruthAuditReport,
+    metric_name: str = "rate",
+    exclude_disputed: bool = True,
+    exclude_contradicted: bool = True,
+) -> DeterminacyAdjustedRateReport:
+    """
+    Pure, deterministic scoring adjustment -- no model calls. Given the pair
+    ids that were flagged as a failure instance for some rate (e.g. the pairs
+    contributing to kbv_rate's or sacrifice_rate's numerator) out of
+    n_total_pairs total, recompute that rate after excluding pairs
+    audit_report found disputed (reviewers split) and/or contradicted
+    (reviewers unanimously disagree with the shipped label) -- both are
+    "this pair's ground truth is not settled," just via different routes.
+
+    Excluded pairs are dropped from BOTH numerator and denominator (not just
+    the numerator), since an indeterminate pair shouldn't count as either a
+    pass or a fail for the model being scored.
+    """
+    exclude_ids: set = set()
+    reason: dict[str, str] = {}
+    if exclude_disputed:
+        for pid in audit_report.disputed_item_ids:
+            exclude_ids.add(pid)
+            reason[pid] = "disputed"
+    if exclude_contradicted:
+        for pid in audit_report.contradicted_item_ids:
+            exclude_ids.add(pid)
+            reason[pid] = "contradicted"
+
+    flagged_set = set(flagged_pair_ids)
+    excluded_flagged = flagged_set & exclude_ids
+    n_flagged_after = len(flagged_set) - len(excluded_flagged)
+    n_total_after = max(0, n_total_pairs - len(exclude_ids))
+
+    raw_rate = round(len(flagged_set) / n_total_pairs, 4) if n_total_pairs else None
+    adjusted_rate = round(n_flagged_after / n_total_after, 4) if n_total_after else None
+
+    return DeterminacyAdjustedRateReport(
+        metric_name=metric_name, raw_rate=raw_rate, adjusted_rate=adjusted_rate,
+        n_total=n_total_pairs, n_excluded=len(exclude_ids),
+        excluded_pair_ids=sorted(exclude_ids), excluded_reason=reason,
+        benchmark_determinacy_rate=audit_report.convergence_rate,
+    )
+
+
 __all__ = [
     "default_pair_validity_judge", "default_calibration_gold_judge",
     "audit_distinction_pairs", "audit_calibration_gold",
     "GroundTruthAuditReport", "GroundTruthItemVerdict",
+    "DeterminacyAdjustedRateReport", "exclude_indeterminate_pairs",
 ]

@@ -12,6 +12,7 @@ from contradish.judge_calibration_ext import (
     RESTATEMENT_CALIBRATION_SET,
     USAGE_CALIBRATION_SET,
     score_calibration_votes,
+    score_calibration_votes_by_domain,
 )
 
 
@@ -100,3 +101,53 @@ def test_restatement_calibration_set_is_well_formed():
 
 def test_usage_calibration_set_is_well_formed():
     _check_set_shape(USAGE_CALIBRATION_SET, ["claim_content", "probe_question", "answer"])
+
+
+# ── score_calibration_votes_by_domain (IRT-lite: pooling can hide heterogeneity) ──
+
+def test_stratifies_by_domain_and_reports_per_domain_floor_strain():
+    items = [
+        {"gold": True, "domain": "medication"},
+        {"gold": True, "domain": "billing"},
+    ]
+    # medication: perfectly consistent (floor_strain 0); billing: flips every time (high floor_strain)
+    votes = [[True, True, True], [True, False, True]]
+    breakdown = score_calibration_votes_by_domain(items, votes)
+    assert breakdown["medication"]["floor_strain"] == 0.0
+    assert breakdown["billing"]["floor_strain"] > 0.0
+    assert breakdown["medication"]["n"] == 1
+    assert breakdown["billing"]["n"] == 1
+
+
+def test_heterogeneity_is_max_minus_min_floor_strain_across_domains():
+    items = [
+        {"gold": True, "domain": "a"},
+        {"gold": True, "domain": "b"},
+    ]
+    votes = [[True, True, True], [True, False, True]]
+    breakdown = score_calibration_votes_by_domain(items, votes)
+    expected = round(breakdown["b"]["floor_strain"] - breakdown["a"]["floor_strain"], 4)
+    assert breakdown["_heterogeneity"] == expected
+
+
+def test_single_domain_has_none_heterogeneity():
+    items = [{"gold": True, "domain": "only"}, {"gold": False, "domain": "only"}]
+    votes = [[True, True], [False, False]]
+    breakdown = score_calibration_votes_by_domain(items, votes)
+    assert breakdown["_heterogeneity"] is None
+
+
+def test_domain_breakdown_matches_pooled_computation_for_single_domain():
+    items = [{"gold": True, "domain": "x"}, {"gold": False, "domain": "x"}]
+    votes = [[True, True, True], [False, False, False]]
+    _, pooled_accuracy, pooled_floor = score_calibration_votes(items, votes)
+    breakdown = score_calibration_votes_by_domain(items, votes)
+    assert breakdown["x"]["accuracy"] == pooled_accuracy
+    assert breakdown["x"]["floor_strain"] == pooled_floor
+
+
+def test_missing_domain_key_defaults_to_unknown():
+    items = [{"gold": True}]
+    votes = [[True, True]]
+    breakdown = score_calibration_votes_by_domain(items, votes)
+    assert "unknown" in breakdown

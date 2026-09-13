@@ -98,6 +98,49 @@ def score_calibration_votes(gold_items: list[dict], votes_by_item: list[list]) -
     return results, round(accuracy, 4), floor_strain
 
 
+def score_calibration_votes_by_domain(gold_items: list[dict], votes_by_item: list[list]) -> dict:
+    """
+    Pure, deterministic, no model calls: the same score_calibration_votes()
+    computation, stratified by each item's "domain" field instead of pooled
+    into one scalar.
+
+    Classical test theory -- the model floor_strain implements -- assumes a
+    single unidimensional trait: one true self-agreement rate the judge has,
+    with per-item variance treated as noise around it. Item-response-theory
+    practice (and the LLM Psychometrics review this package already cites
+    for judge_calibration.py/judge_calibration_ext.py) exists specifically
+    because that assumption is often false -- a judge can be reliable on one
+    domain and not another, and a single pooled floor_strain hides exactly
+    that heterogeneity. This does not replace floor_strain (still the right
+    single number when one is needed); it exposes what pooling was averaging
+    over.
+
+    Returns {domain: {"n": int, "accuracy": float, "floor_strain": float}},
+    plus a "_heterogeneity" key: max(floor_strain) - min(floor_strain) across
+    domains with >=1 item -- 0.0 when every domain the judge was tested on is
+    equally reliable, larger when pooling was masking real unevenness. None
+    when fewer than two domains are present (heterogeneity is undefined for
+    a single domain).
+    """
+    by_domain: dict[str, tuple[list, list]] = {}
+    for item, votes in zip(gold_items, votes_by_item):
+        domain = item.get("domain", "unknown")
+        items_list, votes_list = by_domain.setdefault(domain, ([], []))
+        items_list.append(item)
+        votes_list.append(votes)
+
+    breakdown: dict = {}
+    for domain, (items_list, votes_list) in by_domain.items():
+        _, accuracy, floor_strain = score_calibration_votes(items_list, votes_list)
+        breakdown[domain] = {
+            "n": len(items_list), "accuracy": accuracy, "floor_strain": floor_strain,
+        }
+
+    strains = [v["floor_strain"] for v in breakdown.values()]
+    breakdown["_heterogeneity"] = round(max(strains) - min(strains), 4) if len(strains) >= 2 else None
+    return breakdown
+
+
 def _collect_votes(gold_items, prompt_builders, llm, use_model, concurrency, response_key):
     """The model-calling half: collect votes_by_item via the judge under test."""
     import concurrent.futures
@@ -392,7 +435,7 @@ def measure_usage_judge_floor(judge_provider: Optional[str] = None, judge_model:
 
 
 __all__ = [
-    "score_calibration_votes",
+    "score_calibration_votes", "score_calibration_votes_by_domain",
     "measure_hedge_judge_floor", "HEDGE_CALIBRATION_SET",
     "measure_restatement_judge_floor", "RESTATEMENT_CALIBRATION_SET",
     "measure_usage_judge_floor", "USAGE_CALIBRATION_SET",
