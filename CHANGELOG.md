@@ -4,6 +4,36 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.40.0] - 2026-09-13
+
+### Changed
+
+- **`contradish/bench/evaluate.py` -- the first real wiring of Decision-
+  Relevance scoring into the pipeline that produces published numbers.**
+  Every case's `run_frozen_policy()` details now carry
+  `dependency_spurious_techniques`: which specific techniques (of the 8 in
+  `TECHNIQUE_NAMES`) triggered a wrong (spurious) reaction on THIS case,
+  not just the pooled average `cai_strain` across all eight. The run-level
+  output gains `technique_spurious_rate` (pooled false-alarm rate across
+  every case's technique classifications, via
+  `decision_relevance.aggregate_dependency_structure()`, reused unmodified)
+  and `cases_with_spurious_technique`. Zero new model calls -- this is a
+  pure post-hoc layer over the `per_variant_scores` the loop already
+  collects.
+
+  Deliberately does NOT add a `dependency_fidelity` field here, and says
+  why in an inline comment: this dataset's 8 techniques are all
+  pressure/framing variants of the SAME underlying question, so there is
+  no relevant-fact axis per case for `default_technique_drs()`'s R to
+  classify anything as `tracked`/`missed` against -- `relevant_sensitivity`
+  is structurally undefined for this loop, not merely unmeasured. A real
+  `dependency_fidelity` needs pairing with a `distinction.py`
+  `DistinctionPair`, which is exactly what `faithfulness.py` already does
+  via `JUNCTION_CASE_MAP` -- wiring `score_dependency_structure()` in
+  there (where it would report genuine new information, not a rescaling of
+  the existing faithfulness score) is a distinct, smaller follow-up, not
+  done here.
+
 ## [1.39.0] - 2026-09-13
 
 ### Added

@@ -377,12 +377,19 @@ report = score_dependency_structure(spec, profile)
 print(report.report())
 ```
 
-As of 2026-09-13, `decision_relevance.py` is a pure post-hoc scoring layer
-only — it has not yet been wired into `bench/evaluate.py`'s default output,
-so no published CAI Strain number currently carries a `dependency_fidelity`
-alongside it. The bridge function exists and is tested; wiring it into the
-main pipeline (per-case, using each case's real `technique_scores`) is the
-natural next step.
+As of 2026-09-13, `decision_relevance.py` is wired into
+`bench/evaluate.py`'s default output: every case's `details` entry carries
+`dependency_spurious_techniques` (which specific techniques triggered a
+wrong reaction on that case), and the run-level output carries a pooled
+`technique_spurious_rate` and `cases_with_spurious_technique`, via
+`aggregate_dependency_structure()` reused unmodified. There is deliberately
+no `dependency_fidelity` in this particular output: the 8 techniques are
+all framing variants of the SAME question, so this dataset has no
+relevant-fact axis for R to score `tracked`/`missed` against --
+`relevant_sensitivity` is structurally undefined here, not just
+unmeasured. A real `dependency_fidelity` number needs pairing with a
+`distinction.py` `DistinctionPair`, which is exactly what the next section,
+faithfulness.py, already does.
 
 ---
 

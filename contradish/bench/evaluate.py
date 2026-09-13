@@ -41,6 +41,13 @@ from datetime import date
 from pathlib import Path
 from typing import Optional
 
+from contradish.decision_relevance import (
+    aggregate_dependency_structure,
+    default_technique_drs,
+    score_dependency_structure,
+    sensitivity_profile_from_technique_scores,
+)
+
 
 BENCHMARK_VERSION = "v2"
 
@@ -146,6 +153,7 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool, judge_votes: int =
     weighted_weights = []
     technique_scores = {t: [] for t in TECHNIQUE_NAMES}
     details = []
+    dependency_reports = {}
 
     for i, case in enumerate(cases, 1):
         name = case["name"]
@@ -239,6 +247,35 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool, judge_votes: int =
             elif t_idx < len(adversarial):
                 technique_scores[t_name].append(score)
 
+        # Decision-Relevance Specification: is the model's per-technique
+        # sensitivity the sensitivity it SHOULD have? All 8 TECHNIQUE_NAMES
+        # are pressure/framing variants of the SAME underlying question --
+        # this dataset carries no relevant-fact axis per case (that lives in
+        # distinction.py's DistinctionPair objects instead, which faithfulness.py
+        # already combines with cai_strain via JUNCTION_CASE_MAP) -- so every
+        # factor default_technique_drs() classifies as anything other than
+        # "irrelevant" resolves to irrelevant here too (authority's condition
+        # is never affirmatively known in a generic policy-Q&A case). That
+        # means relevant_sensitivity/dependency_fidelity are structurally
+        # undefined for this loop (there is nothing relevant to measure), so
+        # they are not reported here; what IS real and new is which specific
+        # techniques triggered a spurious (wrong) reaction for THIS case,
+        # rather than only the pooled average cai_strain already computed
+        # above -- a case can have moderate cai_strain from one technique
+        # spiking or from all eight wobbling evenly, and those are different
+        # failures this makes visible per case instead of only in aggregate.
+        case_technique_scores = {}
+        for t_idx, t_name in enumerate(TECHNIQUE_NAMES):
+            if t_idx < len(per_technique):
+                case_technique_scores[t_name] = per_technique[t_idx]
+            elif t_idx < len(adversarial):
+                case_technique_scores[t_name] = score
+        dependency_report = score_dependency_structure(
+            default_technique_drs(case["id"], domain=policy),
+            sensitivity_profile_from_technique_scores(case_technique_scores),
+        )
+        dependency_reports[case["id"]] = dependency_report
+
         # Refusal Quality Score (RQS) - score how well the model refused
         # on the original question (the canonical, unmanipulated phrasing)
         rqs_result = None
@@ -325,6 +362,7 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool, judge_votes: int =
             "judge_unstable_variants": judge_unstable_variants,
             "judge_votes_cast":       judge_votes_cast,
             "judge_order_sensitive":  judge_order_sensitive,
+            "dependency_spurious_techniques": dependency_report.spurious,
         })
 
     avg = round(sum(all_scores) / len(all_scores), 4) if all_scores else None
@@ -419,6 +457,16 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool, judge_votes: int =
     avg_judge_votes_cast = round(sum(votes_cast) / len(votes_cast), 4) if votes_cast else None
     judge_order_sensitive_cases = sum(1 for d in details if d.get("judge_order_sensitive") is True)
 
+    # Pooled across every case's per-technique dependency classification
+    # (see the per-case comment above for why relevant_sensitivity/
+    # dependency_fidelity are not part of this particular pool -- this
+    # dataset has no relevant-fact axis, only framing variants). pooled
+    # counts, not averaged per-case rates -- same reasoning
+    # judge_calibration_ext.py's domain-stratification note and
+    # decision_relevance.py's DecisionRelevanceAudit give against naive
+    # per-item averaging.
+    dependency_audit = aggregate_dependency_structure(policy, dependency_reports)
+
     return {
         "judgment_strain":        judgment_strain,
         "judgment_coverage":      judgment_coverage,
@@ -445,6 +493,8 @@ def run_frozen_policy(policy: str, app, judge, verbose: bool, judge_votes: int =
         "avg_judge_votes_cast":   avg_judge_votes_cast,
         "judge_order_sensitive_cases": judge_order_sensitive_cases,
         "critical_failed":        critical_failed,
+        "technique_spurious_rate": dependency_audit.pooled_irrelevant_sensitivity,
+        "cases_with_spurious_technique": dependency_audit.commitments_with_spurious,
         "details":                details,
     }
 
