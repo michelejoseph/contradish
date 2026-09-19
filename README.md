@@ -74,6 +74,49 @@ contradish improve --eval-file my_cases.yaml --prompt-file system.txt \
 
 ---
 
+## Warranted behavioral updating (`contradish update`)
+
+CAI Strain answers "is the model stable." That is necessary but not sufficient -- a model that never updates on anything is perfectly stable and useless. The narrower, independently testable claim underneath it is: when the governing information genuinely changes, does the model's behavior change by exactly the amount that change warrants, no more, no less, in the right direction?
+
+Two failure modes fall directly out of that question, not out of a taxonomy invented for this project. **Rigidity**: a change the new information warranted, that the model failed to make. **Drift**: a change the model made anyway, that nothing warranted. A third, finer failure lives inside the changes that did happen: **directional failure**, changing the right thing but landing on the wrong new answer. Once a measurement compares "cases that should change" against "cases that did change," rigidity and drift are a forced consequence of that comparison -- this is the same construct contradish's NIST AI 200-2 public comment recommends as a TEVV measurement concept ("Behavioral Update Fidelity"), not a taxonomy original to contradish.
+
+```bash
+contradish update                                              # the letter's own worked example, zero config
+contradish update --case-file interventions.yaml --app mymodule:my_app --threshold 0.8
+```
+
+```
+  probing 1 intervention(s)  (demo mode: anthropic)
+
+  MINIMAL INTERVENTION DELTA AUDIT  *  ecommerce
+------------------------------------------------------------------------------
+
+  ecommerce: 1 intervention(s)  *  exact_match_rate=1.0000  exact_match_rate_with_direction=1.0000  *  0 with excess, 0 with deficit
+
+    ecommerce-refund-window-30-to-45: justified deltaB = ['refund_32_days']  *  actual deltaB = ['refund_32_days']  *  EXACT (correct direction)
+```
+
+A case file names, per intervention, which commitments the new information justifies changing (with the expected new answer) and which it must leave untouched:
+
+```yaml
+interventions:
+  - intervention_id: refund-window-30-to-45
+    domain: ecommerce
+    before: "Refunds are accepted within 30 days of purchase, no exceptions."
+    after: "Refunds are accepted within 45 days of purchase, no exceptions."
+    justified:
+      refund_32_days:
+        question: "I bought this 32 days ago. Can I get a refund?"
+        expected_effect: "yes, eligible for a refund"
+    invariant:
+      refund_10_days: "I bought this 10 days ago. Can I get a refund?"
+      return_shipping_cost: "Who pays for return shipping?"
+```
+
+`--app` here takes `(system_prompt, question)`, not just `question` like the rest of contradish's commands: this measurement's whole point is swapping the governing information itself between the app's before and after states, so a black-box callable that already has its governing information fixed inside it can't be probed this way. See `contradish/minimal_intervention_delta.py` and `contradish/intervention_probe.py` for the full method.
+
+---
+
 ## Three axes most tools miss
 
 CAI Strain measures how much an answer moves when you hold meaning fixed and vary the surface. Vary different surfaces and the same machinery answers different questions.

@@ -238,6 +238,34 @@ def _default_commitment_extractor(llm):
     return default_commitment_extractor(llm)
 
 
+def _default_commitment_judge(llm):
+    """
+    Fallback correctness_judge for `contradish distinguish` and `contradish
+    compare --distinctions`. Thin wrapper around
+    contradish.distinction.default_commitment_judge -- pairs with
+    _default_commitment_extractor above: DistinctionMeasurement.both_correct
+    (and directional_fidelity.py's directional_correctness, computed from it)
+    is not meaningful with the freeform default extractor unless this judge
+    is also supplied -- see default_commitment_extractor's docstring caveat
+    and default_commitment_judge's own docstring for why.
+    """
+    from .distinction import default_commitment_judge
+    return default_commitment_judge(llm)
+
+
+def _default_commitment_judge_for_chains(llm):
+    """
+    Fallback correctness_judge for `contradish chain-distinguish`. Thin
+    wrapper around contradish.chain_fidelity.default_chain_commitment_judge
+    -- the K-way generalization of _default_commitment_judge above, for the
+    same reason: ChainMeasurement.point_correct / function_match_rate is
+    not meaningful with a freeform paraphrase extractor unless a
+    classify-against-the-chain's-own-commitments judge is also supplied.
+    """
+    from .chain_fidelity import default_chain_commitment_judge
+    return default_chain_commitment_judge(llm)
+
+
 def cmd_policy(args):
     """Run a prebuilt domain policy pack. No system prompt required."""
     from contradish import Suite
@@ -984,6 +1012,7 @@ def cmd_distinguish(args):
 
     llm = LLMClient()
     extractor = _default_commitment_extractor(llm)
+    correctness_judge = _default_commitment_judge(llm)
 
     if not use_json:
         print()
@@ -996,6 +1025,7 @@ def cmd_distinguish(args):
         pairs=pairs,
         commitment_extractor=extractor,
         domain=args.domain,
+        correctness_judge=correctness_judge,
     )
     loss_map = prober.measure(n_samples=getattr(args, "n_samples", 1), verbose=not use_json)
 
@@ -1109,6 +1139,231 @@ def cmd_distinguish(args):
             for c in rate_distortion_results:
                 print(c.report())
                 print()
+
+    sys.exit(0)
+
+
+def cmd_chain_distinguish(args):
+    """
+    Measure whether the model's response FUNCTION over a graded, >2-point
+    information axis matches the warranted one -- not just whether it gets
+    the two endpoints right. See contradish/chain_fidelity.py's module
+    docstring for why this is a distinct question from `contradish
+    distinguish`'s two-point DistinctionPair: two points can't tell a step
+    function with the right shape apart from one with the wrong shape.
+
+    There's no built-in chain set (unlike `distinguish`'s --domain): a
+    DistinctionChain needs an author-verified ordered sequence of >=2
+    correct answers along a real axis, which is inherently domain-specific
+    content this package doesn't ship pre-authored yet. Bring your own via
+    --chains MODULE:VARIABLE (a list[DistinctionChain]) -- see
+    examples/chain_demo.py for the pattern.
+    """
+    from contradish.chain_fidelity import ChainProber, default_chain_commitment_judge
+    from contradish.llm import LLMClient
+
+    _check_api_key()
+    use_json = getattr(args, "json", False)
+
+    chains = _load_callable(args.chains)
+    if not chains:
+        print(f"\n  {args.chains!r} resolved to an empty chain list.\n")
+        sys.exit(1)
+
+    if args.app:
+        app_fn = _load_callable(args.app)
+        provider = None
+    else:
+        demo_system = "You are a helpful assistant. Answer clearly and accurately."
+        app_fn, provider = _make_demo_app(demo_system)
+
+    def model_fn(system_prompt: str, question: str, _f=app_fn) -> str:
+        return _f(question)
+
+    llm = LLMClient()
+    extractor = _default_commitment_extractor(llm)
+    correctness_judge = _default_commitment_judge_for_chains(llm)
+
+    if not use_json:
+        print()
+        print(f"  probing {len(chains)} chain(s) from {args.chains}  "
+              f"({'your app' if args.app else 'demo mode: ' + (provider or '')})")
+        print()
+
+    prober = ChainProber(
+        model_fn=model_fn,
+        chains=chains,
+        commitment_extractor=extractor,
+        domain=getattr(args, "domain_label", None) or args.chains,
+        correctness_judge=correctness_judge,
+    )
+    fidelity_map = prober.measure(n_samples=getattr(args, "n_samples", 1), verbose=not use_json)
+
+    report_path = getattr(args, "report", None)
+    if report_path:
+        if not isinstance(report_path, str):
+            report_path = "chain_fidelity.json"
+        with open(report_path, "w") as f:
+            json.dump(fidelity_map.to_dict(include_raw=True), f, indent=2)
+        if not use_json:
+            print(f"\n  report saved: {report_path}\n")
+
+    if use_json:
+        print(json.dumps(fidelity_map.to_dict(), indent=2))
+    else:
+        print(fidelity_map.report())
+        print()
+
+    threshold = getattr(args, "threshold", None)
+    if threshold is not None and fidelity_map.profiles:
+        worst = fidelity_map.profiles[fidelity_map.most_fragile]
+        worst_score = (worst.mean_boundary_precision() + worst.mean_boundary_recall()) / 2
+        if worst_score < threshold:
+            print(f"  FAIL: worst chain's mean boundary precision/recall {worst_score:.2f} "
+                  f"({fidelity_map.most_fragile}) is below threshold {threshold}.\n")
+            sys.exit(1)
+
+    sys.exit(0)
+
+
+def _load_intervention_cases(path):
+    """
+    Load a list[InterventionCase] from a YAML/JSON case file for `contradish
+    update`. Same _load_cases-style format tolerance (top-level list, or a
+    dict with the cases under a named key) as the rest of this file's
+    loaders.
+
+    File shape::
+
+        interventions:
+          - intervention_id: refund-window-30-to-45
+            domain: ecommerce
+            before: "Refunds accepted within 30 days, no exceptions."
+            after: "Refunds accepted within 45 days, no exceptions."
+            justified:
+              refund_32_days:
+                question: "Bought 32 days ago, refund?"
+                expected_effect: "yes, eligible"
+            invariant:
+              refund_50_days: "Bought 50 days ago, refund?"
+    """
+    from contradish.intervention_probe import InterventionCase
+
+    with open(path) as f:
+        raw = f.read()
+    if path.endswith((".yaml", ".yml")):
+        try:
+            import yaml
+            data = yaml.safe_load(raw)
+        except ImportError:
+            sys.exit("Install pyyaml to use YAML files:  pip install pyyaml")
+    else:
+        data = json.loads(raw)
+    items = data.get("interventions", data) if isinstance(data, dict) else data
+    return [
+        InterventionCase(
+            intervention_id=it["intervention_id"],
+            domain=it.get("domain", ""),
+            before=it["before"],
+            after=it["after"],
+            justified=it.get("justified", {}),
+            invariant=it.get("invariant", {}),
+        )
+        for it in items
+    ]
+
+
+def _demo_update_model_fn(llm):
+    """
+    Same LLM-call shape as _make_demo_app above, except system_prompt is a
+    parameter rather than baked in at closure-creation time -- `contradish
+    update`'s whole question is what happens when governing information
+    (the system prompt) itself changes, so unlike every other command's
+    single-argument demo app, this one has to let the caller vary it per
+    call.
+    """
+    def fn(system_prompt: str, question: str) -> str:
+        if llm.provider == "anthropic":
+            msg = llm._client.messages.create(
+                model=llm.fast_model,
+                max_tokens=256,
+                system=system_prompt,
+                messages=[{"role": "user", "content": question}],
+            )
+            return msg.content[0].text.strip()
+        resp = llm._client.chat.completions.create(
+            model=llm.fast_model,
+            max_tokens=256,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": question},
+            ],
+        )
+        return resp.choices[0].message.content.strip()
+    return fn
+
+
+def cmd_update(args):
+    """
+    Measure warranted behavioral updating: given new governing information,
+    did the model change exactly what it warranted -- no more, no less, in
+    the right direction? See contradish/minimal_intervention_delta.py and
+    contradish/intervention_probe.py for the full method and the NIST
+    AI 200-2 comment letter this operationalizes.
+
+    Unlike `distinguish`/`fairness`/etc., --app here takes TWO arguments,
+    (system_prompt, question), not one: this measurement's entire point is
+    swapping the governing information itself between the app's before and
+    after states, so a single-argument black-box callable that already has
+    its governing information fixed inside it can't be probed this way.
+    """
+    from contradish.intervention_probe import (
+        BUILTIN_INTERVENTIONS, default_change_judge, default_effect_judge, probe_interventions,
+    )
+    from contradish.llm import LLMClient
+
+    _check_api_key()
+    use_json = getattr(args, "json", False)
+
+    if args.case_file:
+        cases = _load_intervention_cases(args.case_file)
+    else:
+        cases = [BUILTIN_INTERVENTIONS["ecommerce_refund_window"]]
+
+    if args.app:
+        model_fn = _load_callable(args.app)
+        mode_label = "your app"
+    else:
+        llm_for_app = LLMClient()
+        model_fn = _demo_update_model_fn(llm_for_app)
+        mode_label = f"demo mode: {llm_for_app.provider}"
+
+    if not use_json:
+        print()
+        print(f"  probing {len(cases)} intervention(s)  ({mode_label})")
+        print()
+
+    llm = LLMClient()
+    audit = probe_interventions(
+        cases, model_fn,
+        change_judge=default_change_judge(llm),
+        effect_judge=default_effect_judge(llm),
+    )
+
+    if use_json:
+        print(json.dumps(audit.to_dict(), indent=2))
+    else:
+        print(audit.report())
+        for verdict in audit.by_intervention.values():
+            print(f"    {verdict.summary()}")
+        print()
+
+    threshold = getattr(args, "threshold", None)
+    if threshold is not None and audit.exact_match_rate is not None:
+        if audit.exact_match_rate < threshold:
+            print(f"  FAIL: exact_match_rate {audit.exact_match_rate:.2f} is below "
+                  f"threshold {threshold}.\n")
+            sys.exit(1)
 
     sys.exit(0)
 
@@ -1358,6 +1613,7 @@ def cmd_compare(args):
         else:
             llm = LLMClient()
             extractor = _default_commitment_extractor(llm)
+            correctness_judge = _default_commitment_judge(llm)
 
             def _baseline_fn(system_prompt, question, _f=baseline_app):
                 return _f(question)
@@ -1370,9 +1626,11 @@ def cmd_compare(args):
 
             baseline_map = DistinctionProber(
                 model_fn=_baseline_fn, pairs=pairs, commitment_extractor=extractor, domain=domain,
+                correctness_judge=correctness_judge,
             ).measure(verbose=not use_json)
             candidate_map = DistinctionProber(
                 model_fn=_candidate_fn, pairs=pairs, commitment_extractor=extractor, domain=domain,
+                correctness_judge=correctness_judge,
             ).measure(verbose=not use_json)
 
             dist_diff = diff_distinction_reports(
@@ -2690,6 +2948,88 @@ examples:
     dist_p.add_argument("--json", action="store_true", default=False,
                         help="Output the loss map as JSON.")
 
+    # contradish chain-distinguish -- does the response FUNCTION over a
+    # graded, >2-point axis match the warranted one, not just its endpoints
+    chain_p = sub.add_parser(
+        "chain-distinguish",
+        help="Measure whether the model's response function over a graded, "
+             ">2-point information axis matches the warranted one -- not "
+             "just whether it gets the two endpoints right.",
+        description=(
+            "The generalization of `distinguish`'s two-point DistinctionPair to an "
+            "ordered chain of >=2 points along a real information axis (a "
+            "day-count, a dose range, a severity grade). Scores the model's actual "
+            "response function against the warranted one on two independent axes: "
+            "boundary precision/recall (did it draw its change-points in the right "
+            "places -- see 'spurious'/'missed' in the report) and pointwise "
+            "function_match_rate (at each sampled point, is the label itself "
+            "correct). See contradish/chain_fidelity.py's module docstring for why "
+            "two points can't tell these apart.\n\n"
+            "No built-in chain set -- bring your own via --chains, a "
+            "module:variable pointing to a list[DistinctionChain]. See "
+            "examples/chain_demo.py.\n\n"
+            "  contradish chain-distinguish --chains examples.chain_demo:CHAINS --app mymodule:my_app\n"
+            "  contradish chain-distinguish --chains mymodule:my_chains --json\n"
+        ),
+    )
+    chain_p.add_argument("--chains", metavar="MODULE:VARIABLE", required=True,
+                        help="A list[DistinctionChain] to probe. Required -- there is no "
+                             "built-in set (unlike --domain for `distinguish`).")
+    chain_p.add_argument("--app", metavar="MODULE:FUNCTION", default=None,
+                        help="Your app callable. If omitted, runs the configured LLM in demo mode.")
+    chain_p.add_argument("--n-samples", type=int, default=1, metavar="N", dest="n_samples",
+                        help="Samples per (chain, framing, intensity). 1 is fast; 3+ for variance.")
+    chain_p.add_argument("--threshold", type=float, default=None, metavar="F",
+                        help="Exit nonzero if the most fragile chain's mean boundary "
+                             "precision/recall falls below this. For CI gating.")
+    chain_p.add_argument("--report", nargs="?", const=True, default=False, metavar="FILE",
+                        help="Save the full JSON report, including raw measurements "
+                             "(default filename if none given).")
+    chain_p.add_argument("--json", action="store_true", default=False,
+                        help="Output the fidelity map as JSON.")
+
+    # contradish update -- warranted behavioral updating: given new governing
+    # information, did the model change exactly what it warranted, no more,
+    # no less, in the right direction? The narrow, testable claim this
+    # project's NIST AI 200-2 comment letter calls Behavioral Update
+    # Fidelity -- see contradish/minimal_intervention_delta.py and
+    # contradish/intervention_probe.py for the full method.
+    upd_p = sub.add_parser(
+        "update",
+        help="Measure warranted behavioral updating: given new governing "
+             "information, did the model change exactly what it warranted "
+             "-- no more, no less, in the right direction?",
+        description=(
+            "The narrow, testable claim behind this project's NIST AI 200-2 comment "
+            "letter: 'Behavioral Update Fidelity.' Most consistency testing asks "
+            "whether a model's answer is stable. This asks the complementary "
+            "question: when the governing information genuinely changes, does the "
+            "model's behavior change by exactly the amount that change warrants? "
+            "Two named failure modes follow directly -- rigidity (should have "
+            "changed, didn't) and drift (changed, shouldn't have) -- plus a third, "
+            "directional failure (changed the right thing, landed on the wrong new "
+            "answer). See contradish/minimal_intervention_delta.py.\n\n"
+            "Without --case-file, runs the letter's own worked example (a retailer's "
+            "refund window amended from 30 to 45 days) as a zero-config demo, the "
+            "same way the bare `contradish` command ships a demo ecommerce policy "
+            "pack.\n\n"
+            "  contradish update\n"
+            "  contradish update --case-file interventions.yaml --app mymodule:my_app\n"
+            "  contradish update --case-file interventions.yaml --threshold 0.8 --json\n"
+        ),
+    )
+    upd_p.add_argument("--case-file", metavar="FILE", dest="case_file", default=None,
+                        help="YAML/JSON file of interventions to probe. Omit to run the "
+                             "built-in ecommerce refund-window demo case.")
+    upd_p.add_argument("--app", metavar="MODULE:FUNCTION", default=None,
+                        help="Your app callable, taking (system_prompt, question). If "
+                             "omitted, runs the configured LLM in demo mode.")
+    upd_p.add_argument("--threshold", type=float, default=None, metavar="F",
+                        help="Exit nonzero if exact_match_rate falls below this. For CI "
+                             "gating.")
+    upd_p.add_argument("--json", action="store_true", default=False,
+                        help="Output the audit as JSON.")
+
     # contradish judge-floor -- measure the judge's own CAI Strain
     jf_p = sub.add_parser(
         "judge-floor",
@@ -2981,6 +3321,10 @@ examples:
         cmd_fairness(args)
     elif args.command == "distinguish":
         cmd_distinguish(args)
+    elif args.command == "chain-distinguish":
+        cmd_chain_distinguish(args)
+    elif args.command == "update":
+        cmd_update(args)
     elif args.command == "analyze":
         cmd_quick(args)
     elif args.command == "calibrate":

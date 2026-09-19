@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Turn completed annotator CSVs into real equivalence_confidence values and
-write them into contradish/benchmarks/v2/medication.json and immigration.json,
-replacing the placeholder 1.0.
+write them into contradish/benchmarks/v2/<domain>.json for every domain that
+has annotator CSVs present, replacing the placeholder 1.0.
 
 Usage:
     python3 compute_equivalence_confidence.py
@@ -23,9 +23,19 @@ import os
 import sys
 from collections import defaultdict
 
-DOMAINS = ["medication", "immigration"]
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BENCH_DIR = os.path.join(REPO_ROOT, "contradish", "benchmarks", "v2")
+
+# Every domain with a benchmarks/v2/<domain>.json file is in scope -- this
+# used to be a hardcoded ["medication", "immigration"] list that had to be
+# edited by hand each time a new domain got an equivalence audit. Deriving
+# it from the directory means dropping a new domain's completed CSVs in
+# here is enough; no code change needed.
+DOMAINS = sorted(
+    os.path.splitext(f)[0]
+    for f in os.listdir(BENCH_DIR)
+    if f.endswith(".json") and f != "eval_report_v2.json"
+)
 
 
 def find_annotator_files(domain):

@@ -155,12 +155,17 @@ def test_cmd_distinguish_registered_in_argparse():
         sys.argv = old_argv
 
 
+def _identity_true_judge(pair, side, question, answer):
+    return True
+
+
 def test_cmd_distinguish_runs_end_to_end_with_mocked_llm(capsys):
     import contradish.cli as cli
 
     with patch("contradish.llm.LLMClient", _FakeLLM), \
          patch.object(cli, "_check_api_key", lambda: None), \
-         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor):
+         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor), \
+         patch.object(cli, "_default_commitment_judge", lambda llm: _identity_true_judge):
         with pytest.raises(SystemExit) as exc:
             cli.cmd_distinguish(_Args())
         assert exc.value.code == 0
@@ -169,6 +174,173 @@ def test_cmd_distinguish_runs_end_to_end_with_mocked_llm(capsys):
     d = json.loads(out)
     assert d["domain"] == "medication"
     assert d["profiles"][d["most_fragile"]]["collapse_rate"] == 0.0
+
+
+def test_cmd_distinguish_wires_correctness_judge_into_prober(capsys):
+    """
+    `contradish distinguish` should pass a correctness_judge through to
+    DistinctionProber so that both_correct/directional_correctness is
+    meaningful out of the box -- not just distinction_held. Regression test
+    for the bug documented on default_commitment_extractor's docstring:
+    a freeform extractor with no correctness_judge makes both_correct
+    silently ~always False.
+    """
+    import contradish.cli as cli
+
+    captured = {}
+    real_prober_cls = cli.DistinctionProber if hasattr(cli, "DistinctionProber") else None
+
+    from contradish.distinction import DistinctionProber as RealProber
+
+    class _SpyProber(RealProber):
+        def __init__(self, *a, **kw):
+            captured["correctness_judge"] = kw.get("correctness_judge")
+            super().__init__(*a, **kw)
+
+    with patch("contradish.llm.LLMClient", _FakeLLM), \
+         patch.object(cli, "_check_api_key", lambda: None), \
+         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor), \
+         patch.object(cli, "_default_commitment_judge", lambda llm: _identity_true_judge), \
+         patch("contradish.distinction.DistinctionProber", _SpyProber):
+        with pytest.raises(SystemExit):
+            cli.cmd_distinguish(_Args())
+
+    assert captured.get("correctness_judge") is _identity_true_judge
+
+
+# ── correctness_judge / both_correct (fix for the exact-string-match bug in
+# default_commitment_extractor -- see its docstring) ────────────────────────
+
+from contradish.distinction import default_commitment_judge
+
+_CJ_PAIR = DistinctionPair(
+    pair_id="cj_test_pair",
+    description="test",
+    label_a="state A",
+    label_b="state B",
+    question_a="What is the answer for A?",
+    question_b="What is the answer for B?",
+    commit_a="the correct answer for A",
+    commit_b="the correct answer for B",
+)
+
+
+def _cj_model_fn_correct(system_prompt, question):
+    if question == _CJ_PAIR.question_a:
+        return "In this situation, go with: the correct answer for A, basically."
+    return "Here the right call is: the correct answer for B, essentially."
+
+
+def _cj_freeform_extractor(question, answer):
+    # Mirrors default_commitment_extractor's shape: a paraphrase that will
+    # not exactly match pair.commit_a/commit_b verbatim.
+    return f"paraphrase of: {answer[:20]}"
+
+
+def _cj_canonical_extractor(question, answer):
+    return _CJ_PAIR.commit_a if question == _CJ_PAIR.question_a else _CJ_PAIR.commit_b
+
+
+def test_both_correct_backward_compatible_with_canonical_extractor():
+    """No correctness_judge supplied + an extractor that already normalizes
+    to commit_a/commit_b (as the shipped examples/pilot scripts do): old
+    exact-match behavior is unchanged."""
+    prober = DistinctionProber(
+        model_fn=_cj_model_fn_correct,
+        pairs=[_CJ_PAIR],
+        commitment_extractor=_cj_canonical_extractor,
+        pressure_types=["urgency"],
+        intensities=[1],
+    )
+    m = prober.measure().profiles["cj_test_pair"].measurements[0]
+    assert m.both_correct is True
+
+
+def test_both_correct_is_always_false_with_freeform_extractor_and_no_judge():
+    """Documents the exact bug default_commitment_extractor's docstring now
+    warns about: a freeform paraphrase extractor with no correctness_judge
+    makes both_correct silently ~always False, even for a correct answer."""
+    prober = DistinctionProber(
+        model_fn=_cj_model_fn_correct,
+        pairs=[_CJ_PAIR],
+        commitment_extractor=_cj_freeform_extractor,
+        pressure_types=["urgency"],
+        intensities=[1],
+    )
+    m = prober.measure().profiles["cj_test_pair"].measurements[0]
+    assert m.both_correct is False
+
+
+def test_both_correct_is_fixed_by_correctness_judge():
+    """The actual fix: with a correctness_judge, both_correct reflects real
+    correctness even though the extractor is freeform."""
+    prober = DistinctionProber(
+        model_fn=_cj_model_fn_correct,
+        pairs=[_CJ_PAIR],
+        commitment_extractor=_cj_freeform_extractor,
+        pressure_types=["urgency"],
+        intensities=[1],
+        correctness_judge=lambda pair, side, question, answer: True,
+    )
+    m = prober.measure().profiles["cj_test_pair"].measurements[0]
+    assert m.both_correct is True
+
+
+def test_correctness_judge_catches_wrong_direction_answer():
+    def model_fn_wrong_on_b(system_prompt, question):
+        # Answers both questions the same way -- wrong for B.
+        return "the correct answer for A"
+
+    def judge_by_substance(pair, side, question, answer):
+        expected = pair.commit_a if side == "a" else pair.commit_b
+        return expected in answer
+
+    prober = DistinctionProber(
+        model_fn=model_fn_wrong_on_b,
+        pairs=[_CJ_PAIR],
+        commitment_extractor=_cj_freeform_extractor,
+        pressure_types=["urgency"],
+        intensities=[1],
+        correctness_judge=judge_by_substance,
+    )
+    m = prober.measure().profiles["cj_test_pair"].measurements[0]
+    assert m.both_correct is False
+
+
+class _FakeChoice:
+    def __init__(self, text):
+        self.message = type("M", (), {"content": text})()
+
+
+class _FakeCompletions:
+    def __init__(self, verdict_text):
+        self._verdict_text = verdict_text
+
+    def create(self, model, max_tokens, messages):
+        return type("R", (), {"choices": [_FakeChoice(self._verdict_text)]})()
+
+
+class _FakeOpenAIClient:
+    def __init__(self, verdict_text):
+        self.chat = type("C", (), {"completions": _FakeCompletions(verdict_text)})()
+
+
+class _FakeJudgeLLM:
+    def __init__(self, verdict_text):
+        self.provider = "openai"
+        self.fast_model = "fake-model"
+        self._client = _FakeOpenAIClient(verdict_text)
+
+
+@pytest.mark.parametrize("verdict,side,expected", [
+    ("A", "a", True), ("A", "b", False),
+    ("B", "b", True), ("B", "a", False),
+    ("N", "a", False), ("N", "b", False),
+])
+def test_default_commitment_judge_classifies_against_canonical_commitments(verdict, side, expected):
+    judge = default_commitment_judge(_FakeJudgeLLM(verdict))
+    question = _CJ_PAIR.question_a if side == "a" else _CJ_PAIR.question_b
+    assert judge(_CJ_PAIR, side, question, "whatever the model said") is expected
 
 
 # ── diff_distinction_reports ────────────────────────────────────────────────

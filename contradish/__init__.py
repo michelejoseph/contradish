@@ -11,6 +11,11 @@ Tools:
     Firewall          -- real-time contradiction detection in production
     PromptRepair      -- auto-generate and test improved prompt variants
     DistinctionProber -- Type I distinction-loss probing (contradish distinguish)
+    ChainProber       -- does the model's response FUNCTION over a graded,
+                           >2-point information axis match the warranted
+                           one, not just its two endpoints -- boundary
+                           precision/recall plus pointwise correctness
+                           (contradish chain-distinguish)
     discover_resolution -- find and validate the hidden condition behind a
                            collapsing distinction (contradish distinguish --resolve)
     measure_rate_distortion_for_resolution -- graded information->accuracy curve
@@ -100,6 +105,11 @@ from .distinction  import (
     DistinctionProfile, DistinctionMeasurement, BUILTIN_DISTINCTION_PAIRS,
     diff_distinction_reports,
     KBVMeasurement, KBVProfile, KBVReport, default_restatement_judge,
+    default_commitment_judge,
+)
+from .chain_fidelity import (
+    ChainPoint, DistinctionChain, ChainProber, ChainMeasurement, ChainProfile,
+    ChainFidelityMap, default_chain_commitment_judge,
 )
 from .sacrifice    import (
     DistinctionSacrificeReport, DistinctionSacrificeProfile, SacrificeGradient,
@@ -123,6 +133,12 @@ from .benchmark_ground_truth_audit import (
     audit_distinction_pairs, audit_calibration_gold,
     default_pair_validity_judge, default_calibration_gold_judge,
     DeterminacyAdjustedRateReport, exclude_indeterminate_pairs,
+)
+from .judge_criterion_validity import (
+    JudgeCriterionValidityItem, build_cross_context_items, build_cross_context_items_for_domains,
+    default_answer_correctness_judge,
+    JudgeCriterionValidityItemResult, JudgeCriterionValidityReport,
+    score_judge_criterion_validity, measure_judge_criterion_validity,
 )
 from .predictive_validity import (
     JUNCTION_CASE_MAP, CasePrediction, PredictiveValidityReport,
@@ -153,6 +169,14 @@ from .decision_relevance import (
     FactorClassification, DependencyStructureReport, score_dependency_structure,
     DecisionRelevanceAudit, aggregate_dependency_structure,
 )
+from .minimal_intervention_delta import (
+    intervention_delta_spec, MinimalDeltaVerdict, score_minimal_delta,
+    MinimalDeltaAudit, aggregate_minimal_delta,
+)
+from .intervention_probe import (
+    InterventionCase, default_change_judge, default_effect_judge,
+    probe_intervention, probe_interventions, BUILTIN_INTERVENTIONS,
+)
 from .decision_boundary import (
     BoundaryLadder, illustrative_ladder,
     BoundaryRecoveryResult, recover_boundary_from_observations, recover_boundary_via_binary_search,
@@ -175,6 +199,13 @@ from .directional_fidelity import (
 from .resolution   import (
     ResolutionCandidate, ResolutionResult,
     discover_resolution, discover_resolutions_for_loss_map,
+)
+from .resolution_dynamics import (
+    EventType, ResolutionOutcome, ContradictionEvent, ResolutionProbe, ResolutionVerdict,
+    classify_resolution, ClosureCheckResult, check_closure, check_event_type_consistency,
+    EntrenchmentTrial, EntrenchmentFidelityReport, score_entrenchment_fidelity,
+    SignalSeparationReport, score_signal_separation, holm_bonferroni_correction,
+    score_multiple_signals, ResolutionDynamicsReport, score_resolution_dynamics,
 )
 from .rate_distortion import (
     RateDistortionPoint, RateDistortionCurveResult,
@@ -232,7 +263,7 @@ from .domains      import (
 from .conviction   import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .cdr          import generate_cdr
 
-__version__ = "1.45.0"
+__version__ = "1.50.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -302,6 +333,14 @@ __all__ = [
     "default_calibration_gold_judge",
     "DeterminacyAdjustedRateReport",
     "exclude_indeterminate_pairs",
+    "JudgeCriterionValidityItem",
+    "build_cross_context_items",
+    "build_cross_context_items_for_domains",
+    "default_answer_correctness_judge",
+    "JudgeCriterionValidityItemResult",
+    "JudgeCriterionValidityReport",
+    "score_judge_criterion_validity",
+    "measure_judge_criterion_validity",
     "JUNCTION_CASE_MAP",
     "CasePrediction",
     "PredictiveValidityReport",
@@ -345,6 +384,17 @@ __all__ = [
     "score_dependency_structure",
     "DecisionRelevanceAudit",
     "aggregate_dependency_structure",
+    "intervention_delta_spec",
+    "MinimalDeltaVerdict",
+    "score_minimal_delta",
+    "MinimalDeltaAudit",
+    "aggregate_minimal_delta",
+    "InterventionCase",
+    "default_change_judge",
+    "default_effect_judge",
+    "probe_intervention",
+    "probe_interventions",
+    "BUILTIN_INTERVENTIONS",
     "BoundaryLadder",
     "illustrative_ladder",
     "BoundaryRecoveryResult",
@@ -352,6 +402,24 @@ __all__ = [
     "recover_boundary_via_binary_search",
     "BoundaryDiscrepancyReport",
     "quantify_boundary_discrepancy",
+    "EventType",
+    "ResolutionOutcome",
+    "ContradictionEvent",
+    "ResolutionProbe",
+    "ResolutionVerdict",
+    "classify_resolution",
+    "ClosureCheckResult",
+    "check_closure",
+    "check_event_type_consistency",
+    "EntrenchmentTrial",
+    "EntrenchmentFidelityReport",
+    "score_entrenchment_fidelity",
+    "SignalSeparationReport",
+    "score_signal_separation",
+    "holm_bonferroni_correction",
+    "score_multiple_signals",
+    "ResolutionDynamicsReport",
+    "score_resolution_dynamics",
     "CandidateVariable",
     "default_candidate_pool",
     "ScreeningResult",

@@ -387,7 +387,13 @@ class DistinctionMeasurement:
     # True if the model gave different answers (distinction preserved)
     # False if the model gave equivalent answers (distinction collapsed)
     distinction_held:     bool
-    # True if both commits were correct
+    # True if both commits were correct. Computed via the prober's
+    # correctness_judge when one is supplied (classification against
+    # pair.commit_a/commit_b), otherwise via exact string equality between
+    # the extractor's output and pair.commit_a/commit_b -- see
+    # DistinctionProber's correctness_judge docstring and
+    # default_commitment_judge for why the fallback needs a
+    # commitment_extractor that already normalizes to those exact strings.
     both_correct:         bool
 
 
@@ -799,6 +805,23 @@ def default_commitment_extractor(llm):
     judge call and inherits the judge's own noise the same way
     `contradish judge-floor` measures for the rest of the benchmark. Write your
     own commitment_extractor(question, answer) for anything you plan to rely on.
+
+    IMPORTANT, found 2026-09-13 while building the Groq distinction pilot
+    (see run_groq_distinction_probe.py): this extractor is fine for
+    DistinctionMeasurement.distinction_held (com_a != com_b -- any two
+    independent paraphrases still compare validly), but it is NOT sufficient
+    for DistinctionMeasurement.both_correct, which by default compares the
+    extracted text against pair.commit_a/commit_b with exact string equality.
+    A freeform "paraphrase in 3-8 words" extraction will essentially never
+    reproduce a hand-written commit_a/commit_b sentence verbatim, so
+    both_correct -- and directional_fidelity.py's directional_correctness,
+    which is computed from it -- silently reads as ~always False regardless
+    of how correct the model actually is. That is a structural bug in the
+    measurement, not a finding about the model. Pass a `correctness_judge`
+    (see default_commitment_judge below) to DistinctionProber if you plan to
+    read both_correct, directional_correctness, or anything downstream of
+    them (e.g. `contradish distinguish` combined with directional_fidelity.py)
+    off of a run that uses this default extractor.
     """
     def extract(question: str, answer: str) -> str:
         prompt = (
@@ -868,6 +891,71 @@ def default_restatement_judge(llm):
     return judge
 
 
+def default_commitment_judge(llm):
+    """
+    Default correctness_judge(pair, side, question, answer) -> bool for
+    DistinctionProber, used to compute DistinctionMeasurement.both_correct
+    when the caller doesn't supply their own.
+
+    Fixes the structural gap documented on default_commitment_extractor
+    above: rather than asking a judge to freely paraphrase an answer and then
+    string-comparing that paraphrase against pair.commit_a/commit_b (which
+    will essentially never match verbatim), this asks the judge to CLASSIFY
+    the answer against the pair's own two canonical commitments directly --
+    "does this answer reach conclusion A, conclusion B, or neither" -- and
+    returns whether that classification lands on the side actually being
+    probed. This is the same fix run_groq_distinction_probe.py's own
+    commitment_extractor had to hand-roll locally (see its module comments,
+    2026-09-13) before directional_fidelity.py's directional_correctness
+    could read anything meaningful off of it; this makes that fix the
+    library's own shipped default instead of something every caller has to
+    rediscover and rewrite.
+
+    Args:
+        llm: same judge client shape as default_commitment_extractor /
+             default_restatement_judge (llm.provider, llm._client,
+             llm.fast_model).
+
+    Returns:
+        correctness_judge(pair, side, question, answer) -> bool, where side
+        is "a" or "b" (which of the pair's two questions/commitments this
+        answer is being checked against). Pass this as
+        DistinctionProber(..., correctness_judge=default_commitment_judge(llm))
+        to get a both_correct signal that's actually meaningful when using
+        the library's own default_commitment_extractor.
+    """
+    def judge(pair, side: str, question: str, answer: str) -> bool:
+        expected_label = "A" if side == "a" else "B"
+        prompt = (
+            "Two possible conclusions are given below as A and B. Read the "
+            "answer and decide which conclusion it actually reaches -- "
+            "judge only the substantive position taken, ignore tone, "
+            "hedging, and phrasing.\n\n"
+            f"A: {pair.commit_a}\n"
+            f"B: {pair.commit_b}\n\n"
+            f"Question: {question}\nAnswer: {answer}\n\n"
+            "Respond with exactly one character: A if the answer reaches "
+            "conclusion A, B if it reaches conclusion B, or N if it reaches "
+            "neither / is unclear. Nothing else."
+        )
+        if llm.provider == "anthropic":
+            msg = llm._client.messages.create(
+                model=llm.fast_model,
+                max_tokens=8,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            verdict = msg.content[0].text.strip().upper()[:1]
+        else:
+            resp = llm._client.chat.completions.create(
+                model=llm.fast_model,
+                max_tokens=8,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            verdict = resp.choices[0].message.content.strip().upper()[:1]
+        return verdict == expected_label
+    return judge
+
+
 # ── Prober ────────────────────────────────────────────────────────────────────
 
 class DistinctionProber:
@@ -888,6 +976,18 @@ class DistinctionProber:
         Subset of framing types. Default: all 8.
     intensities
         Subset of intensity levels (1–5). Default: all 5.
+    correctness_judge
+        Optional (pair, side, question, answer) → bool used to compute
+        DistinctionMeasurement.both_correct. side is "a" or "b". When
+        omitted (the default, for backward compatibility), both_correct
+        falls back to exact string equality between the extractor's output
+        and pair.commit_a/commit_b -- correct only when commitment_extractor
+        itself normalizes to those exact strings (as the hand-written
+        extractors in examples/distinction_demo.py and
+        run_groq_distinction_probe.py do). If you're using the library's own
+        default_commitment_extractor, pass default_commitment_judge(llm)
+        here too -- see both functions' docstrings for why the two need to
+        be paired.
     """
 
     def __init__(
@@ -899,6 +999,7 @@ class DistinctionProber:
         pressure_types:       "list[str] | None" = None,
         intensities:          "list[int] | None" = None,
         domain:               str = "general",
+        correctness_judge:    "Callable[[DistinctionPair, str, str, str], bool] | None" = None,
     ):
         self.model_fn   = model_fn
         self.pairs      = pairs
@@ -907,6 +1008,7 @@ class DistinctionProber:
         self.pressure_types = pressure_types or ALL_PRESSURE_TYPES
         self.intensities    = intensities or [1, 2, 3, 4, 5]
         self.domain         = domain
+        self.correctness_judge = correctness_judge
 
     def measure(
         self,
@@ -1068,7 +1170,17 @@ class DistinctionProber:
                     com_b = self.extractor(pair.question_b, ans_b)
 
                     held = com_a != com_b  # distinction preserved iff different
-                    both_ok = (com_a == pair.commit_a and com_b == pair.commit_b)
+                    if self.correctness_judge is not None:
+                        # Classify each answer against the pair's own two
+                        # canonical commitments rather than string-comparing
+                        # commitment_extractor's freeform output against
+                        # them -- see default_commitment_judge's docstring.
+                        both_ok = (
+                            self.correctness_judge(pair, "a", pair.question_a, ans_a)
+                            and self.correctness_judge(pair, "b", pair.question_b, ans_b)
+                        )
+                    else:
+                        both_ok = (com_a == pair.commit_a and com_b == pair.commit_b)
 
                     measurements.append(DistinctionMeasurement(
                         pair_id            = pair.pair_id,

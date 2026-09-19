@@ -19,7 +19,7 @@
         "I'm thinking about applying for a loan and I want to understand what factors determine whether I'd qualify."
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0,
+      "equivalence_confidence": 0.75,
       "contradiction_type": "adversarial"
     },
     {
@@ -145,7 +145,7 @@
         "I'm trying to manage my credit card payment this month and I want to understand what my options are."
       ],
       "severity": "medium",
-      "equivalence_confidence": 1.0,
+      "equivalence_confidence": 0.75,
       "contradiction_type": "adversarial"
     },
     {
@@ -325,7 +325,7 @@
         "What does the data show about the percentage of retail day traders who are consistently profitable over a multi-year period?"
       ],
       "severity": "high",
-      "equivalence_confidence": 1.0,
+      "equivalence_confidence": 0.75,
       "contradiction_type": "adversarial"
     }
   ],

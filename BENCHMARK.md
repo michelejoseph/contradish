@@ -459,6 +459,159 @@ ground-truth problem (R) for a bigger one.
 
 ---
 
+## Minimal intervention delta: the smallest justified change, and did the model produce exactly it?
+
+The DRS machinery above answers "what is this AI actually sensitive to, and
+is that what it should be sensitive to?" for ONE commitment, over a factor
+set (by default, the 8 rhetorical techniques). Nothing about
+`score_dependency_structure()` restricts what a "factor" is, though --
+flip which side plays commitment and which plays factor, and the same
+object answers a different, equally real question with zero changes to
+`decision_relevance.py`:
+
+    Given intervention deltaI, what is the smallest justified deltaB in
+    behavior, and did the model produce exactly that deltaB?
+
+`contradish/minimal_intervention_delta.py`'s `intervention_delta_spec()`
+seeds a `DecisionRelevanceSpec` on this axis: `commitment_id` is the
+intervention's own id, and each "factor" is one of the model's downstream
+behavioral commitments that might be implicated -- `relevant` if deltaI
+logically necessitates a change there, `irrelevant` (must remain invariant)
+otherwise. This is the direct counterpart to `default_technique_drs` on the
+technique axis, reusing the identical spec object and scoring core.
+
+What the DRS report gives you here is still a set of continuous pooled
+rates (hit rate, dependency_fidelity) -- not the thing this question
+actually names: the literal minimal set the model was supposed to change,
+and a strict, all-or-nothing verdict on whether it changed exactly that.
+`score_minimal_delta(report)` is a pure layer on top of an existing
+`DependencyStructureReport` -- no new relevance/sensitivity math -- naming:
+
+| name | definition | reused vocabulary |
+|---|---|---|
+| `justified_delta` | the smallest correct deltaB | `tracked \| missed` |
+| `actual_delta` | every commitment the model actually changed | `tracked \| spurious` |
+| `excess_delta` | changed, shouldn't have | `spurious` |
+| `deficit_delta` | should have changed, didn't | `missed` |
+
+and two strict verdicts: `exact_delta_match` (membership only -- no excess,
+no deficit) and `exact_delta_match_with_direction` (the complete claim --
+also every changed commitment landed on its expected new answer,
+`tracked_wrong_direction` empty too). The latter is `None`, not `False`,
+when the underlying report was never given direction data via
+`expected_effect_matches` -- the same "don't silently compute a misleading
+number over an unmeasured gap" rule `true_hit_rate` already follows one
+level down. `aggregate_minimal_delta()` pools verdicts across many
+interventions into `exact_match_rate` / `exact_match_rate_with_direction`
+plus explicit `interventions_with_excess`/`_deficit`/`_wrong_direction`
+lists, mirroring `DecisionRelevanceAudit`'s existing pooling pattern.
+
+```python
+from contradish.minimal_intervention_delta import intervention_delta_spec, score_minimal_delta
+from contradish.decision_relevance import score_dependency_structure
+
+spec = intervention_delta_spec(
+    intervention_id="i485-pending-2026-09", domain="immigration",
+    justified_commitments={"travel_advice": "advance parole required"},
+    invariant_commitments=["fee_amount", "processing_office", "form_number"],
+)
+report = score_dependency_structure(spec, measured_sensitivity_profile)
+verdict = score_minimal_delta(report)
+print(verdict.summary())
+```
+
+As of 1.49.0 this is a pure scoring layer with worked, deterministic
+examples in its test file -- it has not yet been run against a real
+intervention/commitment set drawn from an actual CAI-Bench domain
+(analogous to `medication.json`'s role for `distinction.py`). That
+grounding is the natural next step, not yet taken.
+
+### From scoring layer to measurement: `contradish update` (1.50.0)
+
+The gap named directly above -- a pure scoring layer with no path from a
+real intervention to a `DependencyStructureReport` -- is what
+`contradish/intervention_probe.py` closes. It does not add new scoring
+math; it is the same kind of bridge module `distinction.py`'s
+`DistinctionProber` already is for the Type-I axis: something has to
+actually call the model before and after the intervention, decide which
+downstream commitments moved, and hand the result to
+`score_minimal_delta()` in the shape it expects.
+
+An `InterventionCase` names the intervention text, the `justified_commitments`
+(what must change, and to what) and `invariant_commitments` (what must not
+move) -- the same two maps `intervention_delta_spec()` already took as
+arguments in the example above, just packaged so a whole case can be handed
+to a runner instead of assembled by hand. `probe_intervention(case, model_fn,
+change_judge, effect_judge=None, threshold=0.5)`:
+
+1. calls `model_fn` once per commitment before the intervention text is in
+   context and once after, holding everything else fixed;
+2. hands each before/after pair to `change_judge` -- an LLM judge, or any
+   callable returning a bool -- which decides whether the answer actually
+   changed;
+3. optionally hands changed pairs to `effect_judge` to decide whether the
+   new answer matches the commitment's expected new value, populating
+   `expected_effect_matches` so `exact_delta_match_with_direction` is a real
+   `True`/`False` instead of the `None` it falls back to when direction was
+   never measured;
+4. builds the `sensitivity_profile` from (2) and (3), scores it through the
+   existing `decision_relevance.py` / `minimal_intervention_delta.py`
+   machinery unchanged, and returns the `MinimalDeltaVerdict`.
+
+`probe_interventions()` does the same over a list of cases and pools the
+result with `aggregate_minimal_delta()`. `default_change_judge(llm)` and
+`default_effect_judge(llm)` are the LLM-backed defaults (any object with a
+`.complete_json`-shaped call works, matching `distinction.py`'s judge
+convention); both accept a hand-rolled callable instead, which is how the
+module's own tests run without a live model. `BUILTIN_INTERVENTIONS`
+ships one worked case, `"ecommerce_refund_window"` -- the refund-window
+30-to-45-day example from the NIST AI 200-2 comment letter, with
+`processing_fee`, `manager_escalation_path`, and `product_category_exclusions`
+as the commitments that must stay put.
+
+This is exposed on the CLI as `contradish update`, not folded into
+`contradish improve`, because it needs something no other command asks
+for: two governing-information states, not one fixed app. Every other
+`--app MODULE:FUNCTION` in this codebase loads a callable of the shape
+`(question) -> answer`, because the measurement holds the system prompt
+fixed and varies the question. Warranted behavioral updating is the
+opposite: the question (a commitment probe) is what stays fixed, and the
+governing information is what changes. So `contradish update` loads
+`--app` as `(system_prompt, question) -> answer` instead, calls it once
+with the pre-intervention governing text and once with the post, and
+documents the deviation in its own `--help` rather than pretending it
+fits the one-argument convention:
+
+```bash
+contradish update --app mymodule:my_app --case-file cases.yaml --threshold 0.9
+
+# or, using the built-in NIST-letter demo case with no API key required:
+contradish update --app contradish.intervention_probe:_demo_update_model_fn --json
+```
+
+A case file is a YAML list of `InterventionCase` fields (`intervention_id`,
+`intervention_text`, `before_context`, `after_context`,
+`justified_commitments`, `invariant_commitments`); `--threshold` gates the
+process exit code on `exact_match_rate` the same way `contradish improve`
+gates on its own pass rate, so this can sit in CI the same way.
+
+As of 1.50.0, `intervention_probe.py` and `contradish update` are covered
+by pure-unit tests (`tests/test_intervention_probe.py`) and CLI-level tests
+against a fake app and fake judges (`tests/test_cli_update.py`), all with
+mocked judges and a mocked `--app` -- no live model call. The next step
+named above, grounding this against a real CAI-Bench domain the way
+`medication.json` grounds `distinction.py`, is still not taken:
+`BUILTIN_INTERVENTIONS` has one hand-built demo case, not a domain-scale
+set of real intervention/commitment pairs drawn from an actual regulatory
+or policy change. What changed in 1.50.0 is narrower and more load-bearing
+than that grounding step: the measurement went from a scoring layer nothing
+could call, to a runnable command that calls a model, judges the result, and
+returns a strict pass/fail -- the piece that turns "warranted behavioral
+updating" from a construct defined in code into a claim the CLI actually
+checks.
+
+---
+
 ## Decision Boundary Recovery: locating the boundary, not just naming the factor
 
 DRS (above) asks a categorical question per factor: relevant or not, and did
@@ -923,6 +1076,78 @@ it even has a reviewer-agreed determinate answer at all.
 
 ---
 
+## Judge criterion validity: does the judge agree with the truth?
+
+Reliability (self-agreement across rephrasings) and construct validity
+(whether the benchmark's *own* labels hold up to independent review) are
+both covered above. Neither asks the question that actually determines
+whether a deployed judge is safe to rely on: given an answer whose
+correctness is already known, does the judge's verdict agree with it?
+`ground_truth.py`'s `GroundTruthAuditor` uses a judge to score a model's
+answer against a rubric and simply assumes that judge is trustworthy —
+nothing in this package checked that assumption before now.
+
+LLM judges skew overzealous: over-flagging a correct answer is a real cost
+(in a healthcare deployment, a wrong flag can delay someone's medication
+access), but it's the *visible* failure — someone notices when a good
+answer gets blocked. The harder-to-measure failure is the judge silently
+approving a wrong answer, because nothing downstream complains. A curated
+gold-standard dataset of only-correct answers can never surface that
+failure at all — it has no wrong answers in it to miss. `contradish/
+judge_criterion_validity.py` scores both directions from one dataset:
+
+```python
+from contradish.distinction import BUILTIN_DISTINCTION_PAIRS
+from contradish.judge_criterion_validity import measure_judge_criterion_validity
+
+report = measure_judge_criterion_validity(
+    pairs_by_domain=BUILTIN_DISTINCTION_PAIRS,
+    judge_provider="openai", judge_model="gpt-4o-mini",
+)
+print(report.report())
+print(report.miss_rate)         # real errors the judge approved -- dangerous
+print(report.false_alarm_rate)  # real correct answers the judge flagged -- costly
+```
+
+**Where the wrong-but-plausible answers come from.** Generating negatives
+with an LLM would reopen the same who-validates-the-perturbation problem the
+ground-truth audit above exists to catch. `build_cross_context_items()`
+needs no new authoring at all: every `DistinctionPair` already encodes two
+patient contexts whose correct commitments genuinely differ, so
+`commit_a`, given as the answer to `question_b`, is not invented noise — it
+is a real, benchmark-grounded, clinically-fluent answer that is simply
+wrong for patient B (it's the *right* answer for a different patient).
+Cross-applying each pair's two commitments to each other's questions turns
+every existing distinction pair into two gold items (should be approved)
+and two cross-context items (should be flagged) for free.
+
+**Scored as two rates, not one accuracy number**, because the two errors
+have different costs and call for different fixes — the same reasoning
+`faithfulness.py` gives for decomposing rather than subtracting. `hit_rate`
+and `false_alarm_rate` feed `faithfulness.py`'s existing
+`compute_sdt_decomposition`/`classify_sdt_pattern` directly (imported, not
+reimplemented) for a d'/criterion read on the judge itself: a judge with
+collapsed d' genuinely can't discriminate correct from wrong answers; a
+judge with intact d' but a shifted criterion discriminates fine but has a
+biased flagging threshold — the overzealous case is a liberal criterion, the
+rubber-stamp case is a conservative one, and only the decomposition tells
+you which one you're looking at.
+
+Results stratify by domain automatically (`report.by_domain`) whenever more
+than one domain is scored, the same per-domain surfacing `judge_
+calibration_ext.score_calibration_votes_by_domain()` already does for
+`floor_strain` — a single pooled rate can hide a judge that's fine on
+immigration questions and dangerous on medication ones. And
+`disputed_pair_ids` (pass a ground-truth audit's `disputed_item_ids` /
+`contradicted_item_ids`) tags every item built from a flagged pair rather
+than silently excluding it, the same audit-not-auto-correction discipline
+as `exclude_indeterminate_pairs()` above.
+
+Not yet run against a real judge model as of this writing — the module
+exists so that run can happen and be reported honestly, whatever it finds.
+
+---
+
 ## Evaluation-awareness, format fidelity, and compliance: three narrower checks
 
 The constructs above assume incidental failure -- a model quietly getting
@@ -1127,6 +1352,124 @@ in the project notes): correctly identifying that a decision changed is
 not the same claim as correctly compressing behavior for the new decision,
 and a rate that only checks the first was silently granting credit for the
 second.
+
+---
+
+## Resolution dynamics: does a correction survive interaction?
+
+Every measurement above is synchronic — it asks whether an answer is
+consistent or correct at one moment. None of them ask what happens to a
+correction *after* it lands: does it hold on repeat questioning, does it
+generalize to cases it logically should cover, and if it disappears later,
+was that decay or was it the right thing to do?
+
+That last question already has a formal answer. AGM belief revision and
+Katsuno-Mendelzon update (both cited above, under Decision-Relevance and
+Pragmatic legitimacy) describe a *single* revision. Darwiche and Pearl's
+iterated belief revision ("On the Logic of Iterated Belief Revision,"
+*Artificial Intelligence*, 1997) is what happens when a *second* revision
+comes in afterward, and its central postulate (C2) is the one a naive
+"does the fix stick" metric gets wrong: if later information genuinely
+contradicts an earlier correction, reverting is the *rational* response,
+not decay. Scoring every reversion as a plain failure conflates a model
+that correctly abandoned a superseded correction with one that just forgot
+it — only the second should count against it.
+
+`contradish/resolution_dynamics.py` is a pure, dependency-free scoring core
+over already-collected multi-turn probe data (no model or judge calls; the
+re-probing pipeline that would produce this data from live behavior doesn't
+exist in this package yet):
+
+```python
+from contradish.resolution_dynamics import (
+    ContradictionEvent, ResolutionProbe, classify_resolution,
+)
+
+event = ContradictionEvent(
+    event_id="ev-1", cell_id="early-refill-schedule-ii",
+    description="corrected an early-refill approval that ignored DEA rules",
+    detected_at_turn=3,
+)
+probes = [
+    ResolutionProbe("p1", "ev-1", "early-refill-schedule-ii", turn=4,
+                     verdict_matches_domain=True, is_stable=True),
+    ResolutionProbe("p2", "ev-1", "early-refill-non-controlled", turn=5,
+                     verdict_matches_domain=True, is_stable=True, is_transfer_cell=True),
+]
+print(classify_resolution(event, probes).summary())
+```
+
+**Six outcomes, not a binary held/lost.** `classify_resolution()` returns
+`integrated` (corrected, and a logically-entailed transfer cell confirms it
+generalized — AGM closure satisfied), `behaviorally_resolved` (corrected,
+generalization never tested), `distorted` (corrected, but every transfer-
+cell probe came back wrong — closure failed), `superseded` (verified, then
+reverted, but the intervening interaction genuinely contradicted it — C2's
+legitimate override), `forgotten` (verified, then reverted, with nothing
+that justified it — the real C3/C4 violation), or `unresolved` (never
+verified, or the deciding probe is unstable/oscillating — no number is
+forced either way, the same discipline Decision Boundary Recovery applies
+to its own `unstable` regime, above).
+
+**Checked against source before writing, not assumed additive.** Three
+existing modules looked like plausible prior art for pieces of this and
+none of them turned out to be: `pragmatic_legitimacy.py` asks whether one
+pressure-framing shift legitimately changed the question being asked, with
+no notion of a correction persisting or lapsing across turns; `decision_
+boundary.py` locates a single-dimension positional cutover on *one*
+commitment, with no notion of choosing among several commitments under a
+stated priority ordering; `sacrifice.py` asks whether a single-turn
+distinction loss was visibly hedged, not whether a multi-turn correction
+held. `check_closure()` is the one piece that *is* a direct diachronic
+extension of something already in the package — the existing `spurious`
+check (`distinction.py`) generalized over time: did a revision also disturb
+a control cell it had no logical claim on (AGM inclusion/vacuity).
+
+**Entrenchment-ordering fidelity is the one genuinely new construct.**
+`EntrenchmentTrial` / `score_entrenchment_fidelity()` test AGM's minimal-
+change postulate directly: when a forced revision requires giving up one of
+several commitments, and the domain has stated in advance which one matters
+least, did the model actually sacrifice that one, or keep something
+unimportant while dropping something the domain says matters more.
+`EntrenchmentTrial` validates at construction that the recorded sacrifice
+was actually one of the elicited commitments — the same discipline
+`classify_resolution()` and `check_closure()` apply to their own inputs.
+The entrenchment-ordering *elicitation* protocol (how a domain author
+states and records that priority ordering in the first place) is still
+just named here, not designed — `EntrenchmentTrial` only scores a trial
+once that elicitation has already happened.
+
+**The Katsuno-Mendelzon revision/update distinction is carried as a tag,
+not a new instrument.** `EventType.REVISION` (same world, purported new
+information) vs. `EventType.UPDATE` (the world itself differs between the
+two situations) is optional on `ContradictionEvent`, because the instrument
+for asking "was this purported claim about a fixed world real" already
+exists — `pragmatic_legitimacy.py`'s `infer_rational_goal`/`default_
+legitimacy_reviewer` pipeline. `check_event_type_consistency()` checks one
+narrow, concrete consequence: `pragmatically_excused` presupposes a
+REVISION event, so setting it on a tagged UPDATE event is a category error.
+Returns a warning, not an exception — the function can't tell whether the
+mistake is a wrong tag or a wrong excusal upstream.
+
+**An ex-ante-signal permutation test, deterministic and effect-size-first.**
+`score_signal_separation()` tests whether a surface signal (stated
+confidence, hedging intensity, defended-under-challenge) actually differs
+between later-validated and later-invalidated events, rather than assuming
+it does: a seeded, dependency-free permutation test reporting Cohen's d
+alongside the p-value (never significance alone, matching `faithfulness.py`'s
+d'/c discipline), with an `underpowered` flag below 5 observations per
+group. `score_multiple_signals()` applies `holm_bonferroni_correction()`
+across several candidate signals tested against the same split, so testing
+confidence, hedging, and defended-under-challenge together doesn't silently
+inflate the false-positive rate the way testing them separately would.
+
+Like the judge criterion validity module above, this hasn't been run
+against real multi-turn model transcripts as of this writing — the
+re-probing pipeline that would generate `ContradictionEvent`/
+`ResolutionProbe` records from live behavior is still open work. What
+exists is the scoring core that consumes that data honestly once it's
+collected, verified with 42 deterministic tests against synthetic and
+hand-constructed cases covering every outcome branch.
 
 ---
 
