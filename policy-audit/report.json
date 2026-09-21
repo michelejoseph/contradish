@@ -1,0 +1,26 @@
+{
+  "claims_extracted": 39,
+  "pairs_considered": 72,
+  "findings": [
+    {
+      "claim_a": {
+        "claim_id": "legal.html#27",
+        "source": "legal.html",
+        "section": "Privacy Policy > 5. Data Retention",
+        "text": "You can request deletion at any time (see Section 7)."
+      },
+      "claim_b": {
+        "claim_id": "legal.html#29",
+        "source": "legal.html",
+        "section": "Privacy Policy > 7. Your Rights",
+        "text": "Depending on where you live, you may have the right to access, correct, export, or delete your personal information, or to object to certain processing."
+      },
+      "is_contradiction": true,
+      "contradiction_type": "scope_conflict",
+      "shared_subject": "whether the right to delete personal data is unconditional or jurisdiction-dependent",
+      "confidence": 0.55,
+      "severity": "medium",
+      "explanation": "Section 5 states 'You can request deletion at any time' with no qualifier, and points the reader to Section 7 for details. Section 7, the section it points to, actually frames deletion as one of several rights you 'may have... depending on where you live' -- i.e. not universal. A reader who stops at Section 5's cross-reference reasonably comes away thinking deletion is always available; Section 7 says otherwise. Not a hard logical impossibility (both can be literally true -- you can always ASK, but the company isn't always obligated to comply) but a real scope mismatch between an absolute-sounding promise and the conditional right it cross-references. Easy fix: reword Section 5 to 'you can request deletion at any time, though the right to have it honored may depend on where you live (see Section 7)'."
+    }
+  ]
+}
