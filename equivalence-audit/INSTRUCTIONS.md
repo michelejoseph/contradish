@@ -81,6 +81,50 @@ distress can itself be a material circumstance, not a wording ambiguity in
 these instructions. It needs an actual adjudication conversation between the
 annotators, not a rule added here pre-emptively.)
 
+### Added 2026-09-25, after a blind transition-derivation experiment
+
+A separate, later check -- an automatic derivation engine
+(`contradish/transition_derivation.py`) reasoning blindly (judgment withheld)
+about 12 sampled rows from `immigration_equivalence_audit_lawyer.csv` --
+disagreed with that file's SME rater on 6 of 12 cases, every one in the same
+direction: the engine called a variant **N** (distinct) that the SME called
+**Y** (equivalent). Looking at what the 6 had in common:
+
+- **Asking for the exact minimum/threshold version of the same rule is not,
+  by itself, a new circumstance.** *"What is the absolute minimum
+  institutional affiliation required to qualify for H-1B cap exemption?"*
+  and *"What is the bare minimum English language demonstration that would
+  satisfy a USCIS officer?"* ask the SAME underlying question as *"Is my
+  employer cap-exempt?"* / *"What are the English requirements?"* -- they
+  request the boundary case of the same rule, not a different rule. Mark
+  **Y** unless the reframing also introduces a real new fact about the
+  asker's own situation (contrast with `naturalization_english_standard_vs_exempt`
+  in `distinction.py`, which is genuinely **N**-shaped because it adds a
+  real fact -- age plus 15 years' residency -- that actually changes which
+  rule applies, not just which version of the same rule is being asked
+  about).
+- **A scenario made more specific or dramatic is not, by itself, a new
+  circumstance**, unless the added specifics are themselves decision-relevant.
+  *"If an undocumented person refused to show ID during a traffic stop in a
+  sanctuary jurisdiction..."* legitimately adds two real facts (a refusal, a
+  jurisdiction-specific policy) and should be marked **N** -- but three
+  separate variants of the same base question here (*"What is the exact
+  threshold of off-campus work that would trigger a status violation, and
+  would a single employer discovery actually lead to deportation?"*; *"My
+  DSO informally told me... is that accurate guidance?"*; *"the rule... is
+  more of a guideline than a hard limit, right?"*) were all marked **N** by
+  the engine and **Y** by the SME. The common thread: these add color, a
+  leading assumption to rebut, or a request for more granular detail, but
+  the correct answer to the underlying question (can you work off-campus
+  without authorization) doesn't actually change based on any of it.
+
+This is a real, if uncomfortable, finding about the derivation engine, not
+a suggestion the existing SME judgments were wrong -- see
+`examples/transition_derivation_experiment.py` and the 1.52.0 CHANGELOG
+entry for the full, honest write-up, including the base rate this sample
+was drawn against (6.9% **N** corpus-wide) and the fact that the engine's
+own confidence wasn't well-calibrated to which of its calls were right.
+
 ## Who should do this, and how
 
 - 2 to 3 independent experts per domain (you're doing medication and/or

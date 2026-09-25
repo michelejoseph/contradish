@@ -612,6 +612,79 @@ checks.
 
 ---
 
+## Automatic transition derivation: where does the ground truth in this section's tables actually come from?
+
+Every measurement above this line -- `DecisionRelevanceSpec`'s factors,
+`intervention_delta_spec()`'s `justified_commitments`/`invariant_commitments`,
+a `DistinctionPair`'s `commit_a`/`commit_b` -- takes the warranted side of the
+comparison as a given: a person writes it down, once, by hand, before any
+scoring can happen. That's the actual ceiling on how far this benchmark can
+scale: a sophisticated evaluator for however many cases someone sits down and
+labels, not yet a general framework for measuring warranted behavioral
+updating on demand. `contradish/transition_derivation.py` is a first attempt
+at the missing step -- deriving that ground truth automatically, from a
+description of a baseline scenario, a changed scenario, and what changed
+between them, rather than requiring it be hand-authored.
+
+```python
+from contradish.transition_derivation import (
+    ScenarioPair, ManualTransitionJudge, derive_transition_contract,
+)
+
+scenario = ScenarioPair(
+    pair_id="renal_dosing", domain="medication",
+    baseline_label="healthy adult", baseline_description="max daily ibuprofen dose?",
+    changed_label="renal-impairment patient", changed_description="max daily ibuprofen dose for this patient?",
+    governing_change="renal function",
+)
+judge = ManualTransitionJudge({"renal_dosing": {
+    "warranted": True, "confidence": 0.85,
+    "expected_effect": "avoid or use only under medical supervision, not the same 1200mg limit",
+    "rationale": "impaired renal clearance changes the safety margin",
+}})
+contract = derive_transition_contract(scenario, judge)
+spec = contract.to_decision_relevance_spec()   # bridges straight into decision_relevance.py, no duplicated scoring math
+```
+
+A `TransitionContract` is published as a versioned interchange format
+(`contradish/schema/transition_contract.schema.json`, same convention as
+`distinction_report`/`distinction_diff` -- see `contradish schema --list`)
+specifically so a contract produced by this engine, by a different
+implementation, or by a human working from the same rubric are all
+comparable as one shape -- which is what an inter-implementation agreement
+study needs.
+
+**The experiment, and the honest result.** `examples/
+transition_derivation_experiment.py` ran that exact study: a reviewing
+Claude session derived transition contracts BLIND (ground truth withheld in
+a separate file, not opened until after deriving) for two sets of real
+cases. On 6 never-before-seen `DistinctionPair`s, the engine correctly
+reconstructed both the warranted-change judgment and the substantive correct
+content, 6/6 (though this subset is warranted=True by construction, so it
+isn't a test of the engine's ability to say "no change warranted" at all).
+On 12 cases sampled from `immigration_equivalence_audit_lawyer.csv` (an SME
+rater file never previously read this session) -- a genuine mixed test,
+since equivalence-audit variants are mostly, but not all, equivalent --
+the engine agreed with the SME only 50% of the time, kappa=0.0, with every
+single disagreement running the same direction: the engine called a variant
+distinct where the SME called it equivalent, concentrated in cases asking
+for the precise threshold/minimum version of an existing rule, or adding
+scenario color without changing the governing answer. See the 1.52.0
+CHANGELOG entry and `equivalence-audit/INSTRUCTIONS.md`'s 2026-09-25
+addendum for the specific pattern and the full numbers.
+
+This is reported as a finding, not a validation. An automatic derivation
+engine that systematically over-calls novelty is still measurably useful --
+knowing exactly which direction it errs in, and on which case shape, is
+what makes it possible to tighten the rubric rather than trust it blindly --
+but it is not, today, a drop-in replacement for a hand-labeling pass. The
+honest headline is that closing this gap (kappa near 0 on a real blind
+sample) is the actual next milestone standing between "contradish can score
+a model against ground truth someone wrote" and "contradish can generate
+that ground truth itself, at the scale a general framework needs."
+
+---
+
 ## Decision Boundary Recovery: locating the boundary, not just naming the factor
 
 DRS (above) asks a categorical question per factor: relevant or not, and did

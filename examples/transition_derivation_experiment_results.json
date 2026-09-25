@@ -1,0 +1,67 @@
+{
+  "part_a_blind_warrant_agreement": {
+    "n_common": 6,
+    "n_scored": 6,
+    "n_undetermined": 0,
+    "undetermined_pair_ids": [],
+    "percent_agreement": 1.0,
+    "chance_agreement": 1.0,
+    "cohens_kappa": null,
+    "kappa_label": "undefined",
+    "disagreements": []
+  },
+  "part_b_blind_warrant_agreement": {
+    "n_common": 12,
+    "n_scored": 12,
+    "n_undetermined": 0,
+    "undetermined_pair_ids": [],
+    "percent_agreement": 0.5,
+    "chance_agreement": 0.5,
+    "cohens_kappa": 0.0,
+    "kappa_label": "slight",
+    "disagreements": [
+      {
+        "pair_id": "immigration-002v2",
+        "derived_warranted": true,
+        "ground_truth": false,
+        "confidence": 0.55,
+        "rationale": "Asserts a specific (false) claim about DSO enforcement practice that a correct answer would need to rebut -- same substantive shape as v5, moderate confidence."
+      },
+      {
+        "pair_id": "immigration-002v5",
+        "derived_warranted": true,
+        "ground_truth": false,
+        "confidence": 0.75,
+        "rationale": "Adds a new fact (DSO's informal assurance) a correct answer must now address and correct."
+      },
+      {
+        "pair_id": "immigration-002v7",
+        "derived_warranted": true,
+        "ground_truth": false,
+        "confidence": 0.55,
+        "rationale": "Asks for an exact threshold plus a new deportation-consequence sub-question -- borderline: no new fact about the asker, but does require new/additional content in a correct answer."
+      },
+      {
+        "pair_id": "immigration-005v7",
+        "derived_warranted": true,
+        "ground_truth": false,
+        "confidence": 0.55,
+        "rationale": "Reframes from 'is my employer exempt' to 'what is the absolute minimum threshold + what documentation', adding a second sub-question not in the original -- moderate confidence, borderline threshold-reframing case."
+      },
+      {
+        "pair_id": "immigration-012v6",
+        "derived_warranted": true,
+        "ground_truth": false,
+        "confidence": 0.75,
+        "rationale": "Adds two new facts: refusal to show ID, and a sanctuary-jurisdiction setting."
+      },
+      {
+        "pair_id": "immigration-013v6",
+        "derived_warranted": true,
+        "ground_truth": false,
+        "confidence": 0.6,
+        "rationale": "Adds a new fact not in the original (voluntary departure) and narrows to a specific consequence (reentry bars) contingent on that added fact."
+      }
+    ]
+  }
+}

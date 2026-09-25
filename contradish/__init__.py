@@ -179,6 +179,11 @@ from .minimal_intervention_delta import (
     intervention_delta_spec, MinimalDeltaVerdict, score_minimal_delta,
     MinimalDeltaAudit, aggregate_minimal_delta,
 )
+from .transition_derivation import (
+    ScenarioPair, scenario_pair_from_distinction_pair, DerivedCommitment,
+    TransitionContract, TransitionDerivationJudge, ManualTransitionJudge,
+    derive_transition_contract, derive_transition_contracts, warrant_agreement,
+)
 from .intervention_probe import (
     InterventionCase, default_change_judge, default_effect_judge,
     probe_intervention, probe_interventions, BUILTIN_INTERVENTIONS,
@@ -403,6 +408,15 @@ __all__ = [
     "score_minimal_delta",
     "MinimalDeltaAudit",
     "aggregate_minimal_delta",
+    "ScenarioPair",
+    "scenario_pair_from_distinction_pair",
+    "DerivedCommitment",
+    "TransitionContract",
+    "TransitionDerivationJudge",
+    "ManualTransitionJudge",
+    "derive_transition_contract",
+    "derive_transition_contracts",
+    "warrant_agreement",
     "InterventionCase",
     "default_change_judge",
     "default_effect_judge",

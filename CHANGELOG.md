@@ -4,6 +4,88 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.52.0] - 2026-09-25
+
+### Added
+
+- **`contradish/transition_derivation.py`** -- an automatic warranted-transition
+  derivation engine: given a baseline scenario and a changed scenario, derives
+  whether a different answer is warranted (no less -- CW\\CM/rigidity if a
+  model fails to make it; no more -- CM\\CW/drift if it moves when it
+  shouldn't) and what the correct new content should be, rather than requiring
+  a human to hand-author that ground truth the way every upstream module
+  (`decision_relevance.DecisionRelevanceSpec`, `minimal_intervention_delta.
+  intervention_delta_spec()`, a `DistinctionPair`'s `commit_a`/`commit_b`)
+  currently does. Same Judge/Manual*Judge architecture as
+  `justification_faithfulness.py`: `TransitionDerivationJudge` (LLM-backed)
+  and `ManualTransitionJudge` (no-API-key fallback). `TransitionContract`
+  bridges directly into the already-built, already-tested CW/CM scoring core
+  via `to_decision_relevance_spec()` and `justified_and_invariant_commitments()`
+  -- this module produces the spec those two already-shipped modules
+  currently require a human to write; it does not duplicate their scoring
+  math. 18 tests, all passing (`tests/test_transition_derivation.py`).
+
+- **`contradish/schema/transition_contract.schema.json`** -- the interchange
+  schema for a `TransitionContract`, published the same way
+  `distinction_report`/`distinction_diff` already are (JSON Schema draft
+  2020-12, `schema_version` with the existing minor/major bump discipline,
+  reachable via `contradish.schema.list_schemas()`/`load_schema()` and the
+  existing `contradish schema` CLI subcommand with zero CLI code changes,
+  since `cmd_schema` was already generic over the schema registry).
+
+- **`examples/transition_derivation_experiment.py`** -- the experiment this
+  engine exists to make possible: does an independently, BLINDLY produced
+  transition contract agree with existing, separately-produced ground truth?
+  Two genuinely blind subsets (the reviewing session wrote its derivations
+  from scenario text alone, with ground truth withheld in a separate file it
+  did not open until after deriving):
+
+  - **Part A blind** (6 cases): 6 `DistinctionPair`s never previously read by
+    this session (`daca_valid_vs_no_status`, `advance_parole_approved_vs_pending`,
+    and all 4 `scriptural_ethics` pairs), commit_a/commit_b withheld during
+    derivation. Warranted=True by construction for all 6 (100% agreement,
+    kappa undefined since ground truth has no variance in this subset) --
+    the substantive test here was whether the derived `expected_effect`
+    independently reconstructed the same correct content as the withheld
+    `commit_b`; all 6 did.
+  - **Part B blind** (12 cases): a random sample from
+    `immigration_equivalence_audit_lawyer.csv` (a single-SME-rater file
+    never previously read by this session), judgment withheld during
+    derivation. Real, honest result: **50% agreement, kappa=0.0** against
+    the SME. All 6 disagreements ran the same direction -- the engine
+    called `warranted=True` where the SME called it equivalent -- on cases
+    that asked for a more specific/threshold version of the same rule, or
+    added scenario elaboration/embellishment without actually changing the
+    governing legal answer (three of the six disagreements were different
+    variants of the exact same base case, F-1 student off-campus work,
+    each independently over-called). The corpus-wide base rate for
+    "genuinely distinct" in this file is 6.9% (10/144); confidence was not
+    well-calibrated to correctness in this sample (mean confidence 0.625 on
+    wrong calls vs. 0.65 on correct calls). A `2026-09-25` addendum to
+    `equivalence-audit/INSTRUCTIONS.md` records the specific pattern this
+    surfaced: **an already-known-correct answer, applied to a specific
+    borderline case (immigration-007v7, naturalization English threshold)
+    within the same blind sample, was judged CORRECTLY as equivalent** --
+    meaning the reviewer already had the right general instinct
+    (threshold/precision-seeking reframing usually isn't a new governing
+    fact) but did not apply it consistently across structurally identical
+    cases in the same session, which is itself evidence this rubric needs
+    to be stated as an explicit, applied rule rather than left to
+    case-by-case judgment -- the same lesson this project already learned
+    once for "hypothetical" framing (see the 2026-09-25 INSTRUCTIONS.md
+    entry from the inter-rater agreement work two commits ago).
+
+  Full results in `examples/transition_derivation_experiment_results.json`.
+
+  **Honest scope**: Part A's 6 blind cases are also, by construction,
+  warranted=True 100% of the time -- not a genuine test of the engine's
+  ability to say "no, nothing warrants a change" on distinction-pair-shaped
+  input. Part B is where that test actually happens, and it's where the
+  50%/kappa=0.0 result lives. This is a real finding about a real
+  limitation, not a validation result -- treat it as the honest starting
+  point for tightening the derivation rubric, not as evidence the engine is
+  ready to replace hand-authored ground truth.
+
 ## [1.51.0] - 2026-09-25
 
 ### Added

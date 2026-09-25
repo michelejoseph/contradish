@@ -20,7 +20,7 @@ internal detail of DistinctionLossMap.to_dict() and
 diff_distinction_reports(). See contradish/schema/README.md for the full
 rationale and the versioning policy.
 
-Two schemas ship today:
+Three schemas ship today:
 
     distinction_report   the shape of `DistinctionLossMap.to_dict()`, i.e.
                           what `contradish distinguish --json` writes: one
@@ -32,10 +32,19 @@ Two schemas ship today:
                           prints: a baseline-vs-candidate diff of a
                           distinction_report, flagging newly_collapsed pairs.
 
+    transition_contract  the shape of `TransitionContract.to_dict()`
+                          (transition_derivation.py): one scenario pair's
+                          automatically-derived warranted-transition
+                          judgment(s) -- the ground-truth spec
+                          decision_relevance.py and minimal_intervention_delta.py
+                          otherwise require a human to hand-author, published
+                          so an independently produced contract for the same
+                          pair can be compared to contradish's own.
+
 Usage:
     from contradish.schema import list_schemas, load_schema, validate_against_schema
 
-    list_schemas()                                          # ["distinction_diff", "distinction_report"]
+    list_schemas()                                          # ["distinction_diff", "distinction_report", "transition_contract"]
     load_schema("distinction_report")                       # parsed JSON Schema document (stdlib only)
     validate_against_schema(payload, "distinction_report")   # [] if valid, else error strings
                                                               # (requires the optional jsonschema package)
@@ -55,8 +64,9 @@ from typing import Any
 SCHEMA_DIR = Path(__file__).parent
 
 _SCHEMA_FILES = {
-    "distinction_report": "distinction_report.schema.json",
-    "distinction_diff":   "distinction_diff.schema.json",
+    "distinction_report":   "distinction_report.schema.json",
+    "distinction_diff":     "distinction_diff.schema.json",
+    "transition_contract":  "transition_contract.schema.json",
 }
 
 
