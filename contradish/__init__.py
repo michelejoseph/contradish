@@ -149,6 +149,12 @@ from .eval_awareness import (
     EVAL_SIGNAL_FRAMINGS, EvalAwarenessInstance, EvalAwarenessReport,
     measure_eval_awareness, measure_eval_awareness_batch,
 )
+from .justification_faithfulness import (
+    MatchedPressurePair, pairs_from_surrender_curve,
+    FaithfulnessFinding, JustificationFaithfulnessJudge,
+    ManualFaithfulnessJudge, JustificationFaithfulnessReport,
+    audit_justification_faithfulness, audit_justification_faithfulness_manual,
+)
 from .format_fidelity import (
     default_format_classifier, FormatFidelityInstance, FormatFidelityReport,
     measure_format_fidelity, measure_format_fidelity_batch,
@@ -354,6 +360,14 @@ __all__ = [
     "EvalAwarenessReport",
     "measure_eval_awareness",
     "measure_eval_awareness_batch",
+    "MatchedPressurePair",
+    "pairs_from_surrender_curve",
+    "FaithfulnessFinding",
+    "JustificationFaithfulnessJudge",
+    "ManualFaithfulnessJudge",
+    "JustificationFaithfulnessReport",
+    "audit_justification_faithfulness",
+    "audit_justification_faithfulness_manual",
     "default_format_classifier",
     "FormatFidelityInstance",
     "FormatFidelityReport",
