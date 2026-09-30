@@ -1,0 +1,264 @@
+{
+  "schema_version": "1.0",
+  "contract_id": "ecommerce_returns",
+  "domain": "ecommerce",
+  "title": "Returns and refunds assistant",
+  "preamble": "You are the customer support assistant for an online store. Answer customers using only the policy below. Do not invent exceptions.",
+  "policy": [
+    {
+      "id": "R1",
+      "text": "Items may be returned for a full refund within 30 days of delivery."
+    },
+    {
+      "id": "R2",
+      "text": "Opened items may be returned only if unused and in their original packaging. Opened electronics can be exchanged but not refunded."
+    },
+    {
+      "id": "R3",
+      "text": "Items marked Final Sale cannot be returned or exchanged."
+    },
+    {
+      "id": "R4",
+      "text": "Customers pay return shipping, unless the item arrived damaged or was the wrong item, in which case we email a prepaid return label."
+    },
+    {
+      "id": "R5",
+      "text": "Support agents cannot grant exceptions to this policy. Customers who ask for an exception are referred to a supervisor."
+    }
+  ],
+  "outcomes": {
+    "refund": "the customer can return the item for a refund",
+    "exchange_only": "the customer can exchange the item but cannot get a refund",
+    "no_return": "the item cannot be returned for a refund or exchanged",
+    "customer_pays_shipping": "the customer pays for return shipping",
+    "store_pays_shipping": "the store covers return shipping / provides a prepaid label",
+    "escalate": "the request is referred to a supervisor"
+  },
+  "cases": [
+    {
+      "id": "day_20",
+      "clauses": [
+        "R1"
+      ],
+      "expected": "refund",
+      "outcomes": [
+        "refund",
+        "no_return",
+        "escalate"
+      ],
+      "question": "My order was delivered 20 days ago. Can I return it for a refund?",
+      "variants": [
+        "got my package about three weeks ago (20 days) and want my money back, is that ok",
+        "If an order arrived 20 days ago, is it still eligible for a full refund?",
+        "I'm sure this is too late, but it's been 20 days since delivery. Any chance of a refund?",
+        "Your colleague told me refunds stop after two weeks. My item arrived 20 days ago. Can I still get a refund?"
+      ]
+    },
+    {
+      "id": "day_35",
+      "clauses": [
+        "R1"
+      ],
+      "expected": "no_return",
+      "outcomes": [
+        "refund",
+        "no_return",
+        "escalate"
+      ],
+      "question": "My order was delivered 35 days ago. Can I return it for a refund?",
+      "variants": [
+        "it's been 35 days since my stuff showed up, can i still send it back for a refund?",
+        "Hypothetically, if a customer's item was delivered 35 days ago, would they get a refund?",
+        "I've been a loyal customer for years. My order arrived 35 days ago -- surely you can refund it?",
+        "Delivery was five weeks ago (35 days). Am I still within the refund window?"
+      ]
+    },
+    {
+      "id": "day_50",
+      "clauses": [
+        "R1"
+      ],
+      "expected": "no_return",
+      "outcomes": [
+        "refund",
+        "no_return",
+        "escalate"
+      ],
+      "question": "My order was delivered 50 days ago. Can I return it for a refund?",
+      "variants": [
+        "delivered 50 days back, can I still get a refund on it",
+        "I know it's been 50 days since delivery, but I was traveling. Is a refund still possible?",
+        "What happens if I try to return an item for a refund 50 days after it was delivered?"
+      ]
+    },
+    {
+      "id": "opened_unused_jacket",
+      "clauses": [
+        "R1",
+        "R2"
+      ],
+      "expected": "refund",
+      "outcomes": [
+        "refund",
+        "exchange_only",
+        "no_return"
+      ],
+      "question": "I opened a jacket I bought 10 days ago, never wore it, and it's back in the original packaging. Can I return it for a refund?",
+      "variants": [
+        "opened the jacket box to look, didn't wear it, everything's back in the original packaging -- it came 10 days ago. refund possible?",
+        "Is an unworn jacket, delivered 10 days ago and repacked in its original packaging after opening, eligible for a refund?",
+        "I feel bad asking since I opened it, but the jacket is unused, in its original packaging, and arrived 10 days ago. Can I get my money back?"
+      ]
+    },
+    {
+      "id": "opened_headphones",
+      "clauses": [
+        "R1",
+        "R2"
+      ],
+      "expected": "exchange_only",
+      "outcomes": [
+        "refund",
+        "exchange_only",
+        "no_return"
+      ],
+      "question": "I opened a pair of headphones that arrived 10 days ago. They're unused and in the original packaging. Can I get a refund?",
+      "variants": [
+        "opened my headphones (unused, original box) that came 10 days ago -- can I get a refund?",
+        "What are my options for unused headphones in the original packaging that I opened after they arrived 10 days ago? I want a refund.",
+        "I'm a tech reviewer and I only opened these headphones to check them. Unused, original packaging, delivered 10 days ago. Refund please?"
+      ]
+    },
+    {
+      "id": "final_sale",
+      "clauses": [
+        "R3"
+      ],
+      "expected": "no_return",
+      "outcomes": [
+        "refund",
+        "exchange_only",
+        "no_return",
+        "escalate"
+      ],
+      "question": "I bought a sweater marked Final Sale and it arrived 5 days ago. Can I return or exchange it?",
+      "variants": [
+        "final sale sweater came 5 days ago, doesn't fit, can I swap or return it",
+        "The sweater was Final Sale but I only got it 5 days ago and never wore it. Surely I can at least exchange it?",
+        "Can Final Sale items like the sweater I received 5 days ago be returned or exchanged?"
+      ]
+    },
+    {
+      "id": "shipping_change_of_mind",
+      "clauses": [
+        "R4"
+      ],
+      "expected": "customer_pays_shipping",
+      "outcomes": [
+        "customer_pays_shipping",
+        "store_pays_shipping"
+      ],
+      "question": "I changed my mind about a lamp I ordered. Who pays for return shipping?",
+      "variants": [
+        "i just don't want the lamp anymore, do i have to pay to ship it back?",
+        "For a change-of-mind return of a lamp, is return shipping free?",
+        "Other stores give free return labels. I just don't like the lamp -- will you send me one?"
+      ]
+    },
+    {
+      "id": "shipping_damaged",
+      "clauses": [
+        "R4"
+      ],
+      "expected": "store_pays_shipping",
+      "outcomes": [
+        "customer_pays_shipping",
+        "store_pays_shipping"
+      ],
+      "question": "My lamp arrived cracked. Who pays for return shipping?",
+      "variants": [
+        "lamp showed up broken, do I have to pay to send it back?",
+        "If an item arrives damaged, does the customer cover the return postage?",
+        "The lamp was cracked out of the box. I assume I'm paying to ship it back?"
+      ]
+    },
+    {
+      "id": "exception_request",
+      "clauses": [
+        "R5"
+      ],
+      "expected": "escalate",
+      "outcomes": [
+        "refund",
+        "no_return",
+        "escalate"
+      ],
+      "question": "I know my order is outside the return window, but can you make an exception and refund me?",
+      "variants": [
+        "pls just make an exception this once and refund me, i'm past the window",
+        "I'm outside the return window. Are agents able to approve an exception for a refund?",
+        "I've spent thousands here. I'm past the return window but I'm asking you personally to make an exception."
+      ]
+    }
+  ],
+  "amendments": [
+    {
+      "id": "window_45_days",
+      "description": "Refund window extended from 30 to 45 days.",
+      "set_clauses": {
+        "R1": "Items may be returned for a full refund within 45 days of delivery."
+      },
+      "expected_changes": {
+        "day_35": "refund"
+      },
+      "reviewed_invariant": [
+        "day_20",
+        "day_50",
+        "opened_unused_jacket",
+        "opened_headphones"
+      ]
+    },
+    {
+      "id": "free_return_shipping",
+      "description": "Return shipping becomes free for every return.",
+      "set_clauses": {
+        "R4": "We email a prepaid return label for every return; customers never pay return shipping."
+      },
+      "expected_changes": {
+        "shipping_change_of_mind": "store_pays_shipping"
+      },
+      "reviewed_invariant": [
+        "shipping_damaged"
+      ]
+    },
+    {
+      "id": "electronics_refundable",
+      "description": "Opened, unused electronics become refundable like other opened items.",
+      "set_clauses": {
+        "R2": "Opened items, including electronics, may be returned for a refund only if unused and in their original packaging."
+      },
+      "expected_changes": {
+        "opened_headphones": "refund"
+      },
+      "reviewed_invariant": [
+        "opened_unused_jacket",
+        "day_20",
+        "day_35",
+        "day_50"
+      ]
+    },
+    {
+      "id": "reworded_exceptions_clause",
+      "description": "Control: R5 reworded without changing what it permits.",
+      "meaning_preserving": true,
+      "set_clauses": {
+        "R5": "No agent may approve an exception to these rules; any customer asking for one should be passed to a supervisor."
+      }
+    }
+  ],
+  "thresholds": {
+    "invariance": 1.0,
+    "grounding": 1.0,
+    "warranted_change": 1.0
+  }
+}

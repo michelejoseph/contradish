@@ -27,6 +27,8 @@ a feature inside someone else's internal tool.
 |---|---|---|---|
 | `distinction_report` | `distinction_report.schema.json` | `DistinctionLossMap.to_dict()`, `contradish distinguish --json` | One domain's Constraint Support Graph as measured against a model: which distinctions were probed and how well each survived pressure framing. |
 | `distinction_diff` | `distinction_diff.schema.json` | `diff_distinction_reports()`, `contradish compare --distinctions` / `--baseline-distinctions`/`--candidate-distinctions` | A baseline-vs-candidate diff of two distinction reports, flagging distinctions that newly collapsed. |
+| `policy_contract` | `policy_contract.schema.json` | `PolicyContract.to_dict()`; hand-written contract files (`contradish contract lint/run`) | The evaluation contract for a policy-grounded assistant: identified clauses, decision cases with meaning-preserving variants and warranted outcomes, and amendments declaring exactly which outcomes change. |
+| `contract_result` | `contract_result.schema.json` | `ContractResult.to_dict()`, `contradish contract run --json` | Obligation values (semantic invariance, policy grounding, warranted change) against thresholds, per-state labels, per-amendment transition verdicts, failures attributed to clauses. |
 | `transition_contract` | `transition_contract.schema.json` | `TransitionContract.to_dict()` (`transition_derivation.py`) | One scenario pair's automatically-derived warranted-transition judgment(s): which commitments are warranted to change, the correct new content, and confidence -- the spec `decision_relevance.py`/`minimal_intervention_delta.py` otherwise require a human to hand-author. |
 
 Each document is self-contained (its own `$id`, `$defs`, and `additionalProperties: true`
@@ -43,7 +45,7 @@ Every payload carries a `schema_version` field as `"<major>.<minor>"`.
 - A **major** version bump is the only kind of change allowed to remove
   or repurpose an existing field.
 
-All three schemas ship today at `1.0`.
+All five schemas ship today at `1.0`.
 
 ## Using these schemas
 
@@ -53,7 +55,7 @@ without you needing to read them off disk yourself:
 ```python
 from contradish.schema import list_schemas, load_schema, validate_against_schema
 
-list_schemas()                       # ["distinction_diff", "distinction_report", "transition_contract"]
+list_schemas()                       # ["contract_result", "distinction_diff", "distinction_report", "policy_contract", "transition_contract"]
 load_schema("distinction_report")    # the parsed JSON Schema document
 validate_against_schema(payload, "distinction_report")   # [] if valid, else error strings
 ```

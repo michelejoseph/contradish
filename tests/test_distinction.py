@@ -22,7 +22,8 @@ from contradish.distinction import (
 # ── BUILTIN_DISTINCTION_PAIRS structural sanity ─────────────────────────────
 
 def test_builtin_pairs_cover_medication_and_immigration():
-    assert set(BUILTIN_DISTINCTION_PAIRS) == {"medication", "immigration"}
+    # scriptural_ethics was added as a third built-in domain (CHANGELOG 1.x).
+    assert {"medication", "immigration"} <= set(BUILTIN_DISTINCTION_PAIRS)
     for domain, pairs in BUILTIN_DISTINCTION_PAIRS.items():
         assert len(pairs) >= 3, f"{domain} should ship at least 3 distinction pairs"
 

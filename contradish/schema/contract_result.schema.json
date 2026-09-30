@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contradish.com/schema/contract-result/1.0.json",
+  "title": "Contradish Policy Contract Result",
+  "description": "The result of evaluating an assistant against a policy_contract (ContractResult.to_dict(), `contradish contract run --json`): per-obligation values against thresholds, per-state case labels, per-amendment transition verdicts (warranted_change / held / rigidity / drift / misdirected / indeterminate), and failures attributed back to policy clauses.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "contract_id",
+    "passed",
+    "obligations",
+    "states",
+    "transitions"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
+    "contract_id": {
+      "type": "string"
+    },
+    "domain": {
+      "type": "string"
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "obligations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "value",
+          "threshold",
+          "passed"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "semantic_invariance",
+              "policy_grounding",
+              "warranted_change"
+            ]
+          },
+          "scope": {
+            "type": "string"
+          },
+          "value": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "threshold": {
+            "type": "number"
+          },
+          "passed": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "states": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "state",
+          "cases"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "state": {
+            "type": "string"
+          },
+          "invariance_rate": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "grounding_rate": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "cases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "case_id",
+                "expected",
+                "labels"
+              ],
+              "additionalProperties": true,
+              "properties": {
+                "case_id": {
+                  "type": "string"
+                },
+                "expected": {
+                  "type": "string"
+                },
+                "labels": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "invariant": {
+                  "type": "boolean"
+                },
+                "grounded": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "transitions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "amendment_id",
+          "passed",
+          "per_case"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "amendment_id": {
+            "type": "string"
+          },
+          "meaning_preserving": {
+            "type": "boolean"
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "per_case": {
+            "type": "object",
+            "additionalProperties": {
+              "enum": [
+                "warranted_change",
+                "held",
+                "rigidity",
+                "drift",
+                "misdirected",
+                "indeterminate"
+              ]
+            }
+          },
+          "before": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "after": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "unanchored": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "minimal_delta": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "by_clause": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "lint": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  }
+}

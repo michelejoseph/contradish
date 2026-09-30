@@ -4,6 +4,79 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.53.0] - 2026-09-30
+
+### Added
+
+- **The policy evaluation contract** (`contradish/contract.py`,
+  `contradish contract lint|show|run`). contradish's two measurements --
+  semantic invariance (CAI Strain) and warranted behavioral change
+  (`contradish update`) -- previously took different inputs and answered
+  separately. For a policy-grounded assistant they are one requirement:
+  behavior must be a function of the policy-relevant content of the
+  situation. A `PolicyContract` declares the policy as identified clauses,
+  decision cases (clauses cited, canonical question, meaning-preserving
+  variants, warranted outcome from a declared vocabulary), and amendments
+  (clause edits plus the exact cases whose warranted outcome changes). Three
+  obligations are checked together: **SI** semantic invariance (one outcome
+  per equivalence class, under every policy state), **PG** policy grounding
+  (that outcome is the warranted one), **WC** warranted change (each
+  amendment changes exactly the declared cases to the declared outcomes;
+  per-case verdicts `warranted_change` / `held` / `rigidity` / `drift` /
+  `misdirected` / `indeterminate`). WC is scored with the existing
+  `intervention_delta_spec` / `score_dependency_structure` /
+  `score_minimal_delta` core, not new math. Meaning-preserving amendments
+  (`meaning_preserving: true`) are controls: any change they cause is drift,
+  which extends invariance from paraphrases of the user's input to
+  paraphrases of the policy itself. Failures are attributed back to clauses.
+  `run` exits nonzero when an obligation is under threshold (default 1.0),
+  so it works as a CI gate.
+- **Contract linter** (`PolicyContract.lint()`, `contradish contract lint`):
+  static checks with no API calls -- unknown clauses/outcomes, declared
+  changes that aren't changes (E007), expected changes not traceable to a
+  clause the amendment touched (W104), cases citing an amended clause whose
+  scope was never reviewed (W103), uncited clauses (W101), thin variant sets
+  (W102), meaning-preserving amendments that declare changes (E013).
+- **Built-in contract** `ecommerce_returns` (5 clauses, 9 cases, 29
+  variants, 3 amendments + 1 control), shipped as JSON in the package and
+  mirrored as `examples/contracts/ecommerce_returns.yaml`. It extends the
+  NIST AI 200-2 comment's 30-to-45-day refund-window example into a full
+  contract.
+- **Schemas** `policy_contract` and `contract_result` (JSON Schema 2020-12,
+  `1.0`), registered in `contradish.schema`.
+- `evaluate_contract()` scores labelled observations from any source (hand
+  labels, replayed logs) with no model calls; `run_contract()` probes and
+  scores; `PolicyContract.to_intervention_cases()` bridges amendments to
+  `contradish update`.
+
+### Changed
+
+- README and package description now lead with the evaluation contract;
+  CAI Strain, truth scoring, and `contradish update` are presented as the
+  instruments behind SI, PG, and WC respectively. Nothing was removed.
+
+### Fixed
+
+- `contradish.__version__` read `1.50.0` while `pyproject.toml` read
+  `1.52.0` (the 1.51.0/1.52.0 bumps missed `__init__.py`);
+  `tests/test_packaging.py` caught it. Both now `1.53.0`.
+- `tests/test_schema.py` still expected two published schemas after 1.52.0
+  added a third; `tests/test_distinction.py` still expected exactly two
+  built-in distinction domains after `scriptural_ethics` was added.
+
+### Verification
+
+- `tests/test_contract.py`: 34 tests, all passing, no API key (rule-based
+  stand-in assistants that are faithful, rigid, drifting, pressure-sensitive,
+  and misdirecting; each fails exactly the obligation it should).
+- Full suite under Python 3.11: 1608 passed, 28 failed, 2 skipped. All 28
+  failures predate this change: 22 are `anthropic`/`openai` SDKs not being
+  installed in the verification environment, and 6 are `_FakeLLM` test doubles
+  in `test_distinction.py`/`test_resolution.py`/`test_rate_distortion.py`
+  lacking the `_client` attribute that `distinction.py`'s default judges
+  read directly. Those 6 are real, unfixed, and out of scope here.
+- Not yet run against a live model.
+
 ## [1.52.0] - 2026-09-25
 
 ### Added

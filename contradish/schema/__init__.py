@@ -20,7 +20,7 @@ internal detail of DistinctionLossMap.to_dict() and
 diff_distinction_reports(). See contradish/schema/README.md for the full
 rationale and the versioning policy.
 
-Three schemas ship today:
+Five schemas ship today:
 
     distinction_report   the shape of `DistinctionLossMap.to_dict()`, i.e.
                           what `contradish distinguish --json` writes: one
@@ -41,10 +41,20 @@ Three schemas ship today:
                           so an independently produced contract for the same
                           pair can be compared to contradish's own.
 
+    policy_contract      the evaluation contract for a policy-grounded
+                          assistant (contract.py, `contradish contract`):
+                          clauses, decision cases with meaning-preserving
+                          variants, and amendments with their declared
+                          warranted changes.
+
+    contract_result      the shape of `ContractResult.to_dict()` /
+                          `contradish contract run --json`: obligation
+                          values, per-state labels, per-amendment verdicts.
+
 Usage:
     from contradish.schema import list_schemas, load_schema, validate_against_schema
 
-    list_schemas()                                          # ["distinction_diff", "distinction_report", "transition_contract"]
+    list_schemas()                                          # ["contract_result", "distinction_diff", "distinction_report", "policy_contract", "transition_contract"]
     load_schema("distinction_report")                       # parsed JSON Schema document (stdlib only)
     validate_against_schema(payload, "distinction_report")   # [] if valid, else error strings
                                                               # (requires the optional jsonschema package)
@@ -67,6 +77,8 @@ _SCHEMA_FILES = {
     "distinction_report":   "distinction_report.schema.json",
     "distinction_diff":     "distinction_diff.schema.json",
     "transition_contract":  "transition_contract.schema.json",
+    "policy_contract":      "policy_contract.schema.json",
+    "contract_result":      "contract_result.schema.json",
 }
 
 

@@ -30,8 +30,11 @@ from contradish.schema import list_schemas, load_schema, validate_against_schema
 
 # ── list_schemas() / load_schema() ─────────────────────────────────────────
 
-def test_list_schemas_returns_both_published_schemas():
-    assert list_schemas() == ["distinction_diff", "distinction_report"]
+def test_list_schemas_returns_every_published_schema():
+    assert list_schemas() == [
+        "contract_result", "distinction_diff", "distinction_report",
+        "policy_contract", "transition_contract",
+    ]
 
 
 def test_load_schema_returns_the_matching_document():

@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "contradish"
-version = "1.52.0"
-description = "Semantic invariance testing (paraphrase robustness testing) for LLMs. Tells you what's actually wrong with your LLM, not just that something is. Findings layer mines every run for the one specific surprise: root-cause clusters, rigidity vs drift, the cases where your model gave both the right and the wrong answer to the same question. Plus: Judgment Strain (two-sided), the one-command repair loop, and per-case equivalence audit. CAI-Bench v2: 20 domains, 2,160 strain tests."
+version = "1.53.0"
+description = "An evaluation contract for policy-grounded assistants: semantic invariance (same meaning, same policy outcome), policy grounding (the outcome the policy warrants), and warranted behavioral change (when the policy changes, change exactly what it licenses: no drift, no rigidity). Declarative contracts, a linter, a CI gate, and the CAI-Bench semantic invariance benchmark (20 domains)."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-keywords = ["llm", "testing", "evaluation", "cai", "benchmark", "consistency", "semantic-invariance", "paraphrase-robustness", "paraphrase-invariance", "ai", "agents", "rag", "regression", "firewall", "prompt-engineering", "policy", "ecommerce", "hr", "healthcare", "legal", "finance", "saas", "insurance", "education", "fingerprinting", "travel", "mental-health", "government", "automotive", "real-estate", "medication", "telecommunications", "employment", "immigration", "food-delivery", "financial-planning"]
+keywords = ["llm", "testing", "evaluation", "evaluation-contract", "policy-grounded", "warranted-change", "behavioral-update", "cai", "benchmark", "consistency", "semantic-invariance", "paraphrase-robustness", "paraphrase-invariance", "ai", "agents", "rag", "regression", "firewall", "prompt-engineering", "policy", "ecommerce", "hr", "healthcare", "legal", "finance", "saas", "insurance", "education", "fingerprinting", "travel", "mental-health", "government", "automotive", "real-estate", "medication", "telecommunications", "employment", "immigration", "food-delivery", "financial-planning"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",

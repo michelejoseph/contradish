@@ -1,11 +1,26 @@
 """
-contradish: CAI Strain testing for LLM applications.
+contradish: an evaluation contract for policy-grounded assistants.
+
+A policy-grounded assistant must (1) give the same policy outcome to every
+rewording of the same situation -- semantic invariance -- and (2) change its
+outcome when, and only when, the governing policy changes in a way that
+warrants it -- warranted behavioral change. `PolicyContract` states both,
+plus policy grounding, as one declarative, checkable contract
+(`contradish contract lint|show|run`; see contradish/contract.py). The
+instruments below measure each obligation on its own.
+
+CAI Strain testing for LLM applications.
 
 Detects CAI failures: when your app gives contradictory answers to semantically
 equivalent inputs. ML literature calls this drift; contradish names and scores it.
 Returns CAI Strain per rule (0-1, lower = more consistent).
 
 Tools:
+    PolicyContract    -- the evaluation contract: clauses, decision cases
+                           with meaning-preserving variants, amendments with
+                           declared warranted changes; run_contract() checks
+                           semantic invariance, policy grounding, and
+                           warranted change together (contradish contract)
     Suite             -- offline CAI Strain testing (run before deploy)
     RegressionSuite   -- compare baseline vs candidate for CI/CD gates
     Firewall          -- real-time contradiction detection in production
@@ -188,6 +203,12 @@ from .intervention_probe import (
     InterventionCase, default_change_judge, default_effect_judge,
     probe_intervention, probe_interventions, BUILTIN_INTERVENTIONS,
 )
+from .contract import (
+    PolicyContract, Clause, DecisionCase, Amendment, Thresholds, LintIssue,
+    ContractResult, TransitionResult, Obligation,
+    run_contract, evaluate_contract, default_outcome_classifier,
+    load_builtin_contract, list_builtin_contracts,
+)
 from .decision_boundary import (
     BoundaryLadder, illustrative_ladder,
     BoundaryRecoveryResult, recover_boundary_from_observations, recover_boundary_via_binary_search,
@@ -274,7 +295,7 @@ from .domains      import (
 from .conviction   import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .cdr          import generate_cdr
 
-__version__ = "1.50.0"
+__version__ = "1.53.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -423,6 +444,20 @@ __all__ = [
     "probe_intervention",
     "probe_interventions",
     "BUILTIN_INTERVENTIONS",
+    "PolicyContract",
+    "Clause",
+    "DecisionCase",
+    "Amendment",
+    "Thresholds",
+    "LintIssue",
+    "ContractResult",
+    "TransitionResult",
+    "Obligation",
+    "run_contract",
+    "evaluate_contract",
+    "default_outcome_classifier",
+    "load_builtin_contract",
+    "list_builtin_contracts",
     "BoundaryLadder",
     "illustrative_ladder",
     "BoundaryRecoveryResult",

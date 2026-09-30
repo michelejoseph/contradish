@@ -1,0 +1,228 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contradish.com/schema/policy-contract/1.0.json",
+  "title": "Contradish Policy Evaluation Contract",
+  "description": "A declarative evaluation contract for a policy-grounded assistant (contradish/contract.py). A policy is a list of identified clauses; each decision case names the clauses it depends on, a canonical question, meaning-preserving variants of it, and the outcome the policy warrants. Each amendment edits clauses and declares which cases' warranted outcomes change and to what. Three obligations follow: semantic invariance (every variant of a case gets the same outcome, under every policy state), policy grounding (that outcome is the warranted one), and warranted change (an amendment changes exactly the declared cases, to the declared outcomes -- no drift, no rigidity, no misdirection).",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "contract_id",
+    "policy",
+    "outcomes",
+    "cases"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Schema version as \"<major>.<minor>\"."
+    },
+    "contract_id": {
+      "type": "string",
+      "description": "Identifier for this contract."
+    },
+    "domain": {
+      "type": "string",
+      "description": "Governing domain, e.g. \"ecommerce\" or \"benefits\"."
+    },
+    "title": {
+      "type": "string"
+    },
+    "preamble": {
+      "type": "string",
+      "description": "Text placed before the rendered policy in the assistant's system prompt."
+    },
+    "policy": {
+      "description": "The base policy: a list of {id, text} clauses, or a {clause_id: text} mapping.",
+      "oneOf": [
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/clause"
+          }
+        },
+        {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "outcomes": {
+      "description": "Outcome vocabulary: {label: description}, or a list of labels. The label \"unclear\" is reserved.",
+      "oneOf": [
+        {
+          "type": "object",
+          "minProperties": 2,
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/case"
+      }
+    },
+    "amendments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/amendment"
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "invariance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Per policy state: minimum fraction of cases whose every input committed to the same outcome."
+        },
+        "grounding": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Per policy state: minimum fraction of inputs whose outcome equals the warranted one."
+        },
+        "warranted_change": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum fraction of amendments whose behavioral delta was exact."
+        }
+      }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "clause": {
+      "type": "object",
+      "required": [
+        "id",
+        "text"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    },
+    "case": {
+      "type": "object",
+      "required": [
+        "id",
+        "clauses",
+        "question",
+        "expected"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "clauses": {
+          "description": "Ids of the clauses this decision depends on.",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "question": {
+          "type": "string",
+          "description": "Canonical phrasing of the decision."
+        },
+        "variants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Meaning-preserving rewrites of question: same policy-relevant facts, different wording, framing, or pressure."
+        },
+        "expected": {
+          "type": "string",
+          "description": "Outcome label the base policy warrants."
+        },
+        "outcomes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional subset of the outcome vocabulary the classifier chooses between for this case."
+        }
+      }
+    },
+    "amendment": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "set_clauses": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "{clause_id: new_text}; an unknown id adds a clause."
+        },
+        "remove_clauses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expected_changes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "{case_id: new_outcome}. Every case not listed is warranted to keep its base outcome."
+        },
+        "reviewed_invariant": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Cases citing an amended clause whose outcome the author checked does not change."
+        },
+        "meaning_preserving": {
+          "type": "boolean",
+          "description": "A control amendment that rewords the policy without changing what it permits; must declare no expected_changes."
+        }
+      }
+    }
+  }
+}

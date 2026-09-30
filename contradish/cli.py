@@ -1368,6 +1368,122 @@ def cmd_update(args):
     sys.exit(0)
 
 
+def _load_contract_arg(path):
+    """A contract file path, or a built-in contract name, or the default demo."""
+    from contradish.contract import (
+        PolicyContract, list_builtin_contracts, load_builtin_contract,
+    )
+    if not path:
+        return load_builtin_contract("ecommerce_returns"), "built-in: ecommerce_returns"
+    if not os.path.exists(path) and path in list_builtin_contracts():
+        return load_builtin_contract(path), f"built-in: {path}"
+    return PolicyContract.load(path), path
+
+
+def cmd_contract(args):
+    """
+    The policy evaluation contract: semantic invariance and warranted
+    behavioral change, checked together against one declared policy. See
+    contradish/contract.py.
+
+      contradish contract lint [FILE]     static checks, no API calls
+      contradish contract show [FILE]     print the contract's rendered policy states
+      contradish contract run  [FILE]     probe an assistant and score every obligation
+
+    FILE is a .yaml/.json contract or a built-in contract name; omitted, the
+    built-in ecommerce_returns contract is used. --app takes
+    (system_prompt, question), the same convention as `contradish update`,
+    because the contract varies the governing policy itself.
+    """
+    from contradish.contract import run_contract, default_outcome_classifier
+
+    action = args.contract_action
+    use_json = getattr(args, "json", False)
+
+    try:
+        contract, source = _load_contract_arg(args.file)
+    except (OSError, ValueError, KeyError) as e:
+        print(f"\n  could not load contract: {e}\n")
+        sys.exit(2)
+
+    if action == "lint":
+        issues = contract.lint()
+        errors = [i for i in issues if i.level == "error"]
+        warnings = [i for i in issues if i.level == "warning"]
+        if use_json:
+            print(json.dumps({
+                "contract_id": contract.contract_id,
+                "ok": not errors,
+                "issues": [i.to_dict() for i in issues],
+            }, indent=2))
+        else:
+            print()
+            print(f"  {contract.contract_id}  ({source})")
+            print(f"  {len(contract.clauses)} clauses  *  {len(contract.cases)} cases  *  "
+                  f"{sum(len(c.variants) for c in contract.cases)} variants  *  "
+                  f"{len(contract.amendments)} amendments")
+            print()
+            for i in issues:
+                print(f"  {i}")
+            print()
+            print(f"  {len(errors)} error(s), {len(warnings)} warning(s)")
+            print()
+        if errors or (getattr(args, "strict", False) and warnings):
+            sys.exit(1)
+        sys.exit(0)
+
+    if action == "show":
+        for state in contract.states():
+            print()
+            print(f"  --- policy state: {state} ---")
+            print(contract.policy_text(state))
+        print()
+        sys.exit(0)
+
+    # run
+    _check_api_key()
+    from contradish.llm import LLMClient
+
+    if args.app:
+        model_fn = _load_callable(args.app)
+        mode_label = "your app"
+    else:
+        llm_for_app = LLMClient()
+        model_fn = _demo_update_model_fn(llm_for_app)
+        mode_label = f"demo mode: {llm_for_app.provider}"
+
+    amendment_variants = not getattr(args, "canonical_after_amendment", False)
+    n_inputs = sum(len(c.inputs()) for c in contract.cases)
+    n_after = sum(len(c.inputs(amendment_variants)) for c in contract.cases) * len(contract.amendments)
+    if not use_json:
+        print()
+        print(f"  {contract.contract_id}  ({source})  *  {n_inputs + n_after} probes  ({mode_label})")
+
+    try:
+        result = run_contract(
+            contract, model_fn, default_outcome_classifier(LLMClient()),
+            amendment_variants=amendment_variants,
+            workers=args.workers,
+            strict_lint=not getattr(args, "allow_lint_errors", False),
+        )
+    except ValueError as e:
+        print(f"\n  {e}\n")
+        sys.exit(2)
+
+    if args.output:
+        with open(args.output, "w", encoding="utf-8") as f:
+            json.dump(result.to_dict(), f, indent=2)
+
+    if use_json:
+        print(json.dumps(result.to_dict(include_observations=False), indent=2))
+    else:
+        print(result.report())
+        if args.output:
+            print(f"  full result (with every answer) -> {args.output}\n")
+
+    sys.exit(0 if result.passed else 1)
+
+
 def cmd_replay(args):
     """
     Replay logged conversation transcripts through the memory-aware
@@ -2494,6 +2610,10 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 examples:
+  # the policy evaluation contract: invariance + grounding + warranted change
+  contradish contract lint my_contract.yaml
+  contradish contract run  my_contract.yaml --app mymodule:app
+
   # run a prebuilt policy pack, no system prompt needed
   contradish --policy ecommerce --app mymodule:my_app
   contradish --policy hr --app mymodule:my_app --report
@@ -2994,6 +3114,57 @@ examples:
     # project's NIST AI 200-2 comment letter calls Behavioral Update
     # Fidelity -- see contradish/minimal_intervention_delta.py and
     # contradish/intervention_probe.py for the full method.
+    # contradish contract -- the policy evaluation contract
+    con_p = sub.add_parser(
+        "contract",
+        help="Check a policy-grounded assistant against its evaluation contract: "
+             "semantic invariance + policy grounding + warranted change.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=(
+            "The policy evaluation contract. A contract declares a policy as "
+            "identified clauses, decision cases (each with meaning-preserving "
+            "variants and the outcome the policy warrants), and amendments (each "
+            "with the exact cases whose warranted outcome changes). Three "
+            "obligations are checked:\n\n"
+            "  SI  semantic invariance  same meaning -> same outcome, under every policy state\n"
+            "  PG  policy grounding     that outcome is the one the policy warrants\n"
+            "  WC  warranted change     an amendment changes exactly the declared cases,\n"
+            "                           to the declared outcomes (no drift, no rigidity,\n"
+            "                           no misdirection)\n\n"
+            "  contradish contract lint my_contract.yaml\n"
+            "  contradish contract show my_contract.yaml\n"
+            "  contradish contract run  my_contract.yaml --app mymodule:app\n"
+            "  contradish contract run                      # built-in demo contract\n\n"
+            "--app takes (system_prompt, question): the contract renders each policy "
+            "state into the system prompt itself. Exit status is nonzero when any "
+            "obligation is below its threshold, so `run` works as a CI gate."
+        ),
+    )
+    con_p.add_argument("contract_action", choices=["lint", "show", "run"],
+                       help="lint: static checks, no API calls. show: print each policy "
+                            "state. run: probe and score.")
+    con_p.add_argument("file", nargs="?", default=None,
+                       help="Contract file (.yaml/.json) or built-in contract name. "
+                            "Default: the built-in ecommerce_returns contract.")
+    con_p.add_argument("--app", metavar="MODULE:FUNCTION", default=None,
+                       help="Your assistant, taking (system_prompt, question). If omitted, "
+                            "runs the configured LLM in demo mode.")
+    con_p.add_argument("--canonical-after-amendment", action="store_true", default=False,
+                       dest="canonical_after_amendment",
+                       help="Under amended policies ask only canonical questions (WC fully "
+                            "measured; SI/PG only under the base policy). Fewer calls.")
+    con_p.add_argument("--workers", type=int, default=4, metavar="N",
+                       help="Parallel probes (default 4).")
+    con_p.add_argument("--output", metavar="FILE", default=None,
+                       help="Write the full result, including every answer, as JSON.")
+    con_p.add_argument("--allow-lint-errors", action="store_true", default=False,
+                       dest="allow_lint_errors",
+                       help="Run even if the contract has lint errors.")
+    con_p.add_argument("--strict", action="store_true", default=False,
+                       help="lint: exit nonzero on warnings too.")
+    con_p.add_argument("--json", action="store_true", default=False,
+                       help="Output as JSON.")
+
     upd_p = sub.add_parser(
         "update",
         help="Measure warranted behavioral updating: given new governing "
@@ -3325,6 +3496,8 @@ examples:
         cmd_chain_distinguish(args)
     elif args.command == "update":
         cmd_update(args)
+    elif args.command == "contract":
+        cmd_contract(args)
     elif args.command == "analyze":
         cmd_quick(args)
     elif args.command == "calibrate":
