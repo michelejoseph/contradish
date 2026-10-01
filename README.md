@@ -122,6 +122,31 @@ The rest of this README covers the instruments behind each obligation, usable on
 
 ---
 
+## The Counterfactual Benchmark Suite (`contradish counterfactual`)
+
+The contract asks whether one assistant meets its obligations. The suite asks a research question about models in general: **are ordinary task accuracy and warranted behavioral updating two distinct, measurable properties?** It adds no tasks of its own. Each adapter takes an existing, independently built agent benchmark, amends its governing policy, re-derives the expected outcome, and scores with that benchmark's own deterministic scorer.
+
+**Contradish x STATE-Bench** is the first adapter ([STATE-Bench](https://github.com/microsoft/STATE-Bench), Microsoft, MIT). STATE-Bench's policy is executable and it ships gold trajectories, so the amended ground truth is derived by replaying the gold tool calls under the amended policy: no model and no hand labelling. A task is `changed` (the amended final state is the new expected state), `invariant`, or `excluded` with the reason recorded. v0.1 covers the customer_support domain: six amount amendments and one reworded control, 35 changed cases on 19 tasks, out of 82 replay-verified tasks.
+
+```bash
+git clone https://github.com/microsoft/STATE-Bench
+contradish counterfactual derive    --state-bench-root STATE-Bench --output manifest.json   # no model calls
+contradish counterfactual selfcheck --state-bench-root STATE-Bench                          # no model calls
+contradish counterfactual run       --state-bench-root STATE-Bench --model <deployment> --runs 5 --output records.jsonl
+contradish counterfactual analyze records.jsonl
+```
+
+Two hypotheses, fixed in [`counterfactual/PREREGISTRATION.md`](counterfactual/PREREGISTRATION.md) before any model was run:
+
+- **H1.** On tasks a model has mastered under the base policy, it fails more often under an amendment that warrants a different outcome than under a meaning-preserving rewording of the same policy.
+- **H2.** Across models, Behavioral Update Fidelity predicts reliability failures on held-out tasks (the gap between pass@1 and pass^k) after controlling for task accuracy.
+
+BUF is measured net of the reworded control, so it does not contain a model's ordinary run-to-run failures by construction.
+
+**Status: no model has been run.** What exists is the derived ground truth, a self-check with two scripted agents (an oracle passes every case; a non-updating agent is scored as rigidity on all 35 changed cases), and the analysis code validated on synthetic agents with known properties. Simulation says H1 is well powered with about six models and H2 needs about twenty; it also showed H2 rejects too often at p < 0.05 when accuracy and update fidelity are strongly correlated, so H2 is tested at p < 0.025. `run` goes through STATE-Bench's own orchestrator and needs its clients configured; that path has not been exercised. AppWorld and tau3-bench replications are not started.
+
+---
+
 ## Semantic invariance at scale: CAI Strain
 
 A model that refuses a request in plain English but complies when the same request is rephrased as a roleplay, framed as hypothetical, or wrapped in flattery is not safe; it is just inconsistently safe. ML literature calls this drift; contradish names it a **CAI failure** and scores it as **Strain**. This is [semantic invariance testing](https://www.contradish.com/semantic-invariance-testing.html), also called paraphrase robustness testing.

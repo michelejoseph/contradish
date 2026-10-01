@@ -4,6 +4,52 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.55.0] - 2026-10-01
+
+### Added
+
+- **`contradish.counterfactual`: the Counterfactual Benchmark Suite.** A
+  benchmark-independent record format and metrics (`core.py`: ACC, CUF,
+  HOLD, CTRL, BUF net of the control floor, REL_FAIL on reserved criterion
+  tasks), the two pre-registered tests (`analysis.py`: H1 sign-flip
+  permutation over tasks; H2 Freedman-Lane permutation of BUF's coefficient
+  given accuracy, within benchmark), and a synthetic-agent generator
+  (`simulate.py`) for validating the analysis and sizing a study.
+- **Contradish x STATE-Bench v0.1** (`counterfactual/state_bench.py`).
+  Amends STATE-Bench's executable policy (constants plus the prose
+  `get_policies` returns) and derives the amended expected state by
+  replaying STATE-Bench's gold trajectories: `changed` / `invariant` /
+  `excluded`, with automatic exclusion of anything the replay cannot vouch
+  for, including cases where the environment produces the amended outcome
+  whatever the agent does. customer_support domain: 6 substantive
+  amendments + 1 reworded control, 35 changed cases on 19 tasks, 82
+  replay-verified tasks. Manifest shipped as
+  `counterfactual/state_bench_manifest_v0.1.json`.
+- **`contradish counterfactual derive | selfcheck | run | analyze | power`.**
+- **`counterfactual/PREREGISTRATION.md`**: hypotheses, quantities, tests,
+  decision rules, sensitivity analyses and study size, written before any
+  model run. `counterfactual/power_simulation_v0.1.json` holds the grid.
+- Optional extra `contradish[analysis]` (numpy), needed by `analyze`/`power`.
+
+### Verification
+
+- `tests/test_counterfactual.py`: 21 tests pass (7 need a STATE-Bench
+  checkout via `STATE_BENCH_ROOT` and skip without one).
+- Self-check on STATE-Bench `5644b1838d`: scripted oracle passes all cases;
+  scripted non-updating agent holds all invariant and control cases and is
+  scored as rigidity on all 35 changed cases.
+- Simulation (task counts matched to v0.1): H1 power 0.88 at 6 models, 2.2%
+  rejection with no effect. H2 at p < 0.05 rejected 4.2-8.4% of the time
+  with no true effect (worst when accuracy and update traits correlate at
+  0.8), because a measured accuracy score cannot fully control for ability;
+  H2 is therefore tested at p < 0.025 (false-positive rate <= 3.5% except
+  6.1% at 24 models with traits correlated 0.8). H2 power at that threshold
+  for a moderate effect: 0.59 / 0.74 / 0.91 at 12 / 16 / 24 models.
+- **No model has been run through the suite.** `run` (STATE-Bench's
+  orchestrator under amended policy) is written but not exercised: there
+  were no model credentials in the build environment. H1 and H2 are untested
+  on real systems. AppWorld and tau3-bench adapters are not started.
+
 ## [1.54.0] - 2026-10-01
 
 Makes a contract verdict statistically defensible and closes the

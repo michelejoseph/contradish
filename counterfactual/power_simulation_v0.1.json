@@ -1,0 +1,507 @@
+{
+ "note": "Synthetic agents with known properties; task counts matched to Contradish x STATE-Bench v0.1. Not an empirical result.",
+ "grid_alpha_0.05_400_sims": [
+  {
+   "n_models": 6,
+   "gamma": 0.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.935,
+   "h2_reject_rate": 0.060759493670886074
+  },
+  {
+   "n_models": 8,
+   "gamma": 0.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.9775,
+   "h2_reject_rate": 0.0675
+  },
+  {
+   "n_models": 12,
+   "gamma": 0.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.9925,
+   "h2_reject_rate": 0.06
+  },
+  {
+   "n_models": 16,
+   "gamma": 0.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 1.0,
+   "h2_reject_rate": 0.0575
+  },
+  {
+   "n_models": 24,
+   "gamma": 0.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 1.0,
+   "h2_reject_rate": 0.07
+  },
+  {
+   "n_models": 6,
+   "gamma": 0.0,
+   "rho": 0.8,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.91,
+   "h2_reject_rate": 0.0583756345177665
+  },
+  {
+   "n_models": 8,
+   "gamma": 0.0,
+   "rho": 0.8,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.9675,
+   "h2_reject_rate": 0.055
+  },
+  {
+   "n_models": 12,
+   "gamma": 0.0,
+   "rho": 0.8,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.99,
+   "h2_reject_rate": 0.07
+  },
+  {
+   "n_models": 16,
+   "gamma": 0.0,
+   "rho": 0.8,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 1.0,
+   "h2_reject_rate": 0.07
+  },
+  {
+   "n_models": 24,
+   "gamma": 0.0,
+   "rho": 0.8,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 1.0,
+   "h2_reject_rate": 0.0575
+  },
+  {
+   "n_models": 6,
+   "gamma": 0.5,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.9175,
+   "h2_reject_rate": 0.232
+  },
+  {
+   "n_models": 8,
+   "gamma": 0.5,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.9625,
+   "h2_reject_rate": 0.3065326633165829
+  },
+  {
+   "n_models": 12,
+   "gamma": 0.5,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.99,
+   "h2_reject_rate": 0.4925
+  },
+  {
+   "n_models": 16,
+   "gamma": 0.5,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 1.0,
+   "h2_reject_rate": 0.6025
+  },
+  {
+   "n_models": 24,
+   "gamma": 0.5,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 1.0,
+   "h2_reject_rate": 0.79
+  },
+  {
+   "n_models": 6,
+   "gamma": 1.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.8796992481203008,
+   "h2_reject_rate": 0.3253731343283582
+  },
+  {
+   "n_models": 8,
+   "gamma": 1.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.945,
+   "h2_reject_rate": 0.47341772151898737
+  },
+  {
+   "n_models": 12,
+   "gamma": 1.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.9875,
+   "h2_reject_rate": 0.7025
+  },
+  {
+   "n_models": 16,
+   "gamma": 1.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.995,
+   "h2_reject_rate": 0.8275
+  },
+  {
+   "n_models": 24,
+   "gamma": 1.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 1.0,
+   "h2_reject_rate": 0.9375
+  },
+  {
+   "n_models": 6,
+   "gamma": 1.5,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.84,
+   "h2_reject_rate": 0.322463768115942
+  },
+  {
+   "n_models": 8,
+   "gamma": 1.5,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.9125,
+   "h2_reject_rate": 0.5103626943005182
+  },
+  {
+   "n_models": 12,
+   "gamma": 1.5,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.9725,
+   "h2_reject_rate": 0.73
+  },
+  {
+   "n_models": 16,
+   "gamma": 1.5,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.9925,
+   "h2_reject_rate": 0.8675
+  },
+  {
+   "n_models": 24,
+   "gamma": 1.5,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": true,
+   "h1_reject_rate": 1.0,
+   "h2_reject_rate": 0.99
+  },
+  {
+   "n_models": 8,
+   "gamma": 0.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 400,
+   "update_hurdle": false,
+   "h1_reject_rate": 0.0225,
+   "h2_reject_rate": 0.05
+  }
+ ],
+ "false_positive_check_1000_sims": [
+  {
+   "n_models": 8,
+   "gamma": 0.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 1000,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.967,
+   "h2_reject_rate": 0.042042042042042045,
+   "alpha": 0.05
+  },
+  {
+   "n_models": 16,
+   "gamma": 0.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 1000,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.999,
+   "h2_reject_rate": 0.056,
+   "alpha": 0.05
+  },
+  {
+   "n_models": 8,
+   "gamma": 0.0,
+   "rho": 0.8,
+   "runs": 5,
+   "sims": 1000,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.948,
+   "h2_reject_rate": 0.052,
+   "alpha": 0.05
+  },
+  {
+   "n_models": 16,
+   "gamma": 0.0,
+   "rho": 0.8,
+   "runs": 5,
+   "sims": 1000,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.999,
+   "h2_reject_rate": 0.084,
+   "alpha": 0.05
+  },
+  {
+   "n_models": 8,
+   "gamma": 0.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 1000,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.961,
+   "h2_reject_rate": 0.03203203203203203,
+   "alpha": 0.04
+  },
+  {
+   "n_models": 16,
+   "gamma": 0.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 1000,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.998,
+   "h2_reject_rate": 0.041,
+   "alpha": 0.04
+  },
+  {
+   "n_models": 8,
+   "gamma": 0.0,
+   "rho": 0.8,
+   "runs": 5,
+   "sims": 1000,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.936,
+   "h2_reject_rate": 0.043,
+   "alpha": 0.04
+  },
+  {
+   "n_models": 16,
+   "gamma": 0.0,
+   "rho": 0.8,
+   "runs": 5,
+   "sims": 1000,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.999,
+   "h2_reject_rate": 0.074,
+   "alpha": 0.04
+  }
+ ],
+ "quadratic_accuracy_control_600_sims": [
+  {
+   "n_models": 16,
+   "gamma": 0.0,
+   "rho": 0.8,
+   "runs": 5,
+   "sims": 600,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.9966666666666667,
+   "h2_reject_rate": 0.056666666666666664,
+   "deg": 1
+  },
+  {
+   "n_models": 16,
+   "gamma": 0.0,
+   "rho": 0.8,
+   "runs": 5,
+   "sims": 600,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.9966666666666667,
+   "h2_reject_rate": 0.051666666666666666,
+   "deg": 2
+  },
+  {
+   "n_models": 24,
+   "gamma": 0.0,
+   "rho": 0.8,
+   "runs": 5,
+   "sims": 600,
+   "update_hurdle": true,
+   "h1_reject_rate": 1.0,
+   "h2_reject_rate": 0.07666666666666666,
+   "deg": 1
+  },
+  {
+   "n_models": 24,
+   "gamma": 0.0,
+   "rho": 0.8,
+   "runs": 5,
+   "sims": 600,
+   "update_hurdle": true,
+   "h1_reject_rate": 1.0,
+   "h2_reject_rate": 0.075,
+   "deg": 2
+  },
+  {
+   "n_models": 16,
+   "gamma": 1.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 600,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.9983333333333333,
+   "h2_reject_rate": 0.8266666666666667,
+   "deg": 1
+  },
+  {
+   "n_models": 16,
+   "gamma": 1.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 600,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.9983333333333333,
+   "h2_reject_rate": 0.7883333333333333,
+   "deg": 2
+  },
+  {
+   "n_models": 12,
+   "gamma": 0.0,
+   "rho": 0.8,
+   "runs": 5,
+   "sims": 600,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.9766666666666667,
+   "h2_reject_rate": 0.07,
+   "deg": 2
+  },
+  {
+   "n_models": 12,
+   "gamma": 1.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 600,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.9783333333333334,
+   "h2_reject_rate": 0.63,
+   "deg": 2
+  }
+ ],
+ "alpha_0.025_1000_sims": [
+  {
+   "n_models": 16,
+   "gamma": 0.0,
+   "rho": 0.8,
+   "runs": 5,
+   "sims": 1000,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.991,
+   "h2_reject_rate": 0.035
+  },
+  {
+   "n_models": 24,
+   "gamma": 0.0,
+   "rho": 0.8,
+   "runs": 5,
+   "sims": 1000,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.999,
+   "h2_reject_rate": 0.061
+  },
+  {
+   "n_models": 16,
+   "gamma": 1.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 1000,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.989,
+   "h2_reject_rate": 0.742
+  },
+  {
+   "n_models": 24,
+   "gamma": 1.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 1000,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.999,
+   "h2_reject_rate": 0.913
+  },
+  {
+   "n_models": 12,
+   "gamma": 1.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 1000,
+   "update_hurdle": true,
+   "h1_reject_rate": 0.971,
+   "h2_reject_rate": 0.585
+  },
+  {
+   "n_models": 24,
+   "gamma": 0.0,
+   "rho": 0.5,
+   "runs": 5,
+   "sims": 1000,
+   "update_hurdle": true,
+   "h1_reject_rate": 1.0,
+   "h2_reject_rate": 0.027
+  }
+ ]
+}

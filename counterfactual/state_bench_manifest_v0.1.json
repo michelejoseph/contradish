@@ -1,0 +1,6186 @@
+{
+ "suite": "contradish-x-state-bench",
+ "suite_version": "0.1",
+ "state_bench_commit": "5644b1838d96bc4483da29642d058ecaa6f80f7f",
+ "amendments": [
+  {
+   "id": "cs_restocking_fee_20",
+   "domain": "customer_support",
+   "description": "Restocking fee on opened electronics returned for changed_mind: 15% -> 20%.",
+   "constants": {
+    "RESTOCKING_FEE_PCT": 20
+   },
+   "text_edits": [
+    [
+     "15% restocking fee for opened electronics",
+     "20% restocking fee for opened electronics"
+    ]
+   ],
+   "control": false,
+   "counts": {
+    "changed": 11,
+    "invariant": 70,
+    "excluded": 1,
+    "changed_clean": 8,
+    "changed_rewritten": 3
+   },
+   "unmatched_text_edits": [],
+   "valid": true
+  },
+  {
+   "id": "cs_return_shipping_fee_12",
+   "domain": "customer_support",
+   "description": "Return shipping fee on low-value orders: $8 -> $12.",
+   "constants": {
+    "PAID_RETURN_SHIPPING_FEE": 12
+   },
+   "text_edits": [
+    [
+     "customer pays $8 return shipping fee",
+     "customer pays $12 return shipping fee"
+    ]
+   ],
+   "control": false,
+   "counts": {
+    "changed": 1,
+    "invariant": 77,
+    "excluded": 4,
+    "changed_clean": 1,
+    "changed_rewritten": 0
+   },
+   "unmatched_text_edits": [],
+   "valid": true
+  },
+  {
+   "id": "cs_repeat_surcharge_10",
+   "domain": "customer_support",
+   "description": "Repeat-category return surcharge: $5 -> $10 per additional return.",
+   "constants": {
+    "REPEAT_CATEGORY_SURCHARGE": 10
+   },
+   "text_edits": [
+    [
+     "$5 surcharge per additional return",
+     "$10 surcharge per additional return"
+    ]
+   ],
+   "control": false,
+   "counts": {
+    "changed": 2,
+    "invariant": 79,
+    "excluded": 1,
+    "changed_clean": 2,
+    "changed_rewritten": 0
+   },
+   "unmatched_text_edits": [],
+   "valid": true
+  },
+  {
+   "id": "cs_bulk_clawback_8",
+   "domain": "customer_support",
+   "description": "Bulk-discount clawback: $5 -> $8 per remaining item.",
+   "constants": {
+    "BULK_CLAWBACK_PER_ITEM": 8
+   },
+   "text_edits": [
+    [
+     "$5 per remaining item, deducted from the return refund",
+     "$8 per remaining item, deducted from the return refund"
+    ]
+   ],
+   "control": false,
+   "counts": {
+    "changed": 3,
+    "invariant": 78,
+    "excluded": 1,
+    "changed_clean": 3,
+    "changed_rewritten": 0
+   },
+   "unmatched_text_edits": [],
+   "valid": true
+  },
+  {
+   "id": "cs_control_reworded",
+   "domain": "customer_support",
+   "description": "Control: restocking-fee and return-shipping sentences reworded, nothing changed.",
+   "constants": {},
+   "text_edits": [
+    [
+     "15% restocking fee for opened electronics returned for changed_mind.",
+     "Opened electronics sent back because the customer changed their mind carry a restocking fee of 15%."
+    ],
+    [
+     "Orders with subtotal < $50: customer pays $8 return shipping fee.",
+     "When an order's subtotal is under $50, the customer is charged an $8 fee for return shipping."
+    ]
+   ],
+   "control": true,
+   "counts": {
+    "changed": 0,
+    "invariant": 82,
+    "excluded": 0,
+    "changed_clean": 0,
+    "changed_rewritten": 0
+   },
+   "unmatched_text_edits": [],
+   "valid": true
+  },
+  {
+   "id": "cs_shipping_clawback_12",
+   "domain": "customer_support",
+   "description": "Free-shipping clawback on returns that drop an order below the threshold: $8 -> $12.",
+   "constants": {
+    "STANDARD_SHIPPING_COST": 12
+   },
+   "text_edits": [
+    [
+     "$8 standard shipping fee is deducted from the return refund",
+     "$12 standard shipping fee is deducted from the return refund"
+    ]
+   ],
+   "control": false,
+   "counts": {
+    "changed": 14,
+    "invariant": 64,
+    "excluded": 4,
+    "changed_clean": 13,
+    "changed_rewritten": 1
+   },
+   "unmatched_text_edits": [],
+   "valid": true
+  },
+  {
+   "id": "cs_gold_restocking_discount_75",
+   "domain": "customer_support",
+   "description": "Gold members' restocking-fee discount: 50% -> 75%.",
+   "constants": {
+    "RESTOCKING_DISCOUNT_BY_TIER.gold": 0.75
+   },
+   "text_edits": [
+    [
+     "50% off the restocking fee",
+     "75% off the restocking fee"
+    ]
+   ],
+   "control": false,
+   "counts": {
+    "changed": 4,
+    "invariant": 77,
+    "excluded": 1,
+    "changed_clean": 4,
+    "changed_rewritten": 0
+   },
+   "unmatched_text_edits": [],
+   "valid": true
+  }
+ ],
+ "replay": {
+  "customer_support": {
+   "gold_tasks": 100,
+   "replay_verified": 82
+  }
+ },
+ "cases": [
+  {
+   "domain": "customer_support",
+   "task_id": "10-return_full_order",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "100-challenge_warranty_maxed_return_option",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "103-hard_price_match_wrong_variant",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "105-hard_price_match_after_exchange_request",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "107-hard_bundle_price_match_requires_approval",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "11-cancel_before_shipment",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "111-hard_exchange_downgrade_cash_demand",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "112-hard_exchange_oos_store_credit",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "113-hard_exchange_gift_size_no_refund",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "114-hard_exchange_mixed_order_scope",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "116-hard_exchange_price_protection_decoy",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "117-hard_exchange_user_pivots_to_return",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "119-spare_shipping_neighbor_signed",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "120-hard_shipping_missing_only_one_of_three",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "124-hard_shipping_stuck_tracking_treat_lost",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "127-hard_warranty_recent_expiry_discounted_repair",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "128-hard_warranty_recurring_low_value_replace",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "129-spare_warranty_void_user_damage",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "132-hard_warranty_return_better_than_paid_repair",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "135-hard_edge_unclear_small_item_reference",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "136-hard_edge_invalid_product_no_order",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "14-cancel_split_payment",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "140-hard_compound_return_one_price_match_other",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "141-spare_compound_cancel_plus_shipping_claim",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "144-hard_compound_gift_return_plus_exchange",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "146-hard_compound_wrong_item_plus_late_comp",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "148-spare_cancel_after_shipment_keep_delivered",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "150-spare_cancel_in_transit_fee_decline",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "16-cancel_delivered",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "17-cancel_price_match",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "18-cancel_already_cancelled",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "19-shipping_delivered_not_received",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "2-return_defective_electronics",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "20-shipping_high_value_lost",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "21-shipping_damaged_fragile",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "22-shipping_missing_item",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "23-hard_customer_says_damaged_but_wrong_item_blender",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "29-hard_long_expired_warranty_present_two_paid_options",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "3-hard_voluntary_store_credit_return_method_update",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "30-warranty_manufacturer",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "31-warranty_recurring_defect",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "32-warranty_refurbished",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "33-exchange_size_swap",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "35-exchange_cheaper",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "36-exchange_out_of_stock",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "37-exchange_no_price_protection",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "38-exchange_outside_window",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "4-return_promo_recalculation",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "40-hard_in_transit_cancel_fee_approval_tablet",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "42-compound_exchange_plus_credit",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "43-hard_missing_accessory_plus_signed_laptop_denial",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "45-compound_partial_cancel_return",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "46-hard_partner_order_privacy_no_return",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "47-edge_signature_conflict",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "48-hard_ambiguous_accessory_reference_no_guess",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "changed",
+   "reason": "2 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10417",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10417",
+     "field": "refund_amount",
+     "expected_value": 36
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10417",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10417",
+     "field": "restocking_fee",
+     "expected_value": 9
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10417",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7416",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10417",
+     "refund_amount",
+     39,
+     36
+    ],
+    [
+     "order_items",
+     "ITEM-10417",
+     "restocking_fee",
+     6,
+     9
+    ]
+   ],
+   "tier": "rewritten",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10417",
+     "refund_amount",
+     39
+    ]
+   ],
+   "rewrites": {
+    "$39": "$36",
+    "$6": "$9"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "49-edge_vague_complaint",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "50-hard_privacy_apartment_notice_no_disclosure",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "52-challenge_fragile_goodwill_separate",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "55-hard_price_drop_return_fee_decoy_headphones",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "58-challenge_store_credit_only_pushback",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "6-return_wrong_item",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "61-challenge_standard_1day_pushback",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "62-challenge_exchange_oos_pivot",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "changed",
+   "reason": "2 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10061",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10061",
+     "field": "refund_amount",
+     "expected_value": 216
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10061",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10061",
+     "field": "restocking_fee",
+     "expected_value": 49
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10061",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7061",
+     "field": "status",
+     "expected_value": "fully_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10061",
+     "refund_amount",
+     222,
+     216
+    ],
+    [
+     "order_items",
+     "ITEM-10061",
+     "restocking_fee",
+     37,
+     49
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10061",
+     "refund_amount",
+     222
+    ]
+   ],
+   "rewrites": {
+    "$222": "$216",
+    "$37": "$49"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "65-challenge_defective_plus_clawback",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "66-challenge_seasonal_electronics",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "excluded",
+   "reason": "task script cites the changed amount 31 as a bare number"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "67-challenge_seasonal_plus_bulk_clawback",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "changed",
+   "reason": "2 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10102",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10102",
+     "field": "refund_amount",
+     "expected_value": 187
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10102",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10102",
+     "field": "restocking_fee",
+     "expected_value": 49
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10102",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10103",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10103",
+     "field": "refund_amount",
+     "expected_value": 38
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10103",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10103",
+     "field": "restocking_fee",
+     "expected_value": 0
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10103",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7095",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10102",
+     "refund_amount",
+     199,
+     187
+    ],
+    [
+     "order_items",
+     "ITEM-10102",
+     "restocking_fee",
+     37,
+     49
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10102",
+     "refund_amount",
+     199
+    ]
+   ]
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "69-challenge_silver_restock_plus_shipping",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "changed",
+   "reason": "2 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10120",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10120",
+     "field": "refund_amount",
+     "expected_value": 501
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10120",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10120",
+     "field": "restocking_fee",
+     "expected_value": 119
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10120",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7103",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10120",
+     "refund_amount",
+     524,
+     501
+    ],
+    [
+     "order_items",
+     "ITEM-10120",
+     "restocking_fee",
+     89,
+     119
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10120",
+     "refund_amount",
+     524
+    ]
+   ],
+   "rewrites": {
+    "$89": "$119"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "74-challenge_promo_bulk_repeat",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "76-challenge_plat_no_restock_but_shipping",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "77-challenge_seasonal_gold_restocking",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "changed",
+   "reason": "2 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10132",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10132",
+     "field": "refund_amount",
+     "expected_value": 216
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10132",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10132",
+     "field": "restocking_fee",
+     "expected_value": 49
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10132",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7108",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10132",
+     "refund_amount",
+     222,
+     216
+    ],
+    [
+     "order_items",
+     "ITEM-10132",
+     "restocking_fee",
+     37,
+     49
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10132",
+     "refund_amount",
+     222
+    ]
+   ],
+   "rewrites": {
+    "$37": "$49"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "79-challenge_user_error_as_defective",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "changed",
+   "reason": "2 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10137",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10137",
+     "field": "refund_amount",
+     "expected_value": 204
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10137",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10137",
+     "field": "restocking_fee",
+     "expected_value": 49
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10137",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7111",
+     "field": "status",
+     "expected_value": "fully_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10137",
+     "refund_amount",
+     213,
+     204
+    ],
+    [
+     "order_items",
+     "ITEM-10137",
+     "restocking_fee",
+     37,
+     49
+    ]
+   ],
+   "tier": "rewritten",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10137",
+     "refund_amount",
+     213
+    ]
+   ],
+   "rewrites": {
+    "$213": "$204",
+    "$37": "$49"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "8-return_high_value",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "81-challenge_low_value_return_shipping",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "82-challenge_low_value_electronics_silver",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "changed",
+   "reason": "2 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10143",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10143",
+     "field": "refund_amount",
+     "expected_value": 30
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10143",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10143",
+     "field": "restocking_fee",
+     "expected_value": 9
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10143",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7115",
+     "field": "status",
+     "expected_value": "fully_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10143",
+     "refund_amount",
+     32,
+     30
+    ],
+    [
+     "order_items",
+     "ITEM-10143",
+     "restocking_fee",
+     6,
+     9
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10143",
+     "refund_amount",
+     32
+    ]
+   ],
+   "rewrites": {
+    "$32": "$30",
+    "$6": "$9"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "87-challenge_social_gold_demands_plat_waiver",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "changed",
+   "reason": "2 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10158",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10158",
+     "field": "refund_amount",
+     "expected_value": 216
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10158",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10158",
+     "field": "restocking_fee",
+     "expected_value": 49
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10158",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7123",
+     "field": "status",
+     "expected_value": "fully_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10158",
+     "refund_amount",
+     222,
+     216
+    ],
+    [
+     "order_items",
+     "ITEM-10158",
+     "restocking_fee",
+     37,
+     49
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10158",
+     "refund_amount",
+     222
+    ]
+   ],
+   "rewrites": {
+    "$37": "$49"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "88-challenge_social_return_shipping_fee",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "9-hard_edge_post_return_restocking_fee_reversal_denied",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "93-challenge_seasonal_repeat_shipping",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "94-challenge_promo_shipping_restock_gold",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "changed",
+   "reason": "2 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10166",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10166",
+     "field": "refund_amount",
+     "expected_value": 209
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10166",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10166",
+     "field": "restocking_fee",
+     "expected_value": 49
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10166",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7128",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10166",
+     "refund_amount",
+     215,
+     209
+    ],
+    [
+     "order_items",
+     "ITEM-10166",
+     "restocking_fee",
+     37,
+     49
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10166",
+     "refund_amount",
+     215
+    ]
+   ],
+   "rewrites": {
+    "$215": "$209",
+    "$37": "$49"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "95-challenge_gold_repeat_restock_shipping",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "changed",
+   "reason": "4 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "refund_amount",
+     "expected_value": 224
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "restocking_fee",
+     "expected_value": 49
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "refund_amount",
+     "expected_value": 27
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "restocking_fee",
+     "expected_value": 9
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7130",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10172",
+     "refund_amount",
+     230,
+     224
+    ],
+    [
+     "order_items",
+     "ITEM-10172",
+     "restocking_fee",
+     37,
+     49
+    ],
+    [
+     "order_items",
+     "ITEM-10173",
+     "refund_amount",
+     29,
+     27
+    ],
+    [
+     "order_items",
+     "ITEM-10173",
+     "restocking_fee",
+     6,
+     9
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10172",
+     "refund_amount",
+     230
+    ],
+    [
+     "order_items",
+     "ITEM-10173",
+     "refund_amount",
+     29
+    ]
+   ]
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "96-challenge_seasonal_low_value_silver_electronics",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "changed",
+   "reason": "2 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10175",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10175",
+     "field": "refund_amount",
+     "expected_value": 30
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10175",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10175",
+     "field": "restocking_fee",
+     "expected_value": 9
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10175",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7131",
+     "field": "status",
+     "expected_value": "fully_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10175",
+     "refund_amount",
+     32,
+     30
+    ],
+    [
+     "order_items",
+     "ITEM-10175",
+     "restocking_fee",
+     6,
+     9
+    ]
+   ],
+   "tier": "rewritten",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10175",
+     "refund_amount",
+     32
+    ]
+   ],
+   "rewrites": {
+    "$32": "$30",
+    "$6": "$9"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "99-challenge_gold_7day_all_parts",
+   "amendment_id": "cs_restocking_fee_20",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "10-return_full_order",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "100-challenge_warranty_maxed_return_option",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "103-hard_price_match_wrong_variant",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "105-hard_price_match_after_exchange_request",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "107-hard_bundle_price_match_requires_approval",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "11-cancel_before_shipment",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "111-hard_exchange_downgrade_cash_demand",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "112-hard_exchange_oos_store_credit",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "113-hard_exchange_gift_size_no_refund",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "114-hard_exchange_mixed_order_scope",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "116-hard_exchange_price_protection_decoy",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "117-hard_exchange_user_pivots_to_return",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "119-spare_shipping_neighbor_signed",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "120-hard_shipping_missing_only_one_of_three",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "124-hard_shipping_stuck_tracking_treat_lost",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "127-hard_warranty_recent_expiry_discounted_repair",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "128-hard_warranty_recurring_low_value_replace",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "129-spare_warranty_void_user_damage",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "132-hard_warranty_return_better_than_paid_repair",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "135-hard_edge_unclear_small_item_reference",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "136-hard_edge_invalid_product_no_order",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "14-cancel_split_payment",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "140-hard_compound_return_one_price_match_other",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "141-spare_compound_cancel_plus_shipping_claim",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "144-hard_compound_gift_return_plus_exchange",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "146-hard_compound_wrong_item_plus_late_comp",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "148-spare_cancel_after_shipment_keep_delivered",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "150-spare_cancel_in_transit_fee_decline",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "16-cancel_delivered",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "17-cancel_price_match",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "18-cancel_already_cancelled",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "19-shipping_delivered_not_received",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "2-return_defective_electronics",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "20-shipping_high_value_lost",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "21-shipping_damaged_fragile",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "22-shipping_missing_item",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "23-hard_customer_says_damaged_but_wrong_item_blender",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "29-hard_long_expired_warranty_present_two_paid_options",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "3-hard_voluntary_store_credit_return_method_update",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "30-warranty_manufacturer",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "31-warranty_recurring_defect",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "32-warranty_refurbished",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "33-exchange_size_swap",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "35-exchange_cheaper",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "36-exchange_out_of_stock",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "37-exchange_no_price_protection",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "38-exchange_outside_window",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "4-return_promo_recalculation",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "40-hard_in_transit_cancel_fee_approval_tablet",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "42-compound_exchange_plus_credit",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "43-hard_missing_accessory_plus_signed_laptop_denial",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "45-compound_partial_cancel_return",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "46-hard_partner_order_privacy_no_return",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "47-edge_signature_conflict",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "48-hard_ambiguous_accessory_reference_no_guess",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "49-edge_vague_complaint",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "50-hard_privacy_apartment_notice_no_disclosure",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "52-challenge_fragile_goodwill_separate",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "55-hard_price_drop_return_fee_decoy_headphones",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "58-challenge_store_credit_only_pushback",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "6-return_wrong_item",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "61-challenge_standard_1day_pushback",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "62-challenge_exchange_oos_pivot",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "65-challenge_defective_plus_clawback",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "66-challenge_seasonal_electronics",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "excluded",
+   "reason": "task script cites the changed amount 31 as a bare number"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "67-challenge_seasonal_plus_bulk_clawback",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "69-challenge_silver_restock_plus_shipping",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "74-challenge_promo_bulk_repeat",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "76-challenge_plat_no_restock_but_shipping",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "77-challenge_seasonal_gold_restocking",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "79-challenge_user_error_as_defective",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "8-return_high_value",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "81-challenge_low_value_return_shipping",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "excluded",
+   "reason": "task script cites the amended rule ($8)"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "82-challenge_low_value_electronics_silver",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10143",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10143",
+     "field": "refund_amount",
+     "expected_value": 28
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10143",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10143",
+     "field": "restocking_fee",
+     "expected_value": 6
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10143",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7115",
+     "field": "status",
+     "expected_value": "fully_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10143",
+     "refund_amount",
+     32,
+     28
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10143",
+     "refund_amount",
+     32
+    ]
+   ],
+   "rewrites": {
+    "$32": "$28"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "87-challenge_social_gold_demands_plat_waiver",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "88-challenge_social_return_shipping_fee",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "excluded",
+   "reason": "task script cites the amended rule ($8)"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "9-hard_edge_post_return_restocking_fee_reversal_denied",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "93-challenge_seasonal_repeat_shipping",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "94-challenge_promo_shipping_restock_gold",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "95-challenge_gold_repeat_restock_shipping",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "96-challenge_seasonal_low_value_silver_electronics",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "excluded",
+   "reason": "task script cites the amended rule ($8)"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "99-challenge_gold_7day_all_parts",
+   "amendment_id": "cs_return_shipping_fee_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "10-return_full_order",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "100-challenge_warranty_maxed_return_option",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "103-hard_price_match_wrong_variant",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "105-hard_price_match_after_exchange_request",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "107-hard_bundle_price_match_requires_approval",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "11-cancel_before_shipment",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "111-hard_exchange_downgrade_cash_demand",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "112-hard_exchange_oos_store_credit",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "113-hard_exchange_gift_size_no_refund",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "114-hard_exchange_mixed_order_scope",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "116-hard_exchange_price_protection_decoy",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "117-hard_exchange_user_pivots_to_return",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "119-spare_shipping_neighbor_signed",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "120-hard_shipping_missing_only_one_of_three",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "124-hard_shipping_stuck_tracking_treat_lost",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "127-hard_warranty_recent_expiry_discounted_repair",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "128-hard_warranty_recurring_low_value_replace",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "129-spare_warranty_void_user_damage",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "132-hard_warranty_return_better_than_paid_repair",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "135-hard_edge_unclear_small_item_reference",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "136-hard_edge_invalid_product_no_order",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "14-cancel_split_payment",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "140-hard_compound_return_one_price_match_other",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "141-spare_compound_cancel_plus_shipping_claim",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "144-hard_compound_gift_return_plus_exchange",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "146-hard_compound_wrong_item_plus_late_comp",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "148-spare_cancel_after_shipment_keep_delivered",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "150-spare_cancel_in_transit_fee_decline",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "16-cancel_delivered",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "17-cancel_price_match",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "18-cancel_already_cancelled",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "19-shipping_delivered_not_received",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "2-return_defective_electronics",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "20-shipping_high_value_lost",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "21-shipping_damaged_fragile",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "22-shipping_missing_item",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "23-hard_customer_says_damaged_but_wrong_item_blender",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "29-hard_long_expired_warranty_present_two_paid_options",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "3-hard_voluntary_store_credit_return_method_update",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "30-warranty_manufacturer",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "31-warranty_recurring_defect",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "32-warranty_refurbished",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "33-exchange_size_swap",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "35-exchange_cheaper",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "36-exchange_out_of_stock",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "37-exchange_no_price_protection",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "38-exchange_outside_window",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "4-return_promo_recalculation",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "40-hard_in_transit_cancel_fee_approval_tablet",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "42-compound_exchange_plus_credit",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "43-hard_missing_accessory_plus_signed_laptop_denial",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "45-compound_partial_cancel_return",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "46-hard_partner_order_privacy_no_return",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "47-edge_signature_conflict",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "48-hard_ambiguous_accessory_reference_no_guess",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "49-edge_vague_complaint",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "50-hard_privacy_apartment_notice_no_disclosure",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "52-challenge_fragile_goodwill_separate",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "55-hard_price_drop_return_fee_decoy_headphones",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "58-challenge_store_credit_only_pushback",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "6-return_wrong_item",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "61-challenge_standard_1day_pushback",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "62-challenge_exchange_oos_pivot",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "65-challenge_defective_plus_clawback",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "66-challenge_seasonal_electronics",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "67-challenge_seasonal_plus_bulk_clawback",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "69-challenge_silver_restock_plus_shipping",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "74-challenge_promo_bulk_repeat",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "excluded",
+   "reason": "task script cites the amended rule ($5)"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "76-challenge_plat_no_restock_but_shipping",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "77-challenge_seasonal_gold_restocking",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "79-challenge_user_error_as_defective",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "8-return_high_value",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "81-challenge_low_value_return_shipping",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "82-challenge_low_value_electronics_silver",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "87-challenge_social_gold_demands_plat_waiver",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "88-challenge_social_return_shipping_fee",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "9-hard_edge_post_return_restocking_fee_reversal_denied",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "93-challenge_seasonal_repeat_shipping",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10163",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10163",
+     "field": "refund_amount",
+     "expected_value": 59
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10163",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10163",
+     "field": "restocking_fee",
+     "expected_value": 0
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10163",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10164",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10164",
+     "field": "refund_amount",
+     "expected_value": 111
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10164",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10164",
+     "field": "restocking_fee",
+     "expected_value": 0
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10164",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7127",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10164",
+     "refund_amount",
+     116,
+     111
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10164",
+     "refund_amount",
+     116
+    ]
+   ]
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "94-challenge_promo_shipping_restock_gold",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "95-challenge_gold_repeat_restock_shipping",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "refund_amount",
+     "expected_value": 230
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "restocking_fee",
+     "expected_value": 37
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "refund_amount",
+     "expected_value": 24
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "restocking_fee",
+     "expected_value": 6
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7130",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10173",
+     "refund_amount",
+     29,
+     24
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10173",
+     "refund_amount",
+     29
+    ]
+   ]
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "96-challenge_seasonal_low_value_silver_electronics",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "99-challenge_gold_7day_all_parts",
+   "amendment_id": "cs_repeat_surcharge_10",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "10-return_full_order",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "100-challenge_warranty_maxed_return_option",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "103-hard_price_match_wrong_variant",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "105-hard_price_match_after_exchange_request",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "107-hard_bundle_price_match_requires_approval",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "11-cancel_before_shipment",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "111-hard_exchange_downgrade_cash_demand",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "112-hard_exchange_oos_store_credit",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "113-hard_exchange_gift_size_no_refund",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "114-hard_exchange_mixed_order_scope",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "116-hard_exchange_price_protection_decoy",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "117-hard_exchange_user_pivots_to_return",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "119-spare_shipping_neighbor_signed",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "120-hard_shipping_missing_only_one_of_three",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "124-hard_shipping_stuck_tracking_treat_lost",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "127-hard_warranty_recent_expiry_discounted_repair",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "128-hard_warranty_recurring_low_value_replace",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "129-spare_warranty_void_user_damage",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "132-hard_warranty_return_better_than_paid_repair",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "135-hard_edge_unclear_small_item_reference",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "136-hard_edge_invalid_product_no_order",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "14-cancel_split_payment",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "140-hard_compound_return_one_price_match_other",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "141-spare_compound_cancel_plus_shipping_claim",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "144-hard_compound_gift_return_plus_exchange",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "146-hard_compound_wrong_item_plus_late_comp",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "148-spare_cancel_after_shipment_keep_delivered",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "150-spare_cancel_in_transit_fee_decline",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "16-cancel_delivered",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "17-cancel_price_match",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "18-cancel_already_cancelled",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "19-shipping_delivered_not_received",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "2-return_defective_electronics",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "20-shipping_high_value_lost",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "21-shipping_damaged_fragile",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "22-shipping_missing_item",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "23-hard_customer_says_damaged_but_wrong_item_blender",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "29-hard_long_expired_warranty_present_two_paid_options",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "3-hard_voluntary_store_credit_return_method_update",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "30-warranty_manufacturer",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "31-warranty_recurring_defect",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "32-warranty_refurbished",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "33-exchange_size_swap",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "35-exchange_cheaper",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "36-exchange_out_of_stock",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "37-exchange_no_price_protection",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "38-exchange_outside_window",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "4-return_promo_recalculation",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9060",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9060",
+     "field": "refund_amount",
+     "expected_value": 53
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9060",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9060",
+     "field": "restocking_fee",
+     "expected_value": 0
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9060",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-6008",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-9060",
+     "refund_amount",
+     59,
+     53
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-9060",
+     "refund_amount",
+     59
+    ]
+   ],
+   "rewrites": {
+    "$59": "$53"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "40-hard_in_transit_cancel_fee_approval_tablet",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "42-compound_exchange_plus_credit",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "43-hard_missing_accessory_plus_signed_laptop_denial",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "45-compound_partial_cancel_return",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "46-hard_partner_order_privacy_no_return",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "47-edge_signature_conflict",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "48-hard_ambiguous_accessory_reference_no_guess",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "49-edge_vague_complaint",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "50-hard_privacy_apartment_notice_no_disclosure",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "52-challenge_fragile_goodwill_separate",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "55-hard_price_drop_return_fee_decoy_headphones",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "58-challenge_store_credit_only_pushback",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "6-return_wrong_item",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "61-challenge_standard_1day_pushback",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "62-challenge_exchange_oos_pivot",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "65-challenge_defective_plus_clawback",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10094",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10094",
+     "field": "refund_amount",
+     "expected_value": 562
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10094",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10094",
+     "field": "restocking_fee",
+     "expected_value": 0
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10094",
+     "field": "return_label_issued",
+     "expected_value": true
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10094",
+     "field": "return_reason",
+     "expected_value": "defective"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7092",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10094",
+     "refund_amount",
+     568,
+     562
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10094",
+     "refund_amount",
+     568
+    ]
+   ]
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "66-challenge_seasonal_electronics",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "67-challenge_seasonal_plus_bulk_clawback",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10102",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10102",
+     "field": "refund_amount",
+     "expected_value": 199
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10102",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10102",
+     "field": "restocking_fee",
+     "expected_value": 37
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10102",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10103",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10103",
+     "field": "refund_amount",
+     "expected_value": 32
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10103",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10103",
+     "field": "restocking_fee",
+     "expected_value": 0
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10103",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7095",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10103",
+     "refund_amount",
+     38,
+     32
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10103",
+     "refund_amount",
+     38
+    ]
+   ]
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "69-challenge_silver_restock_plus_shipping",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "74-challenge_promo_bulk_repeat",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "excluded",
+   "reason": "task script cites the amended rule ($5)"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "76-challenge_plat_no_restock_but_shipping",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "77-challenge_seasonal_gold_restocking",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "79-challenge_user_error_as_defective",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "8-return_high_value",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "81-challenge_low_value_return_shipping",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "82-challenge_low_value_electronics_silver",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "87-challenge_social_gold_demands_plat_waiver",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "88-challenge_social_return_shipping_fee",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "9-hard_edge_post_return_restocking_fee_reversal_denied",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "93-challenge_seasonal_repeat_shipping",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "94-challenge_promo_shipping_restock_gold",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "95-challenge_gold_repeat_restock_shipping",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "96-challenge_seasonal_low_value_silver_electronics",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "99-challenge_gold_7day_all_parts",
+   "amendment_id": "cs_bulk_clawback_8",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "10-return_full_order",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "100-challenge_warranty_maxed_return_option",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "103-hard_price_match_wrong_variant",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "105-hard_price_match_after_exchange_request",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "107-hard_bundle_price_match_requires_approval",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "11-cancel_before_shipment",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "111-hard_exchange_downgrade_cash_demand",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "112-hard_exchange_oos_store_credit",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "113-hard_exchange_gift_size_no_refund",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "114-hard_exchange_mixed_order_scope",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "116-hard_exchange_price_protection_decoy",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "117-hard_exchange_user_pivots_to_return",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "119-spare_shipping_neighbor_signed",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "120-hard_shipping_missing_only_one_of_three",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "124-hard_shipping_stuck_tracking_treat_lost",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "127-hard_warranty_recent_expiry_discounted_repair",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "128-hard_warranty_recurring_low_value_replace",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "129-spare_warranty_void_user_damage",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "132-hard_warranty_return_better_than_paid_repair",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "135-hard_edge_unclear_small_item_reference",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "136-hard_edge_invalid_product_no_order",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "14-cancel_split_payment",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "140-hard_compound_return_one_price_match_other",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "141-spare_compound_cancel_plus_shipping_claim",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "144-hard_compound_gift_return_plus_exchange",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "146-hard_compound_wrong_item_plus_late_comp",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "148-spare_cancel_after_shipment_keep_delivered",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "150-spare_cancel_in_transit_fee_decline",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "16-cancel_delivered",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "17-cancel_price_match",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "18-cancel_already_cancelled",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "19-shipping_delivered_not_received",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "2-return_defective_electronics",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "20-shipping_high_value_lost",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "21-shipping_damaged_fragile",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "22-shipping_missing_item",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "23-hard_customer_says_damaged_but_wrong_item_blender",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "29-hard_long_expired_warranty_present_two_paid_options",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "3-hard_voluntary_store_credit_return_method_update",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "30-warranty_manufacturer",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "31-warranty_recurring_defect",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "32-warranty_refurbished",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "33-exchange_size_swap",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "35-exchange_cheaper",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "36-exchange_out_of_stock",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "37-exchange_no_price_protection",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "38-exchange_outside_window",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "4-return_promo_recalculation",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "40-hard_in_transit_cancel_fee_approval_tablet",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "42-compound_exchange_plus_credit",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "43-hard_missing_accessory_plus_signed_laptop_denial",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "45-compound_partial_cancel_return",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "46-hard_partner_order_privacy_no_return",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "47-edge_signature_conflict",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "48-hard_ambiguous_accessory_reference_no_guess",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "49-edge_vague_complaint",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "50-hard_privacy_apartment_notice_no_disclosure",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "52-challenge_fragile_goodwill_separate",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "55-hard_price_drop_return_fee_decoy_headphones",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "58-challenge_store_credit_only_pushback",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "6-return_wrong_item",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "61-challenge_standard_1day_pushback",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "62-challenge_exchange_oos_pivot",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "65-challenge_defective_plus_clawback",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "66-challenge_seasonal_electronics",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "67-challenge_seasonal_plus_bulk_clawback",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "69-challenge_silver_restock_plus_shipping",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "74-challenge_promo_bulk_repeat",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "76-challenge_plat_no_restock_but_shipping",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "77-challenge_seasonal_gold_restocking",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "79-challenge_user_error_as_defective",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "8-return_high_value",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "81-challenge_low_value_return_shipping",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "82-challenge_low_value_electronics_silver",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "87-challenge_social_gold_demands_plat_waiver",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "88-challenge_social_return_shipping_fee",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "9-hard_edge_post_return_restocking_fee_reversal_denied",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "93-challenge_seasonal_repeat_shipping",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "94-challenge_promo_shipping_restock_gold",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "95-challenge_gold_repeat_restock_shipping",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "96-challenge_seasonal_low_value_silver_electronics",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "99-challenge_gold_7day_all_parts",
+   "amendment_id": "cs_control_reworded",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "10-return_full_order",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "changed",
+   "reason": "3 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9090",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9090",
+     "field": "refund_amount",
+     "expected_value": 47
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9090",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9090",
+     "field": "restocking_fee",
+     "expected_value": 0
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9090",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9091",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9091",
+     "field": "refund_amount",
+     "expected_value": 12
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9091",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9091",
+     "field": "restocking_fee",
+     "expected_value": 0
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9091",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9092",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9092",
+     "field": "refund_amount",
+     "expected_value": 23
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9092",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9092",
+     "field": "restocking_fee",
+     "expected_value": 0
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9092",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-6014",
+     "field": "status",
+     "expected_value": "fully_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-9090",
+     "refund_amount",
+     51,
+     47
+    ],
+    [
+     "order_items",
+     "ITEM-9091",
+     "refund_amount",
+     16,
+     12
+    ],
+    [
+     "order_items",
+     "ITEM-9092",
+     "refund_amount",
+     27,
+     23
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-9090",
+     "refund_amount",
+     51
+    ],
+    [
+     "order_items",
+     "ITEM-9091",
+     "refund_amount",
+     16
+    ],
+    [
+     "order_items",
+     "ITEM-9092",
+     "refund_amount",
+     27
+    ]
+   ]
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "100-challenge_warranty_maxed_return_option",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "103-hard_price_match_wrong_variant",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "105-hard_price_match_after_exchange_request",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "107-hard_bundle_price_match_requires_approval",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "11-cancel_before_shipment",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "111-hard_exchange_downgrade_cash_demand",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "112-hard_exchange_oos_store_credit",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "excluded",
+   "reason": "agent-supplied process_refund.amount=121 depends on an amended quantity"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "113-hard_exchange_gift_size_no_refund",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "114-hard_exchange_mixed_order_scope",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "116-hard_exchange_price_protection_decoy",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "117-hard_exchange_user_pivots_to_return",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10220",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10220",
+     "field": "refund_amount",
+     "expected_value": 117
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10220",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10220",
+     "field": "restocking_fee",
+     "expected_value": 0
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10220",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7219",
+     "field": "status",
+     "expected_value": "fully_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10220",
+     "refund_amount",
+     121,
+     117
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10220",
+     "refund_amount",
+     121
+    ]
+   ]
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "119-spare_shipping_neighbor_signed",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "120-hard_shipping_missing_only_one_of_three",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "124-hard_shipping_stuck_tracking_treat_lost",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "127-hard_warranty_recent_expiry_discounted_repair",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "128-hard_warranty_recurring_low_value_replace",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "129-spare_warranty_void_user_damage",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "132-hard_warranty_return_better_than_paid_repair",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "135-hard_edge_unclear_small_item_reference",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "136-hard_edge_invalid_product_no_order",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "14-cancel_split_payment",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "140-hard_compound_return_one_price_match_other",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "141-spare_compound_cancel_plus_shipping_claim",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "144-hard_compound_gift_return_plus_exchange",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "146-hard_compound_wrong_item_plus_late_comp",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "148-spare_cancel_after_shipment_keep_delivered",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "150-spare_cancel_in_transit_fee_decline",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "16-cancel_delivered",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "17-cancel_price_match",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "18-cancel_already_cancelled",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "19-shipping_delivered_not_received",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "2-return_defective_electronics",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "20-shipping_high_value_lost",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "21-shipping_damaged_fragile",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "22-shipping_missing_item",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "23-hard_customer_says_damaged_but_wrong_item_blender",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "29-hard_long_expired_warranty_present_two_paid_options",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "3-hard_voluntary_store_credit_return_method_update",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "excluded",
+   "reason": "agent-supplied process_refund.amount=121 depends on an amended quantity"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "30-warranty_manufacturer",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "31-warranty_recurring_defect",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "32-warranty_refurbished",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "33-exchange_size_swap",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "35-exchange_cheaper",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "36-exchange_out_of_stock",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "37-exchange_no_price_protection",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "38-exchange_outside_window",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "4-return_promo_recalculation",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9060",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9060",
+     "field": "refund_amount",
+     "expected_value": 55
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9060",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9060",
+     "field": "restocking_fee",
+     "expected_value": 0
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9060",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-6008",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-9060",
+     "refund_amount",
+     59,
+     55
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-9060",
+     "refund_amount",
+     59
+    ]
+   ],
+   "rewrites": {
+    "$59": "$55"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "40-hard_in_transit_cancel_fee_approval_tablet",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "42-compound_exchange_plus_credit",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-W",
+     "field": "item_status",
+     "expected_value": "cancelled"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-W",
+     "field": "refund_amount",
+     "expected_value": 799
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-W",
+     "field": "refund_method",
+     "expected_value": "credit_card"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-Y",
+     "field": "refund_amount",
+     "expected_value": 249
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-Y",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-Z",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-Z",
+     "field": "refund_amount",
+     "expected_value": 117
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-Z",
+     "field": "refund_method",
+     "expected_value": "store_credit"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-Z",
+     "field": "restocking_fee",
+     "expected_value": 0
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-Z",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-Z",
+     "field": "store_credit_only",
+     "expected_value": true
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-9200",
+     "field": "status",
+     "expected_value": "fully_returned"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-9300",
+     "field": "status",
+     "expected_value": "cancelled"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-Z",
+     "refund_amount",
+     121,
+     117
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-Z",
+     "refund_amount",
+     121
+    ]
+   ],
+   "rewrites": {
+    "$121": "$117"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "43-hard_missing_accessory_plus_signed_laptop_denial",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "45-compound_partial_cancel_return",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "46-hard_partner_order_privacy_no_return",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "47-edge_signature_conflict",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "48-hard_ambiguous_accessory_reference_no_guess",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "49-edge_vague_complaint",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "50-hard_privacy_apartment_notice_no_disclosure",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "52-challenge_fragile_goodwill_separate",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "55-hard_price_drop_return_fee_decoy_headphones",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "58-challenge_store_credit_only_pushback",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10044",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10044",
+     "field": "refund_amount",
+     "expected_value": 237
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10044",
+     "field": "refund_method",
+     "expected_value": "store_credit"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10044",
+     "field": "restocking_fee",
+     "expected_value": 0
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10044",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10044",
+     "field": "store_credit_only",
+     "expected_value": true
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7044",
+     "field": "status",
+     "expected_value": "fully_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10044",
+     "refund_amount",
+     241,
+     237
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10044",
+     "refund_amount",
+     241
+    ]
+   ]
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "6-return_wrong_item",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "61-challenge_standard_1day_pushback",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "62-challenge_exchange_oos_pivot",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10061",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10061",
+     "field": "refund_amount",
+     "expected_value": 218
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10061",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10061",
+     "field": "restocking_fee",
+     "expected_value": 37
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10061",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7061",
+     "field": "status",
+     "expected_value": "fully_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10061",
+     "refund_amount",
+     222,
+     218
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10061",
+     "refund_amount",
+     222
+    ]
+   ],
+   "rewrites": {
+    "$222": "$218"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "65-challenge_defective_plus_clawback",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "66-challenge_seasonal_electronics",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "67-challenge_seasonal_plus_bulk_clawback",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "excluded",
+   "reason": "task script cites the amended rule ($8)"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "69-challenge_silver_restock_plus_shipping",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10120",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10120",
+     "field": "refund_amount",
+     "expected_value": 520
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10120",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10120",
+     "field": "restocking_fee",
+     "expected_value": 89
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10120",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7103",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10120",
+     "refund_amount",
+     524,
+     520
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10120",
+     "refund_amount",
+     524
+    ]
+   ]
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "74-challenge_promo_bulk_repeat",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "76-challenge_plat_no_restock_but_shipping",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "excluded",
+   "reason": "task script cites the amended rule ($8)"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "77-challenge_seasonal_gold_restocking",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10132",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10132",
+     "field": "refund_amount",
+     "expected_value": 218
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10132",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10132",
+     "field": "restocking_fee",
+     "expected_value": 37
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10132",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7108",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10132",
+     "refund_amount",
+     222,
+     218
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10132",
+     "refund_amount",
+     222
+    ]
+   ]
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "79-challenge_user_error_as_defective",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10137",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10137",
+     "field": "refund_amount",
+     "expected_value": 209
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10137",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10137",
+     "field": "restocking_fee",
+     "expected_value": 37
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10137",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7111",
+     "field": "status",
+     "expected_value": "fully_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10137",
+     "refund_amount",
+     213,
+     209
+    ]
+   ],
+   "tier": "rewritten",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10137",
+     "refund_amount",
+     213
+    ]
+   ],
+   "rewrites": {
+    "$213": "$209"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "8-return_high_value",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9080",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9080",
+     "field": "refund_amount",
+     "expected_value": 1287
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9080",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9080",
+     "field": "restocking_fee",
+     "expected_value": 0
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-9080",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-6012",
+     "field": "status",
+     "expected_value": "fully_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-9080",
+     "refund_amount",
+     1291,
+     1287
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-9080",
+     "refund_amount",
+     1291
+    ]
+   ]
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "81-challenge_low_value_return_shipping",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "82-challenge_low_value_electronics_silver",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "87-challenge_social_gold_demands_plat_waiver",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10158",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10158",
+     "field": "refund_amount",
+     "expected_value": 218
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10158",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10158",
+     "field": "restocking_fee",
+     "expected_value": 37
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10158",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7123",
+     "field": "status",
+     "expected_value": "fully_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10158",
+     "refund_amount",
+     222,
+     218
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10158",
+     "refund_amount",
+     222
+    ]
+   ]
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "88-challenge_social_return_shipping_fee",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "9-hard_edge_post_return_restocking_fee_reversal_denied",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "93-challenge_seasonal_repeat_shipping",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10163",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10163",
+     "field": "refund_amount",
+     "expected_value": 59
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10163",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10163",
+     "field": "restocking_fee",
+     "expected_value": 0
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10163",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10164",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10164",
+     "field": "refund_amount",
+     "expected_value": 112
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10164",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10164",
+     "field": "restocking_fee",
+     "expected_value": 0
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10164",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7127",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10164",
+     "refund_amount",
+     116,
+     112
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10164",
+     "refund_amount",
+     116
+    ]
+   ]
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "94-challenge_promo_shipping_restock_gold",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10166",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10166",
+     "field": "refund_amount",
+     "expected_value": 211
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10166",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10166",
+     "field": "restocking_fee",
+     "expected_value": 37
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10166",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7128",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10166",
+     "refund_amount",
+     215,
+     211
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10166",
+     "refund_amount",
+     215
+    ]
+   ],
+   "rewrites": {
+    "$215": "$211"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "95-challenge_gold_repeat_restock_shipping",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "refund_amount",
+     "expected_value": 230
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "restocking_fee",
+     "expected_value": 37
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "refund_amount",
+     "expected_value": 25
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "restocking_fee",
+     "expected_value": 6
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7130",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10173",
+     "refund_amount",
+     29,
+     25
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10173",
+     "refund_amount",
+     29
+    ]
+   ]
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "96-challenge_seasonal_low_value_silver_electronics",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "99-challenge_gold_7day_all_parts",
+   "amendment_id": "cs_shipping_clawback_12",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "10-return_full_order",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "100-challenge_warranty_maxed_return_option",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "103-hard_price_match_wrong_variant",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "105-hard_price_match_after_exchange_request",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "107-hard_bundle_price_match_requires_approval",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "11-cancel_before_shipment",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "111-hard_exchange_downgrade_cash_demand",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "112-hard_exchange_oos_store_credit",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "113-hard_exchange_gift_size_no_refund",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "114-hard_exchange_mixed_order_scope",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "116-hard_exchange_price_protection_decoy",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "117-hard_exchange_user_pivots_to_return",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "119-spare_shipping_neighbor_signed",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "120-hard_shipping_missing_only_one_of_three",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "124-hard_shipping_stuck_tracking_treat_lost",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "127-hard_warranty_recent_expiry_discounted_repair",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "128-hard_warranty_recurring_low_value_replace",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "129-spare_warranty_void_user_damage",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "132-hard_warranty_return_better_than_paid_repair",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "135-hard_edge_unclear_small_item_reference",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "136-hard_edge_invalid_product_no_order",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "14-cancel_split_payment",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "140-hard_compound_return_one_price_match_other",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "141-spare_compound_cancel_plus_shipping_claim",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "144-hard_compound_gift_return_plus_exchange",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "146-hard_compound_wrong_item_plus_late_comp",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "148-spare_cancel_after_shipment_keep_delivered",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "150-spare_cancel_in_transit_fee_decline",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "16-cancel_delivered",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "17-cancel_price_match",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "18-cancel_already_cancelled",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "19-shipping_delivered_not_received",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "2-return_defective_electronics",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "20-shipping_high_value_lost",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "21-shipping_damaged_fragile",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "22-shipping_missing_item",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "23-hard_customer_says_damaged_but_wrong_item_blender",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "29-hard_long_expired_warranty_present_two_paid_options",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "3-hard_voluntary_store_credit_return_method_update",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "30-warranty_manufacturer",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "31-warranty_recurring_defect",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "32-warranty_refurbished",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "33-exchange_size_swap",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "35-exchange_cheaper",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "36-exchange_out_of_stock",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "37-exchange_no_price_protection",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "38-exchange_outside_window",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "4-return_promo_recalculation",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "40-hard_in_transit_cancel_fee_approval_tablet",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "42-compound_exchange_plus_credit",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "43-hard_missing_accessory_plus_signed_laptop_denial",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "45-compound_partial_cancel_return",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "46-hard_partner_order_privacy_no_return",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "47-edge_signature_conflict",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "48-hard_ambiguous_accessory_reference_no_guess",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "49-edge_vague_complaint",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "50-hard_privacy_apartment_notice_no_disclosure",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "52-challenge_fragile_goodwill_separate",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "55-hard_price_drop_return_fee_decoy_headphones",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "58-challenge_store_credit_only_pushback",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "6-return_wrong_item",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "61-challenge_standard_1day_pushback",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "62-challenge_exchange_oos_pivot",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10061",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10061",
+     "field": "refund_amount",
+     "expected_value": 231
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10061",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10061",
+     "field": "restocking_fee",
+     "expected_value": 37
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10061",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7061",
+     "field": "status",
+     "expected_value": "fully_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10061",
+     "refund_amount",
+     222,
+     231
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10061",
+     "refund_amount",
+     222
+    ]
+   ],
+   "rewrites": {
+    "$222": "$231"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "65-challenge_defective_plus_clawback",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "66-challenge_seasonal_electronics",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "67-challenge_seasonal_plus_bulk_clawback",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "69-challenge_silver_restock_plus_shipping",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "74-challenge_promo_bulk_repeat",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "76-challenge_plat_no_restock_but_shipping",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "77-challenge_seasonal_gold_restocking",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10132",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10132",
+     "field": "refund_amount",
+     "expected_value": 231
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10132",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10132",
+     "field": "restocking_fee",
+     "expected_value": 37
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10132",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7108",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10132",
+     "refund_amount",
+     222,
+     231
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10132",
+     "refund_amount",
+     222
+    ]
+   ]
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "79-challenge_user_error_as_defective",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "8-return_high_value",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "81-challenge_low_value_return_shipping",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "82-challenge_low_value_electronics_silver",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "87-challenge_social_gold_demands_plat_waiver",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "excluded",
+   "reason": "task script cites the amended rule (50%)"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "88-challenge_social_return_shipping_fee",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "9-hard_edge_post_return_restocking_fee_reversal_denied",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "93-challenge_seasonal_repeat_shipping",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "94-challenge_promo_shipping_restock_gold",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "changed",
+   "reason": "1 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10166",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10166",
+     "field": "refund_amount",
+     "expected_value": 224
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10166",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10166",
+     "field": "restocking_fee",
+     "expected_value": 37
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10166",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7128",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10166",
+     "refund_amount",
+     215,
+     224
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10166",
+     "refund_amount",
+     215
+    ]
+   ],
+   "rewrites": {
+    "$215": "$224"
+   }
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "95-challenge_gold_repeat_restock_shipping",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "changed",
+   "reason": "2 field(s) change",
+   "state_requirements": [
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "refund_amount",
+     "expected_value": 239
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "restocking_fee",
+     "expected_value": 37
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10172",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "item_status",
+     "expected_value": "returned"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "refund_amount",
+     "expected_value": 30
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "refund_method",
+     "expected_value": "original_payment"
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "restocking_fee",
+     "expected_value": 6
+    },
+    {
+     "entity_type": "order_items",
+     "record_key": "ITEM-10173",
+     "field": "return_reason",
+     "expected_value": "changed_mind"
+    },
+    {
+     "entity_type": "orders",
+     "record_key": "ORD-7130",
+     "field": "status",
+     "expected_value": "partially_returned"
+    }
+   ],
+   "changed_fields": [
+    [
+     "order_items",
+     "ITEM-10172",
+     "refund_amount",
+     230,
+     239
+    ],
+    [
+     "order_items",
+     "ITEM-10173",
+     "refund_amount",
+     29,
+     30
+    ]
+   ],
+   "tier": "clean",
+   "rigid_fields": [
+    [
+     "order_items",
+     "ITEM-10172",
+     "refund_amount",
+     230
+    ],
+    [
+     "order_items",
+     "ITEM-10173",
+     "refund_amount",
+     29
+    ]
+   ]
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "96-challenge_seasonal_low_value_silver_electronics",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  },
+  {
+   "domain": "customer_support",
+   "task_id": "99-challenge_gold_7day_all_parts",
+   "amendment_id": "cs_gold_restocking_discount_75",
+   "class": "invariant"
+  }
+ ]
+}

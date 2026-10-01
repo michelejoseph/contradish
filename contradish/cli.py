@@ -1556,6 +1556,173 @@ def cmd_contract(args):
     sys.exit(0 if result.passed else 1)
 
 
+def cmd_counterfactual(args):
+    """
+    The Contradish Counterfactual Benchmark Suite: amend an existing agent
+    benchmark's policy, re-derive the expected outcome, and test whether
+    warranted behavioral updating is a property distinct from task accuracy.
+    See contradish/counterfactual/ and counterfactual/PREREGISTRATION.md.
+
+      derive     build the Contradish x STATE-Bench manifest (no model calls)
+      selfcheck  run the scripted oracle and rigid agents through the suite
+      run        run a real model through STATE-Bench under every amendment
+      analyze    the pre-registered tests on one or more record files
+      power      rejection rates of the tests on synthetic agents
+    """
+    action = args.cf_action
+    use_json = getattr(args, "json", False)
+
+    if action == "analyze":
+        try:
+            from contradish.counterfactual.analysis import analyze, format_report
+        except ImportError:
+            print("\n  `contradish counterfactual analyze` needs numpy (pip install numpy).\n")
+            sys.exit(2)
+        from contradish.counterfactual.core import load_records
+        if not args.files:
+            print("\n  analyze needs one or more record files (.jsonl)\n")
+            sys.exit(2)
+        records = []
+        for path in args.files:
+            records += load_records(path)
+        # Pre-registered sensitivity analyses.
+        leave_out = set(args.leave_out or [])
+        if leave_out:
+            records = [r for r in records if r.condition not in leave_out]
+        if args.clean_only:
+            if not args.manifest:
+                print("\n  --clean-only needs --manifest (to know which changed cases are clean)\n")
+                sys.exit(2)
+            with open(args.manifest, encoding="utf-8") as f:
+                clean = {(c["task_id"], c["amendment_id"]) for c in json.load(f)["cases"]
+                         if c["class"] == "changed" and c.get("tier") == "clean"}
+            records = [r for r in records
+                       if r.role != "changed" or (r.task_id, r.condition) in clean]
+        result = analyze(records, mastery=args.mastery, seed=args.seed)
+        if args.output:
+            with open(args.output, "w", encoding="utf-8") as f:
+                json.dump(result, f, indent=2)
+        print(json.dumps(result, indent=2) if use_json else format_report(result))
+        sys.exit(0)
+
+    if action == "power":
+        try:
+            from contradish.counterfactual.simulate import power
+        except ImportError:
+            print("\n  `contradish counterfactual power` needs numpy (pip install numpy).\n")
+            sys.exit(2)
+        result = power(args.models, args.gamma, rho=args.rho, sims=args.sims, runs=args.runs,
+                       seed=args.seed, n_tasks=118, n_changed=19, n_invariant=27)
+        if use_json:
+            print(json.dumps(result, indent=2))
+        else:
+            print()
+            print(f"  synthetic agents: {args.models} models, gamma={args.gamma}, rho={args.rho}, "
+                  f"{args.sims} simulated studies (not an empirical result)")
+            print(f"  H1 rejection rate: {result['h1_reject_rate']:.3f}")
+            print(f"  H2 rejection rate: {result['h2_reject_rate']:.3f}"
+                  + ("   <- this is the false-positive rate" if args.gamma == 0 else "   <- this is power"))
+            print()
+        sys.exit(0)
+
+    from contradish.counterfactual import state_bench as cf_sb
+    from contradish.counterfactual.core import dump_records, all_model_metrics
+    if not args.state_bench_root:
+        print("\n  needs --state-bench-root (a checkout of https://github.com/microsoft/STATE-Bench)\n")
+        sys.exit(2)
+    try:
+        sb = cf_sb.load_state_bench(args.state_bench_root)
+    except (FileNotFoundError, ImportError) as e:
+        print(f"\n  could not load STATE-Bench: {e}\n")
+        sys.exit(2)
+
+    if args.manifest and action != "derive":
+        with open(args.manifest, encoding="utf-8") as f:
+            manifest = json.load(f)
+    else:
+        manifest = cf_sb.derive_suite(sb)
+
+    if action == "derive":
+        if args.output:
+            with open(args.output, "w", encoding="utf-8") as f:
+                json.dump(manifest, f, indent=1)
+        if use_json:
+            print(json.dumps({k: v for k, v in manifest.items() if k != "cases"}, indent=2))
+        else:
+            print()
+            print(f"  Contradish x STATE-Bench {manifest['suite_version']}  "
+                  f"(STATE-Bench {manifest['state_bench_commit'][:10]})")
+            for d, r in manifest["replay"].items():
+                print(f"  {d}: {r['replay_verified']} of {r['gold_tasks']} gold trajectories reproduce "
+                      "the checked-in expected state")
+            print()
+            print("  amendment                         changed  invariant  excluded  valid")
+            for a in manifest["amendments"]:
+                c = a["counts"]
+                tag = " (control)" if a["control"] else ""
+                print(f"  {(a['id'] + tag):<33s} {c['changed']:>7d}  {c['invariant']:>9d}  "
+                      f"{c['excluded']:>8d}  {'yes' if a['valid'] else 'NO'}")
+            if args.output:
+                print(f"\n  manifest -> {args.output}")
+            print()
+        sys.exit(0 if all(a["valid"] for a in manifest["amendments"]) else 1)
+
+    if action == "selfcheck":
+        ok = True
+        rows = []
+        for agent in ("oracle", "rigid"):
+            recs = cf_sb.scripted_records(sb, manifest, agent)
+            m = all_model_metrics(recs, criterion=set())[0]
+            rows.append((agent, m))
+            if agent == "oracle":
+                ok &= m.acc == 1.0 and m.cuf == 1.0 and m.hold == 1.0 and m.ctrl == 1.0
+            else:
+                ok &= m.acc == 1.0 and m.cuf == 0.0 and m.rigid == 1.0 and m.hold == 1.0 and m.ctrl == 1.0
+        if use_json:
+            print(json.dumps({"ok": ok, "agents": {a: m.to_dict() for a, m in rows}}, indent=2))
+        else:
+            print()
+            print("  scripted agent   ACC    CUF   RIGID   HOLD   CTRL   changed  invariant  control")
+            for a, m in rows:
+                print(f"  {a:<14s} {m.acc:5.2f}  {m.cuf:5.2f}  {m.rigid:5.2f}  {m.hold:5.2f}  {m.ctrl:5.2f}  "
+                      f"{m.n_changed:>7d}  {m.n_invariant:>9d}  {m.n_control:>7d}")
+            print()
+            print("  " + ("OK: the oracle passes every case; the rigid agent holds every invariant and "
+                          "control case and is scored as rigidity on every changed case."
+                          if ok else "FAILED: the suite's ground truth and scorer disagree."))
+            print()
+        sys.exit(0 if ok else 1)
+
+    # run
+    if not args.model:
+        print("\n  run needs --model (the agent deployment name STATE-Bench should call)\n")
+        sys.exit(2)
+    if not args.output:
+        print("\n  run needs --output (a .jsonl file to append records to)\n")
+        sys.exit(2)
+    try:
+        client_mod = importlib.import_module("state_bench.client")
+        client = client_mod.build_llm_client(deployments=[args.model])
+        sim_client = client_mod.build_user_sim_client()
+    except Exception as e:
+        print(f"\n  could not build STATE-Bench clients ({type(e).__name__}: {e}).\n"
+              "  Configure STATE-Bench's agent and locked evaluation clients first: see its\n"
+              "  docs/RUN_BENCHMARK.md.\n")
+        sys.exit(2)
+    out = open(args.output, "a", encoding="utf-8")
+
+    def on_record(rec):
+        out.write(json.dumps(rec.to_dict()) + "\n")
+        out.flush()
+
+    recs = cf_sb.live_records(sb, manifest, args.model, client, sim_client, runs=args.runs,
+                              invariant_per_amendment=args.invariant_per_amendment,
+                              seed=args.seed, on_record=on_record)
+    out.close()
+    print(f"\n  {len(recs)} records -> {args.output}\n")
+    sys.exit(0)
+
+
 def cmd_replay(args):
     """
     Replay logged conversation transcripts through the memory-aware
@@ -3257,6 +3424,59 @@ examples:
     con_p.add_argument("--json", action="store_true", default=False,
                        help="Output as JSON.")
 
+    # contradish counterfactual -- the Counterfactual Benchmark Suite
+    cf_p = sub.add_parser(
+        "counterfactual",
+        help="Counterfactual Benchmark Suite: is warranted behavioral updating a property "
+             "distinct from task accuracy? (Contradish x STATE-Bench)",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=(
+            "Amend an existing agent benchmark's policy, re-derive the expected outcome\n"
+            "from the benchmark's own executable policy, and test two pre-registered\n"
+            "hypotheses (counterfactual/PREREGISTRATION.md):\n\n"
+            "  H1  on tasks a model has mastered, it fails more often under an amendment\n"
+            "      that warrants a different outcome than under a reworded control\n"
+            "  H2  across models, Behavioral Update Fidelity predicts reliability failures\n"
+            "      on held-out tasks after controlling for task accuracy\n\n"
+            "  contradish counterfactual derive    --state-bench-root ../STATE-Bench --output manifest.json\n"
+            "  contradish counterfactual selfcheck --state-bench-root ../STATE-Bench\n"
+            "  contradish counterfactual run       --state-bench-root ../STATE-Bench --model gpt-5.4 \\\n"
+            "                                      --runs 5 --output records.jsonl\n"
+            "  contradish counterfactual analyze records.jsonl [more.jsonl ...]\n"
+            "  contradish counterfactual power --models 12 --gamma 1.0\n\n"
+            "derive, selfcheck, analyze and power make no model calls. run uses STATE-Bench's\n"
+            "own orchestrator and clients, so it needs STATE-Bench configured with credentials."
+        ),
+    )
+    cf_p.add_argument("cf_action", choices=["derive", "selfcheck", "run", "analyze", "power"])
+    cf_p.add_argument("files", nargs="*", help="analyze: record files (.jsonl)")
+    cf_p.add_argument("--state-bench-root", dest="state_bench_root", metavar="DIR", default=None,
+                      help="A STATE-Bench checkout.")
+    cf_p.add_argument("--manifest", metavar="FILE", default=None,
+                      help="selfcheck/run: use a saved manifest instead of re-deriving. "
+                           "analyze --clean-only: the manifest that says which cases are clean.")
+    cf_p.add_argument("--model", default=None, help="run: agent deployment name.")
+    cf_p.add_argument("--runs", type=int, default=5, help="run/power: repeats per task (default 5).")
+    cf_p.add_argument("--invariant-per-amendment", dest="invariant_per_amendment", type=int, default=12,
+                      help="run: invariant tasks sampled per amendment (default 12).")
+    cf_p.add_argument("--mastery", choices=["all", "majority"], default="all",
+                      help="analyze: a task is mastered if all (default) or most base runs passed.")
+    cf_p.add_argument("--leave-out", dest="leave_out", action="append", metavar="AMENDMENT",
+                      help="analyze: drop every record made under this amendment (repeatable).")
+    cf_p.add_argument("--clean-only", dest="clean_only", action="store_true", default=False,
+                      help="analyze: keep only changed cases whose task script needed no rewriting "
+                           "(needs --manifest).")
+    cf_p.add_argument("--models", type=int, default=12, help="power: number of simulated models.")
+    cf_p.add_argument("--gamma", type=float, default=1.0,
+                      help="power: how strongly reliability failures depend on update fidelity "
+                           "(0 = not at all, which gives the false-positive rate).")
+    cf_p.add_argument("--rho", type=float, default=0.5,
+                      help="power: correlation between accuracy and update fidelity across models.")
+    cf_p.add_argument("--sims", type=int, default=200, help="power: simulated studies.")
+    cf_p.add_argument("--seed", type=int, default=0)
+    cf_p.add_argument("--output", metavar="FILE", default=None)
+    cf_p.add_argument("--json", action="store_true", default=False)
+
     upd_p = sub.add_parser(
         "update",
         help="Measure warranted behavioral updating: given new governing "
@@ -3590,6 +3810,8 @@ examples:
         cmd_update(args)
     elif args.command == "contract":
         cmd_contract(args)
+    elif args.command == "counterfactual":
+        cmd_counterfactual(args)
     elif args.command == "analyze":
         cmd_quick(args)
     elif args.command == "calibrate":
