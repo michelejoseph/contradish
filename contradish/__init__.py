@@ -19,8 +19,10 @@ Tools:
     PolicyContract    -- the evaluation contract: clauses, decision cases
                            with meaning-preserving variants, amendments with
                            declared warranted changes; run_contract() checks
-                           semantic invariance, policy grounding, and
-                           warranted change together (contradish contract)
+                           semantic invariance, policy grounding, fact
+                           sensitivity, and warranted change together, with
+                           95% intervals, a sampling noise floor, and
+                           human-label judge calibration (contradish contract)
     Suite             -- offline CAI Strain testing (run before deploy)
     RegressionSuite   -- compare baseline vs candidate for CI/CD gates
     Firewall          -- real-time contradiction detection in production
@@ -204,7 +206,8 @@ from .intervention_probe import (
     probe_intervention, probe_interventions, BUILTIN_INTERVENTIONS,
 )
 from .contract import (
-    PolicyContract, Clause, DecisionCase, Amendment, Thresholds, LintIssue,
+    PolicyContract, Clause, DecisionCase, Contrast, Amendment, Thresholds, LintIssue,
+    ClassifierCalibration, calibration_sample,
     ContractResult, TransitionResult, Obligation,
     run_contract, evaluate_contract, default_outcome_classifier,
     load_builtin_contract, list_builtin_contracts,
@@ -295,7 +298,7 @@ from .domains      import (
 from .conviction   import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .cdr          import generate_cdr
 
-__version__ = "1.53.0"
+__version__ = "1.54.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -445,6 +448,9 @@ __all__ = [
     "probe_interventions",
     "BUILTIN_INTERVENTIONS",
     "PolicyContract",
+    "Contrast",
+    "ClassifierCalibration",
+    "calibration_sample",
     "Clause",
     "DecisionCase",
     "Amendment",

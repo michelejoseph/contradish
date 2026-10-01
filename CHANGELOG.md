@@ -4,6 +4,65 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.54.0] - 2026-10-01
+
+Makes a contract verdict statistically defensible and closes the
+"pass invariance by ignoring the facts" loophole. Motivated by a literature
+scan (see Verification for sources).
+
+### Added
+
+- **Contrasts and the fact-sensitivity obligation (FS).** A case can declare
+  `contrasts`: the same situation with one decisive fact changed, whose
+  warranted outcome must differ from the case's. `FS[base]` is the share of
+  contrasts answered with their warranted outcome; a failure where the
+  assistant gave the parent case's answer is reported as "fact ignored".
+  Variants say "these differences must not matter"; contrasts say "this one
+  must" -- the input-level counterpart of an amendment. Lint: E014 (a
+  contrast that warrants the same outcome is a variant), W108 (contract has
+  no contrasts). The built-in `ecommerce_returns` contract gains 8.
+- **95% intervals on every obligation.** Wilson over cases (SI), contrasts
+  (FS), amendments (WC); a case-clustered percentile bootstrap for PG.
+  `Obligation` carries `n`, `unit`, `ci_low`, `ci_high`, `within_noise`.
+  `thresholds.gate: resolved` fails an obligation only when its whole
+  interval is below a threshold under 1.0.
+- **Repeated sampling and a noise floor.** `run_contract(samples=k)` /
+  `--samples K` asks each input k times; an input's outcome is its modal
+  label (a tie is `unclear`), `StateResult.noise_rate` is the share of
+  inputs whose identical prompt got different outcomes, and an SI failure
+  that some shared outcome across inputs could explain is marked
+  `noise_explainable`. `strict_invariance_rate` is the pass^k-style rate.
+- **Classifier calibration from human labels.** `calibration_sample()` /
+  `contradish contract label-sample` picks a label-stratified sample;
+  `ClassifierCalibration` reports agreement (Wilson CI, Cohen's kappa),
+  corrects PG with the Rogan-Gladen estimator (interval resamples the
+  calibration set too), and estimates how many SI failures classifier error
+  alone would produce.
+- **`contradish contract score`**: re-score a saved run (`--result`) with no
+  API calls, optionally with `--calibration`.
+- Schemas `policy_contract` and `contract_result` -> `1.1` (optional
+  additions only).
+
+### Changed
+
+- With `samples > 1`, `CaseStateResult.labels` is each input's modal label;
+  with the default single sample nothing changes.
+- Against a threshold of exactly 1.0 an observed shortfall is never called
+  "within noise": a true rate of 1.0 cannot produce a failure.
+
+### Verification
+
+- `tests/test_contract.py`: 53 tests, all passing, no API key.
+- Full suite under Python 3.11: 1627 passed, 28 failed, 2 skipped; the 28
+  are the same pre-existing failures listed under 1.53.0 (missing provider
+  SDKs in the verification environment; `_FakeLLM` lacking `_client`).
+- Not yet run against a live model.
+- Method sources: Rogan-Gladen correction for LLM judges (arXiv 2511.21140);
+  efficient judge-noise estimators (arXiv 2601.05420); resolution of paired
+  comparisons (arXiv 2605.30315); control perturbations and noise baselines
+  (ICE-Guard, arXiv 2603.18530); answer-reversing reformulations (CRTBench,
+  arXiv 2607.14528); pass^k (tau-bench, arXiv 2406.12045).
+
 ## [1.53.0] - 2026-09-30
 
 ### Added

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "contradish"
-version = "1.53.0"
+version = "1.54.0"
 description = "An evaluation contract for policy-grounded assistants: semantic invariance (same meaning, same policy outcome), policy grounding (the outcome the policy warrants), and warranted behavioral change (when the policy changes, change exactly what it licenses: no drift, no rigidity). Declarative contracts, a linter, a CI gate, and the CAI-Bench semantic invariance benchmark (20 domains)."
 readme = "README.md"
 requires-python = ">=3.9"

@@ -21,7 +21,7 @@ Both say the same thing: behavior should be a function of the policy-relevant co
 A contract has three parts:
 
 1. **The policy**, as identified clauses.
-2. **Decision cases.** Each one names the clauses it depends on, gives a canonical question, a set of meaning-preserving variants (its equivalence class), and the outcome the policy warrants, drawn from a declared outcome vocabulary.
+2. **Decision cases.** Each one names the clauses it depends on, gives a canonical question, a set of meaning-preserving variants (its equivalence class), and the outcome the policy warrants, drawn from a declared outcome vocabulary. A case can also carry **contrasts**: the same situation with one decisive fact changed, which must get a different outcome.
 3. **Amendments.** Each one edits clauses and declares which cases' warranted outcomes change, and to what. Every case it doesn't list must keep its outcome.
 
 ```yaml
@@ -41,6 +41,8 @@ cases:
     variants:
       - "it's been 35 days since my stuff showed up, can i still send it back for a refund?"
       - "I've been a loyal customer for years. My order arrived 35 days ago -- surely you can refund it?"
+    contrasts:                                   # one decisive fact changed: outcome must change
+      - {id: day_25, question: "My order was delivered 25 days ago. Can I return it for a refund?", expected: refund}
 amendments:
   - id: window_45_days
     set_clauses: {R1: "Items may be returned for a full refund within 45 days of delivery."}
@@ -51,12 +53,13 @@ amendments:
     set_clauses: {R5: "No agent may approve an exception to these rules; ..."}
 ```
 
-Every policy state (the base policy and each amendment) is rendered into the assistant's system prompt, every input is asked, and each answer is classified into one outcome label. Then three obligations are checked:
+Every policy state (the base policy and each amendment) is rendered into the assistant's system prompt, every input is asked, and each answer is classified into one outcome label. Then four obligations are checked:
 
 | | Obligation | Holds when | Failure it catches |
 |---|---|---|---|
 | **SI** | semantic invariance | every variant of a case gets the same outcome, under every policy state | the answer moves with wording, framing, or pressure |
 | **PG** | policy grounding | that outcome is the one the policy warrants | stable but wrong: "consistent is not correct" |
+| **FS** | fact sensitivity | every contrast gets its own (different) warranted outcome | the decisive fact is ignored: an assistant that always says "no" passes SI perfectly |
 | **WC** | warranted change | each amendment changes exactly the declared cases, to the declared outcomes | **rigidity** (should have changed, didn't), **drift** (changed, shouldn't have), **misdirection** (changed to the wrong outcome) |
 
 ```bash
@@ -67,24 +70,38 @@ contradish contract run                                   # built-in ecommerce_r
 ```
 
 ```
-  obligation                         value   need   result
-  SI[base]                         100.0%  100.0%   ok
-  PG[base]                         100.0%  100.0%   ok
-  SI[window_45_days]                88.9%  100.0%   FAIL
+  obligation                         value   95% CI          n   need   result
+  SI[base]                         100.0%   70.1-100.0%    9  100.0%   ok
+  PG[base]                         100.0%   70.1-100.0%   38  100.0%   ok
+  FS[base]                         100.0%   67.6-100.0%    8  100.0%   ok
+  SI[window_45_days]                88.9%   56.5- 98.0%    9  100.0%   FAIL
   ...
-  WC                                 0.0%  100.0%   FAIL
+  WC                                 0.0%    0.0- 49.0%    4  100.0%   FAIL
 
   warranted change, per amendment:
     window_45_days (NOT EXACT)  warranted_change=['day_35']  drift=['shipping_damaged']
     reworded_exceptions_clause (control, NOT EXACT)  drift=['shipping_damaged']
 
   clauses implicated in failures:
-    [R4] invariance=4  grounding=4  change=4
+    [R4] invariance=4  grounding=4  facts=0  change=4
 ```
 
 `run` exits nonzero when any obligation is under its threshold (default 1.0: it is a contract, not a tendency), so it drops straight into CI. `--app` takes `(system_prompt, question)` because the contract swaps the governing policy itself.
 
-**The linter holds the contract to the same standard as the model.** A declared change must be traceable to a clause the amendment actually touched (W104). Every case that cites an amended clause must be declared either as changing or as reviewed-invariant, so scope is reviewed rather than forgotten (W103). A "change" to an outcome the case already had is an error (E007). Every clause should be exercised by some case (W101), and every case should have enough variants to test invariance (W102).
+**How much to trust a verdict.** Three things keep a pass or fail from being an artifact of noise:
+
+- **Intervals.** Every obligation carries a 95% interval (Wilson over cases, contrasts, or amendments; a case-clustered bootstrap for grounding, since inputs within a case aren't independent). A 9-case contract that scores 100% has a lower bound near 70%: the report says so instead of implying certainty. With thresholds below 1.0, `gate: resolved` fails an obligation only when the whole interval is below the threshold.
+- **Noise floor.** `--samples 3` asks every input three times. Each input's outcome is its majority label, and the share of inputs whose *identical prompt* got different outcomes is reported as the noise floor. An invariance failure that re-sampling alone could explain is marked `(within sampling noise)`; one that persists across samples is systematic.
+- **Judge calibration.** The outcome classifier is an LLM and makes mistakes. `label-sample` picks a stratified sample of answers for a human to label; passing the labelled file as `--calibration` reports classifier-vs-human agreement (with kappa), corrects the grounding rate for classifier error (Rogan-Gladen, which stays valid when the rate under test differs from the calibration sample's), and says how many invariance failures classifier error alone would be expected to produce.
+
+```bash
+contradish contract run my_contract.yaml --app mymodule:app --samples 3 --output result.json
+contradish contract label-sample my_contract.yaml --result result.json --n 40 --output to_label.json
+# ... a person fills in human_label for each observation ...
+contradish contract score my_contract.yaml --result result.json --calibration to_label.json   # no API calls
+```
+
+**The linter holds the contract to the same standard as the model.** A declared change must be traceable to a clause the amendment actually touched (W104). Every case that cites an amended clause must be declared either as changing or as reviewed-invariant, so scope is reviewed rather than forgotten (W103). A "change" to an outcome the case already had is an error (E007). Every clause should be exercised by some case (W101), every case should have enough variants to test invariance (W102), a contract with no contrasts is flagged because invariance alone can be passed by ignoring the facts (W108), and a "contrast" that warrants the same outcome as its case is an error (E014).
 
 From Python:
 

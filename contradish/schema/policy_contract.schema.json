@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://contradish.com/schema/policy-contract/1.0.json",
+  "$id": "https://contradish.com/schema/policy-contract/1.1.json",
   "title": "Contradish Policy Evaluation Contract",
-  "description": "A declarative evaluation contract for a policy-grounded assistant (contradish/contract.py). A policy is a list of identified clauses; each decision case names the clauses it depends on, a canonical question, meaning-preserving variants of it, and the outcome the policy warrants. Each amendment edits clauses and declares which cases' warranted outcomes change and to what. Three obligations follow: semantic invariance (every variant of a case gets the same outcome, under every policy state), policy grounding (that outcome is the warranted one), and warranted change (an amendment changes exactly the declared cases, to the declared outcomes -- no drift, no rigidity, no misdirection).",
+  "description": "A declarative evaluation contract for a policy-grounded assistant (contradish/contract.py). A policy is a list of identified clauses; each decision case names the clauses it depends on, a canonical question, meaning-preserving variants of it, and the outcome the policy warrants. Each amendment edits clauses and declares which cases' warranted outcomes change and to what. Four obligations follow: semantic invariance (every variant of a case gets the same outcome, under every policy state), policy grounding (that outcome is the warranted one), fact sensitivity (a contrast -- the same situation with one decisive fact changed -- gets its own, different warranted outcome), and warranted change (an amendment changes exactly the declared cases, to the declared outcomes -- no drift, no rigidity, no misdirection).",
   "type": "object",
   "required": [
     "schema_version",
@@ -104,6 +104,19 @@
           "minimum": 0,
           "maximum": 1,
           "description": "Minimum fraction of amendments whose behavioral delta was exact."
+        },
+        "fact_sensitivity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum fraction of contrasts answered with their warranted outcome (added in 1.1)."
+        },
+        "gate": {
+          "enum": [
+            "point",
+            "resolved"
+          ],
+          "description": "point: pass iff the point estimate meets the threshold. resolved: fail only when the whole 95% interval is below it (added in 1.1)."
         }
       }
     }
@@ -175,6 +188,30 @@
             "type": "string"
           },
           "description": "Optional subset of the outcome vocabulary the classifier chooses between for this case."
+        },
+        "contrasts": {
+          "type": "array",
+          "description": "Minimal edits to the situation that change its warranted outcome (added in 1.1). Probed under the base policy.",
+          "items": {
+            "type": "object",
+            "required": [
+              "question",
+              "expected"
+            ],
+            "additionalProperties": true,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "question": {
+                "type": "string"
+              },
+              "expected": {
+                "type": "string",
+                "description": "Warranted outcome; must differ from the case's."
+              }
+            }
+          }
         }
       }
     },

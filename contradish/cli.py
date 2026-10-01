@@ -1389,13 +1389,20 @@ def cmd_contract(args):
       contradish contract lint [FILE]     static checks, no API calls
       contradish contract show [FILE]     print the contract's rendered policy states
       contradish contract run  [FILE]     probe an assistant and score every obligation
+      contradish contract score [FILE] --result R.json [--calibration L.json]
+                                          re-score a saved run, no API calls
+      contradish contract label-sample [FILE] --result R.json [--n 40]
+                                          pick observations for humans to label
 
     FILE is a .yaml/.json contract or a built-in contract name; omitted, the
     built-in ecommerce_returns contract is used. --app takes
     (system_prompt, question), the same convention as `contradish update`,
     because the contract varies the governing policy itself.
     """
-    from contradish.contract import run_contract, default_outcome_classifier
+    from contradish.contract import (
+        run_contract, default_outcome_classifier, evaluate_contract,
+        ClassifierCalibration, calibration_sample,
+    )
 
     action = args.contract_action
     use_json = getattr(args, "json", False)
@@ -1432,6 +1439,68 @@ def cmd_contract(args):
             sys.exit(1)
         sys.exit(0)
 
+    def _read_json(path, what):
+        try:
+            with open(path, encoding="utf-8") as f:
+                return json.load(f)
+        except (OSError, ValueError) as e:
+            print(f"\n  could not read {what} {path}: {e}\n")
+            sys.exit(2)
+
+    def _observations_from(path, what):
+        data = _read_json(path, what)
+        obs = data.get("observations") if isinstance(data, dict) else data
+        if not isinstance(obs, list):
+            print(f"\n  {path} has no observations list (save a run with --output)\n")
+            sys.exit(2)
+        return obs
+
+    calibration = None
+    if getattr(args, "calibration", None):
+        calibration = ClassifierCalibration.from_observations(
+            contract, _observations_from(args.calibration, "calibration file"))
+        if not calibration.items:
+            print(f"\n  {args.calibration} has no observations with a human_label\n")
+            sys.exit(2)
+
+    if action == "label-sample":
+        if not args.result:
+            print("\n  label-sample needs --result (a file saved by `contract run --output`)\n")
+            sys.exit(2)
+        sample = calibration_sample(_observations_from(args.result, "result"), n=args.n)
+        payload = {
+            "instructions": "Fill human_label for each observation with the outcome the "
+                            "answer actually commits to (one of: "
+                            + ", ".join(sorted(contract.outcomes)) + ", or unclear). "
+                            "Then pass this file as --calibration.",
+            "observations": sample,
+        }
+        text = json.dumps(payload, indent=2)
+        if args.output:
+            with open(args.output, "w", encoding="utf-8") as f:
+                f.write(text)
+            print(f"\n  {len(sample)} observations to label -> {args.output}\n")
+        else:
+            print(text)
+        sys.exit(0)
+
+    if action == "score":
+        if not args.result:
+            print("\n  score needs --result (a file saved by `contract run --output`)\n")
+            sys.exit(2)
+        result = evaluate_contract(
+            contract, _observations_from(args.result, "result"),
+            lint=contract.lint(), calibration=calibration,
+        )
+        if args.output:
+            with open(args.output, "w", encoding="utf-8") as f:
+                json.dump(result.to_dict(), f, indent=2)
+        if use_json:
+            print(json.dumps(result.to_dict(include_observations=False), indent=2))
+        else:
+            print(result.report())
+        sys.exit(0 if result.passed else 1)
+
     if action == "show":
         for state in contract.states():
             print()
@@ -1453,17 +1522,20 @@ def cmd_contract(args):
         mode_label = f"demo mode: {llm_for_app.provider}"
 
     amendment_variants = not getattr(args, "canonical_after_amendment", False)
-    n_inputs = sum(len(c.inputs()) for c in contract.cases)
+    samples = max(1, int(getattr(args, "samples", 1) or 1))
+    n_inputs = sum(len(c.inputs()) + len(c.contrasts) for c in contract.cases)
     n_after = sum(len(c.inputs(amendment_variants)) for c in contract.cases) * len(contract.amendments)
     if not use_json:
         print()
-        print(f"  {contract.contract_id}  ({source})  *  {n_inputs + n_after} probes  ({mode_label})")
+        print(f"  {contract.contract_id}  ({source})  *  {(n_inputs + n_after) * samples} probes  ({mode_label})")
 
     try:
         result = run_contract(
             contract, model_fn, default_outcome_classifier(LLMClient()),
             amendment_variants=amendment_variants,
             workers=args.workers,
+            samples=samples,
+            calibration=calibration,
             strict_lint=not getattr(args, "allow_lint_errors", False),
         )
     except ValueError as e:
@@ -3124,13 +3196,18 @@ examples:
             "The policy evaluation contract. A contract declares a policy as "
             "identified clauses, decision cases (each with meaning-preserving "
             "variants and the outcome the policy warrants), and amendments (each "
-            "with the exact cases whose warranted outcome changes). Three "
+            "with the exact cases whose warranted outcome changes). Four "
             "obligations are checked:\n\n"
             "  SI  semantic invariance  same meaning -> same outcome, under every policy state\n"
             "  PG  policy grounding     that outcome is the one the policy warrants\n"
+            "  FS  fact sensitivity     a contrast (one decisive fact changed) gets its own,\n"
+            "                           different warranted outcome\n"
             "  WC  warranted change     an amendment changes exactly the declared cases,\n"
             "                           to the declared outcomes (no drift, no rigidity,\n"
             "                           no misdirection)\n\n"
+            "Every obligation is reported with a 95% interval. --samples K re-asks each\n"
+            "input to measure the noise floor; label-sample + --calibration correct\n"
+            "policy grounding for classifier error using a few dozen human labels.\n\n"
             "  contradish contract lint my_contract.yaml\n"
             "  contradish contract show my_contract.yaml\n"
             "  contradish contract run  my_contract.yaml --app mymodule:app\n"
@@ -3140,9 +3217,11 @@ examples:
             "obligation is below its threshold, so `run` works as a CI gate."
         ),
     )
-    con_p.add_argument("contract_action", choices=["lint", "show", "run"],
+    con_p.add_argument("contract_action", choices=["lint", "show", "run", "score", "label-sample"],
                        help="lint: static checks, no API calls. show: print each policy "
-                            "state. run: probe and score.")
+                            "state. run: probe and score. score: re-score a saved run "
+                            "(--result), no API calls. label-sample: pick observations "
+                            "from a saved run for humans to label.")
     con_p.add_argument("file", nargs="?", default=None,
                        help="Contract file (.yaml/.json) or built-in contract name. "
                             "Default: the built-in ecommerce_returns contract.")
@@ -3153,10 +3232,23 @@ examples:
                        dest="canonical_after_amendment",
                        help="Under amended policies ask only canonical questions (WC fully "
                             "measured; SI/PG only under the base policy). Fewer calls.")
+    con_p.add_argument("--samples", type=int, default=1, metavar="K",
+                       help="run: ask every input K times (use an odd K). Each input's "
+                            "outcome is its majority label, and repeat disagreement is "
+                            "reported as the noise floor.")
+    con_p.add_argument("--result", metavar="FILE", default=None,
+                       help="score/label-sample: a result saved by `contract run --output`.")
+    con_p.add_argument("--calibration", metavar="FILE", default=None,
+                       help="run/score: observations with a filled human_label (from "
+                            "label-sample). Corrects policy grounding for classifier error "
+                            "and reports classifier-vs-human agreement.")
+    con_p.add_argument("--n", type=int, default=40, metavar="N",
+                       help="label-sample: how many observations to pick (default 40).")
     con_p.add_argument("--workers", type=int, default=4, metavar="N",
                        help="Parallel probes (default 4).")
     con_p.add_argument("--output", metavar="FILE", default=None,
-                       help="Write the full result, including every answer, as JSON.")
+                       help="run/score: write the full result, including every answer, as "
+                            "JSON. label-sample: write the sample here.")
     con_p.add_argument("--allow-lint-errors", action="store_true", default=False,
                        dest="allow_lint_errors",
                        help="Run even if the contract has lint errors.")

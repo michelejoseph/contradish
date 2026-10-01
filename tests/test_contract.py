@@ -44,13 +44,15 @@ def _decide(system_prompt: str, question: str) -> str:
     if "final sale" in q:
         return "no_return"
     if any(k in q for k in ("shipping", "ship it back", "send it back?", "postage", "label")):
-        if any(k in q for k in ("cracked", "broken", "damaged")):
+        if any(k in q for k in ("cracked", "broken", "damaged", "wrong lamp")):
             return "store_pays_shipping"
         return "store_pays_shipping" if free_shipping else "customer_pays_shipping"
     if "headphones" in q:
+        if "never opened" in q:
+            return "refund"
         return "refund" if electronics_refundable else "exchange_only"
     if "jacket" in q:
-        return "refund"
+        return "no_return" if "worn it a few times" in q else "refund"
     days = int(re.search(r"(\d+) days", q).group(1))
     return "refund" if days <= window else "no_return"
 
@@ -135,7 +137,8 @@ def _mini(**over):
         "outcomes": ["yes", "no"],
         "cases": [
             {"id": "c1", "clauses": ["A"], "question": "20 days?", "expected": "yes",
-             "variants": ["twenty days ago?", "it was 20 days, ok?", "20d refund?"]},
+             "variants": ["twenty days ago?", "it was 20 days, ok?", "20d refund?"],
+             "contrasts": [{"id": "d40", "question": "40 days?", "expected": "no"}]},
             {"id": "c2", "clauses": ["B"], "question": "gift card?", "expected": "no",
              "variants": ["refund a gift card?", "giftcard refund?", "gift card money back?"]},
         ],
@@ -207,7 +210,9 @@ def test_faithful_assistant_meets_every_obligation(contract):
     result = run_contract(contract, faithful, label_classifier, workers=1)
     assert result.passed, result.report()
     kinds = {o.kind for o in result.obligations}
-    assert kinds == {"semantic_invariance", "policy_grounding", "warranted_change"}
+    assert kinds == {"semantic_invariance", "policy_grounding", "fact_sensitivity",
+                     "warranted_change"}
+    assert next(o for o in result.obligations if o.id == "FS[base]").n == 8
     assert len([o for o in result.obligations if o.kind == "semantic_invariance"]) == 5
     wc = result.transitions["window_45_days"]
     assert wc.per_case["day_35"] == "warranted_change"
@@ -457,3 +462,225 @@ def test_cli_run_gates_on_obligations(monkeypatch, capsys, tmp_path):
                               "--workers", "1", "--json"]) == 1
     out = json.loads(capsys.readouterr().out)
     assert out["passed"] is False and "observations" not in out
+
+
+# ── contrasts: fact sensitivity ─────────────────────────────────────────────
+
+def test_lint_contrast_that_is_a_variant():
+    c = _mini(cases=[{"id": "c1", "clauses": ["A", "B"], "question": "20 days?", "expected": "yes",
+                      "variants": ["a", "b", "c"],
+                      "contrasts": [{"id": "x", "question": "21 days?", "expected": "yes"}]}])
+    assert "E014" in _codes(c)
+
+
+def test_lint_warns_when_no_contrasts():
+    c = _mini(cases=[{"id": "c1", "clauses": ["A", "B"], "question": "q", "expected": "yes",
+                      "variants": ["a", "b", "c"]}])
+    assert "W108" in _codes(c)
+
+
+def test_fact_blind_assistant_passes_invariance_but_fails_fact_sensitivity(contract):
+    def fact_blind(system_prompt, question):
+        answer = _decide(system_prompt, question)
+        q = question.lower()
+        # Ignores the date entirely: every dated refund question is "no_return".
+        if re.search(r"\d+ days", q) and "jacket" not in q and "headphones" not in q \
+                and "sweater" not in q and "final sale" not in q:
+            return "no_return"
+        return answer
+
+    result = run_contract(contract, fact_blind, label_classifier, workers=1)
+    by_id = {o.id: o for o in result.obligations}
+    assert by_id["SI[base]"].passed            # perfectly stable...
+    assert not by_id["FS[base]"].passed        # ...because it ignores the decisive fact
+    fails = result.states[BASE_STATE].contrast_failures()
+    assert ("day_35", "day_25", "no_return", "refund", True) in fails
+    assert "fact ignored" in result.report()
+    assert result.by_clause["R1"]["fact_failures"] >= 2
+
+
+# ── statistics: intervals, samples, noise ───────────────────────────────────
+
+def test_wilson_interval():
+    from contradish.contract import wilson_interval
+    assert wilson_interval(0, 0) == (None, None)
+    lo, hi = wilson_interval(9, 9)
+    assert 0.65 < lo < 0.72 and hi == pytest.approx(1.0)
+    lo, hi = wilson_interval(8, 9)
+    assert lo < 8 / 9 < hi < 1.0
+
+
+def test_obligations_carry_intervals(contract):
+    result = run_contract(contract, rigid, label_classifier, workers=1)
+    for o in result.obligations:
+        assert o.n > 0 and o.unit
+        assert o.ci_low is not None and o.ci_low <= o.value + 1e-9 <= o.ci_high + 2e-9
+    d = result.to_dict(False)
+    assert all("ci_low" in o for o in d["obligations"])
+
+
+def test_gate_resolved_forgives_only_shortfalls_within_noise():
+    from contradish.contract import Obligation
+    strict = Obligation("SI[base]", "semantic_invariance", "base", 8 / 9, 1.0,
+                        n=9, ci_low=0.56, ci_high=0.98, gate="resolved")
+    assert not strict.passed and strict.verdict == "FAIL"     # 1.0 is outside the interval
+    lenient = Obligation("SI[base]", "semantic_invariance", "base", 8 / 9, 0.95,
+                         n=9, ci_low=0.56, ci_high=0.98, gate="resolved")
+    assert lenient.passed and lenient.verdict == "ok~"
+    point = Obligation("SI[base]", "semantic_invariance", "base", 8 / 9, 0.95,
+                       n=9, ci_low=0.56, ci_high=0.98, gate="point")
+    assert not point.passed and point.verdict == "FAIL~"
+
+
+def test_gate_parsed_and_validated():
+    c = _mini(thresholds={"gate": "resolved", "fact_sensitivity": 0.5})
+    assert c.thresholds.gate == "resolved" and c.thresholds.fact_sensitivity == 0.5
+    with pytest.raises(ValueError, match="gate"):
+        _mini(thresholds={"gate": "sometimes"})
+
+
+class _Flaky:
+    """Deterministic stand-in for sampling noise: per-input answer sequences."""
+
+    def __init__(self, scripted):
+        self.scripted = scripted          # {question: [answer, answer, ...]}
+        self.calls = {}
+
+    def __call__(self, system_prompt, question):
+        if question in self.scripted and system_prompt == load_builtin_contract().policy_text(BASE_STATE):
+            i = self.calls.get(question, 0)
+            self.calls[question] = i + 1
+            seq = self.scripted[question]
+            return seq[i % len(seq)]
+        return faithful(system_prompt, question)
+
+
+def test_samples_majority_absorbs_noise(contract):
+    q = contract.case_map["day_20"].question
+    app = _Flaky({q: ["refund", "no_return", "refund"]})
+    result = run_contract(contract, app, label_classifier, workers=1, samples=3)
+    base = result.states[BASE_STATE]
+    assert base.cases["day_20"].invariant                # majority is right
+    assert not base.cases["day_20"].strictly_invariant   # but not every draw was
+    assert base.cases["day_20"].noisy_inputs == ["canonical"]
+    assert base.noise_rate > 0
+    assert result.samples == 3 and result.passed
+    assert "noise floor" in result.report()
+
+
+def test_si_failure_flagged_as_within_noise(contract):
+    v1 = contract.case_map["day_20"].variants[0]
+    app = _Flaky({v1: ["refund", "no_return", "no_return"]})
+    result = run_contract(contract, app, label_classifier, workers=1, samples=3)
+    case = result.states[BASE_STATE].cases["day_20"]
+    assert not case.invariant and case.noise_explainable
+    assert "(within sampling noise)" in result.report()
+
+
+def test_systematic_si_failure_is_not_noise(contract):
+    result = run_contract(contract, pressure_sensitive, label_classifier, workers=1, samples=3)
+    case = result.states[BASE_STATE].cases["day_35"]
+    assert not case.invariant and not case.noise_explainable
+    assert result.states[BASE_STATE].noise_rate == 0
+
+
+def test_even_sample_tie_is_unclear(contract):
+    q = contract.case_map["day_20"].question
+    app = _Flaky({q: ["refund", "no_return"]})
+    result = run_contract(contract, app, label_classifier, workers=1, samples=2)
+    assert result.states[BASE_STATE].cases["day_20"].canonical_label == UNCLEAR
+
+
+def test_samples_must_be_positive(contract):
+    with pytest.raises(ValueError):
+        run_contract(contract, faithful, label_classifier, workers=1, samples=0)
+
+
+def test_rescoring_saved_observations_is_identical(contract):
+    result = run_contract(contract, pressure_sensitive, label_classifier, workers=1, samples=3)
+    saved = json.loads(json.dumps(result.to_dict()))
+    again = evaluate_contract(contract, saved["observations"])
+    assert again.to_dict(False)["obligations"] == result.to_dict(False)["obligations"]
+
+
+# ── classifier calibration ──────────────────────────────────────────────────
+
+def test_rogan_gladen_correction():
+    from contradish.contract import ClassifierCalibration
+    items = ([("ok", "ok", "ok")] * 9 + [("ok", "bad", "ok")] * 1          # q1 = 0.9
+             + [("ok", "bad", "bad")] * 8 + [("ok", "ok", "bad")] * 2)      # q0 = 0.8
+    cal = ClassifierCalibration(items)
+    assert cal.sensitivity == pytest.approx(0.9) and cal.specificity == pytest.approx(0.8)
+    assert cal.correctable
+    assert cal.correct(0.75) == pytest.approx((0.75 + 0.8 - 1) / (0.8 + 0.9 - 1))
+    assert cal.accuracy == pytest.approx(17 / 20)
+    assert -1 <= cal.kappa <= 1
+
+
+def test_calibration_without_ungrounded_items_does_not_correct():
+    from contradish.contract import ClassifierCalibration
+    cal = ClassifierCalibration([("ok", "ok", "ok")] * 5)
+    assert not cal.correctable and cal.correct(0.9) is None
+    assert "not corrected" in cal.summary()
+
+
+def test_calibration_flows_into_grounding(contract):
+    from contradish.contract import ClassifierCalibration
+    result = run_contract(contract, rigid, label_classifier, workers=1)
+    labelled = []
+    for o in result.to_dict()["observations"][:30]:
+        o = dict(o)
+        o["human_label"] = o["label"]
+        labelled.append(o)
+    # Two observations where the human disagrees with the classifier.
+    labelled[0]["human_label"] = next(
+        l for l in contract.outcomes if l != labelled[0]["label"])
+    labelled[1]["human_label"] = next(
+        l for l in contract.outcomes if l != labelled[1]["label"])
+    cal = ClassifierCalibration.from_observations(contract, labelled)
+    assert cal.n == 30
+    scored = evaluate_contract(contract, result.observations, calibration=cal)
+    pg = [o for o in scored.obligations if o.kind == "policy_grounding"]
+    if cal.correctable:
+        assert all(o.raw_value is not None for o in pg)
+        assert "corrected for classifier error" in scored.report()
+    assert "classifier vs humans" in scored.report()
+    assert scored.calibration.expected_false_si_failures(scored) >= 0
+
+
+def test_calibration_sample_is_stratified_and_blank(contract):
+    from contradish.contract import calibration_sample
+    result = run_contract(contract, rigid, label_classifier, workers=1)
+    sample = calibration_sample(result.observations, n=12, seed=1)
+    assert len(sample) == 12
+    assert all(s["human_label"] == "" for s in sample)
+    assert len({s["label"] for s in sample}) >= 5       # rare labels represented
+
+
+def test_observation_roundtrip():
+    o = Observation("base", "c", "contrast:x", "q", "a", "yes", sample=2, human_label="no")
+    assert Observation.from_dict(o.to_dict()) == o
+
+
+def test_cli_score_and_label_sample(monkeypatch, capsys, tmp_path):
+    contract = load_builtin_contract()
+    result = run_contract(contract, rigid, label_classifier, workers=1)
+    res_path = tmp_path / "result.json"
+    res_path.write_text(json.dumps(result.to_dict()))
+
+    assert _cli(monkeypatch, ["contract", "score", "--result", str(res_path), "--json"]) == 1
+    out = json.loads(capsys.readouterr().out)
+    assert out["passed"] is False
+
+    lab_path = tmp_path / "to_label.json"
+    assert _cli(monkeypatch, ["contract", "label-sample", "--result", str(res_path),
+                              "--n", "10", "--output", str(lab_path)]) == 0
+    capsys.readouterr()
+    payload = json.loads(lab_path.read_text())
+    assert len(payload["observations"]) == 10 and "instructions" in payload
+    for o in payload["observations"]:
+        o["human_label"] = o["label"]
+    lab_path.write_text(json.dumps(payload))
+    assert _cli(monkeypatch, ["contract", "score", "--result", str(res_path),
+                              "--calibration", str(lab_path)]) == 1
+    assert "classifier vs humans: n=10" in capsys.readouterr().out

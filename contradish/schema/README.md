@@ -45,7 +45,7 @@ Every payload carries a `schema_version` field as `"<major>.<minor>"`.
 - A **major** version bump is the only kind of change allowed to remove
   or repurpose an existing field.
 
-All five schemas ship today at `1.0`.
+`policy_contract` and `contract_result` are at `1.1` (contrasts, intervals, samples, calibration: all optional additions); the other three ship at `1.0`.
 
 ## Using these schemas
 

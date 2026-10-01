@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://contradish.com/schema/contract-result/1.0.json",
+  "$id": "https://contradish.com/schema/contract-result/1.1.json",
   "title": "Contradish Policy Contract Result",
   "description": "The result of evaluating an assistant against a policy_contract (ContractResult.to_dict(), `contradish contract run --json`): per-obligation values against thresholds, per-state case labels, per-amendment transition verdicts (warranted_change / held / rigidity / drift / misdirected / indeterminate), and failures attributed back to policy clauses.",
   "type": "object",
@@ -47,7 +47,8 @@
             "enum": [
               "semantic_invariance",
               "policy_grounding",
-              "warranted_change"
+              "warranted_change",
+              "fact_sensitivity"
             ]
           },
           "scope": {
@@ -64,6 +65,40 @@
           },
           "passed": {
             "type": "boolean"
+          },
+          "n": {
+            "type": "integer"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "ci_low": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "ci_high": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "gate": {
+            "enum": [
+              "point",
+              "resolved"
+            ]
+          },
+          "within_noise": {
+            "type": "boolean"
+          },
+          "raw_value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Uncorrected value when a classifier calibration corrected it."
           }
         }
       }
@@ -205,6 +240,16 @@
       "items": {
         "type": "object"
       }
+    },
+    "samples": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Samples per input (added in 1.1)."
+    },
+    "calibration": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Classifier-vs-human agreement used to correct policy grounding (added in 1.1)."
     }
   }
 }

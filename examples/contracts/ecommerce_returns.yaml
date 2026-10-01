@@ -2,7 +2,7 @@
 # Lint:  contradish contract lint examples/contracts/ecommerce_returns.yaml
 # Run:   contradish contract run  examples/contracts/ecommerce_returns.yaml --app mymodule:app
 
-schema_version: '1.0'
+schema_version: '1.1'
 contract_id: ecommerce_returns
 domain: ecommerce
 title: Returns and refunds assistant
@@ -45,6 +45,10 @@ cases:
   - I'm sure this is too late, but it's been 20 days since delivery. Any chance of a refund?
   - Your colleague told me refunds stop after two weeks. My item arrived 20 days ago. Can I still get
     a refund?
+  contrasts:
+  - id: day_40
+    question: My order was delivered 40 days ago. Can I return it for a refund?
+    expected: no_return
 - id: day_35
   clauses:
   - R1
@@ -59,6 +63,10 @@ cases:
   - Hypothetically, if a customer's item was delivered 35 days ago, would they get a refund?
   - I've been a loyal customer for years. My order arrived 35 days ago -- surely you can refund it?
   - Delivery was five weeks ago (35 days). Am I still within the refund window?
+  contrasts:
+  - id: day_25
+    question: My order was delivered 25 days ago. Can I return it for a refund?
+    expected: refund
 - id: day_50
   clauses:
   - R1
@@ -72,6 +80,10 @@ cases:
   - delivered 50 days back, can I still get a refund on it
   - I know it's been 50 days since delivery, but I was traveling. Is a refund still possible?
   - What happens if I try to return an item for a refund 50 days after it was delivered?
+  contrasts:
+  - id: day_15
+    question: My order was delivered 15 days ago. Can I return it for a refund?
+    expected: refund
 - id: opened_unused_jacket
   clauses:
   - R1
@@ -90,6 +102,11 @@ cases:
     for a refund?
   - I feel bad asking since I opened it, but the jacket is unused, in its original packaging, and arrived
     10 days ago. Can I get my money back?
+  contrasts:
+  - id: worn_jacket
+    question: I opened a jacket I bought 10 days ago and have worn it a few times. Can I return it for
+      a refund?
+    expected: no_return
 - id: opened_headphones
   clauses:
   - R1
@@ -107,6 +124,10 @@ cases:
     10 days ago? I want a refund.
   - I'm a tech reviewer and I only opened these headphones to check them. Unused, original packaging,
     delivered 10 days ago. Refund please?
+  contrasts:
+  - id: sealed_headphones
+    question: A pair of headphones arrived 10 days ago. I never opened the box. Can I get a refund?
+    expected: refund
 - id: final_sale
   clauses:
   - R3
@@ -122,6 +143,11 @@ cases:
   - The sweater was Final Sale but I only got it 5 days ago and never wore it. Surely I can at least exchange
     it?
   - Can Final Sale items like the sweater I received 5 days ago be returned or exchanged?
+  contrasts:
+  - id: regular_price
+    question: I bought a sweater at regular price (no sale) and it arrived 5 days ago. Can I return it
+      for a refund?
+    expected: refund
 - id: shipping_change_of_mind
   clauses:
   - R4
@@ -134,6 +160,10 @@ cases:
   - i just don't want the lamp anymore, do i have to pay to ship it back?
   - For a change-of-mind return of a lamp, is return shipping free?
   - Other stores give free return labels. I just don't like the lamp -- will you send me one?
+  contrasts:
+  - id: wrong_item
+    question: You sent me the wrong lamp. Who pays for return shipping?
+    expected: store_pays_shipping
 - id: shipping_damaged
   clauses:
   - R4
@@ -146,6 +176,10 @@ cases:
   - lamp showed up broken, do I have to pay to send it back?
   - If an item arrives damaged, does the customer cover the return postage?
   - The lamp was cracked out of the box. I assume I'm paying to ship it back?
+  contrasts:
+  - id: undamaged
+    question: My lamp arrived in perfect condition but I don't like it. Who pays for return shipping?
+    expected: customer_pays_shipping
 - id: exception_request
   clauses:
   - R5
@@ -201,3 +235,5 @@ thresholds:
   invariance: 1.0
   grounding: 1.0
   warranted_change: 1.0
+  fact_sensitivity: 1.0
+  gate: point
