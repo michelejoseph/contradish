@@ -10,8 +10,8 @@ earlier releases were not retroactively documented.
 
 - Lead definition across README, package description and module docstring:
   "Contradish measures Behavioral Update Fidelity: whether an AI changes its
-  behavior exactly when, and only as far as, a change in its governing
-  information warrants." With attribution (introduced by Michele Joseph,
+  behavior exactly when, and only as far as, changes in governing
+information warrant." With attribution (introduced by Michele Joseph,
   2026) and a `joseph2026buf` citation entry in README and `CITATION.bib`.
 - README states the current scope plainly: every test compares independent
   runs, so it measures whether behavior tracks the governing information

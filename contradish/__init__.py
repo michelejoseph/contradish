@@ -1,7 +1,7 @@
 """
 contradish measures Behavioral Update Fidelity: whether an AI changes its
-behavior exactly when, and only as far as, a change in its governing
-information warrants. Behavioral Update Fidelity was introduced by Michele
+behavior exactly when, and only as far as, changes in governing
+information warrant. Behavioral Update Fidelity was introduced by Michele
 Joseph in 2026.
 
 In practice: an evaluation contract for policy-grounded assistants.

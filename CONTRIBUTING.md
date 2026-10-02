@@ -4,6 +4,23 @@ CAI-Bench grows through community contributions. There are two ways to contribut
 
 ---
 
+## The core question
+
+Contradish measures Behavioral Update Fidelity: whether an AI changes its
+behavior exactly when, and only as far as, changes in governing information
+warrant.
+
+Every proposed feature is held against one question:
+
+> Does this help determine the minimal behavioral change warranted by a
+> change in governing information?
+
+If yes, build it. If not, ask whether it belongs in the core at all. It may
+still be useful as a precondition (is the base behavior correct?), as
+measurement hygiene (is the observed change real or noise?), or as a
+separate tool, but it should say which, and it should not be presented as
+the thing contradish measures.
+
 ## Submitting a model result
 
 Run the benchmark against your model and open a PR adding the result JSON.

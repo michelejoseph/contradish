@@ -1,6 +1,6 @@
 # contradish
 
-**Contradish measures Behavioral Update Fidelity: whether an AI changes its behavior exactly when, and only as far as, a change in its governing information warrants.**
+**Contradish measures Behavioral Update Fidelity: whether an AI changes its behavior exactly when, and only as far as, changes in governing information warrant.**
 
 Behavioral Update Fidelity was introduced by Michele Joseph in 2026. ([cite](#cite))
 
@@ -655,7 +655,7 @@ Behavioral Update Fidelity, the policy evaluation contract, CAI Strain and CAI-B
 
 ```bibtex
 @misc{joseph2026buf,
-  title         = {Behavioral Update Fidelity: Measuring Whether an AI Changes Its Behavior Exactly When, and Only as Far as, a Change in Its Governing Information Warrants},
+  title         = {Behavioral Update Fidelity: Measuring Whether an AI Changes Its Behavior Exactly When, and Only as Far as, Changes in Governing Information Warrant},
   author        = {Joseph, Michele},
   year          = {2026},
   howpublished  = {\url{https://github.com/michelejoseph/contradish}},
