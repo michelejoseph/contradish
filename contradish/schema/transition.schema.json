@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://contradish.com/schema/transition/1.0.json",
+  "$id": "https://contradish.com/schema/transition/1.1.json",
   "title": "Contradish Transition Contract",
-  "description": "contradish's atomic object (contradish/transition.py): the governing information a system had (before), the governing information it has now (after), and for each case the outcome each warrants. Cases whose outcome is the same on both sides must persist; cases whose outcome differs must be revised. Each pair of cases is a distinction that the transition warrants to survive, collapse, emerge, or stay merged. A transition whose new information means the same as the old (meaning_preserving) is the null transition: everything persists. Distinct from the older `transition_contract` schema, which describes the derivation engine's warranted / not-warranted judgments for a scenario pair.",
+  "description": "contradish's atomic object (contradish/transition.py): the governing information a system had (before), the governing information it has now (after), and for each case the outcome each warrants. Cases whose outcome is the same on both sides must persist; cases whose outcome differs must be revised. Each pair of cases is a distinction that the transition warrants to survive, collapse, emerge, or stay merged. A transition whose new information means the same as the old (meaning_preserving) is the null transition: everything persists. Distinct from the older `transition_contract` schema, which describes the derivation engine's warranted / not-warranted judgments for a scenario pair. Since 1.1 a contract may also say where the new information comes from and how it arrives (sources, update), and per case whether that source has governing authority over it: an update with no authority over a case warrants no change there, whatever it asserts.",
   "type": "object",
   "required": [
     "schema_version",
@@ -144,6 +144,68 @@
               "type": "string"
             },
             "description": "What in the governing information this case depends on."
+          },
+          "asserted": {
+            "type": "string",
+            "description": "Outcome the update calls for on this case (added in 1.1)."
+          },
+          "authority": {
+            "type": "boolean",
+            "description": "Whether the update's source has governing authority over this case. If false, after must equal before (added in 1.1)."
+          }
+        }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "description": "{id: source}. What each source of governing information has authority over (added in 1.1).",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "role": {
+            "type": "string"
+          },
+          "governs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Grounds this source may legitimately change; \"*\" for everything."
+          }
+        }
+      }
+    },
+    "update": {
+      "type": "object",
+      "required": [
+        "source"
+      ],
+      "additionalProperties": true,
+      "description": "The new information as an event: who it is from, how it arrives, what it says, what it asserts (added in 1.1).",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "channel": {
+          "enum": [
+            "system",
+            "user",
+            "tool",
+            "document",
+            "memory"
+          ]
+        },
+        "content": {
+          "type": "string"
+        },
+        "asserts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
           }
         }
       }

@@ -4,6 +4,59 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.57.0] - 2026-10-02
+
+Generalizes the definition and adds authority.
+
+### Changed
+
+- **Top-line definition:** "Contradish measures whether AI transitions
+  remain faithful to their governing information." Principle: "Change what
+  truth requires. Preserve what truth does not require changing."
+  Faithfulness = correct change + correct preservation. Behavioral Update
+  Fidelity is retained as the concrete definition underneath. README,
+  package description, module docstring and CONTRIBUTING lead with the
+  pipeline: governing information -> warranted transition contract ->
+  warranted change frontier -> observed transition -> transition fidelity.
+
+### Added
+
+- **Authority** (`contradish/transition.py`). `Source` (what it governs),
+  `Update` (source, channel, content, what it asserts), and
+  `derive_transition()`: per case, an asserted change is warranted only if
+  the update's source has authority over one of the case's grounds;
+  otherwise the warranted outcome stays where it was. One update can be
+  legitimate for some cases and not for others.
+- **`TransitionContract.frontier()` -> `WarrantedChangeFrontier`**: `change`
+  (must move, and to what), `preserve` (must stay), `resist` (pushed on
+  without authority).
+- **Scoring**: `change` and `preservation` (the two halves of faithfulness),
+  `faithful`, a new status `captured` (moved to what an unauthorized update
+  asserted; distinct from drift), and `authority_respected`.
+- **Channels**: `run_transition` delivers an update through its channel
+  (system, user, tool result, document, memory) while the original
+  instructions stay in force, in both `fresh` and `in_conversation` modes.
+- **Built-in suite `authority_returns`**: one base state, seven updates,
+  three with authority and four without (a customer claiming a policy
+  change, an instruction embedded in a tool result, an unverified recalled
+  promise, a third-party page). `contradish transition show|run --suite`,
+  `run_suite()`, `summarize_outcomes()` (legitimate changes made;
+  illegitimate changes resisted; preserved; faithful transitions).
+- Lint: T005 (change without authority), T006, T007. Schema `transition`
+  -> 1.1 (optional `sources`, `update`, per-case `asserted` / `authority`).
+
+### Verification
+
+- `tests/test_transition.py`: 32 tests pass. Three stand-in agents on the
+  suite, in both delivery modes: faithful (100% / 100%), obedient-to-anyone
+  (100% legitimate changes made, 0% illegitimate resisted), never-moves
+  (0% / 100%).
+- Authority is declared by the contract author; contradish scores whether
+  the system respected it, not whether the declaration is correct. Tool
+  results and documents are rendered as delimited text in a user-role
+  message, not as native tool-call messages.
+- Not run against a real model.
+
 ## [1.56.0] - 2026-10-02
 
 The atomic object is now a transition contract, not a pair of responses.

@@ -1,8 +1,20 @@
 """
-contradish measures Behavioral Update Fidelity: whether an AI changes its
-behavior exactly when, and only as far as, changes in governing
-information warrant. Behavioral Update Fidelity was introduced by Michele
-Joseph in 2026.
+contradish measures whether AI transitions remain faithful to their
+governing information.
+
+    Change what truth requires.
+    Preserve what truth does not require changing.
+
+Faithfulness is correct change plus correct preservation, and a change is
+only required if its source has governing authority over the behavior in
+question. The pipeline: governing information -> warranted transition
+contract -> warranted change frontier -> observed transition -> transition
+fidelity (contradish/transition.py).
+
+The concrete definition underneath: Behavioral Update Fidelity measures
+whether an AI changes its behavior exactly when, and only as far as,
+changes in governing information warrant. Behavioral Update Fidelity was
+introduced by Michele Joseph in 2026.
 
 In practice: an evaluation contract for policy-grounded assistants.
 
@@ -219,6 +231,8 @@ from .intervention_probe import (
 from .transition import (
     TransitionContract, TransitionCase, GoverningState, Distinction,
     TransitionOutcome, evaluate_transition, run_transition,
+    Source, Update, WarrantedChangeFrontier, derive_transition,
+    run_suite, summarize_outcomes, load_builtin_transitions,
 )
 from .contract import (
     PolicyContract, Clause, DecisionCase, Contrast, Amendment, Thresholds, LintIssue,
@@ -313,7 +327,7 @@ from .domains      import (
 from .conviction   import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .cdr          import generate_cdr
 
-__version__ = "1.56.0"
+__version__ = "1.57.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -457,6 +471,13 @@ __all__ = [
     "TransitionOutcome",
     "evaluate_transition",
     "run_transition",
+    "Source",
+    "Update",
+    "WarrantedChangeFrontier",
+    "derive_transition",
+    "run_suite",
+    "summarize_outcomes",
+    "load_builtin_transitions",
     "WarrantDerivation",
     "TransitionDerivationJudge",
     "ManualTransitionJudge",

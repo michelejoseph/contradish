@@ -6,9 +6,22 @@ CAI-Bench grows through community contributions. There are two ways to contribut
 
 ## The core question
 
-Contradish measures Behavioral Update Fidelity: whether an AI changes its
-behavior exactly when, and only as far as, changes in governing information
-warrant.
+Contradish measures whether AI transitions remain faithful to their
+governing information.
+
+> Change what truth requires. Preserve what truth does not require changing.
+
+Faithfulness = correct change + correct preservation. A change is only
+required if its source has governing authority over the behavior in
+question. The pipeline every core feature belongs to:
+
+    governing information -> warranted transition contract
+        -> warranted change frontier -> observed transition
+        -> transition fidelity
+
+The concrete definition underneath: Behavioral Update Fidelity measures
+whether an AI changes its behavior exactly when, and only as far as, changes
+in governing information warrant.
 
 Everything in the core exists to answer one question:
 

@@ -1758,9 +1758,80 @@ def cmd_transition(args):
     (--from-contract, default the built-in ecommerce_returns) and --amendment
     (default: its first amendment).
     """
-    from contradish.transition import TransitionContract, evaluate_transition, run_transition
+    from contradish.transition import (
+        TransitionContract, evaluate_transition, run_transition, run_suite,
+        summarize_outcomes, load_builtin_transitions,
+    )
     action = args.transition_action
     use_json = getattr(args, "json", False)
+
+    if getattr(args, "suite", None):
+        try:
+            suite = load_builtin_transitions(args.suite)
+        except KeyError as e:
+            print(f"\n  {e}\n")
+            sys.exit(2)
+
+        def pct(x):
+            return " n/a" if x is None else f"{x * 100:3.0f}%"
+
+        if action in ("show", "lint", "export"):
+            if action == "export" or use_json:
+                print(json.dumps([t.to_dict() for t in suite], indent=2))
+                sys.exit(0)
+            print()
+            print(f"  TRANSITION SUITE  *  {args.suite}  ({len(suite)} transitions, one base state)")
+            print()
+            for t in suite:
+                f = t.frontier()
+                u = t.update
+                auth = {True: "has authority", False: "NO authority", None: "mixed"}[t.authoritative]
+                print(f"  {t.id}")
+                print(f"    from {u.source} via {u.channel}: {auth}")
+                print(f"    must change  : {f.change or 'nothing'}")
+                if f.resist:
+                    print(f"    must resist  : {f.resist}")
+                issues = t.lint()
+                for l, c, m in issues:
+                    print(f"    {l.upper()} {c} {m}")
+            print()
+            sys.exit(1 if any(t.lint_errors() for t in suite) else 0)
+        if action != "run":
+            print("\n  --suite works with show, lint, export and run\n")
+            sys.exit(2)
+        _check_api_key()
+        from contradish.contract import default_outcome_classifier
+        from contradish.llm import LLMClient
+        chat_fn = _load_callable(args.app) if args.app else _demo_chat_fn(LLMClient())
+        outcomes = run_suite(suite, chat_fn, default_outcome_classifier(LLMClient()),
+                             delivery=args.delivery, samples=args.samples)
+        summary = summarize_outcomes(suite, outcomes)
+        payload = {"suite": args.suite, "delivery": args.delivery, "summary": summary,
+                   "outcomes": [o.to_dict() for o in outcomes]}
+        if args.output:
+            with open(args.output, "w", encoding="utf-8") as f:
+                json.dump(payload, f, indent=2)
+        if use_json:
+            print(json.dumps(payload, indent=2))
+        else:
+            print()
+            print(f"  TRANSITION SUITE  *  {args.suite}  [{args.delivery}]")
+            print("-" * 78)
+            print("  transition                                 authority   result")
+            for t, o in zip(suite, outcomes):
+                auth = {True: "yes", False: "NO", None: "mixed"}[t.authoritative]
+                bad = [f"{name}={ids}" for name, ids in (("rigid", o.rigid), ("captured", o.captured),
+                       ("drift", o.drift), ("misdirected", o.misdirected)) if ids]
+                print(f"  {t.id[:42]:<42s} {auth:<9s}   " + ("faithful" if o.faithful else "  ".join(bad)))
+            print()
+            print(f"  changes that had authority, made      {pct(summary['legitimate_change'])}   "
+                  f"({summary['n_legitimate_changes']})")
+            print(f"  changes without authority, resisted   {pct(summary['illegitimate_resisted'])}   "
+                  f"({summary['n_illegitimate_pressures']})")
+            print(f"  everything else, preserved            {pct(summary['preserved'])}")
+            print(f"  transitions fully faithful            {pct(summary['faithful_transitions'])}")
+            print()
+        sys.exit(0 if all(o.faithful for o in outcomes) else 1)
 
     try:
         if action == "export" or not args.file:
@@ -1815,6 +1886,16 @@ def cmd_transition(args):
             print(f"  TRANSITION CONTRACT  *  {contract.id}  ({source})")
             if contract.description:
                 print(f"  {contract.description}")
+            if contract.update is not None:
+                u = contract.update
+                auth = {True: "has authority over what it asserts", False: "has NO authority over what it asserts",
+                        None: "has authority over some of what it asserts"}[contract.authoritative]
+                print(f"  update from {u.source} via {u.channel}: {auth}")
+                resist = contract.frontier().resist
+                if resist:
+                    print(f"\n  must be resisted ({len(resist)}):")
+                    for cid, asserted in resist.items():
+                        print(f"    {cid}: update asserts {asserted}, warranted stays {contract.case_map[cid].before}")
             print(f"\n  must be revised ({len(contract.revise())}):")
             for c in contract.revise():
                 print(f"    {c.id}: {c.before} -> {c.after}")
@@ -1875,7 +1956,11 @@ def cmd_transition(args):
               f"{outcome.off_target_after} off target after)")
         print(f"  persistence  {pct(outcome.persistence)}     ({outcome.n_must_persist} distinction(s) that must keep their relation)")
         print(f"  revision     {pct(outcome.revision)}     ({outcome.n_must_revise} distinction(s) that must change relation)")
-        for name, ids in (("rigid", outcome.rigid), ("misdirected", outcome.misdirected), ("drift", outcome.drift)):
+        print(f"  change       {pct(outcome.change)}     preservation {pct(outcome.preservation)}")
+        if outcome.n_pressured:
+            print(f"  authority    {pct(outcome.authority_respected)}     ({outcome.n_pressured} case(s) pressed without authority)")
+        for name, ids in (("rigid", outcome.rigid), ("misdirected", outcome.misdirected), ("drift", outcome.drift),
+                          ("captured", outcome.captured)):
             if ids:
                 print(f"  {name:<12s} {', '.join(ids)}")
         if outcome.broken_distinctions:
@@ -3670,6 +3755,10 @@ examples:
     tr_p.add_argument("--from-contract", dest="from_contract", metavar="FILE", default=None,
                       help="Take the transition from a policy contract (default: built-in ecommerce_returns).")
     tr_p.add_argument("--amendment", default=None, help="Which amendment of the policy contract.")
+    tr_p.add_argument("--suite", default=None, metavar="NAME",
+                      help="A built-in suite of transitions (authority_returns): the same base state "
+                           "hit by updates that do and do not have authority, arriving through the "
+                           "system, the user, a tool result, a document, and memory.")
     tr_p.add_argument("--previous", metavar="FILE", default=None, help="score: {case_id: outcome} before.")
     tr_p.add_argument("--current", metavar="FILE", default=None, help="score: {case_id: outcome} after.")
     tr_p.add_argument("--app", metavar="MODULE:FUNCTION", default=None,
