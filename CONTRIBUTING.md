@@ -10,16 +10,28 @@ Contradish measures Behavioral Update Fidelity: whether an AI changes its
 behavior exactly when, and only as far as, changes in governing information
 warrant.
 
-Every proposed feature is held against one question:
+Everything in the core exists to answer one question:
 
-> Does this help determine the minimal behavioral change warranted by a
-> change in governing information?
+> How faithfully did the system move from its previous behavioral state
+> toward the behavioral state warranted by its new governing information?
 
-If yes, build it. If not, ask whether it belongs in the core at all. It may
-still be useful as a precondition (is the base behavior correct?), as
-measurement hygiene (is the observed change real or noise?), or as a
-separate tool, but it should say which, and it should not be presented as
-the thing contradish measures.
+Read each part literally:
+
+- **previous behavioral state**: what the system actually did before, across
+  a set of cases. Not what it should have done.
+- **the state warranted by its new governing information**: the target,
+  derived from the new policy, facts, or instructions.
+- **how faithfully ... move ... toward**: a graded answer about the
+  transition. Did it cover the warranted distance (not rigid), stay on the
+  warranted path (no drift on cases that should not move), and land on the
+  target (no misdirection)? When the governing information did not change,
+  the warranted move is zero, and faithful means staying put.
+
+Every proposed feature is held against it: does this help answer that
+question? If yes, build it. If not, ask whether it belongs in the core at
+all. It may still be useful as a precondition, as measurement hygiene (is
+the observed movement real or noise?), or as a separate tool, but it should
+say which, and it should not be presented as the thing contradish measures.
 
 ## Submitting a model result
 
