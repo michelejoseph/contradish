@@ -1,5 +1,10 @@
 """
-contradish: an evaluation contract for policy-grounded assistants.
+contradish measures Behavioral Update Fidelity: whether an AI changes its
+behavior exactly when, and only as far as, a change in its governing
+information warrants. Behavioral Update Fidelity was introduced by Michele
+Joseph in 2026.
+
+In practice: an evaluation contract for policy-grounded assistants.
 
 A policy-grounded assistant must (1) give the same policy outcome to every
 rewording of the same situation -- semantic invariance -- and (2) change its
@@ -298,7 +303,7 @@ from .domains      import (
 from .conviction   import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .cdr          import generate_cdr
 
-__version__ = "1.55.0"
+__version__ = "1.55.1"
 __all__ = [
     "Suite",
     "RegressionSuite",

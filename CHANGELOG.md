@@ -4,6 +4,19 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.55.1] - 2026-10-02
+
+### Changed
+
+- Lead definition across README, package description and module docstring:
+  "Contradish measures Behavioral Update Fidelity: whether an AI changes its
+  behavior exactly when, and only as far as, a change in its governing
+  information warrants." With attribution (introduced by Michele Joseph,
+  2026) and a `joseph2026buf` citation entry in README and `CITATION.bib`.
+- README states the current scope plainly: every test compares independent
+  runs, so it measures whether behavior tracks the governing information
+  given; a single-agent commit / amend / re-ask test is not built yet.
+
 ## [1.55.0] - 2026-10-01
 
 ### Added

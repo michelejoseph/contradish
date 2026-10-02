@@ -1,13 +1,17 @@
 # contradish
 
-**An evaluation contract for policy-grounded assistants.**
+**Contradish measures Behavioral Update Fidelity: whether an AI changes its behavior exactly when, and only as far as, a change in its governing information warrants.**
 
-If your assistant answers from a written policy (returns, benefits, claims, HR, dosing, eligibility), two things have to be true of it, and they are two halves of one requirement:
+Behavioral Update Fidelity was introduced by Michele Joseph in 2026. ([cite](#cite))
+
+In practice this is an evaluation contract for policy-grounded assistants. If your assistant answers from a written policy (returns, benefits, claims, HR, dosing, eligibility), two things have to be true of it, and they are two halves of one requirement:
 
 - **Semantic invariance.** The same situation gets the same policy outcome however it is worded, framed, or pressured. A rephrasing is not a reason to change the answer.
 - **Warranted behavioral change.** When the policy changes, the outcome changes for exactly the situations the change licenses, to exactly the new outcome, and nowhere else. An amendment is not a reason to change unrelated answers.
 
 Both say the same thing: behavior should be a function of the policy-relevant content of the situation. contradish states that as a contract you write down once, lint before spending a token, and run as a CI gate.
+
+**Scope today.** Every test currently compares independent runs: one fresh run under the original policy, another under the amended one. That measures whether behavior tracks the governing information it is given. A test where a single agent commits to an answer, receives a change, and is asked again (in conversation or through stale memory) is the next piece of work and is not built yet.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Benchmark: v2](https://img.shields.io/badge/Benchmark-v2%20frozen-green.svg)](contradish/benchmarks/v2/)
@@ -647,7 +651,17 @@ contradish init    # three questions; writes .contradish.yaml and optional GHA w
 
 ## Cite
 
+Behavioral Update Fidelity, the policy evaluation contract, CAI Strain and CAI-Bench were introduced by Michele Joseph.
+
 ```bibtex
+@misc{joseph2026buf,
+  title         = {Behavioral Update Fidelity: Measuring Whether an AI Changes Its Behavior Exactly When, and Only as Far as, a Change in Its Governing Information Warrants},
+  author        = {Joseph, Michele},
+  year          = {2026},
+  howpublished  = {\url{https://github.com/michelejoseph/contradish}},
+  note          = {contradish: policy evaluation contract and Counterfactual Benchmark Suite}
+}
+
 @misc{joseph2026caibench,
   title         = {CAI-Bench: A Frozen Benchmark for Adversarial Consistency in Language Models},
   author        = {Joseph, Michele},
