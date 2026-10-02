@@ -116,6 +116,9 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from contradish.decision_relevance import score_dependency_structure
+from contradish.transition import (
+    GoverningState, TransitionCase, TransitionContract, TransitionOutcome, evaluate_transition,
+)
 from contradish.minimal_intervention_delta import (
     MinimalDeltaVerdict,
     intervention_delta_spec,
@@ -550,6 +553,37 @@ class PolicyContract:
 
     def lint_errors(self) -> list:
         return [i for i in self.lint() if i.level == "error"]
+
+    # ── the atomic view ─────────────────────────────────────────────────────
+
+    def transition_contract(self, amendment_id: str) -> TransitionContract:
+        """
+        One amendment as a transition contract: base policy -> amended policy,
+        with the outcome each warrants for every case. A policy contract is a
+        base state plus a set of these.
+        """
+        a = self.amendment_map[amendment_id]
+        return TransitionContract(
+            id=a.id, domain=self.domain, description=a.description, preamble=self.preamble,
+            meaning_preserving=a.meaning_preserving,
+            before=GoverningState(BASE_STATE, self.policy_text(BASE_STATE).split("Policy:", 1)[-1].strip()
+                                  if self.preamble else self.policy_text(BASE_STATE)),
+            after=GoverningState(a.id, self.policy_text(a.id).split("Policy:", 1)[-1].strip()
+                                 if self.preamble else self.policy_text(a.id)),
+            outcomes=dict(self.outcomes),
+            cases=[
+                TransitionCase(
+                    id=c.id, question=c.question, before=c.expected, after=self.expected(c.id, a.id),
+                    variants=list(c.variants), outcomes=list(c.outcomes) if c.outcomes is not None else None,
+                    grounds=list(c.clauses),
+                )
+                for c in self.cases
+            ],
+        )
+
+    def transitions(self) -> list:
+        """Every amendment as a TransitionContract."""
+        return [self.transition_contract(a.id) for a in self.amendments]
 
     # ── bridges ─────────────────────────────────────────────────────────────
 
@@ -1059,6 +1093,9 @@ class TransitionResult:
     before: dict            # {case_id: label}
     after: dict             # {case_id: label}
     unanchored: list        # cases whose base answer was not the warranted one
+    # The graded answer to "how faithfully did it move": fidelity,
+    # persistence, revision (contradish/transition.py).
+    outcome: Optional[TransitionOutcome] = None
 
     @property
     def passed(self) -> bool:
@@ -1077,7 +1114,14 @@ class TransitionResult:
             ids = self.cases_with(status)
             if ids:
                 parts.append(f"{status}={ids}")
-        return s + ("  " + "  ".join(parts) if parts else "  no change warranted, none made")
+        s += ("  " + "  ".join(parts) if parts else "  no change warranted, none made")
+        o = self.outcome
+        if o is not None:
+            def pct(x):
+                return "n/a" if x is None else f"{x * 100:.0f}%"
+            fid = "n/a" if o.fidelity is None else f"{o.fidelity:.2f}"
+            s += f"\n      fidelity {fid}  persistence {pct(o.persistence)}  revision {pct(o.revision)}"
+        return s
 
     def to_dict(self) -> dict:
         return {
@@ -1089,6 +1133,10 @@ class TransitionResult:
             "after": dict(self.after),
             "unanchored": list(self.unanchored),
             "minimal_delta": self.verdict.to_dict() if self.verdict else None,
+            "fidelity": self.outcome.fidelity if self.outcome else None,
+            "persistence": self.outcome.persistence if self.outcome else None,
+            "revision": self.outcome.revision if self.outcome else None,
+            "broken_distinctions": [list(x) for x in self.outcome.broken_distinctions] if self.outcome else [],
         }
 
 
@@ -1531,6 +1579,8 @@ def _transition(contract: PolicyContract, amendment: Amendment,
         before=before_labels,
         after=after_labels,
         unanchored=unanchored,
+        outcome=evaluate_transition(contract.transition_contract(amendment.id),
+                                    before_labels, after_labels, delivery="fresh"),
     )
 
 

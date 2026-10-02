@@ -27,6 +27,13 @@ Read each part literally:
   target (no misdirection)? When the governing information did not change,
   the warranted move is zero, and faithful means staying put.
 
+The unit that carries the question is a **transition contract**
+(`contradish/transition.py`): previous governing information, new governing
+information, and the outcome each warrants per case. It says which cases
+persist, which are revised, and which distinctions survive, collapse or
+emerge. A pair of responses is not the unit; it can be compared, but it
+cannot say what should have happened.
+
 Every proposed feature is held against it: does this help answer that
 question? If yes, build it. If not, ask whether it belongs in the core at
 all. It may still be useful as a precondition, as measurement hygiene (is

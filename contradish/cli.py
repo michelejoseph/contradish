@@ -1723,6 +1723,168 @@ def cmd_counterfactual(args):
     sys.exit(0)
 
 
+def _demo_chat_fn(llm):
+    """chat_fn(messages) for `contradish transition run` demo mode."""
+    def fn(messages):
+        system = "\n\n".join(m["content"] for m in messages if m["role"] == "system")
+        turns = [m for m in messages if m["role"] != "system"]
+        if llm.provider == "anthropic":
+            msg = llm._client.messages.create(
+                model=llm.fast_model, max_tokens=256, system=system,
+                messages=[{"role": m["role"], "content": m["content"]} for m in turns],
+            )
+            return msg.content[0].text.strip()
+        resp = llm._client.chat.completions.create(
+            model=llm.fast_model, max_tokens=256,
+            messages=[{"role": "system", "content": system}] + turns,
+        )
+        return resp.choices[0].message.content.strip()
+    return fn
+
+
+def cmd_transition(args):
+    """
+    The transition contract, contradish's atomic object: previous governing
+    information, new governing information, and what each warrants per case.
+    See contradish/transition.py.
+
+      contradish transition show  [FILE]   persist / revise / distinction fates
+      contradish transition lint  [FILE]
+      contradish transition score [FILE] --previous P.json --current C.json
+      contradish transition run   [FILE] [--app MODULE:CHAT_FN] [--delivery in_conversation]
+      contradish transition export         every amendment of a policy contract as a transition contract
+
+    Without FILE, the transition is taken from a policy contract
+    (--from-contract, default the built-in ecommerce_returns) and --amendment
+    (default: its first amendment).
+    """
+    from contradish.transition import TransitionContract, evaluate_transition, run_transition
+    action = args.transition_action
+    use_json = getattr(args, "json", False)
+
+    try:
+        if action == "export" or not args.file:
+            policy, source = _load_contract_arg(args.from_contract)
+            if action == "export":
+                payload = [t.to_dict() for t in policy.transitions()]
+                text = json.dumps(payload, indent=2)
+                if args.output:
+                    with open(args.output, "w", encoding="utf-8") as f:
+                        f.write(text)
+                    print(f"\n  {len(payload)} transition contract(s) from {source} -> {args.output}\n")
+                else:
+                    print(text)
+                sys.exit(0)
+            if not policy.amendments:
+                print(f"\n  {source} has no amendments, so no transitions\n")
+                sys.exit(2)
+            contract = policy.transition_contract(args.amendment or policy.amendments[0].id)
+            source = f"{source} / {contract.id}"
+        else:
+            contract, source = TransitionContract.load(args.file), args.file
+    except (OSError, ValueError, KeyError) as e:
+        print(f"\n  could not load transition contract: {e}\n")
+        sys.exit(2)
+
+    issues = contract.lint()
+    errors = [i for i in issues if i[0] == "error"]
+
+    if action == "lint":
+        if use_json:
+            print(json.dumps({"id": contract.id, "ok": not errors,
+                              "issues": [{"level": l, "code": c, "message": m} for l, c, m in issues]}, indent=2))
+        else:
+            print()
+            print(f"  {contract.id}  ({source})")
+            for l, c, m in issues:
+                print(f"  {l.upper():7s} {c}  {m}")
+            print(f"\n  {len(errors)} error(s), {sum(1 for i in issues if i[0] == 'warning')} warning(s)\n")
+        sys.exit(1 if errors else 0)
+
+    if action == "show":
+        fates = {}
+        for d in contract.distinctions():
+            fates.setdefault(d.fate, []).append(f"{d.a} | {d.b}")
+        if use_json:
+            print(json.dumps({"contract": contract.to_dict(),
+                              "persist": [c.id for c in contract.persist()],
+                              "revise": {c.id: [c.before, c.after] for c in contract.revise()},
+                              "distinctions": fates}, indent=2))
+        else:
+            print()
+            print(f"  TRANSITION CONTRACT  *  {contract.id}  ({source})")
+            if contract.description:
+                print(f"  {contract.description}")
+            print(f"\n  must be revised ({len(contract.revise())}):")
+            for c in contract.revise():
+                print(f"    {c.id}: {c.before} -> {c.after}")
+            print(f"\n  must persist ({len(contract.persist())}):")
+            for c in contract.persist():
+                print(f"    {c.id}: {c.before}")
+            print("\n  distinctions (pairs of cases that depend on the same part of the information):")
+            for fate in ("collapse", "emerge", "survive", "stay_merged"):
+                pairs = fates.get(fate, [])
+                if not pairs:
+                    continue
+                shown = ", ".join(pairs[:6]) + (f", ... (+{len(pairs) - 6})" if len(pairs) > 6 else "")
+                print(f"    {fate:<12s} {len(pairs):>3d}   {shown}")
+            print()
+        sys.exit(0)
+
+    if errors:
+        print("\n  transition contract has errors:")
+        for l, c, m in errors:
+            print(f"    {c}  {m}")
+        print()
+        sys.exit(2)
+
+    if action == "score":
+        if not args.previous or not args.current:
+            print("\n  score needs --previous and --current ({case_id: outcome} JSON files)\n")
+            sys.exit(2)
+        try:
+            with open(args.previous, encoding="utf-8") as f:
+                previous = json.load(f)
+            with open(args.current, encoding="utf-8") as f:
+                current = json.load(f)
+        except (OSError, ValueError) as e:
+            print(f"\n  could not read outcomes: {e}\n")
+            sys.exit(2)
+        outcome = evaluate_transition(contract, previous, current)
+    else:   # run
+        _check_api_key()
+        from contradish.contract import default_outcome_classifier
+        from contradish.llm import LLMClient
+        chat_fn = _load_callable(args.app) if args.app else _demo_chat_fn(LLMClient())
+        outcome = run_transition(contract, chat_fn, default_outcome_classifier(LLMClient()),
+                                 delivery=args.delivery, samples=args.samples)
+
+    if args.output:
+        with open(args.output, "w", encoding="utf-8") as f:
+            json.dump(outcome.to_dict(), f, indent=2)
+    if use_json:
+        print(json.dumps(outcome.to_dict(), indent=2))
+    else:
+        def pct(x):
+            return "n/a" if x is None else f"{x * 100:.0f}%"
+        print()
+        print(f"  TRANSITION  *  {contract.id}  [{outcome.delivery}]")
+        print("-" * 78)
+        fid = "n/a (nothing needed to move)" if outcome.fidelity is None else f"{outcome.fidelity:.2f}"
+        print(f"  fidelity     {fid}     ({outcome.needed_to_move} case(s) needed to move, "
+              f"{outcome.off_target_after} off target after)")
+        print(f"  persistence  {pct(outcome.persistence)}     ({outcome.n_must_persist} distinction(s) that must keep their relation)")
+        print(f"  revision     {pct(outcome.revision)}     ({outcome.n_must_revise} distinction(s) that must change relation)")
+        for name, ids in (("rigid", outcome.rigid), ("misdirected", outcome.misdirected), ("drift", outcome.drift)):
+            if ids:
+                print(f"  {name:<12s} {', '.join(ids)}")
+        if outcome.broken_distinctions:
+            print("  broken distinctions: " + ", ".join(f"{a} | {b} (should {fate})"
+                                                       for a, b, fate in outcome.broken_distinctions[:8]))
+        print()
+    sys.exit(0 if outcome.exact else 1)
+
+
 def cmd_replay(args):
     """
     Replay logged conversation transcripts through the memory-aware
@@ -3477,6 +3639,46 @@ examples:
     cf_p.add_argument("--output", metavar="FILE", default=None)
     cf_p.add_argument("--json", action="store_true", default=False)
 
+    # contradish transition -- the atomic object
+    tr_p = sub.add_parser(
+        "transition",
+        help="The transition contract: previous governing information, new governing "
+             "information, and what each warrants. Which cases persist, which are revised.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=(
+            "contradish's atomic object. A transition contract states the governing\n"
+            "information a system had, the information it has now, and the outcome each\n"
+            "warrants per case. From that follow which cases must persist, which must be\n"
+            "revised, and which distinctions between cases survive, collapse or emerge.\n\n"
+            "Scoring answers one question: how faithfully did the system move from its\n"
+            "previous behavioral state toward the state its new information warrants?\n\n"
+            "  fidelity     1 - (cases off target after) / (cases that needed to move)\n"
+            "  persistence  share of distinctions that had to keep their relation and did\n"
+            "  revision     share of distinctions that had to change relation and did\n\n"
+            "  contradish transition show\n"
+            "  contradish transition score my_transition.json --previous before.json --current after.json\n"
+            "  contradish transition run   my_transition.json --app mymodule:chat --delivery in_conversation\n"
+            "  contradish transition export --from-contract my_contract.yaml --output transitions.json\n\n"
+            "--app takes a list of {role, content} messages and returns the assistant's text.\n"
+            "--delivery fresh compares independent runs before and after (the deployed system);\n"
+            "--delivery in_conversation gives one agent the old information, lets it answer,\n"
+            "then delivers the new information in the same conversation and asks again."
+        ),
+    )
+    tr_p.add_argument("transition_action", choices=["show", "lint", "score", "run", "export"])
+    tr_p.add_argument("file", nargs="?", default=None, help="A transition contract (.json/.yaml).")
+    tr_p.add_argument("--from-contract", dest="from_contract", metavar="FILE", default=None,
+                      help="Take the transition from a policy contract (default: built-in ecommerce_returns).")
+    tr_p.add_argument("--amendment", default=None, help="Which amendment of the policy contract.")
+    tr_p.add_argument("--previous", metavar="FILE", default=None, help="score: {case_id: outcome} before.")
+    tr_p.add_argument("--current", metavar="FILE", default=None, help="score: {case_id: outcome} after.")
+    tr_p.add_argument("--app", metavar="MODULE:FUNCTION", default=None,
+                      help="run: your chat function, taking a list of {role, content} messages.")
+    tr_p.add_argument("--delivery", choices=["fresh", "in_conversation"], default="fresh")
+    tr_p.add_argument("--samples", type=int, default=1, metavar="K")
+    tr_p.add_argument("--output", metavar="FILE", default=None)
+    tr_p.add_argument("--json", action="store_true", default=False)
+
     upd_p = sub.add_parser(
         "update",
         help="Measure warranted behavioral updating: given new governing "
@@ -3812,6 +4014,8 @@ examples:
         cmd_contract(args)
     elif args.command == "counterfactual":
         cmd_counterfactual(args)
+    elif args.command == "transition":
+        cmd_transition(args)
     elif args.command == "analyze":
         cmd_quick(args)
     elif args.command == "calibrate":

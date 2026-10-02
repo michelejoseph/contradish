@@ -11,12 +11,56 @@ In practice this is an evaluation contract for policy-grounded assistants. If yo
 
 Both say the same thing: behavior should be a function of the policy-relevant content of the situation. contradish states that as a contract you write down once, lint before spending a token, and run as a CI gate.
 
-**Scope today.** Every test currently compares independent runs: one fresh run under the original policy, another under the amended one. That measures whether behavior tracks the governing information it is given. A test where a single agent commits to an answer, receives a change, and is asked again (in conversation or through stale memory) is the next piece of work and is not built yet.
+**Scope today.** The policy contract and the counterfactual suite compare independent runs: one fresh run under the original policy, another under the amended one. That measures the deployed system across a policy update. `contradish transition run --delivery in_conversation` adds the single-agent version, where one agent commits to an answer, receives the change, and is asked again. Neither has been run against a real model yet, and a stale-memory version is not built.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Benchmark: v2](https://img.shields.io/badge/Benchmark-v2%20frozen-green.svg)](contradish/benchmarks/v2/)
 [![Paper](https://img.shields.io/badge/Paper-PAPER.md-orange.svg)](PAPER.md)
 [![Leaderboard](https://img.shields.io/badge/Leaderboard-contradish.com-purple.svg)](https://contradish.com)
+
+---
+
+## The atomic object: a transition contract (`contradish transition`)
+
+Intelligent systems need both persistence and revision. When governing information changes, a correct system has to work out which of its distinctions survive the new information and which must collapse. A pair of responses cannot express that: it can be compared, but it cannot say what should have happened. So the unit in contradish is a **transition contract**:
+
+- **before**: the governing information the system had
+- **after**: the governing information it has now
+- **cases**: for each situation, the outcome warranted before and the outcome warranted after
+
+```yaml
+id: window_30_to_45
+before: "Refunds within 30 days of delivery."
+after:  "Refunds within 45 days of delivery."
+outcomes: [refund, no_return]
+cases:
+  - {id: day_20, question: "Delivered 20 days ago. Refund?", before: refund,    after: refund}
+  - {id: day_35, question: "Delivered 35 days ago. Refund?", before: no_return, after: refund}
+  - {id: day_50, question: "Delivered 50 days ago. Refund?", before: no_return, after: no_return}
+```
+
+Everything else follows from those three parts. Cases whose outcome is the same on both sides must **persist**; cases whose outcome differs must be **revised**. Two cases that warrant different outcomes are a **distinction**, and each distinction has a fate: here the line between day 20 and day 35 **collapses**, a new one between day 35 and day 50 **emerges**, and the line between day 20 and day 50 **survives**. A transition whose new information means the same as the old is the null transition: everything persists. Semantic invariance is that special case.
+
+Scoring answers one question: *how faithfully did the system move from its previous behavioral state toward the state its new governing information warrants?*
+
+| Score | Meaning |
+|---|---|
+| **fidelity** | 1 − (cases off target after) ÷ (cases that needed to move). 1 = landed on the target, 0 = no net progress, negative = ended further away than it began. "Needed to move" is judged from what the system actually did before. |
+| **persistence** | of the distinctions that had to keep their relation, the share that did |
+| **revision** | of the distinctions that had to change relation, the share that did |
+
+Every case still off target is exactly one of **rigid** (needed to move, didn't), **misdirected** (moved somewhere else), or **drift** (was on target, left it).
+
+```bash
+contradish transition show                                       # persist / revise / distinction fates
+contradish transition score t.yaml --previous before.json --current after.json   # no API calls
+contradish transition run   t.yaml --app mymodule:chat --delivery in_conversation
+contradish transition export --from-contract my_contract.yaml    # every amendment as a transition contract
+```
+
+`--delivery fresh` compares independent runs before and after the change: the deployed system across a policy update. `--delivery in_conversation` gives one agent the old information, lets it answer, then delivers the new information in the same conversation and asks again: one agent revising a commitment it actually made. An agent that clings to its own earlier answer passes the first and fails the second. Neither has been run against a real model yet.
+
+A policy evaluation contract, below, is a base policy plus a set of transition contracts (one per amendment), with rewordings, contrasts, intervals and a CI gate around them.
 
 ---
 

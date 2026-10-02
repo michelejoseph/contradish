@@ -4,6 +4,54 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.56.0] - 2026-10-02
+
+The atomic object is now a transition contract, not a pair of responses.
+
+### Added
+
+- **`contradish/transition.py`: `TransitionContract`.** Previous governing
+  information, new governing information, and for each case the outcome each
+  warrants. From that: `persist()` / `revise()`, and `distinctions()`, where
+  each related pair of cases has a warranted fate (`survive`, `collapse`,
+  `emerge`, `stay_merged`). A meaning-preserving transition is the null
+  transition; semantic invariance is that special case.
+- **`evaluate_transition()`**: the graded answer to "how faithfully did the
+  system move from its previous behavioral state toward the warranted one".
+  `fidelity = 1 - off_target_after / needed_to_move` (judged from what the
+  system actually did before; negative on overshoot; undefined when nothing
+  needed to move, where `hold` applies), with every off-target case exactly
+  one of rigid / misdirected / drift; `persistence` and `revision` scored on
+  distinctions, so drawing the right lines and attaching the right outcomes
+  are reported separately.
+- **`run_transition(delivery="fresh" | "in_conversation")`**. `fresh` is the
+  deployed system before and after an update (independent runs).
+  `in_conversation` has one agent answer under the old information, then
+  receive the new information in the same conversation and answer again: an
+  agent that clings to its earlier answer passes the first and fails the
+  second.
+- **`contradish transition show | lint | score | run | export`**, and schema
+  `transition` (1.0).
+- `PolicyContract.transition_contract(amendment_id)` / `.transitions()`: a
+  policy contract is a base policy plus transition contracts. Each
+  `TransitionResult` now carries `outcome` (fidelity, persistence, revision,
+  broken distinctions), shown in the report and in `--json`.
+
+### Changed
+
+- `contradish.TransitionContract` is now the atomic object. The derivation
+  engine's output (1.52.0) is renamed `WarrantDerivation`;
+  `contradish.transition_derivation.TransitionContract` remains as an alias,
+  and the `transition_contract` schema still describes it.
+  **Breaking** only for code that imported `TransitionContract` from the
+  top-level package to mean the derivation output.
+
+### Verification
+
+- `tests/test_transition.py`: 22 tests pass, no API key. Full suite: 1671
+  passed, 28 failed (the same pre-existing 28), 2 skipped.
+- Not run against a real model, in either delivery mode.
+
 ## [1.55.1] - 2026-10-02
 
 ### Changed

@@ -33,7 +33,7 @@ from contradish.schema import list_schemas, load_schema, validate_against_schema
 def test_list_schemas_returns_every_published_schema():
     assert list_schemas() == [
         "contract_result", "distinction_diff", "distinction_report",
-        "policy_contract", "transition_contract",
+        "policy_contract", "transition", "transition_contract",
     ]
 
 

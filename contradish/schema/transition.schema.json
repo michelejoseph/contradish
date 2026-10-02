@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contradish.com/schema/transition/1.0.json",
+  "title": "Contradish Transition Contract",
+  "description": "contradish's atomic object (contradish/transition.py): the governing information a system had (before), the governing information it has now (after), and for each case the outcome each warrants. Cases whose outcome is the same on both sides must persist; cases whose outcome differs must be revised. Each pair of cases is a distinction that the transition warrants to survive, collapse, emerge, or stay merged. A transition whose new information means the same as the old (meaning_preserving) is the null transition: everything persists. Distinct from the older `transition_contract` schema, which describes the derivation engine's warranted / not-warranted judgments for a scenario pair.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "before",
+    "after",
+    "outcomes",
+    "cases"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
+    "id": {
+      "type": "string"
+    },
+    "domain": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "preamble": {
+      "type": "string",
+      "description": "Text placed before the governing information in the system prompt."
+    },
+    "meaning_preserving": {
+      "type": "boolean",
+      "description": "Declared null transition: no case may be revised."
+    },
+    "before": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "required": [
+            "text"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            }
+          }
+        }
+      ],
+      "description": "The previous governing information."
+    },
+    "after": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "required": [
+            "text"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            }
+          }
+        }
+      ],
+      "description": "The new governing information."
+    },
+    "outcomes": {
+      "oneOf": [
+        {
+          "type": "object",
+          "minProperties": 2,
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "question",
+          "before",
+          "after"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "before": {
+            "type": "string",
+            "description": "Outcome warranted by the previous governing information."
+          },
+          "after": {
+            "type": "string",
+            "description": "Outcome warranted by the new governing information."
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "outcomes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "grounds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What in the governing information this case depends on."
+          }
+        }
+      }
+    }
+  }
+}

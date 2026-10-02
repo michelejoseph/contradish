@@ -21,6 +21,12 @@ equivalent inputs. ML literature calls this drift; contradish names and scores i
 Returns CAI Strain per rule (0-1, lower = more consistent).
 
 Tools:
+    TransitionContract -- the atomic object: previous governing information,
+                           new governing information, and the outcome each
+                           warrants per case. Says which cases persist, which
+                           are revised, and which distinctions survive,
+                           collapse or emerge; evaluate_transition() scores
+                           how faithfully a system moved (contradish transition)
     PolicyContract    -- the evaluation contract: clauses, decision cases
                            with meaning-preserving variants, amendments with
                            declared warranted changes; run_contract() checks
@@ -203,12 +209,16 @@ from .minimal_intervention_delta import (
 )
 from .transition_derivation import (
     ScenarioPair, scenario_pair_from_distinction_pair, DerivedCommitment,
-    TransitionContract, TransitionDerivationJudge, ManualTransitionJudge,
+    WarrantDerivation, TransitionDerivationJudge, ManualTransitionJudge,
     derive_transition_contract, derive_transition_contracts, warrant_agreement,
 )
 from .intervention_probe import (
     InterventionCase, default_change_judge, default_effect_judge,
     probe_intervention, probe_interventions, BUILTIN_INTERVENTIONS,
+)
+from .transition import (
+    TransitionContract, TransitionCase, GoverningState, Distinction,
+    TransitionOutcome, evaluate_transition, run_transition,
 )
 from .contract import (
     PolicyContract, Clause, DecisionCase, Contrast, Amendment, Thresholds, LintIssue,
@@ -303,7 +313,7 @@ from .domains      import (
 from .conviction   import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .cdr          import generate_cdr
 
-__version__ = "1.55.1"
+__version__ = "1.56.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -441,6 +451,13 @@ __all__ = [
     "scenario_pair_from_distinction_pair",
     "DerivedCommitment",
     "TransitionContract",
+    "TransitionCase",
+    "GoverningState",
+    "Distinction",
+    "TransitionOutcome",
+    "evaluate_transition",
+    "run_transition",
+    "WarrantDerivation",
     "TransitionDerivationJudge",
     "ManualTransitionJudge",
     "derive_transition_contract",

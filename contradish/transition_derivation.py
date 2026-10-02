@@ -90,6 +90,7 @@ __all__ = [
     "scenario_pair_from_distinction_pair",
     "DerivedCommitment",
     "TransitionContract",
+    "WarrantDerivation",
     "TransitionDerivationJudge",
     "ManualTransitionJudge",
     "derive_transition_contract",
@@ -207,7 +208,7 @@ SCHEMA_VERSION = "1.0"
 
 
 @dataclass
-class TransitionContract:
+class WarrantDerivation:
     """
     The derivation engine's output for one ScenarioPair: one or more
     DerivedCommitments, plus enough provenance (derived_by, schema_version)
@@ -271,6 +272,14 @@ class TransitionContract:
 
 
 # ── The judge interface (LLM-backed, with a no-API-key fallback) ─────────────
+
+# Backward-compatible name. Since 1.56.0 the atomic transition contract lives
+# in contradish/transition.py (previous information, new information, and
+# what each warrants per case); this class is the derivation engine's output,
+# a set of warranted / not-warranted judgments for one scenario pair, and is
+# what the published `transition_contract` schema (1.0) describes.
+TransitionContract = WarrantDerivation
+
 
 _DERIVATION_PROMPT = """You are deriving a warranted-transition contract for a decision-support system.
 

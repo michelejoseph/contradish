@@ -20,7 +20,7 @@ internal detail of DistinctionLossMap.to_dict() and
 diff_distinction_reports(). See contradish/schema/README.md for the full
 rationale and the versioning policy.
 
-Five schemas ship today:
+Six schemas ship today:
 
     distinction_report   the shape of `DistinctionLossMap.to_dict()`, i.e.
                           what `contradish distinguish --json` writes: one
@@ -77,6 +77,7 @@ _SCHEMA_FILES = {
     "distinction_report":   "distinction_report.schema.json",
     "distinction_diff":     "distinction_diff.schema.json",
     "transition_contract":  "transition_contract.schema.json",
+    "transition":           "transition.schema.json",
     "policy_contract":      "policy_contract.schema.json",
     "contract_result":      "contract_result.schema.json",
 }
