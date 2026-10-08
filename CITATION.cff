@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use Behavioral Update Fidelity, the reference implementation, or the conformance vectors, please cite them using the metadata below."
+title: "Behavioral Update Fidelity: a specification, reference implementation and conformance suite for measuring whether AI behavior changes exactly as far as new governing information warrants"
+type: software
+authors:
+  - family-names: Joseph
+    given-names: Michele
+    email: michelepjoseph@gmail.com
+    affiliation: "Contradish, Inc."
+repository-code: "https://github.com/michelejoseph/contradish"
+url: "https://contradish.com"
+license: MIT
+version: "1.58.0"
+date-released: "2026-10-08"
+keywords:
+  - behavioral update fidelity
+  - belief revision
+  - AI evaluation
+  - instruction hierarchy
+  - authority
+  - semantic invariance
+abstract: "Behavioral Update Fidelity measures whether an AI changes its behavior exactly when, and only as far as, changes in governing information warrant. This repository contains the formal specification (docs/BUF-SPEC.md), an independent reference implementation with exhaustive model-checking of its theorems, language-neutral conformance vectors with a mutation library, and the contradish toolkit. Behavioral Update Fidelity was introduced by Michele Joseph in 2026."
+preferred-citation:
+  type: software
+  title: "Behavioral Update Fidelity"
+  authors:
+    - family-names: Joseph
+      given-names: Michele
+  year: 2026
+  url: "https://github.com/michelejoseph/contradish"

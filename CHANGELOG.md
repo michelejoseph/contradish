@@ -4,6 +4,43 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.58.0] - 2026-10-08
+
+Formalizes Behavioral Update Fidelity and makes it independently checkable.
+
+### Added
+
+- **`docs/BUF-SPEC.md`**: the formal specification. Definitions of the
+  transition object, authority semantics, scores, statuses and distinction
+  fates; Theorems T1-T10 with proofs; sequence semantics (L1-L3,
+  hysteresis, round trip); the invariants and their separability; explicit
+  limits; conformance levels; attribution.
+- **`contradish/reference.py`**: an independent reference implementation
+  (imports nothing from the package; exact rationals) and an exhaustive
+  model-checker for T1-T10 and L1-L3 on finite universes
+  (`python -m contradish.reference`). Planted scorer defects make named
+  theorems fail.
+- **`contradish/conformance.py`, `conformance/vectors.json`**: language-neutral
+  conformance vectors (1,374 score, 42 sequence, 324 hysteresis) generated
+  from the reference, plus a library of 19 single-bug scorers every vector
+  set must kill (`--check`, `--generate`, `--mutants`).
+- **`contradish/transition_sequence.py`**: `SequenceContract`,
+  `evaluate_sequence`, `run_sequence`, `commuting_orders`,
+  `order_independence`: warranted trajectories under per-update authority,
+  hysteresis, path dependence and round trips.
+- **`contradish/invariants.py`**: single-defect witness agents, one probe per
+  invariant, and a separability matrix (magnitude is explicitly marked not
+  built).
+- **`docs/VALIDATION.md`**: what has been checked, and the protocol for
+  independent validation. **`CITATION.cff`**, **`.zenodo.json`**.
+- Tests: `test_reference_conformance.py`, `test_formal_theorems.py`,
+  `test_transition_sequence.py`, `test_witnesses.py`.
+
+### Not changed
+
+- `evaluate_transition` is unchanged: the production scorer already agreed
+  with the independent reference on every contract checked.
+
 ## [1.57.0] - 2026-10-02
 
 Generalizes the definition and adds authority.

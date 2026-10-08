@@ -754,6 +754,23 @@ contradish init    # three questions; writes .contradish.yaml and optional GHA w
 
 ---
 
+## Formal specification and independent validation (`docs/BUF-SPEC.md`)
+
+Behavioral Update Fidelity is specified, not just implemented. [`docs/BUF-SPEC.md`](docs/BUF-SPEC.md) defines the object (a transition contract with per-case authority), the scores, ten theorems with proofs (faithfulness characterization, the skill-score identity, null-agent calibration, monotonicity, invariance, additivity, obedience-is-not-faithfulness, and more), sequence semantics with hysteresis, and the limits of all of it.
+
+```bash
+python -m contradish.reference            # model-check the theorems exhaustively on finite universes (~8.7M checks)
+python -m contradish.conformance --check  # hold the production scorer to language-neutral test vectors
+python -m contradish.conformance --mutants  # which of 19 planted scorer bugs the vectors catch (all of them)
+```
+
+- `contradish/reference.py` is a second implementation of the scorer that imports nothing from the package (exact rationals, plain dicts). The production scorer is differentially tested against it.
+- `conformance/vectors.json` lets an implementation in any language check itself against the spec.
+- `contradish/transition_sequence.py` scores a *history* of updates: order, round trips and hysteresis (right when told the net information afresh, wrong after living through the history).
+- `contradish/invariants.py` shows the invariants of governance fidelity fail independently: one defective oracle agent per invariant, one probe per invariant, a diagonal separability matrix.
+
+What this is not: third-party validation. The reference and production scorer share an author. [`docs/VALIDATION.md`](docs/VALIDATION.md) says what independent validation would look like and how to do it.
+
 ## Cite
 
 Behavioral Update Fidelity, the policy evaluation contract, CAI Strain and CAI-Bench were introduced by Michele Joseph.
@@ -776,7 +793,7 @@ Behavioral Update Fidelity, the policy evaluation contract, CAI Strain and CAI-B
 }
 ```
 
-Full technical report: [PAPER.md](PAPER.md).
+Citation metadata: [CITATION.cff](CITATION.cff). Specification: [docs/BUF-SPEC.md](docs/BUF-SPEC.md). Full technical report: [PAPER.md](PAPER.md).
 
 ---
 

@@ -1,0 +1,10 @@
+{
+  "title": "Behavioral Update Fidelity: specification, reference implementation and conformance suite",
+  "upload_type": "software",
+  "description": "Behavioral Update Fidelity measures whether an AI changes its behavior exactly when, and only as far as, changes in governing information warrant. Includes the formal specification, an independent reference implementation with exhaustively model-checked theorems, language-neutral conformance vectors with a mutation-testing library, and the contradish evaluation toolkit. Introduced by Michele Joseph in 2026.",
+  "creators": [{"name": "Joseph, Michele", "affiliation": "Contradish, Inc."}],
+  "license": "MIT",
+  "keywords": ["behavioral update fidelity", "belief revision", "AI evaluation", "instruction hierarchy", "authority", "conformance"],
+  "access_right": "open",
+  "related_identifiers": [{"relation": "isSupplementTo", "identifier": "https://github.com/michelejoseph/contradish", "scheme": "url"}]
+}

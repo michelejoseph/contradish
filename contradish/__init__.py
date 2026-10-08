@@ -228,6 +228,10 @@ from .intervention_probe import (
     InterventionCase, default_change_judge, default_effect_judge,
     probe_intervention, probe_interventions, BUILTIN_INTERVENTIONS,
 )
+from .transition_sequence import (
+    SequenceContract, SequenceOutcome, evaluate_sequence, run_sequence,
+    commuting_orders, order_independence,
+)
 from .transition import (
     TransitionContract, TransitionCase, GoverningState, Distinction,
     TransitionOutcome, evaluate_transition, run_transition,
@@ -327,7 +331,7 @@ from .domains      import (
 from .conviction   import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .cdr          import generate_cdr
 
-__version__ = "1.57.0"
+__version__ = "1.58.0"
 __all__ = [
     "Suite",
     "RegressionSuite",
@@ -470,6 +474,12 @@ __all__ = [
     "Distinction",
     "TransitionOutcome",
     "evaluate_transition",
+    "SequenceContract",
+    "SequenceOutcome",
+    "evaluate_sequence",
+    "run_sequence",
+    "commuting_orders",
+    "order_independence",
     "run_transition",
     "Source",
     "Update",
