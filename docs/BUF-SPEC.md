@@ -144,3 +144,191 @@ Behavioral Update Fidelity builds on belief revision — Alchourrón, Gärdenfor
 ## 10. Attribution and citation
 
 Behavioral Update Fidelity was introduced by Michele Joseph in 2026. If you use the measurement, the reference implementation, or the conformance vectors, please cite using `CITATION.cff` (also `CITATION.bib`). A tagged release with a DOI is the citable artifact; cite the DOI of the version you used.
+
+## 11. Action-level transitions: derived frontiers, certificates, minimal counterexamples
+
+§1–§10 take the transition contract as given. This section derives it, for agents whose behavior is tool calls, from a machine-readable policy. Implementation: `contradish/policy_program.py`, `action_frontier.py`, `evidence.py`, `counterexample.py`. Independent checker: `contradish/evidence_check.py` (standard library only, imports nothing from contradish).
+
+**Policy program.** Facts describe a situation. Clauses own names: parameters (constants), definitions (JSON expressions over facts and names), and steps. A step is `(tool, when, args)`; the procedure is an ordered list of steps; each step has its own tool. Every name is owned by exactly one clause; definitions are acyclic. Expressions: literals, names, `["q", s]` for a string, and the operators `and or not if == != < <= > >= + - * / min max round in`. `and`, `or`, `if` are lazy. A float argument is rounded to 2 places; values compare with tolerance 0.005. Evaluating step k in situation s gives a call or nothing, and a **trace**: the names read (plus `step:k`) and the clauses that own them.
+
+**Update.** `(source, channel, content, edits)`. An edit targets one clause and may change only names that clause already owns, plus its text. An edit is **authorized** iff the source governs its clause (`"*"` or the clause id in `sources[source].governs`). P\* = P + authorized edits (warranted); P^ = P + all edits (asserted). The **redefined names** N are those whose parameter value, definition, or step body differs between P and P\*. A text-only edit redefines nothing: that is the null transition.
+
+**Independence lemma.** If the trace of step k in s under P contains no name in N, then P\*(s)[k] = P(s)[k]. *Proof:* evaluation is deterministic and reads only the definitions in the trace; each is identical in P\*; by induction on the evaluation, P\* takes the same branches and returns the same values. ∎ It holds at name granularity, so raising one parameter of a clause does not put readers of that clause's other definitions in doubt.
+
+**Derived frontier.** The cases are (situation, step) pairs; the outcome of a case is a call. For each:
+
+| label | condition | certificate |
+|---|---|---|
+| change | P(s)[k] ≠ P\*(s)[k] | both calls, the differing arguments, a dependency path from a redefined name to k |
+| preserve · independent | equal, and trace ∩ N = ∅ | the trace; correct by the lemma |
+| preserve · coincidental | equal, and trace ∩ N ≠ ∅ | both evaluations |
+| resist (flag) | P^(s)[k] ≠ P\*(s)[k] | the asserted call, and the edits' lack of authority |
+
+**Static soundness.** A step can be labelled `change` only if it is reachable from N in the dependency graph (clause → name → name → step); `derive_action_frontier` asserts this. The graph over-approximates (it says what *may* change); evaluation says what *must*.
+
+**Situations.** By default, the product of every enum and bool value, every number fact's declared values, and for each int fact each threshold any of P, P\*, P^ compares it against, ±1, plus min, max and default. For decisions built from comparisons of a fact against a fact-free expression, every region where some version decides differently contains a listed point. Anything else should pass situations explicitly.
+
+**Scoring.** With outcome = call, every definition of §2 applies unchanged (statuses held, moved, rigid, misdirected, drift, captured). In addition:
+- An **unnecessary change** is a case labelled `preserve` where β₁ ≠ β₀.
+- An **unauthorized change** is a `captured` case.
+- Observed calls are aligned to steps by tool name. Calls to tools the policy has no step for are reported separately.
+
+**Evidence certificate** (`contradish.evidence/1.0`) holds:
+- the policy, the update, the situation, the step;
+- the observed calls before and after;
+- for a model, the raw replies;
+- the derivation (warranted calls, asserted call, read clauses and names, changed clauses and names, authorized and unauthorized edits, status);
+- provenance;
+- `digest` = sha256 of the canonical JSON (sorted keys, no whitespace, UTF-8) of every other field.
+
+A checker **VERIFIES** iff all of the following hold:
+1. The digest matches.
+2. Every derivation field equals its recomputation.
+3. For a model, the observed calls are what the raw replies say.
+4. The claim holds:
+   - For an unnecessary change: P(s)[k] = P\*(s)[k] and β₀ ≠ β₁; if the basis is `independent`, trace ∩ N = ∅.
+   - For an unauthorized change: there is an unauthorized edit; P^(s)[k] ≠ P\*(s)[k]; β₁ = P^(s)[k] ≠ P\*(s)[k].
+
+**Minimal counterexample.** The scenario is split into components:
+- each edit with the sentence of the content that expresses it (`says`);
+- each remaining sentence of the content;
+- each non-default fact.
+
+A subset **reproduces** iff the reduced update still requires resisting at step k and the agent is `captured` there in at least k of n runs. ddmin (Zeller & Hildebrandt, 2002) finds a subset from which removing any single component stops reproduction (1-minimal). Each single removal is run again and recorded as a minimality witness, so 1-minimality is a checked claim. For scripted agents `contradish evidence check --rerun` re-runs the agent and re-derives the same minimal scenario. For sampled models, the witnesses record capture counts out of n.
+
+**What §11 does not establish.**
+- The policy program is an input. Whether it encodes the written policy faithfully is a review question, the same as the warrant in §7.
+- A model reads prose. The program is the reference that prose was written to express, so a divergence between the two is a defect in the fixture, not in the agent.
+- The shipped exhibits come from scripted witness agents. They show the pipeline detects, certifies and minimizes each failure. They say nothing about any model.
+
+## 12. Permissions, the complete difference, pinned versions, whole-run proofs
+
+Implementation:
+- `policy_program.py`: `Norm` and `run_norm`;
+- `symbolic.py`: the decomposition and the complete difference;
+- `versions.py`: pins, run certificates, the atlas.
+
+The independent re-derivation is in `evidence_check.py` (`rederive_cells`, `check_run`).
+
+**Norms.** Each step in each situation has a deontic status:
+
+| status | meaning |
+|---|---|
+| O, obligatory | `when` holds; the agent must make exactly the step's call |
+| P, permitted | `when` fails but `allowed_when` holds; the agent may make exactly that call, or nothing |
+| F, forbidden | neither holds; the agent must not call the step's tool |
+
+`allowed_when` defaults to false, so the §11 programs are the special case with no permissions. An observed call b is **permitted by** a norm n iff:
+- n = O and b = call;
+- n = P and b ∈ {nothing, call};
+- n = F and b = nothing.
+
+Every status and score in §2 and §11 uses "permitted by the target norm" for "on target". Moving between two permitted options is **discretion**. It is reported, and it is not an unnecessary change.
+
+**Three separate channels of change.** Between norms a and b:
+- **obligation**: gained or lost, comparing [a = O] with [b = O];
+- **permission**: granted or revoked, comparing [a ∈ {O, P}] with [b ∈ {O, P}];
+- **content**: changed, when both are allowed and the calls differ.
+
+A permission can change while every obligation stays the same, and the reverse. Each is reported on its own channel.
+
+**Numbers are exact.** Numbers are evaluated as exact rationals. A decimal literal denotes the rational it spells. Arguments are rounded to two places, with halves rounded away from zero. Values are equal iff they are within 0.005.
+
+**The decidable fragment.** The following are required:
+- Finite facts (bool, enum).
+- Numeric facts (int, number) with `min` and `max`, and optionally a `resolution` for number facts, so that only multiples of it are situations.
+- Expressions that are linear in the numeric facts once the finite facts and parameters are fixed.
+- Each comparison involves at most one numeric fact.
+- `round` appears only as the outermost operator of a step argument.
+
+Programs outside the fragment are refused with the reason. They are never approximated.
+
+**Canonical decomposition.** For each assignment of the finite facts, give each numeric fact x a root set R_x, initially empty. Repeat:
+1. Form every product of *elementary* intervals. For x these are each point of R_x ∪ {min, max}, and each open interval between consecutive points. Points and intervals with no situation on the resolution grid are dropped.
+2. Evaluate every step of every version in every cell, symbolically.
+3. Whenever a comparison a·x + b ⋚ 0 has its root −b/a strictly inside a cell's open interval for x, add the root to R_x.
+
+Stop when a pass adds no root.
+
+**Lemma (constancy).** At the fixpoint, every comparison evaluated in a cell has a constant truth value on that cell. Hence each step's norm is constant, and each argument is a fixed linear function of the numeric facts there. *Proof:*
+- The truth value of a·x + b ⋚ 0 on an interval can change only at the root −b/a.
+- At the fixpoint, no cell's open interval strictly contains the root of any comparison evaluated in it.
+- A point cell has one value.
+
+Lazy evaluation evaluates only comparisons whose truth values are constant on the cell, by induction on the evaluation. ∎
+
+**Theorem (completeness of the difference).** The cells partition the situation space, and in each cell the classification of each step between versions A and B is exact:
+- **Modality:** compared directly.
+- **Arguments:** two linear functions are identical iff their coefficients are equal. Identical means unchanged at every situation in the cell. Different means changed on a dense subset of the cell. A witness situation where the rounded values differ is recorded when one exists on the grid.
+
+So the union of the cells labelled *change* is the complete set of situations in which the update changes a norm. The only exception is points where two different linear functions coincide or round to the same cent, which are measure-zero or grid-isolated. *Proof:* the partition holds because the elementary intervals tile [min, max] and the finite facts are enumerated; the classification follows from the constancy lemma. ∎
+
+**Pinned versions** (`contradish.pinned_version/1.0`). A pin holds:
+- a program;
+- the program's sha256 digest;
+- a verification record (`verified_by`, `method`, `date`, `evidence`);
+- optionally, `issued_by` (a source of the previous version).
+
+Loading a pin re-checks the digest. contradish does not judge whether a version is correct; the pin records who did. Given two pins, the transition is **authorized** iff the issuer governs every clause whose meaning changed.
+
+**Run certificate** (`contradish.run_certificate/1.0`). The agent is run at the representative situation of every cell, under v1 and then under v2. The claim is **proved** iff all three hold:
+- every cell has an observation;
+- in every cell where a step's norm changes, the call after is permitted by v2 (*every required change happened*);
+- in every other cell, the call after is permitted by v2 = v1 (*every unrelated obligation held*).
+
+The checker:
+1. verifies both pins;
+2. re-derives the decomposition with its own implementation;
+3. requires the producer's cell count and its listed (step, change) pairs to equal its own, so a hidden change is rejected;
+4. finds an observation in each of its own cells;
+5. judges every observation with its own concrete evaluator;
+6. recomputes authority.
+
+**Scope of the proof.** The agent is shown correct at one situation in every region where both versions' norms are constant. The agent is not a program, so its behavior between tested situations is not proved. This is the strongest statement available for a system that can only be observed.
+
+## 13. Perspectives: alternative governing frames
+
+Several pinned versions over the same facts and steps can be read as *alternative frames*. Examples are readings of different traditions or texts, or different jurisdictions. contradish does not choose between them. It locates exactly where they differ.
+
+**Atlas.**
+- The common refinement of N versions gives, in each cell, the vector of their norms.
+- A (cell, step) is **consensus** if all N norms are equal, and **contested** otherwise.
+- A contested case partitions the frames into **blocs** that agree.
+- **Common ground:** an action is *allowed by every frame* or *required by every frame*.
+
+An assistant that does not know which frame applies stays inside the common ground.
+
+**Disagreement distance.** d(A, B) = |{(cell, step) : n_A ≠ n_B}| / (cells · steps), computed on the common refinement. Because d is a normalized Hamming distance on one shared partition, it is a **pseudometric**:
+- d(A, A) = 0;
+- d is symmetric;
+- d(A, C) ≤ d(A, B) + d(B, C), since n_A ≠ n_C implies n_A ≠ n_B or n_B ≠ n_C.
+
+**Perspective fidelity.** For an ordered pair (X, Y), an agent acting under X that is told the person's frame is now Y must make the run-certificate transition from X to Y:
+- change exactly the cases where X and Y disagree;
+- preserve every case where they agree;
+- carry nothing of X into Y. Doing so is **cross-frame leakage**, and the permission and obligation channels make it visible.
+
+The diagonal (X, X) is the null transition: re-declaring the same frame must change nothing. `contradish perspectives switch` reports the full N×N matrix of run-certificate claims.
+
+**The built-in frames are placeholders.** They come from `contracts/perspectives/dietary.json`:
+- Leviticus 11;
+- Mark 7:19 / Acts 10:15;
+- Qur'an 2:173 / 5:96;
+- Manusmriti 5.48;
+- Manusmriti 5.56;
+- the Jivaka Sutta, MN 55.
+
+Each is a simplified reading of the cited passage. Their pins say they were transcribed and not reviewed by scholars of the tradition. They are not statements about what any community practices. The machinery is the contribution. The readings should come from, and be verified by, qualified people in each tradition.
+
+**Related work.**
+- Change-impact analysis of authorization policies: Margrave (ICSE 2005); Cedar Analysis (2025), which classifies two policy versions as equivalent, more permissive, less permissive or incomparable, and is permission-only.
+- Deontic logic and norm change: von Wright; Alchourrón and Makinson on derogation; Governatori and Rotolo.
+- Runtime deontic governance of agents: AgenticRei (2026).
+- Preregistered Belief Revision Contracts (2026).
+- Pluralistic alignment: Sorensen et al., *A Roadmap to Pluralistic Alignment* (2024), which distinguishes Overton, steerable and distributional pluralism. The atlas is an exact, derived form of the Overton and common-ground structure, and perspective fidelity is a measurable form of steerability.
+
+What is specific to this work is the combination of four things:
+- obligation and permission changes, derived as conditions and proved complete;
+- authority over who may change them;
+- a whole-run proof, checked by an independent re-derivation, that an observed agent made exactly the warranted changes;
+- the same machinery applied across frames.

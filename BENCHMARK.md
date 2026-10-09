@@ -2,9 +2,11 @@
 
 **Current version:** v2
 **Domains:** 20
-**Test cases:** 240 (12 per domain)
+**Test cases:** 360 (18 per domain) in the current files; 240 (12 per domain) before 2026-08-28
 **Adversarial variants per case:** 8
-**Total rows per full run:** 2,160
+**Total prompts per full run:** 3,240 (360 originals + 2,880 variants); 2,160 rows before 2026-08-28
+
+> Six cases per domain were added to the v2 files on 2026-08-28 (commit d06fa66) without changing the version label. Results produced before that date ran 240 cases. `contradish cai-bench manifest` prints exact counts and a content hash; report the hash with any result.
 
 v1 (frozen, backwards compatible): 9 domains, 108 cases, 5 variants, 648 total rows.
 

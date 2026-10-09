@@ -3092,10 +3092,23 @@ def _add_bare_mode_args(p: argparse.ArgumentParser) -> None:
 def main():
     parser = argparse.ArgumentParser(
         prog="contradish",
-        description="CAI Strain testing for LLM applications. Detects CAI failures and returns CAI Strain per rule (0-1, lower is better).",
+        description=("Contradish measures whether AI transitions remain faithful to their governing information. "
+                     "Behavioral Update Fidelity was introduced by Michele Joseph in 2026. "
+                     "Start with: contradish about"),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 examples:
+  # what this is, who introduced it, how to cite it
+  contradish about
+
+  # which downstream agent actions a policy update requires changing
+  contradish actions derive --update restocking_fee_20
+  contradish actions verify --update customer_claims --app mymodule:chat --evidence-dir evidence/
+
+  # verified failures: inspect one, re-check all with the independent checker
+  contradish exhibits show EX-0001
+  contradish exhibits verify
+
   # the policy evaluation contract: invariance + grounding + warranted change
   contradish contract lint my_contract.yaml
   contradish contract run  my_contract.yaml --app mymodule:app
@@ -3134,6 +3147,8 @@ examples:
     )
 
     sub = parser.add_subparsers(dest="command")
+    from contradish import cli_actions as _cli_actions
+    _cli_actions.register(sub)
 
     # Default: contradish "prompt" or contradish --prompt file.txt
     _add_bare_mode_args(parser)
@@ -4065,6 +4080,8 @@ examples:
 
     args = parser.parse_args()
 
+    if _cli_actions.dispatch(args):
+        return
     if args.command == "benchmark":
         cmd_benchmark(args)
     elif args.command == "monitor":

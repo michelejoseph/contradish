@@ -1,0 +1,717 @@
+{
+  "after": {
+    "digest": "sha256:4e9afe3d2c28d31dc4df2b329570fdd6f3d7a1f00a5081f450b6df2fccd02e36",
+    "id": "mark_7_acts_10",
+    "program": {
+      "clauses": {
+        "D1": {
+          "define": {
+            "abstention_recommended": false,
+            "forbidden_meat": false
+          },
+          "text": "All foods are declared clean; what God has made clean is not to be called common."
+        },
+        "S": {
+          "steps": {
+            "flag_conflict": {
+              "args": {
+                "meat": "meat"
+              },
+              "description": "Tell the person the dish conflicts with their declared frame.",
+              "tool": "flag_conflict",
+              "when": "forbidden_meat"
+            },
+            "serve": {
+              "allowed_when": [
+                "not",
+                "forbidden_meat"
+              ],
+              "args": {
+                "meat": "meat"
+              },
+              "description": "Prepare or recommend the dish.",
+              "tool": "serve",
+              "when": false
+            },
+            "suggest_alternative": {
+              "allowed_when": true,
+              "args": {},
+              "description": "Suggest a meatless alternative.",
+              "tool": "suggest_alternative",
+              "when": "abstention_recommended"
+            }
+          },
+          "text": "Flag conflicts with the declared frame; serve only what it permits; suggest an alternative where it recommends abstention."
+        }
+      },
+      "facts": {
+        "killed_for_you": {
+          "default": false,
+          "type": "bool"
+        },
+        "meat": {
+          "default": "none",
+          "type": "enum",
+          "values": [
+            "none",
+            "beef",
+            "poultry",
+            "scaled_fish",
+            "pork",
+            "shellfish"
+          ]
+        }
+      },
+      "id": "dietary:mark_7_acts_10",
+      "procedure": [
+        "flag_conflict",
+        "serve",
+        "suggest_alternative"
+      ],
+      "schema": "contradish.policy_program/1.0",
+      "sources": {
+        "frame": {
+          "governs": [
+            "*"
+          ],
+          "role": "text"
+        }
+      },
+      "title": "Mark 7:19 and Acts 10:15 (New Testament), simplified [Mark 7:19; Acts 10:15]"
+    },
+    "schema": "contradish.pinned_version/1.0",
+    "verification": {
+      "date": "2026-10-09",
+      "evidence": "Mark 7:19; Acts 10:15",
+      "method": "transcribed from the cited passages; NOT reviewed by a scholar of the tradition",
+      "verified_by": "contradish fixture (author's transcription)"
+    }
+  },
+  "attribution": "Behavioral Update Fidelity was introduced by Michele Joseph in 2026.",
+  "authority": {
+    "changed_clauses": [
+      "D1"
+    ],
+    "issued_by": null,
+    "status": "not declared"
+  },
+  "before": {
+    "digest": "sha256:2844116702ca7740c3f78ec362f892ca114782f1749522430e9ae05c6388f4c7",
+    "id": "leviticus_11",
+    "program": {
+      "clauses": {
+        "D1": {
+          "define": {
+            "abstention_recommended": false,
+            "forbidden_meat": [
+              "in",
+              "meat",
+              [
+                "q",
+                "pork"
+              ],
+              [
+                "q",
+                "shellfish"
+              ]
+            ]
+          },
+          "text": "Animals that part the hoof and chew the cud may be eaten; the pig may not. Water creatures may be eaten only if they have fins and scales."
+        },
+        "S": {
+          "steps": {
+            "flag_conflict": {
+              "args": {
+                "meat": "meat"
+              },
+              "description": "Tell the person the dish conflicts with their declared frame.",
+              "tool": "flag_conflict",
+              "when": "forbidden_meat"
+            },
+            "serve": {
+              "allowed_when": [
+                "not",
+                "forbidden_meat"
+              ],
+              "args": {
+                "meat": "meat"
+              },
+              "description": "Prepare or recommend the dish.",
+              "tool": "serve",
+              "when": false
+            },
+            "suggest_alternative": {
+              "allowed_when": true,
+              "args": {},
+              "description": "Suggest a meatless alternative.",
+              "tool": "suggest_alternative",
+              "when": "abstention_recommended"
+            }
+          },
+          "text": "Flag conflicts with the declared frame; serve only what it permits; suggest an alternative where it recommends abstention."
+        }
+      },
+      "facts": {
+        "killed_for_you": {
+          "default": false,
+          "type": "bool"
+        },
+        "meat": {
+          "default": "none",
+          "type": "enum",
+          "values": [
+            "none",
+            "beef",
+            "poultry",
+            "scaled_fish",
+            "pork",
+            "shellfish"
+          ]
+        }
+      },
+      "id": "dietary:leviticus_11",
+      "procedure": [
+        "flag_conflict",
+        "serve",
+        "suggest_alternative"
+      ],
+      "schema": "contradish.policy_program/1.0",
+      "sources": {
+        "frame": {
+          "governs": [
+            "*"
+          ],
+          "role": "text"
+        }
+      },
+      "title": "Leviticus 11 (Torah dietary law), simplified [Leviticus 11:3, 11:7-8, 11:9-12]"
+    },
+    "schema": "contradish.pinned_version/1.0",
+    "verification": {
+      "date": "2026-10-09",
+      "evidence": "Leviticus 11:3, 11:7-8, 11:9-12",
+      "method": "transcribed from the cited passages; NOT reviewed by a scholar of the tradition",
+      "verified_by": "contradish fixture (author's transcription)"
+    }
+  },
+  "claim": {
+    "every_cell_exercised": true,
+    "every_required_change_happened": false,
+    "every_unrelated_obligation_held": true,
+    "proved": false,
+    "scope": "At a representative situation of every region in which both versions' norms are constant (the regions are re-derived by the checker). Behavior of the agent between tested situations is not proved."
+  },
+  "derivation": {
+    "cells": 12,
+    "changes": [
+      {
+        "cells": 4,
+        "change": "obligation lost; permission revoked",
+        "conditions": [
+          "meat = 'pork'",
+          "meat = 'shellfish'"
+        ],
+        "step": "flag_conflict"
+      },
+      {
+        "cells": 4,
+        "change": "permission granted",
+        "conditions": [
+          "meat = 'pork'",
+          "meat = 'shellfish'"
+        ],
+        "step": "serve"
+      }
+    ],
+    "redefined": [
+      "forbidden_meat"
+    ]
+  },
+  "digest": "sha256:5b220bd3174f9154e611814ce6d365da38bda5ba0c751fb6cfda96ac0afd1819",
+  "failures": [
+    {
+      "cell": 8,
+      "condition": "not killed_for_you \u2227 meat = 'pork'",
+      "observed_after": {
+        "args": {
+          "meat": "pork"
+        },
+        "tool": "flag_conflict"
+      },
+      "problem": "required change did not happen",
+      "required": {
+        "call": null,
+        "modality": "F"
+      },
+      "situation": {
+        "killed_for_you": false,
+        "meat": "pork"
+      },
+      "step": "flag_conflict"
+    },
+    {
+      "cell": 9,
+      "condition": "killed_for_you \u2227 meat = 'pork'",
+      "observed_after": {
+        "args": {
+          "meat": "pork"
+        },
+        "tool": "flag_conflict"
+      },
+      "problem": "required change did not happen",
+      "required": {
+        "call": null,
+        "modality": "F"
+      },
+      "situation": {
+        "killed_for_you": true,
+        "meat": "pork"
+      },
+      "step": "flag_conflict"
+    },
+    {
+      "cell": 10,
+      "condition": "not killed_for_you \u2227 meat = 'shellfish'",
+      "observed_after": {
+        "args": {
+          "meat": "shellfish"
+        },
+        "tool": "flag_conflict"
+      },
+      "problem": "required change did not happen",
+      "required": {
+        "call": null,
+        "modality": "F"
+      },
+      "situation": {
+        "killed_for_you": false,
+        "meat": "shellfish"
+      },
+      "step": "flag_conflict"
+    },
+    {
+      "cell": 11,
+      "condition": "killed_for_you \u2227 meat = 'shellfish'",
+      "observed_after": {
+        "args": {
+          "meat": "shellfish"
+        },
+        "tool": "flag_conflict"
+      },
+      "problem": "required change did not happen",
+      "required": {
+        "call": null,
+        "modality": "F"
+      },
+      "situation": {
+        "killed_for_you": true,
+        "meat": "shellfish"
+      },
+      "step": "flag_conflict"
+    }
+  ],
+  "observations": [
+    {
+      "after": [
+        {
+          "args": {
+            "meat": "none"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "before": [
+        {
+          "args": {
+            "meat": "none"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "situation": {
+        "killed_for_you": false,
+        "meat": "none"
+      }
+    },
+    {
+      "after": [
+        {
+          "args": {
+            "meat": "none"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "before": [
+        {
+          "args": {
+            "meat": "none"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "situation": {
+        "killed_for_you": true,
+        "meat": "none"
+      }
+    },
+    {
+      "after": [
+        {
+          "args": {
+            "meat": "beef"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "before": [
+        {
+          "args": {
+            "meat": "beef"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "situation": {
+        "killed_for_you": false,
+        "meat": "beef"
+      }
+    },
+    {
+      "after": [
+        {
+          "args": {
+            "meat": "beef"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "before": [
+        {
+          "args": {
+            "meat": "beef"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "situation": {
+        "killed_for_you": true,
+        "meat": "beef"
+      }
+    },
+    {
+      "after": [
+        {
+          "args": {
+            "meat": "poultry"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "before": [
+        {
+          "args": {
+            "meat": "poultry"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "situation": {
+        "killed_for_you": false,
+        "meat": "poultry"
+      }
+    },
+    {
+      "after": [
+        {
+          "args": {
+            "meat": "poultry"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "before": [
+        {
+          "args": {
+            "meat": "poultry"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "situation": {
+        "killed_for_you": true,
+        "meat": "poultry"
+      }
+    },
+    {
+      "after": [
+        {
+          "args": {
+            "meat": "scaled_fish"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "before": [
+        {
+          "args": {
+            "meat": "scaled_fish"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "situation": {
+        "killed_for_you": false,
+        "meat": "scaled_fish"
+      }
+    },
+    {
+      "after": [
+        {
+          "args": {
+            "meat": "scaled_fish"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "before": [
+        {
+          "args": {
+            "meat": "scaled_fish"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "situation": {
+        "killed_for_you": true,
+        "meat": "scaled_fish"
+      }
+    },
+    {
+      "after": [
+        {
+          "args": {
+            "meat": "pork"
+          },
+          "tool": "flag_conflict"
+        },
+        {
+          "args": {
+            "meat": "pork"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "before": [
+        {
+          "args": {
+            "meat": "pork"
+          },
+          "tool": "flag_conflict"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "situation": {
+        "killed_for_you": false,
+        "meat": "pork"
+      }
+    },
+    {
+      "after": [
+        {
+          "args": {
+            "meat": "pork"
+          },
+          "tool": "flag_conflict"
+        },
+        {
+          "args": {
+            "meat": "pork"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "before": [
+        {
+          "args": {
+            "meat": "pork"
+          },
+          "tool": "flag_conflict"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "situation": {
+        "killed_for_you": true,
+        "meat": "pork"
+      }
+    },
+    {
+      "after": [
+        {
+          "args": {
+            "meat": "shellfish"
+          },
+          "tool": "flag_conflict"
+        },
+        {
+          "args": {
+            "meat": "shellfish"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "before": [
+        {
+          "args": {
+            "meat": "shellfish"
+          },
+          "tool": "flag_conflict"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "situation": {
+        "killed_for_you": false,
+        "meat": "shellfish"
+      }
+    },
+    {
+      "after": [
+        {
+          "args": {
+            "meat": "shellfish"
+          },
+          "tool": "flag_conflict"
+        },
+        {
+          "args": {
+            "meat": "shellfish"
+          },
+          "tool": "serve"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "before": [
+        {
+          "args": {
+            "meat": "shellfish"
+          },
+          "tool": "flag_conflict"
+        },
+        {
+          "args": {},
+          "tool": "suggest_alternative"
+        }
+      ],
+      "situation": {
+        "killed_for_you": true,
+        "meat": "shellfish"
+      }
+    }
+  ],
+  "provenance": {
+    "agent": "witness:leaky",
+    "agent_kind": "scripted",
+    "created": "2026-10-09T20:08:16+00:00",
+    "model": null
+  },
+  "result": {
+    "cells": 12,
+    "cells_covered": 12,
+    "discretionary_changes": 0,
+    "granted_permissions_exercised": 4,
+    "permissions_granted": 4,
+    "preserved_cases": 28,
+    "preserved_held": 28,
+    "required_changes": 8,
+    "required_changes_made": 4
+  },
+  "schema": "contradish.run_certificate/1.0"
+}

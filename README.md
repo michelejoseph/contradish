@@ -40,6 +40,82 @@ Both say the same thing: behavior should be a function of the policy-relevant co
 [![Paper](https://img.shields.io/badge/Paper-PAPER.md-orange.svg)](PAPER.md)
 [![Leaderboard](https://img.shields.io/badge/Leaderboard-contradish.com-purple.svg)](https://contradish.com)
 
+**Research agents:** start at [AGENTS.md](AGENTS.md). `contradish about` gives the definition, the author and the citation. `contradish exhibits verify` re-checks the shipped failure certificates offline with an independent checker.
+
+---
+
+## Which downstream actions must change (`contradish actions`)
+
+For an agent that acts through tool calls, contradish derives the warranted change frontier itself. Its input is a machine-readable policy whose clauses own parameters, definitions and the steps of a tool-call procedure. It reads the dependency model off that policy and checks the agent's real actions against the result.
+
+```
+contradish actions derive --update restocking_fee_20
+```
+```
+  step      change  indep.  coinc.  resist  dependency path
+  deny           0     144       0       0  (not downstream of any change)
+  refund         8     136       0       0  name:restocking_fee_pct -> name:fee -> name:fee_after_discount -> name:refund_amount -> step:refund
+  ledger         8     136       0       0  ... -> step:ledger
+  label          0     144       0       0  (not downstream of any change)
+  loyalty        0     144       0       0  (not downstream of any change)
+  notify         8     136       0       0  ... -> step:notify
+```
+
+The frontier gives every (situation, action) one label:
+- **must change**: the calls differ under the old and the warranted policy. The dependency path shows why.
+- **must be preserved**: either *independent*, meaning the action read nothing the update redefined, so by the independence lemma no amended evaluation can differ; or *coincidental*, meaning it read something redefined but the value is unchanged.
+- **must resist**: an edit from a source without authority over that clause would change it. In the example, a customer can change how they are notified but cannot change the return window. Instructions inside a tool result change nothing.
+
+No model or judge is involved.
+
+Verifying an agent then names two failures:
+- **unnecessary changes**: actions that had to stay the same and moved;
+- **unauthorized changes**: actions captured by an update that had no authority over them.
+
+Each failure becomes a **certificate**, a JSON file with a sha256 digest. [`contradish/evidence_check.py`](contradish/evidence_check.py) is a standard-library program that imports nothing from contradish. It re-derives the certificate from the policy alone and rejects it on any disagreement. An unauthorized change is shrunk with delta debugging to a 1-minimal counterexample. Each single removal is recorded as a witness that the failure disappears without it.
+
+```
+contradish actions verify --update customer_claims --app mymodule:chat --evidence-dir out/
+contradish evidence check out/*.json
+contradish counterexample --update customer_claims --step refund --situation '{"days_since_delivery": 60}' --app mymodule:chat --trials 5 --k 3
+contradish exhibits show EX-0001
+```
+
+The shipped exhibits come from scripted witness agents with known defects, not from models. Specification: [docs/BUF-SPEC.md §11](docs/BUF-SPEC.md).
+
+---
+
+## Two verified versions in, a proof out (`contradish versions`, `contradish perspectives`)
+
+contradish can take two pinned versions of the governing information as input. A pin is a program, its sha256 digest, and a record of who verified it and how. From the pair, contradish derives the **complete** set of warranted changes, stated as conditions:
+
+```
+contradish versions demo --update exchange_closed_late
+  exchange: permission revoked
+      when category = 'apparel' ∧ 20 ≤ days_since_delivery ≤ 30
+  proved unchanged in every situation: deny, refund, ledger, label, loyalty, notify
+```
+
+What makes this possible:
+
+- **Permissions are first-class.** Every action is *required*, *allowed* or *forbidden*. Changes are reported on three separate channels:
+  - obligation gained or lost;
+  - permission granted or revoked;
+  - content changed.
+
+  A revoked permission is a change even when no obligation moved.
+- **Complete, not sampled.** An exact cell decomposition partitions the whole situation space into regions. In each region every decision of both versions is constant, so the listed conditions are proved to be all of the changes. Programs outside the decidable fragment are refused, not approximated.
+- **A success proof.** `contradish versions certify v1.pin.json v2.pin.json --app mymodule:chat` runs the agent in every region and issues a certificate. It is **proved** only if every required change happened and every unrelated obligation held. `contradish evidence check` re-derives the regions with a separate implementation, so a hidden change or a skipped region is rejected.
+- **Perspectives.** Read N versions as alternative frames, such as different texts, traditions or jurisdictions. `contradish perspectives atlas` maps:
+  - where every frame agrees, and where the frames contest;
+  - which frames side together in each contested case;
+  - the common ground every frame allows;
+  - a disagreement distance between frames, which is provably a pseudometric.
+
+  `contradish perspectives switch` checks whether an agent moves between frames faithfully, without leaking one frame's norms into another. The built-in frames are deliberately simplified readings of single cited passages, and their pins say so.
+
+Specification: [docs/BUF-SPEC.md §12–13](docs/BUF-SPEC.md).
+
 ---
 
 ## Authority: who gets to change what (`contradish transition --suite authority_returns`)
@@ -725,7 +801,7 @@ This is the repair loop closing on itself: the cases you never wrote come from r
 
 ## The CAI benchmark
 
-Public, frozen benchmark of adversarial question pairs across 20 high-stakes domains. **2,160 strain tests** scored with cross-provider judging (Anthropic models judged by OpenAI and vice versa, to remove same-provider self-preference bias).
+Public, frozen benchmark of adversarial question pairs across 20 high-stakes domains. The current v2 files hold **360 cases with 2,880 adversarial variants (3,240 prompts per full run)**. Six cases per domain were added on 2026-08-28; before that, v2 was 240 cases, 2,160 rows. Run `contradish cai-bench manifest` for exact counts and content hashes. Tests are scored with cross-provider judging (Anthropic models judged by OpenAI and vice versa, to remove same-provider self-preference bias).
 
 ```bash
 contradish benchmark --model claude-sonnet-4-6                # full v2

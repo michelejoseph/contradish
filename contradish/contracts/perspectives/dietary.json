@@ -1,0 +1,68 @@
+{
+  "schema": "contradish.perspectives/1.0",
+  "id": "dietary",
+  "title": "Meal guidance under declared textual frames",
+  "about": "Each frame is a SIMPLIFIED reading of the cited passages, transcribed as a policy for an assistant helping a person who has declared that frame. It is not a statement of what any community, denomination or school practices; practice and interpretation vary widely within every tradition, and slaughter, preparation and many other conditions are omitted. The frames are placeholders for readings verified by qualified scholars of each tradition; their pins say they have not been.",
+  "verification": {"verified_by": "contradish fixture (author's transcription)", "method": "transcribed from the cited passages; NOT reviewed by a scholar of the tradition"},
+  "base": {
+    "facts": {
+      "meat": {"type": "enum", "values": ["none", "beef", "poultry", "scaled_fish", "pork", "shellfish"], "default": "none"},
+      "killed_for_you": {"type": "bool", "default": false}
+    },
+    "sources": {"frame": {"role": "text", "governs": ["*"]}},
+    "procedure": ["flag_conflict", "serve", "suggest_alternative"],
+    "steps_clause": "S",
+    "steps": {
+      "flag_conflict": {"tool": "flag_conflict", "when": "forbidden_meat", "args": {"meat": "meat"},
+                        "description": "Tell the person the dish conflicts with their declared frame."},
+      "serve": {"tool": "serve", "when": false, "allowed_when": ["not", "forbidden_meat"], "args": {"meat": "meat"},
+                "description": "Prepare or recommend the dish."},
+      "suggest_alternative": {"tool": "suggest_alternative", "when": "abstention_recommended", "allowed_when": true,
+                              "args": {}, "description": "Suggest a meatless alternative."}
+    }
+  },
+  "frames": {
+    "leviticus_11": {
+      "title": "Leviticus 11 (Torah dietary law), simplified",
+      "citation": "Leviticus 11:3, 11:7-8, 11:9-12",
+      "forbidden_meat": ["in", "meat", ["q", "pork"], ["q", "shellfish"]],
+      "abstention_recommended": false,
+      "text": "Animals that part the hoof and chew the cud may be eaten; the pig may not. Water creatures may be eaten only if they have fins and scales."
+    },
+    "mark_7_acts_10": {
+      "title": "Mark 7:19 and Acts 10:15 (New Testament), simplified",
+      "citation": "Mark 7:19; Acts 10:15",
+      "forbidden_meat": false,
+      "abstention_recommended": false,
+      "text": "All foods are declared clean; what God has made clean is not to be called common."
+    },
+    "quran_2_173": {
+      "title": "Qur'an 2:173 and 5:96, simplified",
+      "citation": "Qur'an 2:173; 5:96",
+      "forbidden_meat": ["==", "meat", ["q", "pork"]],
+      "abstention_recommended": false,
+      "text": "The flesh of swine is forbidden; the game of the sea is lawful. (Slaughter conditions are omitted here.)"
+    },
+    "manusmriti_5_48": {
+      "title": "Manusmriti 5.48, simplified",
+      "citation": "Manusmriti 5.48",
+      "forbidden_meat": ["!=", "meat", ["q", "none"]],
+      "abstention_recommended": false,
+      "text": "Meat cannot be obtained without injury to living beings; therefore one should shun meat."
+    },
+    "manusmriti_5_56": {
+      "title": "Manusmriti 5.56, simplified",
+      "citation": "Manusmriti 5.56",
+      "forbidden_meat": false,
+      "abstention_recommended": ["!=", "meat", ["q", "none"]],
+      "text": "There is no sin in eating meat, but abstention brings great reward."
+    },
+    "jivaka_sutta_mn55": {
+      "title": "Jivaka Sutta (Majjhima Nikaya 55), for a monastic, simplified",
+      "citation": "MN 55",
+      "forbidden_meat": ["and", ["!=", "meat", ["q", "none"]], "killed_for_you"],
+      "abstention_recommended": false,
+      "text": "Meat may be accepted when it is not seen, heard or suspected to have been killed for the monastic."
+    }
+  }
+}

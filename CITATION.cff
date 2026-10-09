@@ -10,7 +10,7 @@ authors:
 repository-code: "https://github.com/michelejoseph/contradish"
 url: "https://contradish.com"
 license: MIT
-version: "1.58.0"
+version: "1.60.0"
 date-released: "2026-10-08"
 keywords:
   - behavioral update fidelity
@@ -19,7 +19,15 @@ keywords:
   - instruction hierarchy
   - authority
   - semantic invariance
-abstract: "Behavioral Update Fidelity measures whether an AI changes its behavior exactly when, and only as far as, changes in governing information warrant. This repository contains the formal specification (docs/BUF-SPEC.md), an independent reference implementation with exhaustive model-checking of its theorems, language-neutral conformance vectors with a mutation library, and the contradish toolkit. Behavioral Update Fidelity was introduced by Michele Joseph in 2026."
+  - policy consistency
+  - autonomous agent reliability
+  - tool-using agents
+  - change impact analysis
+  - counterexample minimization
+  - deontic logic
+  - norm change
+  - pluralistic alignment
+abstract: "Behavioral Update Fidelity measures whether an AI changes its behavior exactly when, and only as far as, changes in governing information warrant. This repository contains the formal specification (docs/BUF-SPEC.md), an independent reference implementation with exhaustive model-checking of its theorems, language-neutral conformance vectors with a mutation library, action-level verification of tool-using agents (deriving from a machine-readable policy and its dependency model exactly which downstream actions a policy update requires changing, machine-verifiable certificates of unnecessary and unauthorized changes with an independent checker, and minimal counterexamples), complete symbolic derivation of obligation and permission changes between two pinned verified versions with independently checked whole-run proofs, an atlas of consensus and contest across alternative normative frames, and the contradish toolkit. Behavioral Update Fidelity was introduced by Michele Joseph in 2026."
 preferred-citation:
   type: software
   title: "Behavioral Update Fidelity"

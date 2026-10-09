@@ -4,6 +4,125 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.60.0] - 2026-10-09
+
+Two pinned, independently verified versions in; the complete set of
+warranted obligation and permission changes out, proved complete; a
+whole-run proof that an agent made every required change and preserved
+everything else; and the same machinery across alternative frames.
+(Includes 1.59.0, which was not released separately.)
+
+### Added
+
+- **Permissions** (`Norm`, `run_norm`, step `allowed_when`). Every action
+  is required, allowed or forbidden. Changes are reported on separate
+  channels: obligation gained/lost, permission granted/revoked, content
+  changed. Moving between two permitted options is discretion, not a
+  failure. Evidence schema 1.1.
+- **`contradish/symbolic.py`**: an exact, canonical cell decomposition of
+  the whole situation space (finite facts enumerated; numeric facts split
+  at the roots of linear comparisons; optional `resolution` grid).
+  `diff_versions` gives the complete difference with a constancy lemma
+  and a completeness theorem (BUF-SPEC §12). `regions` gives readable
+  conditions. Programs outside the decidable fragment are refused.
+- **Exact arithmetic**: numbers evaluate as rationals, and arguments
+  round half away from zero.
+- **`contradish/versions.py`**:
+  - `pin` / `load_pinned` (`contradish.pinned_version/1.0`, digest plus
+    verification record, optional issuer) and `transition_authority`.
+  - `run_certificate` (`contradish.run_certificate/1.0`): the agent is
+    exercised in every cell; the claim is proved only if every required
+    change happened and every unrelated obligation held.
+  - `atlas` across N versions: consensus, contested cases, agreeing blocs,
+    common ground, and a disagreement pseudometric.
+  - `perspective_matrix`.
+  - `version_witness`: faithful, rigid, stale_permissions, leaky.
+- **Independent re-derivation** in `evidence_check.py`: `rederive_cells`
+  and `check_run` re-derive the decomposition with separate code, require
+  the producer's listed changes and cell count to match, and judge every
+  observation with their own evaluator.
+- **`contracts/perspectives/dietary.json`**: six frames that are
+  simplified readings of cited passages (Leviticus 11; Mark 7:19 /
+  Acts 10:15; Qur'an 2:173 / 5:96; Manusmriti 5.48; Manusmriti 5.56;
+  MN 55). Their pins state they are not scholar-verified.
+- **Built-in program**: the returns program gains an exchange
+  permission, plus updates that grant it, revoke it, turn it into an
+  obligation, and remove an obligation.
+- **CLI**: `contradish versions pin|diff|certify|demo` and
+  `contradish perspectives list|atlas|switch`. `evidence check` and
+  `exhibits verify` handle run certificates.
+- **Exhibits** EX-0004 (proved), EX-0005 (revoked permission still
+  exercised) and EX-0006 (frame switch with leakage).
+- **`docs/BUF-SPEC.md` §12–13**.
+- **`tests/test_versions_symbolic.py`** (24 tests): symbolic results match
+  concrete evaluation at every cell; random situations land in exactly
+  one cell with matching norms; permission channels; pins; authority;
+  tamper rejection; the pseudometric; frame switching.
+
+## [1.59.0] - 2026-10-08 (merged into 1.60.0)
+
+Action-level transitions: derive exactly which downstream agent actions a
+policy update requires changing, verify real agent actions against that,
+produce machine-verifiable evidence of unnecessary changes, and shrink
+unauthorized changes to minimal certified counterexamples. Makes contradish
+findable and checkable by research agents.
+
+### Added
+
+- **`contradish/policy_program.py`**: a machine-readable policy format
+  (`contradish.policy_program/1.0`). Clauses own parameters, definitions and
+  tool-call steps, and each name has exactly one owner. Provides a traced
+  evaluator (lazy `and`/`or`/`if`, so the trace is a dynamic slice) and a
+  static dependency graph (clause -> name -> name -> step). Updates carry
+  per-clause edits and the sentence that expresses each one. Authority is
+  decided per edit.
+- **`contradish/action_frontier.py`**: `derive_action_frontier` labels every
+  (situation, step) as must change, must preserve (independent or
+  coincidental) or must resist. Certificates come from the **independence
+  lemma**: an action that read no redefined name cannot change. It also
+  checks that every change is downstream in the dependency graph, and
+  builds a boundary-complete situation universe from the program's
+  thresholds. `verify_trajectories` scores observed tool calls with the
+  BUF-SPEC statuses and flags unnecessary changes and unauthorized
+  (captured) changes. Includes `witness_agent` (faithful, rigid,
+  credulous, overreach) and `llm_tool_agent` for any chat function.
+- **`contradish/evidence.py`, `contradish/evidence_check.py`**: evidence
+  certificates (`contradish.evidence/1.0`, sha256 digest) and an
+  independent checker. The checker uses only the standard library and
+  imports nothing from contradish. It recomputes the derivation, re-parses
+  raw model replies, and verifies the claim.
+- **`contradish/counterexample.py`**: ddmin over claims, context sentences
+  and facts produces a 1-minimal scenario that still reproduces an
+  unauthorized change. Each single removal is recorded as a minimality
+  witness. Works with sampled models (`trials`, `k`).
+- **`contradish/contracts/programs/returns.json`**: a built-in program with
+  five updates: an owner fee change, an owner window change, a control
+  rewording, a customer's mixed message, and a tool-result injection.
+- **`contradish/exhibits/`** (EX-0001 to EX-0003), built by
+  `python -m contradish.exhibits_build`: verified failure certificates
+  from scripted witness agents, labelled as such.
+- **CLI**:
+  - `contradish about`;
+  - `contradish actions list|derive|verify`;
+  - `contradish counterexample`;
+  - `contradish evidence check [--rerun]`;
+  - `contradish exhibits list|show|verify`;
+  - `contradish cai-bench manifest`.
+- **`AGENTS.md`, `llms.txt`**: an entry point for research agents: find,
+  run, inspect a verified failure, identify the author.
+- **`docs/BUF-SPEC.md` §11**: the format, the independence lemma with proof,
+  derived frontier, certificate semantics, minimal counterexamples, limits.
+- `tests/test_action_frontier.py` (27 tests): the dependency model, the
+  lemma under random edits, witnesses, checker acceptance and tampering
+  rejection, minimality.
+
+### Fixed
+
+- CAI-Bench documentation stated 240 cases and 2,160 rows. The v2 files
+  have held 360 cases and 3,240 prompts since 2026-08-28 (d06fa66).
+  README and BENCHMARK.md now say so, and `cai-bench manifest` reports
+  counts and content hashes from the files.
+
 ## [1.58.0] - 2026-10-08
 
 Formalizes Behavioral Update Fidelity and makes it independently checkable.

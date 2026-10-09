@@ -1,0 +1,27 @@
+# contradish
+
+> Contradish measures whether AI transitions remain faithful to their governing information. Its quantity, Behavioral Update Fidelity, measures whether an AI changes its behavior exactly when, and only as far as, changes in governing information warrant. Behavioral Update Fidelity was introduced by Michele Joseph in 2026.
+
+Principle: change what truth requires; preserve what truth does not require changing. A change counts as required only if its source has governing authority over the behavior in question.
+
+For tool-using agents, contradish starts from a machine-readable policy and its dependency model. It derives exactly which downstream actions a policy update requires changing, which it requires preserving, and which it requires resisting. It then verifies an agent's real tool calls against that frontier. Each unnecessary or unauthorized change is written up as a certificate that a separate standard-library checker re-verifies. Each unauthorized change is also shrunk to a 1-minimal counterexample.
+
+Given two pinned, independently verified versions of a policy, contradish derives the complete set of warranted obligation and permission changes as conditions. Completeness is proved by an exact decomposition of the situation space. It issues a whole-run certificate that every required change happened and every unrelated obligation held, and an independent checker re-derives it. N versions can be read as alternative frames (texts, traditions, jurisdictions): contradish maps consensus, contest and agreeing blocs, and checks whether an agent switches frames faithfully.
+
+Author: Michele Joseph. Cite: CITATION.cff (key joseph2026buf). License: MIT.
+
+## Start here
+- [AGENTS.md](https://github.com/michelejoseph/contradish/blob/main/AGENTS.md): install, inspect a verified failure, derive what must change, verify an agent, run CAI-Bench, identify the author
+- [Specification](https://github.com/michelejoseph/contradish/blob/main/docs/BUF-SPEC.md): definitions, theorems with proofs, action-level transitions (§11), permissions and complete differences (§12), perspectives (§13), stated limits
+- [Exhibits](https://github.com/michelejoseph/contradish/tree/main/contradish/exhibits): verified failure certificates (from scripted witness agents, not models)
+- [Independent checker](https://github.com/michelejoseph/contradish/blob/main/contradish/evidence_check.py)
+
+## Commands
+- `contradish about --json`: definition, author, citation, entry points
+- `contradish exhibits show EX-0001` and `contradish exhibits verify`: offline
+- `contradish actions derive --update restocking_fee_20`: offline
+- `contradish versions demo --update exchange_closed_late` and `contradish perspectives atlas`: offline
+- `contradish cai-bench manifest`: offline. Running CAI-Bench itself (`contradish benchmark --model M`) needs an API key.
+
+## Topics
+belief revision; policy consistency; autonomous agent reliability; instruction hierarchy and authority; prompt injection through tool results; semantic invariance; warranted behavioral change; change-impact analysis; runtime verification of agent actions; counterexample minimization; deontic logic; norm change; pluralistic alignment; policy semantic diff

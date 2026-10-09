@@ -331,8 +331,31 @@ from .domains      import (
 from .conviction   import ConvictionProfiler, ConvictionReport, ConvictionResult
 from .cdr          import generate_cdr
 
-__version__ = "1.58.0"
+# Action-level transitions (1.59.0): derive which downstream tool calls a
+# policy update requires changing, verify an agent against it, certify
+# findings for an independent checker, and shrink unauthorized changes to
+# minimal counterexamples.
+from .policy_program import PolicyProgram, ProgramUpdate, Edit, Call, load_builtin_program
+from .action_frontier import (
+    derive_action_frontier,
+    verify_trajectories,
+    run_agent,
+    witness_agent,
+    llm_tool_agent,
+    ActionFrontier,
+    ActionTransitionResult,
+)
+from .counterexample import minimize_unauthorized_change
+from .policy_program import Norm
+from .symbolic import diff_versions, regions
+from .versions import pin, load_pinned, run_certificate, atlas, load_perspectives
+
+__version__ = "1.60.0"
 __all__ = [
+    "PolicyProgram", "ProgramUpdate", "Edit", "Call", "load_builtin_program",
+    "derive_action_frontier", "verify_trajectories", "run_agent", "witness_agent", "llm_tool_agent",
+    "ActionFrontier", "ActionTransitionResult", "minimize_unauthorized_change",
+    "Norm", "diff_versions", "regions", "pin", "load_pinned", "run_certificate", "atlas", "load_perspectives",
     "Suite",
     "RegressionSuite",
     "Firewall",

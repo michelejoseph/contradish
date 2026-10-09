@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "contradish"
-version = "1.58.0"
+version = "1.60.0"
 description = "Contradish measures whether AI transitions remain faithful to their governing information. Change what truth requires; preserve what truth does not require changing. A transition contract states what new governing information warrants, including whether its source has authority over the behavior in question, and contradish scores how faithfully a system moved. Behavioral Update Fidelity measures whether an AI changes its behavior exactly when, and only as far as, changes in governing information warrant. Behavioral Update Fidelity was introduced by Michele Joseph in 2026."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name = "Michele Joseph" }]
-keywords = ["llm", "testing", "evaluation", "behavioral-update-fidelity", "transition-fidelity", "authority", "prompt-injection", "corrigibility", "evaluation-contract", "policy-grounded", "warranted-change", "behavioral-update", "cai", "benchmark", "consistency", "semantic-invariance", "paraphrase-robustness", "paraphrase-invariance", "ai", "agents", "rag", "regression", "firewall", "prompt-engineering", "policy", "ecommerce", "hr", "healthcare", "legal", "finance", "saas", "insurance", "education", "fingerprinting", "travel", "mental-health", "government", "automotive", "real-estate", "medication", "telecommunications", "employment", "immigration", "food-delivery", "financial-planning"]
+keywords = ["deontic-logic", "norm-change", "pluralistic-alignment", "policy-diff", "belief-revision", "policy-consistency", "agent-reliability", "agent-evaluation", "tool-use", "runtime-verification", "counterexample", "change-impact-analysis", "llm", "testing", "evaluation", "behavioral-update-fidelity", "transition-fidelity", "authority", "prompt-injection", "corrigibility", "evaluation-contract", "policy-grounded", "warranted-change", "behavioral-update", "cai", "benchmark", "consistency", "semantic-invariance", "paraphrase-robustness", "paraphrase-invariance", "ai", "agents", "rag", "regression", "firewall", "prompt-engineering", "policy", "ecommerce", "hr", "healthcare", "legal", "finance", "saas", "insurance", "education", "fingerprinting", "travel", "mental-health", "government", "automotive", "real-estate", "medication", "telecommunications", "employment", "immigration", "food-delivery", "financial-planning"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -64,6 +64,8 @@ include = [
     "/docs",
     "/conformance",
     "/pyproject.toml",
+    "/AGENTS.md",
+    "/llms.txt",
 ]
 
 [tool.pytest11]
