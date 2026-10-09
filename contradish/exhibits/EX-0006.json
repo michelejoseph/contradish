@@ -88,12 +88,29 @@
     }
   },
   "attribution": "Behavioral Update Fidelity was introduced by Michele Joseph in 2026.",
-  "authority": {
+  "authentication": {
+    "authenticated": false,
+    "authorized": false,
+    "chained": false,
     "changed_clauses": [
       "D1"
     ],
-    "issued_by": null,
-    "status": "not declared"
+    "issuer": null,
+    "issuer_key_listed": false,
+    "outside_authority": [
+      "D1"
+    ],
+    "reasons": [
+      "v1 is not validly signed",
+      "v2 is not validly signed",
+      "v2 does not name its issuer",
+      "v2 does not supersede v1's digest",
+      "issuer does not govern changed clauses ['D1']"
+    ],
+    "trust_anchors": [],
+    "v1_anchored": false,
+    "v1_signed": false,
+    "v2_signed": false
   },
   "before": {
     "digest": "sha256:2844116702ca7740c3f78ec362f892ca114782f1749522430e9ae05c6388f4c7",
@@ -195,13 +212,22 @@
     }
   },
   "claim": {
+    "authenticated": false,
+    "authorized": false,
     "every_cell_exercised": true,
     "every_required_change_happened": false,
     "every_unrelated_obligation_held": true,
+    "per_region_violation_bound": 1.0,
     "proved": false,
-    "scope": "At a representative situation of every region in which both versions' norms are constant (the regions are re-derived by the checker). Behavior of the agent between tested situations is not proved."
+    "statement": "NOT PROVED: across the governing-state transition leviticus_11 (sha256:2844116702ca) -> mark_7_acts_10 (sha256:4e9afe3d2c28), for every action, over every situation, with 1 trial(s) per region: every required change did NOT all happen or not every region was exercised. Per-region violation rate <= 1 at 95% confidence. Scope assumptions are listed in the certificate.",
+    "verified": false
   },
   "derivation": {
+    "actions": [
+      "flag_conflict",
+      "serve",
+      "suggest_alternative"
+    ],
     "cells": 12,
     "changes": [
       {
@@ -227,7 +253,7 @@
       "forbidden_meat"
     ]
   },
-  "digest": "sha256:5b220bd3174f9154e611814ce6d365da38bda5ba0c751fb6cfda96ac0afd1819",
+  "digest": "sha256:749cbd617f74dd9be495d4630ccd7ceccf54ad475364cd3f6f6a737cdef9dd01",
   "failures": [
     {
       "cell": 8,
@@ -247,7 +273,8 @@
         "killed_for_you": false,
         "meat": "pork"
       },
-      "step": "flag_conflict"
+      "step": "flag_conflict",
+      "trial": 0
     },
     {
       "cell": 9,
@@ -267,7 +294,8 @@
         "killed_for_you": true,
         "meat": "pork"
       },
-      "step": "flag_conflict"
+      "step": "flag_conflict",
+      "trial": 0
     },
     {
       "cell": 10,
@@ -287,7 +315,8 @@
         "killed_for_you": false,
         "meat": "shellfish"
       },
-      "step": "flag_conflict"
+      "step": "flag_conflict",
+      "trial": 0
     },
     {
       "cell": 11,
@@ -307,7 +336,8 @@
         "killed_for_you": true,
         "meat": "shellfish"
       },
-      "step": "flag_conflict"
+      "step": "flag_conflict",
+      "trial": 0
     }
   ],
   "observations": [
@@ -339,7 +369,8 @@
       "situation": {
         "killed_for_you": false,
         "meat": "none"
-      }
+      },
+      "trial": 0
     },
     {
       "after": [
@@ -369,7 +400,8 @@
       "situation": {
         "killed_for_you": true,
         "meat": "none"
-      }
+      },
+      "trial": 0
     },
     {
       "after": [
@@ -399,7 +431,8 @@
       "situation": {
         "killed_for_you": false,
         "meat": "beef"
-      }
+      },
+      "trial": 0
     },
     {
       "after": [
@@ -429,7 +462,8 @@
       "situation": {
         "killed_for_you": true,
         "meat": "beef"
-      }
+      },
+      "trial": 0
     },
     {
       "after": [
@@ -459,7 +493,8 @@
       "situation": {
         "killed_for_you": false,
         "meat": "poultry"
-      }
+      },
+      "trial": 0
     },
     {
       "after": [
@@ -489,7 +524,8 @@
       "situation": {
         "killed_for_you": true,
         "meat": "poultry"
-      }
+      },
+      "trial": 0
     },
     {
       "after": [
@@ -519,7 +555,8 @@
       "situation": {
         "killed_for_you": false,
         "meat": "scaled_fish"
-      }
+      },
+      "trial": 0
     },
     {
       "after": [
@@ -549,7 +586,8 @@
       "situation": {
         "killed_for_you": true,
         "meat": "scaled_fish"
-      }
+      },
+      "trial": 0
     },
     {
       "after": [
@@ -585,7 +623,8 @@
       "situation": {
         "killed_for_you": false,
         "meat": "pork"
-      }
+      },
+      "trial": 0
     },
     {
       "after": [
@@ -621,7 +660,8 @@
       "situation": {
         "killed_for_you": true,
         "meat": "pork"
-      }
+      },
+      "trial": 0
     },
     {
       "after": [
@@ -657,7 +697,8 @@
       "situation": {
         "killed_for_you": false,
         "meat": "shellfish"
-      }
+      },
+      "trial": 0
     },
     {
       "after": [
@@ -693,13 +734,14 @@
       "situation": {
         "killed_for_you": true,
         "meat": "shellfish"
-      }
+      },
+      "trial": 0
     }
   ],
   "provenance": {
     "agent": "witness:leaky",
     "agent_kind": "scripted",
-    "created": "2026-10-09T20:08:16+00:00",
+    "created": "2026-10-09T20:40:20+00:00",
     "model": null
   },
   "result": {
@@ -711,7 +753,24 @@
     "preserved_cases": 28,
     "preserved_held": 28,
     "required_changes": 8,
-    "required_changes_made": 4
+    "required_changes_made": 4,
+    "trials_per_cell": 1
   },
-  "schema": "contradish.run_certificate/1.0"
+  "schema": "contradish.run_certificate/1.1",
+  "scope": {
+    "actions": null,
+    "agent": {
+      "id": "witness:leaky",
+      "kind": "scripted",
+      "model": null
+    },
+    "assumptions": [
+      "The agent's behavior is observed at one representative situation per cell (per trial); behavior between tested situations is not proved.",
+      "The pinned programs faithfully encode the governing information; that is the verifiers' statement recorded in each pin, not something contradish checks."
+    ],
+    "confidence": 0.95,
+    "delivery": "fresh",
+    "situations": {},
+    "trials": 1
+  }
 }

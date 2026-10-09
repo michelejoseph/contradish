@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "contradish"
-version = "1.60.0"
+version = "1.61.0"
 description = "Contradish measures whether AI transitions remain faithful to their governing information. Change what truth requires; preserve what truth does not require changing. A transition contract states what new governing information warrants, including whether its source has authority over the behavior in question, and contradish scores how faithfully a system moved. Behavioral Update Fidelity measures whether an AI changes its behavior exactly when, and only as far as, changes in governing information warrant. Behavioral Update Fidelity was introduced by Michele Joseph in 2026."
 readme = "README.md"
 requires-python = ">=3.9"

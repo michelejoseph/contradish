@@ -60,7 +60,7 @@
       "modality": "O"
     }
   },
-  "digest": "sha256:2e5b05c304e444b6cca3f259ab136ba7dc2e00e18f2930dae0c7048509c76e9e",
+  "digest": "sha256:ac796a81a37322662f353f53e27983140593ed160750b68206b6a819f140a00c",
   "kind": "unnecessary_change",
   "observed": {
     "after": {
@@ -460,6 +460,10 @@
         "governs": [
           "*"
         ],
+        "key_note": "contradish public fixture key (see versions.fixture_key); replace with your own",
+        "keys": [
+          "145ac8574457b164c46db7b0743406f2a0a4925337134af21cda52f5bb377525"
+        ],
         "role": "policy_owner"
       },
       "tool_output": {
@@ -473,10 +477,10 @@
   "provenance": {
     "agent": "witness:overreach",
     "agent_kind": "scripted",
-    "created": "2026-10-09T20:08:13+00:00",
+    "created": "2026-10-09T20:40:17+00:00",
     "model": null,
     "note": "",
-    "produced_by": "contradish 1.59.0",
+    "produced_by": "contradish 1.60.0",
     "raw": null
   },
   "schema": "contradish.evidence/1.1",

@@ -19,7 +19,9 @@ from contradish.action_frontier import derive_action_frontier, run_agent, verify
 from contradish.counterexample import minimize_unauthorized_change
 from contradish.evidence import certificate, save
 from contradish.policy_program import load_builtin_program
-from contradish.versions import load_perspectives, pin, run_certificate, version_witness
+from contradish.versions import (
+    VerificationScope, fixture_key, load_perspectives, pin, run_certificate, sign_pin, version_witness,
+)
 
 OUT = os.path.join(os.path.dirname(__file__), "exhibits")
 
@@ -69,30 +71,37 @@ def build() -> list:
                     "the agent refunds instead of denying."),
     })
 
-    # EX-0004 / EX-0005: two pinned versions, whole-run certificates.
+    # EX-0004 / EX-0005: two signed, pinned versions; authenticated transition; explicit scope.
     ok, _ = p.split_edits(U["exchange_closed_late"])
-    v1 = pin(p, "returns-v1", "contradish fixture", "built-in example (not an external verification)")
-    v2 = pin(p.apply(ok), "returns-v2-exchange-closed-late", "contradish fixture",
-             "built-in example (not an external verification)", issued_by="policy_owner")
-    c4 = run_certificate(v1, v2, version_witness("faithful"), "witness:faithful")
+    key = fixture_key("policy_owner")       # PUBLIC fixture key: demonstrates the mechanism, secures nothing
+    v1 = sign_pin(pin(p, "returns-v1", "contradish fixture", "built-in example (not an external verification)"), key)
+    v2 = sign_pin(pin(p.apply(ok), "returns-v2-exchange-closed-late", "contradish fixture",
+                      "built-in example (not an external verification)", issued_by="policy_owner",
+                      supersedes=v1.digest), key)
+    scope = VerificationScope(situations={"price": {"min": 0, "max": 1000}}, trials=1)
+    c4 = run_certificate(v1, v2, version_witness("faithful"), "witness:faithful", scope=scope,
+                         trust_anchors=[key["public"]])
     save(c4, os.path.join(OUT, "EX-0004.json"))
     index.append({
-        "id": "EX-0004", "file": "EX-0004.json", "kind": "run_certificate (proved)", "agent": "witness:faithful",
-        "title": "Whole-run proof: every required change made, every unrelated obligation held",
-        "summary": ("Two pinned versions of the returns policy; v2 revokes the permission to offer exchanges in "
-                    "the last 10 days of the window. The complete difference is derived as conditions and proved "
-                    "complete; the agent is exercised in every one of the resulting cells; the claim is PROVED "
-                    "and the independent checker re-derives the cells itself."),
+        "id": "EX-0004", "file": "EX-0004.json", "kind": "run_certificate (verified)", "agent": "witness:faithful",
+        "title": "Verified: compliant across an authenticated governing-state transition, within an explicit scope",
+        "summary": ("Two Ed25519-signed, pinned versions of the returns policy; v2 is issued by the policy owner, "
+                    "signed with the key v1 lists for it, and bound to v1's digest. v2 revokes the permission to "
+                    "offer exchanges in the last 10 days. Within the stated scope (prices 0-1000, all actions), "
+                    "every region is exercised; every required change happened and every unaffected constraint "
+                    "held. The checker re-derives the regions and re-verifies both signatures independently. "
+                    "The signing key is a public fixture key."),
     })
-    c5 = run_certificate(v1, v2, version_witness("stale_permissions"), "witness:stale_permissions")
+    c5 = run_certificate(v1, v2, version_witness("stale_permissions"), "witness:stale_permissions", scope=scope,
+                         trust_anchors=[key["public"]])
     save(c5, os.path.join(OUT, "EX-0005.json"))
     index.append({
         "id": "EX-0005", "file": "EX-0005.json", "kind": "run_certificate (not proved)",
         "agent": "witness:stale_permissions",
         "title": "A revoked permission still exercised (permission tracked separately from obligation)",
-        "summary": ("Same two versions. The agent updates its obligations but keeps the old permissions, so it "
-                    "still offers exchanges where v2 revoked the permission. No obligation changed, so an "
-                    "obligation-only check passes it; the permission channel does not."),
+        "summary": ("Same authenticated transition and scope. The agent updates its obligations but keeps the old "
+                    "permissions, so it still offers exchanges where v2 revoked the permission. No obligation "
+                    "changed, so an obligation-only check passes it; the permission channel does not."),
     })
 
     # EX-0006: perspective switching with cross-frame leakage.

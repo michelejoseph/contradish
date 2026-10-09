@@ -332,3 +332,56 @@ What is specific to this work is the combination of four things:
 - authority over who may change them;
 - a whole-run proof, checked by an independent re-derivation, that an observed agent made exactly the warranted changes;
 - the same machinery applied across frames.
+
+## 14. The verification claim: authenticated transitions, explicit scope
+
+> Contradish verifies that consequential AI actions and obligations remain compliant across authenticated governing-state transitions, proving required changes and preservation of unaffected constraints within an explicitly defined verification scope.
+
+**Authentication.** Each source may list Ed25519 public keys (`sources.<s>.keys`). A pinned version may carry `signature = {alg: ed25519, key, sig}` over the canonical JSON of its body. The transition v1 → v2 is **authenticated** iff all of the following hold:
+1. v1's signature verifies under a key the verifier supplies as a **trust anchor**.
+2. v2's signature verifies.
+3. v2's key is listed in v1 for `v2.issued_by`.
+4. `v2.supersedes` equals v1's digest, so v2 cannot be replayed onto another base.
+
+The transition is **authorized** iff it is authenticated and the issuer governs every clause whose meaning changed. Chains extend inductively: an authenticated v2 can anchor v3.
+
+The signing code is pure Python and follows RFC 8032. It reproduces the RFC test vector and matches the `cryptography` package. The checker verifies signatures with its own separate, verify-only implementation.
+
+**Scope** (`VerificationScope`). The scope sets the boundary of the claim:
+
+| field | what it sets |
+|---|---|
+| `situations` | Narrows the facts: subsets for bool and enum facts, tighter `min`/`max` for numeric facts. It can only narrow, never widen. |
+| `actions` | The steps whose norms are verified. |
+| `trials` | k observed runs per region, before and after. |
+| `confidence` | The confidence level for the violation bound. |
+| `agent` | The identity of the agent under test. |
+| `delivery` | How the new state reached the agent. |
+| `assumptions` | Assumptions that are stated but not verified. |
+
+Both versions are narrowed to the scope before the decomposition is computed, so regions, required changes and coverage are all relative to the scope.
+
+**The claim** is VERIFIED iff all of the following hold:
+- the transition is authorized;
+- every region in scope was exercised k times;
+- in every region where a step's norm changes, every observed call after the transition is permitted by v2;
+- in every other region, every observed call after the transition is permitted by v2 (= v1).
+
+With zero violations in k runs of a region, the per-region violation rate is at most 1 − (1 − c)^(1/k) at confidence c, which is the exact Clopper–Pearson bound.
+
+**What the checker does.** It:
+1. recomputes authentication from the signatures and the trust anchors;
+2. narrows both versions to the stated scope;
+3. re-derives the regions;
+4. requires the claimed cell count, actions and listed changes to match;
+5. counts the observations in every region;
+6. judges every observation with its own evaluator;
+7. recomputes every claim field, including the bound and the claim statement.
+
+If a certificate's scope is widened after the fact, or it reports fewer trials than it claims, the checker rejects it.
+
+**Limits.** Each of these is stated in the scope's assumptions:
+- Behavior between the tested situations is not proved.
+- The pinned programs are taken to encode the governing information faithfully, on the verifiers' word.
+- Trust anchors are the verifier's own choice.
+- The fixture key in the built-in examples is public and secures nothing.

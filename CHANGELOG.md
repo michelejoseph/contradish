@@ -4,6 +4,32 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.61.0] - 2026-10-09
+
+Contradish now answers its verification claim in full:
+"Contradish verifies that consequential AI actions and obligations remain compliant across authenticated governing-state transitions, proving required changes and preservation of unaffected constraints within an explicitly defined verification scope."
+
+### Added
+
+- **Authenticated transitions.**
+  - `contradish/ed25519.py`: pure-Python Ed25519 per RFC 8032. It reproduces the RFC vector and matches `cryptography`.
+  - Sources list public keys, and pins can be signed (`sign_pin`, `versions keygen`, `versions pin --sign --supersedes`).
+  - `authenticate_transition` checks four things: the v1 trust anchor, v2's signature, that v2's key is listed for its issuer in v1, and the digest chain. Authorization additionally requires the issuer to govern every changed clause.
+- **Explicit verification scope** (`VerificationScope`): situation narrowing, actions, trials per region, confidence, agent identity, delivery and stated assumptions. Versions are narrowed to the scope before regions are derived.
+- **Run certificates 1.1.**
+  - k trials per region.
+  - An exact zero-failure Clopper–Pearson bound.
+  - Separate `proved`, `authenticated`, `authorized` and `verified` claims.
+  - A generated claim statement.
+- **Independent checker.**
+  - Its own verify-only Ed25519.
+  - Recomputes authentication.
+  - Narrows to the stated scope and re-derives the regions.
+  - Rejects a widened scope or missing trials.
+- `contradish about` and the README state the verification claim. `docs/BUF-SPEC.md` §14 is new.
+- Exhibit EX-0004 is now an authenticated, scoped, verified certificate, signed with a public fixture key.
+- 6 new tests (57 in the action, version and symbolic suites).
+
 ## [1.60.0] - 2026-10-09
 
 Two pinned, independently verified versions in; the complete set of

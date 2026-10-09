@@ -30,10 +30,10 @@
     {
       "id": "EX-0004",
       "file": "EX-0004.json",
-      "kind": "run_certificate (proved)",
+      "kind": "run_certificate (verified)",
       "agent": "witness:faithful",
-      "title": "Whole-run proof: every required change made, every unrelated obligation held",
-      "summary": "Two pinned versions of the returns policy; v2 revokes the permission to offer exchanges in the last 10 days of the window. The complete difference is derived as conditions and proved complete; the agent is exercised in every one of the resulting cells; the claim is PROVED and the independent checker re-derives the cells itself."
+      "title": "Verified: compliant across an authenticated governing-state transition, within an explicit scope",
+      "summary": "Two Ed25519-signed, pinned versions of the returns policy; v2 is issued by the policy owner, signed with the key v1 lists for it, and bound to v1's digest. v2 revokes the permission to offer exchanges in the last 10 days. Within the stated scope (prices 0-1000, all actions), every region is exercised; every required change happened and every unaffected constraint held. The checker re-derives the regions and re-verifies both signatures independently. The signing key is a public fixture key."
     },
     {
       "id": "EX-0005",
@@ -41,7 +41,7 @@
       "kind": "run_certificate (not proved)",
       "agent": "witness:stale_permissions",
       "title": "A revoked permission still exercised (permission tracked separately from obligation)",
-      "summary": "Same two versions. The agent updates its obligations but keeps the old permissions, so it still offers exchanges where v2 revoked the permission. No obligation changed, so an obligation-only check passes it; the permission channel does not."
+      "summary": "Same authenticated transition and scope. The agent updates its obligations but keeps the old permissions, so it still offers exchanges where v2 revoked the permission. No obligation changed, so an obligation-only check passes it; the permission channel does not."
     },
     {
       "id": "EX-0006",

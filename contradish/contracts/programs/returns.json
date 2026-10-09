@@ -55,7 +55,11 @@
       "role": "policy_owner",
       "governs": [
         "*"
-      ]
+      ],
+      "keys": [
+        "145ac8574457b164c46db7b0743406f2a0a4925337134af21cda52f5bb377525"
+      ],
+      "key_note": "contradish public fixture key (see versions.fixture_key); replace with your own"
     },
     "customer": {
       "role": "user",

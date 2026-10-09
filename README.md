@@ -2,6 +2,16 @@
 
 **Contradish measures whether AI transitions remain faithful to their governing information.**
 
+**What it verifies:** Contradish verifies that consequential AI actions and obligations remain compliant across authenticated governing-state transitions, proving required changes and preservation of unaffected constraints within an explicitly defined verification scope.
+
+In practice, each part of that sentence is a component:
+- **Consequential actions and obligations** are the agent's tool calls. Each one is required, allowed or forbidden.
+- **Authenticated governing-state transitions** are two pinned versions signed with Ed25519. The new version is signed by an issuer whose key the old version lists, and it is bound to the old version's digest.
+- **Proving required changes and preservation** is done by an exact decomposition of the situation space. The agent is exercised in every region.
+- **An explicit verification scope** names the situations, actions, trials, confidence and assumptions. Nothing outside the scope is claimed.
+
+An independent, standard-library checker re-derives all of it, signatures included.
+
 > Change what truth requires. Preserve what truth does not require changing.
 
 Faithfulness is correct change plus correct preservation. And a change only counts as required if its source has **governing authority** over the behavior in question: the system has to determine not just what changed, but whether that change has standing to govern. A policy owner amending the policy does. A customer asserting that the policy changed does not. Text inside a tool result giving orders does not. The same customer changing their own contact preference does.

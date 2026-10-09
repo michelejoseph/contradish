@@ -18,8 +18,13 @@ import json
 import os
 import sys
 
+VERIFIES = ("Contradish verifies that consequential AI actions and obligations remain compliant across "
+            "authenticated governing-state transitions, proving required changes and preservation of unaffected "
+            "constraints within an explicitly defined verification scope.")
+
 ABOUT = {
     "name": "contradish",
+    "verifies": VERIFIES,
     "top_line": "Contradish measures whether AI transitions remain faithful to their governing information.",
     "principle": "Change what truth requires. Preserve what truth does not require changing.",
     "definition": ("Behavioral Update Fidelity measures whether an AI changes its behavior exactly when, "
@@ -117,7 +122,7 @@ def register(sub) -> None:
             "obligation changes. `contradish evidence check run.json` re-derives everything independently."
         ),
     )
-    vs.add_argument("versions_cmd", choices=["pin", "diff", "certify", "demo"])
+    vs.add_argument("versions_cmd", choices=["pin", "diff", "certify", "demo", "keygen"])
     vs.add_argument("files", nargs="*")
     vs.add_argument("--id", default=None)
     vs.add_argument("--verified-by", dest="verified_by", default=None)
@@ -128,6 +133,14 @@ def register(sub) -> None:
     vs.add_argument("--agent", default=None, help="witness:faithful|rigid|stale_permissions|leaky")
     vs.add_argument("--app", default=None, metavar="MODULE:FUNCTION")
     vs.add_argument("--model-name", dest="model_name", default=None)
+    vs.add_argument("--supersedes", default=None, help="pin: the previous pinned version file (binds the chain)")
+    vs.add_argument("--sign", default=None, metavar="KEY.json", help="pin: sign with this key (contradish versions keygen)")
+    vs.add_argument("--source", default=None, help="keygen: the source the key belongs to")
+    vs.add_argument("--trust", action="append", default=[], metavar="PUBKEY_HEX",
+                    help="certify: a trust anchor for the first version's signature (repeatable)")
+    vs.add_argument("--scope", default=None, metavar="SCOPE.json",
+                    help="certify: the verification scope (situations, actions, trials, confidence, assumptions)")
+    vs.add_argument("--trials", type=int, default=None, help="certify: runs per region (overrides the scope)")
     vs.add_argument("--out", default=None)
     vs.add_argument("--json", action="store_true", default=False)
 
@@ -225,6 +238,7 @@ def cmd_about(args) -> None:
         print(json.dumps(info, indent=2))
         return
     print(info["top_line"])
+    print(info["verifies"])
     print(info["principle"])
     print()
     print(info["definition"])
@@ -345,7 +359,7 @@ def _rerun(cert: dict) -> list:
     from contradish.counterexample import _build, components_of
     from contradish.policy_program import Call, PolicyProgram, ProgramUpdate, calls_equal
     prov = cert.get("provenance", {})
-    if cert.get("schema") == "contradish.run_certificate/1.0":
+    if str(cert.get("schema", "")).startswith("contradish.run_certificate/"):
         return _rerun_run(cert)
     if prov.get("agent_kind") != "scripted" or not str(prov.get("agent", "")).startswith("witness:"):
         return ["--rerun applies to scripted witness agents only; a model's replies are checked from the raw text"]
@@ -381,7 +395,7 @@ def cmd_evidence(args) -> None:
     for path in args.files:
         with open(path) as f:
             cert = json.load(f)
-        r = check_run(cert) if cert.get("schema") == "contradish.run_certificate/1.0" else check(cert)
+        r = check_run(cert) if str(cert.get("schema", "")).startswith("contradish.run_certificate/") else check(cert)
         if args.rerun and r["verdict"] == "VERIFIED":
             extra = _rerun(cert)
             hard = [x for x in extra if x.startswith("rerun:")]
@@ -398,8 +412,14 @@ def cmd_evidence(args) -> None:
         print(json.dumps(results, indent=2))
     else:
         for r in results:
-            print(f"{r['verdict']}  {r['file']}")
-            print(f"  claim: {r.get('claim')}")
+            label = "certificate " + r["verdict"]
+            c = r.get("claim")
+            if isinstance(c, dict) and "statement" in c:
+                print(f"{label}  {r['file']}")
+                print(f"  {c['statement']}")
+            else:
+                print(f"{r['verdict']}  {r['file']}")
+                print(f"  claim: {c}")
             for x in r["problems"]:
                 print(f"  problem: {x}")
             for x in r["notes"]:
@@ -416,7 +436,7 @@ def cmd_exhibits(args) -> None:
     from contradish.evidence_check import check as _check1, check_run
 
     def check(cert):
-        return check_run(cert) if cert.get("schema") == "contradish.run_certificate/1.0" else _check1(cert)
+        return check_run(cert) if str(cert.get("schema", "")).startswith("contradish.run_certificate/") else _check1(cert)
     ex = _index()
     if args.exhibits_cmd == "path":
         print(EXHIBITS_DIR)
@@ -471,7 +491,12 @@ def cmd_exhibits(args) -> None:
             hard = [x for x in extra if x.startswith("rerun:")]
             verdict = "VERIFIED" if r["verdict"] == "VERIFIED" and not hard else "REJECTED"
             ok &= verdict == "VERIFIED"
-            print(f"{verdict}  {e['id']}  {e['title']}")
+            c = cert.get("claim")
+            tag = ""
+            if isinstance(c, dict) and "verified" in c:
+                tag = "  [claim: " + ("verified" if c["verified"] else "proved, not authenticated" if c["proved"]
+                                      else "NOT proved") + "]"
+            print(f"{verdict}  {e['id']}  {e['title']}{tag}")
             for x in r["problems"] + hard:
                 print(f"  problem: {x}")
         sys.exit(0 if ok else 1)
@@ -522,8 +547,11 @@ def _rerun_run(cert: dict) -> list:
     name = str(prov.get("agent", ""))
     if prov.get("agent_kind") != "scripted" or not name.startswith("witness:"):
         return ["--rerun applies to scripted witness agents only"]
+    from contradish.versions import VerificationScope
     again = run_certificate(load_pinned(cert["before"]), load_pinned(cert["after"]),
-                            version_witness(name.split(":", 1)[1]), name)
+                            version_witness(name.split(":", 1)[1]), name,
+                            scope=VerificationScope.from_dict(cert.get("scope") or {}),
+                            trust_anchors=(cert.get("authentication") or {}).get("trust_anchors"))
     probs = []
     canon = lambda obs: sorted(json.dumps(o, sort_keys=True) for o in obs)
     if canon(again["observations"]) != canon(cert["observations"]):
@@ -567,61 +595,100 @@ def cmd_versions(args) -> None:
     from contradish.evidence import save
     from contradish.policy_program import PolicyProgram, load_builtin_program
     from contradish.symbolic import diff_versions
-    from contradish.versions import load_pinned, pin, run_certificate, transition_authority
+    from contradish.versions import (
+        VerificationScope, authenticate_transition, fixture_key, load_pinned, new_key, pin, run_certificate,
+        sign_pin,
+    )
 
     def read_pin(path):
         with open(path) as f:
             return load_pinned(json.load(f))
 
+    if args.versions_cmd == "keygen":
+        if not args.source:
+            sys.exit("usage: contradish versions keygen --source SOURCE --out KEY.json")
+        k = new_key(args.source)
+        if args.out:
+            with open(args.out, "w") as f:
+                json.dump(k, f, indent=2)
+            os.chmod(args.out, 0o600)
+            print(f"key for {args.source!r} -> {args.out} (secret; keep it private)")
+            print(f"public key, to list under sources.{args.source}.keys: {k['public']}")
+        else:
+            print(json.dumps(k, indent=2))
+        return
     if args.versions_cmd == "pin":
         if len(args.files) != 1 or not (args.id and args.verified_by and args.method):
-            sys.exit("usage: contradish versions pin PROGRAM.json --id ID --verified-by WHO --method HOW [--out F]")
+            sys.exit("usage: contradish versions pin PROGRAM.json --id ID --verified-by WHO --method HOW "
+                     "[--issued-by SOURCE --supersedes V1.pin.json] [--sign KEY.json] [--out F]")
         with open(args.files[0]) as f:
             spec = json.load(f)
         spec.pop("updates", None)
+        sup = read_pin(args.supersedes).digest if args.supersedes else None
         pv = pin(PolicyProgram(spec), args.id, args.verified_by, args.method, evidence=args.evidence,
-                 issued_by=args.issued_by)
+                 issued_by=args.issued_by, supersedes=sup)
+        if args.sign:
+            with open(args.sign) as f:
+                sign_pin(pv, json.load(f))
         out = json.dumps(pv.to_dict(), indent=2, sort_keys=True)
         if args.out:
             with open(args.out, "w") as f:
                 f.write(out + "\n")
-            print(f"pinned {args.id} ({pv.digest}) -> {args.out}")
+            print(f"pinned {args.id} ({pv.digest}){' signed' if args.sign else ''} -> {args.out}")
         else:
             print(out)
         return
+    anchors = list(args.trust)
     if args.versions_cmd == "demo":
         p, U = load_builtin_program("returns")
         u = U[args.update or "exchange_closed_late"]
         ok, _ = p.split_edits(u)
-        v1 = pin(p, "returns-v1", "contradish fixture", "built-in example")
-        v2 = pin(p.apply(ok), "returns-" + u.id, "contradish fixture", "built-in example", issued_by=u.source)
+        k = fixture_key("policy_owner")
+        v1 = sign_pin(pin(p, "returns-v1", "contradish fixture", "built-in example"), k)
+        v2 = pin(p.apply(ok), "returns-" + u.id, "contradish fixture", "built-in example",
+                 issued_by=u.source, supersedes=v1.digest)
+        if u.source == "policy_owner":
+            sign_pin(v2, k)
+        anchors = anchors or [k["public"]]
     else:
         if len(args.files) != 2:
             sys.exit("usage: contradish versions diff|certify V1.pin.json V2.pin.json")
         v1, v2 = read_pin(args.files[0]), read_pin(args.files[1])
+    auth = authenticate_transition(v1, v2, anchors)
     diff = diff_versions(v1.program, v2.program)
     if args.versions_cmd in ("diff", "demo") and not (args.agent or args.app):
         if args.json:
-            print(json.dumps(diff.to_json(), indent=2, default=str))
+            print(json.dumps({"authentication": auth, "diff": diff.to_json()}, indent=2, default=str))
             return
-        print(f"{v1.id} -> {v2.id}   authority: {transition_authority(v1, v2)['status']}")
+        print(f"{v1.id} -> {v2.id}")
+        print(f"  authenticated: {auth['authenticated']}   authorized: {auth['authorized']}"
+              + (f"   ({'; '.join(auth['reasons'])})" if auth["reasons"] else ""))
         _print_diff(diff)
         return
+    scope = VerificationScope()
+    if args.scope:
+        with open(args.scope) as f:
+            scope = VerificationScope.from_dict(json.load(f))
+    if args.trials:
+        scope.trials = args.trials
     agent, kind = _version_agent(args)
-    cert = run_certificate(v1, v2, agent, getattr(agent, "__name__", "agent"), kind, args.model_name)
+    cert = run_certificate(v1, v2, agent, getattr(agent, "__name__", "agent"), kind, args.model_name,
+                           scope=scope, trust_anchors=anchors)
     if args.out:
         save(cert, args.out)
     r, c = cert["result"], cert["claim"]
-    print(f"{v1.id} -> {v2.id}, agent {cert['provenance']['agent']}")
-    print(f"  cells exercised          {r['cells_covered']}/{r['cells']}")
-    print(f"  required changes made    {r['required_changes_made']}/{r['required_changes']}")
-    print(f"  unrelated obligations    {r['preserved_held']}/{r['preserved_cases']} held")
-    print(f"  granted permissions used {r['granted_permissions_exercised']}/{r['permissions_granted']} (optional)")
-    print(f"  PROVED: {c['proved']}")
+    print(c["statement"])
+    print(f"  authenticated / authorized {c['authenticated']} / {c['authorized']}")
+    print(f"  regions exercised          {r['cells_covered']}/{r['cells']} (x{r['trials_per_cell']} trials)")
+    print(f"  required changes made      {r['required_changes_made']}/{r['required_changes']}")
+    print(f"  unaffected constraints     {r['preserved_held']}/{r['preserved_cases']} held")
+    print(f"  granted permissions used   {r['granted_permissions_exercised']}/{r['permissions_granted']} (optional)")
     for f in cert["failures"][:5]:
         print(f"    - {f.get('step', '')}: {f['problem']} when {f['condition']}")
+    for reason in cert["authentication"]["reasons"]:
+        print(f"    - authentication: {reason}")
     if args.out:
-        print(f"  certificate: {args.out}   (verify: contradish evidence check {args.out})")
+        print(f"  certificate: {args.out}   (independent check: contradish evidence check {args.out})")
 
 
 def cmd_perspectives(args) -> None:

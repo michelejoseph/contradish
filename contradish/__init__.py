@@ -348,14 +348,18 @@ from .action_frontier import (
 from .counterexample import minimize_unauthorized_change
 from .policy_program import Norm
 from .symbolic import diff_versions, regions
-from .versions import pin, load_pinned, run_certificate, atlas, load_perspectives
+from .versions import (
+    pin, load_pinned, run_certificate, atlas, load_perspectives, sign_pin, new_key,
+    authenticate_transition, VerificationScope,
+)
 
-__version__ = "1.60.0"
+__version__ = "1.61.0"
 __all__ = [
     "PolicyProgram", "ProgramUpdate", "Edit", "Call", "load_builtin_program",
     "derive_action_frontier", "verify_trajectories", "run_agent", "witness_agent", "llm_tool_agent",
     "ActionFrontier", "ActionTransitionResult", "minimize_unauthorized_change",
     "Norm", "diff_versions", "regions", "pin", "load_pinned", "run_certificate", "atlas", "load_perspectives",
+    "sign_pin", "new_key", "authenticate_transition", "VerificationScope",
     "Suite",
     "RegressionSuite",
     "Firewall",

@@ -42,7 +42,7 @@
       "modality": "F"
     }
   },
-  "digest": "sha256:14e6f04a642e144018eb73db1f5e7942e9b74550334560b5cc2c1522b782381f",
+  "digest": "sha256:55f0a69785451ee11522544ffe85270b7e7b9b6badf7699b8140346f31ec61a9",
   "kind": "unauthorized_change",
   "minimization": {
     "kept": [
@@ -535,6 +535,10 @@
         "governs": [
           "*"
         ],
+        "key_note": "contradish public fixture key (see versions.fixture_key); replace with your own",
+        "keys": [
+          "145ac8574457b164c46db7b0743406f2a0a4925337134af21cda52f5bb377525"
+        ],
         "role": "policy_owner"
       },
       "tool_output": {
@@ -548,10 +552,10 @@
   "provenance": {
     "agent": "witness:credulous",
     "agent_kind": "scripted",
-    "created": "2026-10-09T20:08:13+00:00",
+    "created": "2026-10-09T20:40:17+00:00",
     "model": null,
     "note": "minimal counterexample",
-    "produced_by": "contradish 1.59.0",
+    "produced_by": "contradish 1.60.0",
     "raw": null
   },
   "schema": "contradish.evidence/1.1",

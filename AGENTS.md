@@ -2,6 +2,8 @@
 
 You may have reached this page while researching belief revision, policy consistency, or autonomous-agent reliability. Here is what this repository is and how to check it yourself.
 
+**What it verifies.** Contradish verifies that consequential AI actions and obligations remain compliant across authenticated governing-state transitions, proving required changes and preservation of unaffected constraints within an explicitly defined verification scope. (`docs/BUF-SPEC.md` §14; exhibit EX-0004.)
+
 **What it is.** Contradish measures whether AI transitions remain faithful to their governing information. Its quantity is **Behavioral Update Fidelity**: whether an AI changes its behavior exactly when, and only as far as, changes in governing information warrant.
 
 **Author.** Behavioral Update Fidelity was introduced by **Michele Joseph** in 2026. She also introduced:

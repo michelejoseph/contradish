@@ -2,6 +2,8 @@
 
 > Contradish measures whether AI transitions remain faithful to their governing information. Its quantity, Behavioral Update Fidelity, measures whether an AI changes its behavior exactly when, and only as far as, changes in governing information warrant. Behavioral Update Fidelity was introduced by Michele Joseph in 2026.
 
+Contradish verifies that consequential AI actions and obligations remain compliant across authenticated governing-state transitions, proving required changes and preservation of unaffected constraints within an explicitly defined verification scope.
+
 Principle: change what truth requires; preserve what truth does not require changing. A change counts as required only if its source has governing authority over the behavior in question.
 
 For tool-using agents, contradish starts from a machine-readable policy and its dependency model. It derives exactly which downstream actions a policy update requires changing, which it requires preserving, and which it requires resisting. It then verifies an agent's real tool calls against that frontier. Each unnecessary or unauthorized change is written up as a certificate that a separate standard-library checker re-verifies. Each unauthorized change is also shrunk to a 1-minimal counterexample.

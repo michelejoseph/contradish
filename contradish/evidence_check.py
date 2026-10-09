@@ -721,6 +721,104 @@ def _change_labels(n1, n2):
     return out
 
 
+# ------------------------------------------------- Ed25519, verify only (RFC 8032)
+# Written independently of contradish/ed25519.py: affine coordinates, no tables.
+
+_EP = 2 ** 255 - 19
+_EL = 2 ** 252 + 27742317777372353535851937790883648493
+_ED = -121665 * pow(121666, _EP - 2, _EP) % _EP
+
+
+def _einv(x):
+    return pow(x, _EP - 2, _EP)
+
+
+def _eadd(P, Q):
+    (x1, y1), (x2, y2) = P, Q
+    t = _ED * x1 * x2 * y1 * y2 % _EP
+    return ((x1 * y2 + x2 * y1) * _einv(1 + t) % _EP, (y1 * y2 + x1 * x2) * _einv(1 - t) % _EP)
+
+
+def _emul(n, P):
+    R = (0, 1)
+    while n:
+        if n & 1:
+            R = _eadd(R, P)
+        P = _eadd(P, P)
+        n >>= 1
+    return R
+
+
+def _edecode(b):
+    y = int.from_bytes(b, "little")
+    sign, y = y >> 255, y & ((1 << 255) - 1)
+    if y >= _EP:
+        return None
+    u, v = (y * y - 1) % _EP, (_ED * y * y + 1) % _EP
+    x = u * pow(v, 3, _EP) * pow(u * pow(v, 7, _EP), (_EP - 5) // 8, _EP) % _EP
+    if (v * x * x - u) % _EP:
+        x = x * pow(2, (_EP - 1) // 4, _EP) % _EP
+        if (v * x * x - u) % _EP:
+            return None
+    if x == 0 and sign:
+        return None
+    if x % 2 != sign:
+        x = _EP - x
+    return (x, y)
+
+
+_EBY = 4 * _einv(5) % _EP
+_EB = _edecode(int.to_bytes(_EBY, 32, "little"))
+
+
+def ed25519_verify(pub_hex, msg, sig_hex):
+    try:
+        pub, sig = bytes.fromhex(pub_hex), bytes.fromhex(sig_hex)
+    except (TypeError, ValueError):
+        return False
+    if len(pub) != 32 or len(sig) != 64:
+        return False
+    A, R = _edecode(pub), _edecode(sig[:32])
+    if A is None or R is None:
+        return False
+    S = int.from_bytes(sig[32:], "little")
+    if S >= _EL:
+        return False
+    h = int.from_bytes(hashlib.sha512(sig[:32] + pub + msg).digest(), "little") % _EL
+    return _emul(S, _EB) == _eadd(R, _emul(h, A))
+
+
+def _pin_body(pv):
+    return {k: v for k, v in pv.items() if k != "signature"}
+
+
+def _pin_sig_ok(pv):
+    sg = pv.get("signature") or {}
+    return sg.get("alg") == "ed25519" and ed25519_verify(sg.get("key", ""), canon(_pin_body(pv)).encode("utf-8"),
+                                                         sg.get("sig", ""))
+
+
+def _narrow(spec, situations):
+    spec = copy.deepcopy(spec)
+    for f, nar in (situations or {}).items():
+        fs = spec["facts"][f]
+        if "values" in nar:
+            dom = [False, True] if fs["type"] == "bool" else list(fs.get("values", []))
+            if any(v not in dom for v in nar["values"]):
+                raise _Outside("scope values outside the domain")
+            if fs["type"] == "bool":
+                fs["type"] = "enum"
+            fs["values"] = list(nar["values"])
+            if fs.get("default") not in fs["values"]:
+                fs["default"] = fs["values"][0]
+        for k in ("min", "max"):
+            if k in nar:
+                if (k == "min" and nar[k] < fs["min"]) or (k == "max" and nar[k] > fs["max"]):
+                    raise _Outside("scope widens a domain")
+                fs[k] = nar[k]
+    return spec
+
+
 def check_run(cert):
     problems, notes = [], []
 
@@ -731,6 +829,7 @@ def check_run(cert):
 
     body = {k: v for k, v in cert.items() if k != "digest"}
     need(cert.get("digest") == sha(body), "integrity: digest does not match content")
+    need(cert.get("schema") == "contradish.run_certificate/1.1", "unknown run-certificate schema")
     pins = []
     for side in ("before", "after"):
         pv = cert.get(side) or {}
@@ -741,87 +840,114 @@ def check_run(cert):
         pins.append(pv)
     if problems:
         return _verdict(cert, problems, notes)
-    s1, s2 = pins[0]["program"], pins[1]["program"]
-    try:
-        cells, steps = rederive_cells([s1, s2])
-    except _Outside as exc:
-        problems.append(f"outside the decidable fragment: {exc}")
-        return _verdict(cert, problems, notes)
-    d = cert.get("derivation") or {}
-    need(d.get("cells") == len(cells),
-         f"derivation: {d.get('cells')} cells claimed, {len(cells)} re-derived")
+    v1, v2 = pins
+    s1, s2 = v1["program"], v2["program"]
 
-    # The full set of changes, re-derived: (step, label) pairs must match the producer's list.
+    # Authentication and authorization, recomputed.
+    a = cert.get("authentication") or {}
+    anchors = set(a.get("trust_anchors") or [])
+    v1_sig, v2_sig = _pin_sig_ok(v1), _pin_sig_ok(v2)
+    v1_anch = v1_sig and (v1.get("signature") or {}).get("key") in anchors
+    issuer = v2.get("issued_by")
+    src = (s1.get("sources") or {}).get(issuer or "")
+    listed = bool(src) and (v2.get("signature") or {}).get("key") in (src.get("keys") or [])
+    chained = v2.get("supersedes") == v1.get("digest")
+    changed = sorted(meaning_changed(s1, s2))
+    gov = (src or {}).get("governs", [])
+    outside = [c for c in changed if "*" not in gov and c not in gov]
+    authenticated = v1_anch and v2_sig and listed and chained
+    authorized = authenticated and not outside
+    for k, mine in (("v1_signed", v1_sig), ("v1_anchored", v1_anch), ("v2_signed", v2_sig),
+                    ("issuer_key_listed", listed), ("chained", chained), ("authenticated", authenticated),
+                    ("authorized", authorized)):
+        need(a.get(k) == mine, f"authentication: {k} recomputed as {mine}")
+    if authenticated:
+        notes.append(f"authenticated: v1 signed by trust anchor {(v1.get('signature') or {}).get('key', '')[:16]}..., "
+                     f"v2 signed by {issuer!r}'s key listed in v1, v2 supersedes v1's digest")
+    else:
+        notes.append("NOT authenticated: " + "; ".join(a.get("reasons") or ["see fields"]))
+
+    # Scope, applied to both versions before re-derivation.
+    sc = cert.get("scope") or {}
+    trials = int(sc.get("trials", 1))
+    conf = float(sc.get("confidence", 0.95))
+    try:
+        n1, n2 = _narrow(s1, sc.get("situations")), _narrow(s2, sc.get("situations"))
+        cells, steps = rederive_cells([n1, n2])
+    except _Outside as exc:
+        problems.append(f"outside the decidable fragment or scope: {exc}")
+        return _verdict(cert, problems, notes)
+    acts = sc.get("actions")
+    if acts is not None:
+        need(all(k in steps for k in acts), "scope names actions that do not exist")
+        steps = [k for k in steps if k in acts]
+    d = cert.get("derivation") or {}
+    need(d.get("cells") == len(cells), f"derivation: {d.get('cells')} cells claimed, {len(cells)} re-derived in scope")
+    need(sorted(d.get("actions") or []) == sorted(steps), "derivation: verified actions differ from the scope")
+
     mine = set()
     for box, norms in cells:
         for k in steps:
-            n1, n2 = norms[0][k], norms[1][k]
-            if not _sym_same(n1, n2):
-                labels = _change_labels(n1, n2)
-                if not labels:
-                    labels = ["content changed"]
-                mine.add((k, "; ".join(labels)))
+            m1, m2 = norms[0][k], norms[1][k]
+            if not _sym_same(m1, m2):
+                mine.add((k, "; ".join(_change_labels(m1, m2) or ["content changed"])))
     theirs = {(c["step"], c["change"]) for c in d.get("changes", [])}
     need(mine == theirs, "derivation: the listed changes differ from the re-derived ones: "
          f"missing {sorted(mine - theirs)}, extra {sorted(theirs - mine)}")
 
-    # Authority, re-derived.
-    issued = pins[1].get("issued_by")
-    if issued:
-        changed = sorted(meaning_changed(s1, s2))
-        gov = (s1.get("sources", {}).get(issued) or {}).get("governs", [])
-        outside = [c for c in changed if "*" not in gov and c not in gov]
-        st = "authorized" if not outside else "unauthorized"
-        need((cert.get("authority") or {}).get("status") == st, f"authority: recomputed {st!r}")
-        if outside:
-            notes.append(f"issuer {issued!r} does not govern {outside}: v2 is not an authorized successor of v1")
-
-    # Coverage and behavior, judged with the concrete evaluator at each observed situation.
-    p1, p2 = Policy(s1), Policy(s2)
+    p2 = Policy(s2)
     obs = cert.get("observations") or []
-    uncovered, req_fail, pres_fail, req_total, pres_total = 0, 0, 0, 0, 0
+    under, req_fail, pres_fail, req_total, pres_total = 0, 0, 0, 0, 0
     for box, norms in cells:
-        o = next((x for x in obs if box.holds(x["situation"])), None)
-        if o is None:
-            uncovered += 1
+        os_ = [x for x in obs if box.holds(x["situation"])]
+        if len(os_) < trials:
+            under += 1
             continue
-        sit = o["situation"]
-        facts = {f: sit[f] for f in s1.get("facts", {})}
-        after = {}
-        for c in o["after"]:
+        for o in os_:
+            sit = o["situation"]
+            facts = {f: sit[f] for f in s1.get("facts", {})}
+            after = {}
+            for c in o["after"]:
+                for k in steps:
+                    st_ = p2.steps.get(k)
+                    if st_ and st_[1]["tool"] == c["tool"] and k not in after:
+                        after[k] = c
             for k in steps:
-                st_ = p2.steps.get(k)
-                if st_ and st_[1]["tool"] == c["tool"] and k not in after:
-                    after[k] = c
-        for k in steps:
-            n2, _ = (p2.norm(k, facts) if k in p2.steps else ({"modality": "F", "call": None}, None))
-            ok = permits(n2, after.get(k))
-            if _sym_same(norms[0][k], norms[1][k]):
-                pres_total += 1
-                pres_fail += not ok
-            else:
-                req_total += 1
-                req_fail += not ok
-        prov = cert.get("provenance") or {}
-        if prov.get("agent_kind") == "model":
-            raw = o.get("raw") or {}
-            for side in ("before", "after"):
-                for c in o[side]:
-                    need(parse_raw(raw.get(side, ""), c["tool"]) is not None,
-                         f"provenance: observed call {c['tool']} not found in the raw reply")
+                nn = p2.norm(k, facts)[0] if k in p2.steps else {"modality": "F", "call": None}
+                ok = permits(nn, after.get(k))
+                if _sym_same(norms[0][k], norms[1][k]):
+                    pres_total += 1
+                    pres_fail += not ok
+                else:
+                    req_total += 1
+                    req_fail += not ok
+            if (cert.get("provenance") or {}).get("agent_kind") == "model":
+                raw = o.get("raw") or {}
+                for side in ("before", "after"):
+                    for c in o[side]:
+                        need(parse_raw(raw.get(side, ""), c["tool"]) is not None,
+                             f"provenance: observed call {c['tool']} not found in the raw reply")
     claim = cert.get("claim") or {}
-    need(claim.get("every_cell_exercised") == (uncovered == 0), f"claim: {uncovered} cells were not exercised")
+    proved = under == 0 and req_fail == 0 and pres_fail == 0
+    need(claim.get("every_cell_exercised") == (under == 0), f"claim: {under} regions exercised fewer than {trials} times")
     need(claim.get("every_required_change_happened") == (req_fail == 0),
          f"claim: {req_fail} of {req_total} required changes did not happen")
     need(claim.get("every_unrelated_obligation_held") == (pres_fail == 0),
-         f"claim: {pres_fail} of {pres_total} unrelated obligations were not preserved")
-    proved = uncovered == 0 and req_fail == 0 and pres_fail == 0
+         f"claim: {pres_fail} of {pres_total} unaffected constraints were not preserved")
     need(claim.get("proved") == proved, "claim: 'proved' disagrees with the re-derivation")
-    notes.append(f"re-derived {len(cells)} cells independently; {req_total} required changes and "
-                 f"{pres_total} preserved cases judged at observed situations")
-    notes.append("PROVED: every required change happened and every unrelated obligation held, at a "
-                 "representative situation of every region of constant norms" if proved else
-                 "NOT PROVED (the certificate says so, and that is what was verified)")
+    need(claim.get("authenticated") == authenticated and claim.get("authorized") == authorized,
+         "claim: authentication disagrees")
+    need(claim.get("verified") == (proved and authorized), "claim: 'verified' disagrees")
+    bound = (1 - (1 - conf) ** (1 / trials)) if proved else 1.0
+    need(abs(float(claim.get("per_region_violation_bound", -1)) - bound) < 1e-12, "claim: violation bound disagrees")
+    notes.append(f"re-derived {len(cells)} regions in scope independently; {req_total} required changes and "
+                 f"{pres_total} unaffected constraints judged; {trials} trial(s) per region")
+    verdict_line = ("VERIFIED CLAIM: compliant across an authenticated, authorized transition within scope"
+                    if proved and authorized else
+                    "the certificate's claim is NOT a full verification (it says so, and that is what was checked)")
+    notes.append(verdict_line)
+    for asm in sc.get("assumptions") or []:
+        notes.append("scope assumption: " + asm)
     if (cert.get("provenance") or {}).get("agent_kind") != "model":
         notes.append("agent is scripted, not a model")
     return _verdict(cert, problems, notes)
@@ -845,7 +971,7 @@ def main(argv=None):
         try:
             with open(p) as f:
                 cert = json.load(f)
-            r = check_run(cert) if cert.get("schema") == "contradish.run_certificate/1.0" else check(cert)
+            r = check_run(cert) if str(cert.get("schema", "")).startswith("contradish.run_certificate/") else check(cert)
         except Exception as exc:  # malformed input is a rejection, not a crash
             r = {"verdict": "REJECTED", "problems": [f"could not check: {exc!r}"], "notes": []}
         r["file"] = p
