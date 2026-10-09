@@ -217,6 +217,7 @@
     "every_cell_exercised": true,
     "every_required_change_happened": false,
     "every_unrelated_obligation_held": true,
+    "legitimate": null,
     "per_region_violation_bound": 1.0,
     "proved": false,
     "statement": "NOT PROVED: across the governing-state transition leviticus_11 (sha256:2844116702ca) -> mark_7_acts_10 (sha256:4e9afe3d2c28), for every action, over every situation, with 1 trial(s) per region: every required change did NOT all happen or not every region was exercised. Per-region violation rate <= 1 at 95% confidence. Scope assumptions are listed in the certificate.",
@@ -253,7 +254,7 @@
       "forbidden_meat"
     ]
   },
-  "digest": "sha256:749cbd617f74dd9be495d4630ccd7ceccf54ad475364cd3f6f6a737cdef9dd01",
+  "digest": "sha256:3504451258408acc51a036d168324fad512519656fa4599f4c4b3dd0abd71b8f",
   "failures": [
     {
       "cell": 8,
@@ -340,6 +341,7 @@
       "trial": 0
     }
   ],
+  "legitimacy": null,
   "observations": [
     {
       "after": [
@@ -741,7 +743,7 @@
   "provenance": {
     "agent": "witness:leaky",
     "agent_kind": "scripted",
-    "created": "2026-10-09T20:40:20+00:00",
+    "created": "2026-10-09T20:57:06+00:00",
     "model": null
   },
   "result": {

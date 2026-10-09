@@ -2,6 +2,8 @@
 
 **Contradish measures whether AI transitions remain faithful to their governing information.**
 
+**The change itself:** Contradish verifies that every change to an AI agent's governing specification is legitimate (authentic, procedurally valid, authorized by its effects, and within entrenched constraints) and that the agent's behavior then follows it exactly, within an explicit verification scope.
+
 **What it verifies:** Contradish verifies that consequential AI actions and obligations remain compliant across authenticated governing-state transitions, proving required changes and preservation of unaffected constraints within an explicitly defined verification scope.
 
 In practice, each part of that sentence is a component:
@@ -92,6 +94,28 @@ contradish exhibits show EX-0001
 ```
 
 The shipped exhibits come from scripted witness agents with known defects, not from models. Specification: [docs/BUF-SPEC.md §11](docs/BUF-SPEC.md).
+
+---
+
+## Is the change itself legitimate? (`contradish legitimacy`)
+
+Verifying that an agent follows its specification proves nothing if the specification was changed illegitimately. Each specification therefore carries a **charter**, its rules of change, and every new version is checked against the previous version's charter:
+
+1. **Provenance.** The change is signed by its issuer, whose key the old version lists, and it is bound to the old version's digest.
+2. **Procedure.** The required approvals (k of n roles, each one a signature) and the minimum review period. The change also cannot take effect retroactively.
+3. **Authority by effect.** contradish derives every behavioral effect of the change exactly, region by region. The issuer must have been granted each effect, not merely each clause it edited.
+4. **Invariants.** Entrenched constraints, such as "final-sale items are never refunded" or "defective items are refunded in full", are *proved* over the new version's entire situation space. A violation comes with a witness.
+
+```
+contradish legitimacy demo --case pricing_prepaid_cut
+NOT LEGITIMATE: ... issued by 'pricing_team' fails procedure, authority by effect, invariants;
+NOTE: the issuer owns every clause it edited (clause-level authority would pass), but 408 of the
+change's behavioral effects lie outside its granted domains; violated invariants: INV-defective-full.
+```
+
+The pricing team edited only a clause it owns. That clause also defines return labels, so the edit silently changed labels and the refunds on defective goods. Neither of those was granted to the pricing team, and the change breaks an entrenched consumer-protection rule. The witness is a defective item priced at $0.01. Authorization by text cannot see this; authorization by effect can.
+
+A run certificate can embed the legitimacy certificate, giving one chain from *the change was legitimate* to *the agent carried it out exactly*. Exhibit EX-0008 is an example. Specification: [docs/BUF-SPEC.md §15](docs/BUF-SPEC.md).
 
 ---
 

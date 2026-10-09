@@ -789,7 +789,7 @@ def ed25519_verify(pub_hex, msg, sig_hex):
 
 
 def _pin_body(pv):
-    return {k: v for k, v in pv.items() if k != "signature"}
+    return {k: v for k, v in pv.items() if k not in ("signature", "approvals")}
 
 
 def _pin_sig_ok(pv):
@@ -937,7 +937,19 @@ def check_run(cert):
     need(claim.get("proved") == proved, "claim: 'proved' disagrees with the re-derivation")
     need(claim.get("authenticated") == authenticated and claim.get("authorized") == authorized,
          "claim: authentication disagrees")
-    need(claim.get("verified") == (proved and authorized), "claim: 'verified' disagrees")
+    legit = cert.get("legitimacy")
+    legit_ok = None
+    if legit is not None:
+        lr = check_legitimacy(legit)
+        need(lr["verdict"] == "VERIFIED", "embedded legitimacy certificate fails: " + "; ".join(lr["problems"][:3]))
+        need((legit.get("before") or {}).get("digest") == v1.get("digest")
+             and (legit.get("after") or {}).get("digest") == v2.get("digest"),
+             "embedded legitimacy certificate is for a different transition")
+        legit_ok = bool(legit.get("legitimate"))
+        notes.append("legitimacy of the change: " + ("LEGITIMATE" if legit_ok else "NOT LEGITIMATE")
+                     + " (embedded certificate re-checked independently)")
+    need(claim.get("legitimate") == legit_ok, "claim: 'legitimate' disagrees")
+    need(claim.get("verified") == (proved and authorized and legit_ok is not False), "claim: 'verified' disagrees")
     bound = (1 - (1 - conf) ** (1 / trials)) if proved else 1.0
     need(abs(float(claim.get("per_region_violation_bound", -1)) - bound) < 1e-12, "claim: violation bound disagrees")
     notes.append(f"re-derived {len(cells)} regions in scope independently; {req_total} required changes and "
@@ -953,10 +965,240 @@ def check_run(cert):
     return _verdict(cert, problems, notes)
 
 
+# ------------------------------------------------------- legitimacy of a change
+
+def _auth_recompute(v1, v2, anchors):
+    s1 = v1["program"]
+    v1_sig, v2_sig = _pin_sig_ok(v1), _pin_sig_ok(v2)
+    v1_anch = v1_sig and (v1.get("signature") or {}).get("key") in anchors
+    issuer = v2.get("issued_by")
+    src = (s1.get("sources") or {}).get(issuer or "")
+    listed = bool(src) and (v2.get("signature") or {}).get("key") in (src.get("keys") or [])
+    chained = v2.get("supersedes") == v1.get("digest")
+    return v1_sig, v1_anch, v2_sig, listed, chained, (v1_anch and v2_sig and listed and chained)
+
+
+def _augment_spec(spec, charter):
+    spec = copy.deepcopy(spec)
+    hidden = {}
+    for d, ds in (charter.get("domains") or {}).items():
+        hidden["__w_" + d] = {"tool": "__w_" + d, "when": ds.get("where", True), "args": {}}
+    for inv in charter.get("invariants") or []:
+        hidden["__i_" + inv["id"]] = {"tool": "__i_" + inv["id"], "when": inv.get("when", True), "args": {}}
+        if inv.get("kind") == "bound":
+            hidden["__r_" + inv["id"]] = {"tool": "__r_" + inv["id"], "when": True, "args": {"rhs": inv["rhs"]}}
+    spec["clauses"]["__charter__"] = {"text": "", "steps": hidden}
+    if spec.get("procedure"):
+        spec["procedure"] = list(spec["procedure"]) + list(hidden)
+    spec.pop("charter", None)
+    return spec
+
+
+def _arg_same(x, y):
+    lx, ly = _lin(x), _lin(y)
+    if lx is not None and ly is not None:
+        dd = _ladd(lx, ly, -1)
+        return not _lvars(dd) and abs(_lconst(dd)) <= _F(TOL) / 10
+    return same_value(x, y)
+
+
+def _effects(n1, n2):
+    out = []
+    ob = (n1[0] == "O", n2[0] == "O")
+    pe = (n1[0] != "F", n2[0] != "F")
+    if ob[0] != ob[1]:
+        out.append(("obligation", "gained" if ob[1] else "lost", ()))
+    if pe[0] != pe[1]:
+        out.append(("permission", "granted" if pe[1] else "revoked", ()))
+    if pe == (True, True):
+        if n1[1] != n2[1] or set(n1[2]) != set(n2[2]):
+            args = sorted(set(n1[2]) | set(n2[2]))
+        else:
+            args = [a for a in sorted(n1[2]) if not _arg_same(n1[2][a], n2[2][a])]
+        for a in args:
+            out.append(("content", "changed", (a,)))
+    return out
+
+
+def _grid_extremes(box):
+    axes, names = [], list(box.ivs)
+    for f in names:
+        lo, hi, pt = box.ivs[f]
+        st = box.steps[f]
+        if pt:
+            axes.append([lo])
+        elif st is None:
+            axes.append([lo, hi])
+        else:
+            k0, k1 = _math.floor(lo / st) + 1, _math.ceil(hi / st) - 1
+            axes.append(sorted({st * k0, st * k1}))
+    return [dict(zip(names, c)) for c in (_it.product(*axes) if axes else [()])]
+
+
+def check_legitimacy(cert):
+    problems, notes = [], []
+
+    def need(cond, msg):
+        if not cond:
+            problems.append(msg)
+        return cond
+
+    body = {k: v for k, v in cert.items() if k != "digest"}
+    need(cert.get("digest") == sha(body), "integrity: digest does not match content")
+    need(cert.get("schema") == "contradish.legitimacy_certificate/1.0", "unknown legitimacy schema")
+    v1, v2 = cert.get("before") or {}, cert.get("after") or {}
+    for side, pv in (("before", v1), ("after", v2)):
+        need(pv.get("digest") == sha(pv.get("program")), f"{side}: pinned digest does not match the program")
+    if problems:
+        return _verdict(cert, problems, notes)
+    s1, s2 = v1["program"], v2["program"]
+    charter = copy.deepcopy(s1.get("charter") or {})
+    need(bool(charter), "v1 has no charter")
+    need(cert.get("charter_digest") == "sha256:" + hashlib.sha256(canon(charter).encode()).hexdigest(),
+         "charter digest disagrees")
+
+    a = cert.get("authentication") or {}
+    anchors = set(a.get("trust_anchors") or [])
+    v1_sig, v1_anch, v2_sig, listed, chained, authenticated = _auth_recompute(v1, v2, anchors)
+    need(a.get("authenticated") == authenticated, f"authentication recomputed as {authenticated}")
+
+    # Approvals: role signatures over v2's body by keys v1 lists for the role.
+    msg = canon(_pin_body(v2)).encode("utf-8")
+    signers = list(v2.get("approvals") or [])
+    if v2.get("signature") and v2.get("issued_by"):
+        signers.append({"role": v2["issued_by"], "key": v2["signature"].get("key"), "sig": v2["signature"].get("sig")})
+    approved = set()
+    if v2_sig:
+        for x in signers:
+            src = (s1.get("sources") or {}).get(x.get("role"), {})
+            if x.get("key") in (src.get("keys") or []) and ed25519_verify(x.get("key", ""), msg, x.get("sig", "")):
+                approved.add(x["role"])
+    approved = sorted(approved)
+    need(sorted((cert.get("procedure") or {}).get("approved_by") or []) == approved,
+         f"approvals recomputed as {approved}")
+
+    # Effects, re-derived over the augmented specifications.
+    try:
+        cells, steps = rederive_cells([_augment_spec(s1, charter), _augment_spec(s2, charter)])
+    except _Outside as exc:
+        problems.append(f"outside the decidable fragment: {exc}")
+        return _verdict(cert, problems, notes)
+    real = [k for k in steps if not k.startswith("__")]
+    doms = charter.get("domains") or {}
+    grants = set((charter.get("grants") or {}).get(v2.get("issued_by") or "", []))
+    eff_all, eff_bad, touched = {}, {}, set()
+    for box, norms in cells:
+        where = {d: norms[0]["__w_" + d][0] == "O" for d in doms}
+        for k in real:
+            for ch, change, args in _effects(norms[0][k], norms[1][k]):
+                lic = []
+                for d, ds in doms.items():
+                    if k not in (ds.get("actions") or []):
+                        continue
+                    if ch not in (ds.get("channels") or ["obligation", "permission", "content"]):
+                        continue
+                    if ch == "content" and ds.get("args") is not None and not set(args) <= set(ds["args"]):
+                        continue
+                    if where[d]:
+                        lic.append(d)
+                key = (k, ch, change, tuple(args), tuple(sorted(lic)))
+                eff_all[key] = eff_all.get(key, 0) + 1
+                touched.add(tuple(sorted(lic)))
+                if not (set(lic) & grants):
+                    eff_bad[key] = eff_bad.get(key, 0) + 1
+    e = cert.get("effects") or {}
+    theirs_all = {(x["step"], x["channel"], x["change"], tuple(x["args"]), tuple(x["domains"])): x["regions"]
+                  for x in e.get("summary") or []}
+    theirs_bad = {(x["step"], x["channel"], x["change"], tuple(x["args"]), tuple(x["domains"])): x["regions"]
+                  for x in e.get("unauthorized") or []}
+    need(theirs_all == eff_all, "effects: the listed effects differ from the re-derived ones")
+    need(theirs_bad == eff_bad, "effects: the unauthorized effects differ from the re-derived ones")
+    need(e.get("regions") == len(cells), "effects: region count differs")
+
+    # Procedure.
+    def date(x):
+        import datetime as _d
+        return _d.date.fromisoformat(x) if x else None
+
+    def rules_ok(rules, touched_):
+        oks = []
+        for r in rules:
+            ds = r.get("domains")
+            if not (ds == "*" or any(t and set(t) <= set(ds or []) for t in touched_)):
+                continue
+            have = set(approved) & set(r.get("approvers") or [])
+            days = int(r.get("review_days", 0))
+            p0, e0 = date(v2.get("proposed_at")), date(v2.get("effective_at"))
+            rev = days == 0 or (p0 is not None and e0 is not None and (e0 - p0).days >= days)
+            oks.append(len(have) >= int(r.get("approvals_min", 1)) and rev)
+        return all(oks)
+
+    proc_ok = rules_ok(charter.get("procedures") or [], touched)
+    e1, e2 = date(v1.get("effective_at")), date(v2.get("effective_at"))
+    retro_ok = True
+    if charter.get("no_retroactivity"):
+        retro_ok = e2 is not None and not (e1 and e2 < e1)
+    proc_ok = proc_ok and retro_ok
+
+    # Invariants over every region of v2.
+    tol = _F(1, 200)
+    inv_ok, inv_rows = True, {}
+    for inv in charter.get("invariants") or []:
+        iid, k = inv["id"], inv["step"]
+        holds = True
+        for box, norms in cells:
+            if norms[1]["__i_" + iid][0] != "O":
+                continue
+            n = norms[1][k]
+            if inv.get("kind", "modality") == "modality":
+                holds = holds and n[0] in inv["modality_in"]
+                continue
+            if n[0] == "F":
+                continue
+            la, lr = _lin(n[2].get(inv["arg"])), _lin(norms[1]["__r_" + iid][2].get("rhs"))
+            if la is None or lr is None:
+                holds = False
+                continue
+            dd = _ladd(la, lr, -1)
+            for pt in _grid_extremes(box):
+                v = _lat(dd, pt)
+                if ((inv["op"] == "<=" and v > tol) or (inv["op"] == ">=" and v < -tol)
+                        or (inv["op"] == "==" and abs(v) > tol)):
+                    holds = False
+                    break
+        inv_rows[iid] = holds
+        inv_ok = inv_ok and holds
+    theirs_inv = {x["id"]: x["holds"] for x in cert.get("invariants") or []}
+    need(theirs_inv == inv_rows, f"invariants recomputed as {inv_rows}")
+
+    # Charter amendment.
+    ch2 = s2.get("charter") or {}
+    amend_ok = True
+    if canon(ch2) != canon(charter):
+        ent = set(charter.get("entrenched") or [])
+        old = {i["id"]: i for i in charter.get("invariants") or []}
+        new = {i["id"]: i for i in ch2.get("invariants") or []}
+        removed = [x for x in ent if x not in new or canon(new[x]) != canon(old[x]) or x not in (ch2.get("entrenched") or [])]
+        amend_ok = not removed and rules_ok([dict(charter.get("amendment") or {}, domains="*")], set())
+        if removed:
+            notes.append(f"charter amendment alters or removes entrenched invariants {sorted(removed)}")
+
+    checks = {"provenance": authenticated, "procedure": proc_ok, "authority_by_effect": not eff_bad,
+              "invariants": inv_ok, "charter_amendment": amend_ok}
+    need((cert.get("checks") or {}) == checks, f"checks recomputed as {checks}")
+    need(cert.get("legitimate") == all(checks.values()), "legitimacy verdict disagrees")
+    notes.append(f"re-derived {len(cells)} regions, {sum(eff_all.values())} effect instances "
+                 f"({sum(eff_bad.values())} outside the issuer's granted domains), {len(inv_rows)} invariants "
+                 "proved or refuted over every region, approvals and signatures re-verified")
+    notes.append(("LEGITIMATE change" if all(checks.values()) else
+                  "NOT LEGITIMATE: " + ", ".join(k for k, v in checks.items() if not v)))
+    return _verdict(cert, problems, notes)
+
+
 def _verdict(cert, problems, notes):
     return {"verdict": "VERIFIED" if not problems else "REJECTED", "kind": cert.get("kind"),
             "step": cert.get("step"), "digest": cert.get("digest"), "problems": problems, "notes": notes,
-            "claim": cert.get("claim")}
+            "claim": cert.get("claim") if cert.get("claim") is not None else cert.get("statement")}
 
 
 def main(argv=None):
@@ -971,7 +1213,9 @@ def main(argv=None):
         try:
             with open(p) as f:
                 cert = json.load(f)
-            r = check_run(cert) if str(cert.get("schema", "")).startswith("contradish.run_certificate/") else check(cert)
+            sch = str(cert.get("schema", ""))
+            r = (check_run(cert) if sch.startswith("contradish.run_certificate/") else
+                 check_legitimacy(cert) if sch.startswith("contradish.legitimacy_certificate/") else check(cert))
         except Exception as exc:  # malformed input is a rejection, not a crash
             r = {"verdict": "REJECTED", "problems": [f"could not check: {exc!r}"], "notes": []}
         r["file"] = p

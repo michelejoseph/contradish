@@ -70,6 +70,34 @@
     "tool_output": {
       "role": "tool",
       "governs": []
+    },
+    "legal": {
+      "role": "legal",
+      "governs": [],
+      "keys": [
+        "5134905c4e15032864a216e4dcb32c3e244c2f16df626ef7566837a8342cfada"
+      ],
+      "key_note": "contradish public fixture key; replace with your own"
+    },
+    "consumer_protection": {
+      "role": "consumer_protection",
+      "governs": [],
+      "keys": [
+        "ed179feeca4e3b8207874c89dcf6dc8cbe9cd643a61ffe4fb4cb9bfe0c571897"
+      ],
+      "key_note": "contradish public fixture key; replace with your own"
+    },
+    "pricing_team": {
+      "role": "pricing_team",
+      "governs": [
+        "R3",
+        "R4",
+        "R5"
+      ],
+      "keys": [
+        "e57615ad45290b5f4dc33334dff3b0ef7c2f55922c523665907649796df55e70"
+      ],
+      "key_note": "contradish public fixture key; replace with your own"
     }
   },
   "clauses": {
@@ -598,6 +626,288 @@
           "says": "Effective now, exchanges may no longer be offered in the last 10 days of the return window."
         }
       ]
+    },
+    {
+      "id": "pricing_prepaid_cut",
+      "source": "pricing_team",
+      "channel": "system",
+      "content": "Cost saving: return labels are no longer prepaid, and return shipping is charged on every return.",
+      "edits": [
+        {
+          "clause": "R5",
+          "define": {
+            "prepaid_label": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "defective_restocking",
+      "source": "policy_owner",
+      "channel": "system",
+      "content": "Effective now, the restocking fee also applies to opened defective electronics.",
+      "edits": [
+        {
+          "clause": "R3",
+          "define": {
+            "fee": [
+              "if",
+              [
+                "and",
+                "opened",
+                [
+                  "==",
+                  "category",
+                  [
+                    "q",
+                    "electronics"
+                  ]
+                ]
+              ],
+              [
+                "*",
+                "price",
+                [
+                  "/",
+                  "restocking_fee_pct",
+                  100
+                ]
+              ],
+              0
+            ]
+          }
+        }
+      ]
     }
-  ]
+  ],
+  "charter": {
+    "about": "Rules of change for this policy: who may cause which behavioral effects, by what procedure, and what no change may break.",
+    "domains": {
+      "pricing": {
+        "actions": [
+          "refund",
+          "ledger",
+          "notify",
+          "loyalty"
+        ],
+        "channels": [
+          "content"
+        ],
+        "args": [
+          "amount"
+        ],
+        "where": [
+          "!=",
+          "reason",
+          [
+            "q",
+            "defective"
+          ]
+        ],
+        "text": "Amounts on non-defective returns."
+      },
+      "eligibility": {
+        "actions": [
+          "deny",
+          "refund",
+          "ledger",
+          "label",
+          "loyalty",
+          "exchange",
+          "notify"
+        ],
+        "channels": [
+          "obligation",
+          "permission",
+          "content"
+        ],
+        "text": "Which returns are accepted, and what follows from that.",
+        "args": [
+          "reason",
+          "outcome",
+          "amount",
+          "credit"
+        ]
+      },
+      "fulfillment": {
+        "actions": [
+          "label"
+        ],
+        "channels": [
+          "obligation",
+          "permission",
+          "content"
+        ],
+        "text": "Return labels."
+      },
+      "offers": {
+        "actions": [
+          "exchange",
+          "loyalty"
+        ],
+        "channels": [
+          "obligation",
+          "permission",
+          "content"
+        ],
+        "text": "Exchanges and loyalty credit."
+      },
+      "communications": {
+        "actions": [
+          "notify"
+        ],
+        "channels": [
+          "content"
+        ],
+        "args": [
+          "channel"
+        ],
+        "text": "How the customer is told."
+      },
+      "defective_remedies": {
+        "actions": [
+          "refund",
+          "ledger",
+          "notify",
+          "label"
+        ],
+        "channels": [
+          "obligation",
+          "permission",
+          "content"
+        ],
+        "where": [
+          "==",
+          "reason",
+          [
+            "q",
+            "defective"
+          ]
+        ],
+        "text": "Remedies for defective goods (consumer protection)."
+      }
+    },
+    "grants": {
+      "policy_owner": [
+        "pricing",
+        "eligibility",
+        "fulfillment",
+        "offers",
+        "communications"
+      ],
+      "pricing_team": [
+        "pricing"
+      ],
+      "consumer_protection": [
+        "defective_remedies"
+      ],
+      "customer": [
+        "communications"
+      ]
+    },
+    "procedures": [
+      {
+        "id": "P-eligibility",
+        "domains": [
+          "eligibility",
+          "defective_remedies"
+        ],
+        "approvers": [
+          "policy_owner",
+          "legal",
+          "consumer_protection"
+        ],
+        "approvals_min": 2,
+        "review_days": 7
+      },
+      {
+        "id": "P-default",
+        "domains": "*",
+        "approvers": [
+          "policy_owner",
+          "pricing_team",
+          "consumer_protection",
+          "legal",
+          "customer"
+        ],
+        "approvals_min": 1,
+        "review_days": 0
+      }
+    ],
+    "no_retroactivity": true,
+    "invariants": [
+      {
+        "id": "INV-final-sale",
+        "text": "Final-sale items are never refunded.",
+        "kind": "modality",
+        "when": [
+          "==",
+          "category",
+          [
+            "q",
+            "final_sale"
+          ]
+        ],
+        "step": "refund",
+        "modality_in": [
+          "F"
+        ]
+      },
+      {
+        "id": "INV-refund-cap",
+        "text": "A refund never exceeds the price.",
+        "kind": "bound",
+        "step": "refund",
+        "arg": "amount",
+        "op": "<=",
+        "rhs": "price",
+        "rhs_text": "price"
+      },
+      {
+        "id": "INV-defective-full",
+        "text": "Defective items returned within the window are refunded in full.",
+        "kind": "bound",
+        "when": [
+          "and",
+          [
+            "==",
+            "reason",
+            [
+              "q",
+              "defective"
+            ]
+          ],
+          "eligible"
+        ],
+        "step": "refund",
+        "arg": "amount",
+        "op": "==",
+        "rhs": "price",
+        "rhs_text": "price"
+      },
+      {
+        "id": "INV-notice",
+        "text": "Every return gets an outcome notice.",
+        "kind": "modality",
+        "step": "notify",
+        "modality_in": [
+          "O"
+        ]
+      }
+    ],
+    "entrenched": [
+      "INV-final-sale",
+      "INV-refund-cap",
+      "INV-defective-full"
+    ],
+    "amendment": {
+      "approvers": [
+        "policy_owner",
+        "legal",
+        "consumer_protection"
+      ],
+      "approvals_min": 3,
+      "review_days": 30
+    }
+  }
 }

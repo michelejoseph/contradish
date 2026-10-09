@@ -50,6 +50,22 @@
       "agent": "witness:leaky",
       "title": "Frame switch with leakage: Leviticus 11 -> Mark 7:19 / Acts 10:15 (simplified readings)",
       "summary": "An assistant acting under a declared frame is told the person now follows another. The agent adopts the new frame but keeps flagging conflicts that only the old frame recognizes. Frames are simplified readings of cited passages, not statements about any community."
+    },
+    {
+      "id": "EX-0007",
+      "file": "EX-0007.json",
+      "kind": "legitimacy_certificate (not legitimate)",
+      "agent": "(no agent: the change itself)",
+      "title": "Authorized by clause, unauthorized by effect: a pricing edit that reaches labels and defective refunds",
+      "summary": "The pricing team edits only clause R5, which it owns, so clause-level authority passes. The exact difference shows the edit also changes return labels and defective-goods refunds, domains it was never granted, and it breaks the entrenched invariant that defective items returned in the window are refunded in full (witness: a defective item priced $0.01)."
+    },
+    {
+      "id": "EX-0008",
+      "file": "EX-0008.json",
+      "kind": "run_certificate (verified, legitimate change)",
+      "agent": "witness:faithful",
+      "title": "End to end: a legitimate change, then proof the agent carried it out exactly",
+      "summary": "The policy owner extends the return window with legal's approval and a review period: provenance, procedure, authority by effect and every invariant pass (embedded legitimacy certificate). The agent is then exercised in every region of the scoped difference; every required change happened and every unaffected constraint held. The checker re-verifies both."
     }
   ]
 }

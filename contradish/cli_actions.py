@@ -22,8 +22,13 @@ VERIFIES = ("Contradish verifies that consequential AI actions and obligations r
             "authenticated governing-state transitions, proving required changes and preservation of unaffected "
             "constraints within an explicitly defined verification scope.")
 
+LEGITIMACY = ("Contradish verifies that every change to an AI agent's governing specification is legitimate "
+              "(authentic, procedurally valid, authorized by its effects, and within entrenched constraints) and "
+              "that the agent's behavior then follows it exactly, within an explicit verification scope.")
+
 ABOUT = {
     "name": "contradish",
+    "legitimacy": LEGITIMACY,
     "verifies": VERIFIES,
     "top_line": "Contradish measures whether AI transitions remain faithful to their governing information.",
     "principle": "Change what truth requires. Preserve what truth does not require changing.",
@@ -33,7 +38,8 @@ ABOUT = {
     "attribution": "Behavioral Update Fidelity was introduced by Michele Joseph in 2026.",
     "also_introduced_by_the_author": ["CAI Strain", "CAI-Bench", "the policy evaluation contract",
                                       "the transition contract", "action-level transition verification",
-                                      "whole-run warranted-transition proofs", "the perspective atlas"],
+                                      "whole-run warranted-transition proofs", "the perspective atlas",
+                                      "authority by behavioral effect"],
     "repository": "https://github.com/michelejoseph/contradish",
     "website": "https://contradish.com",
     "license": "MIT",
@@ -45,6 +51,7 @@ ABOUT = {
         "complete difference of two versions": "contradish versions demo --update exchange_closed_late",
         "whole-run proof": "contradish versions certify v1.pin.json v2.pin.json --app mymodule:chat",
         "alternative frames": "contradish perspectives atlas",
+        "is a change legitimate": "contradish legitimacy demo",
         "inspect a verified failure": "contradish exhibits show EX-0001",
         "re-verify independently": "contradish exhibits verify",
         "run CAI-Bench": "contradish benchmark --model <model> --provider anthropic|openai",
@@ -122,7 +129,11 @@ def register(sub) -> None:
             "obligation changes. `contradish evidence check run.json` re-derives everything independently."
         ),
     )
-    vs.add_argument("versions_cmd", choices=["pin", "diff", "certify", "demo", "keygen"])
+    vs.add_argument("versions_cmd", choices=["pin", "diff", "certify", "demo", "keygen", "approve"])
+    vs.add_argument("--role", default=None, help="approve: the approving role")
+    vs.add_argument("--key", default=None, metavar="KEY.json", help="approve: the role's key")
+    vs.add_argument("--proposed-at", dest="proposed_at", default=None, help="pin: ISO date proposed")
+    vs.add_argument("--effective-at", dest="effective_at", default=None, help="pin: ISO date effective")
     vs.add_argument("files", nargs="*")
     vs.add_argument("--id", default=None)
     vs.add_argument("--verified-by", dest="verified_by", default=None)
@@ -143,6 +154,28 @@ def register(sub) -> None:
     vs.add_argument("--trials", type=int, default=None, help="certify: runs per region (overrides the scope)")
     vs.add_argument("--out", default=None)
     vs.add_argument("--json", action="store_true", default=False)
+
+    lg = sub.add_parser(
+        "legitimacy",
+        help="Is a change to the governing specification legitimate? Provenance, procedure, authority by "
+             "effect, and invariants proved over every situation.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=(
+            "  contradish legitimacy demo                         (all built-in cases)\n"
+            "  contradish legitimacy demo --case pricing_prepaid_cut\n"
+            "  contradish legitimacy check v1.pin.json v2.pin.json --trust <pubkey> --out legit.json\n"
+            "  contradish versions approve v2.pin.json --key legal.key.json --role legal --out v2.pin.json\n\n"
+            "The rules of change live in the specification's `charter`: domains of behavioral effect granted\n"
+            "to roles, approval procedures, entrenched invariants, and how the charter itself may be amended.\n"
+            "docs/BUF-SPEC.md section 15."
+        ),
+    )
+    lg.add_argument("legitimacy_cmd", choices=["demo", "check"])
+    lg.add_argument("files", nargs="*")
+    lg.add_argument("--case", default=None)
+    lg.add_argument("--trust", action="append", default=[], metavar="PUBKEY_HEX")
+    lg.add_argument("--out", default=None)
+    lg.add_argument("--json", action="store_true", default=False)
 
     pp = sub.add_parser(
         "perspectives",
@@ -171,7 +204,8 @@ def _program_args(p) -> None:
     p.add_argument("--update", default=None, help="Built-in update id or an update .json path.")
 
 
-COMMANDS = ("about", "actions", "counterexample", "evidence", "exhibits", "cai-bench", "versions", "perspectives")
+COMMANDS = ("about", "actions", "counterexample", "evidence", "exhibits", "cai-bench", "versions", "perspectives",
+            "legitimacy")
 
 
 def dispatch(args) -> bool:
@@ -179,7 +213,7 @@ def dispatch(args) -> bool:
         return False
     {"about": cmd_about, "actions": cmd_actions, "counterexample": cmd_counterexample,
      "evidence": cmd_evidence, "exhibits": cmd_exhibits, "cai-bench": cmd_cai_bench,
-     "versions": cmd_versions, "perspectives": cmd_perspectives}[args.command](args)
+     "versions": cmd_versions, "perspectives": cmd_perspectives, "legitimacy": cmd_legitimacy}[args.command](args)
     return True
 
 
@@ -238,6 +272,7 @@ def cmd_about(args) -> None:
         print(json.dumps(info, indent=2))
         return
     print(info["top_line"])
+    print(info["legitimacy"])
     print(info["verifies"])
     print(info["principle"])
     print()
@@ -361,6 +396,8 @@ def _rerun(cert: dict) -> list:
     prov = cert.get("provenance", {})
     if str(cert.get("schema", "")).startswith("contradish.run_certificate/"):
         return _rerun_run(cert)
+    if str(cert.get("schema", "")).startswith("contradish.legitimacy_certificate/"):
+        return []          # fully determined by its inputs; the checker re-derives it
     if prov.get("agent_kind") != "scripted" or not str(prov.get("agent", "")).startswith("witness:"):
         return ["--rerun applies to scripted witness agents only; a model's replies are checked from the raw text"]
     agent = witness_agent(prov["agent"].split(":", 1)[1])
@@ -390,12 +427,14 @@ def _rerun(cert: dict) -> list:
 
 
 def cmd_evidence(args) -> None:
-    from contradish.evidence_check import check, check_run
+    from contradish.evidence_check import check, check_legitimacy, check_run
     results = []
     for path in args.files:
         with open(path) as f:
             cert = json.load(f)
-        r = check_run(cert) if str(cert.get("schema", "")).startswith("contradish.run_certificate/") else check(cert)
+        sch = str(cert.get("schema", ""))
+        r = (check_run(cert) if sch.startswith("contradish.run_certificate/") else
+             check_legitimacy(cert) if sch.startswith("contradish.legitimacy_certificate/") else check(cert))
         if args.rerun and r["verdict"] == "VERIFIED":
             extra = _rerun(cert)
             hard = [x for x in extra if x.startswith("rerun:")]
@@ -433,10 +472,15 @@ def _index() -> list:
 
 
 def cmd_exhibits(args) -> None:
-    from contradish.evidence_check import check as _check1, check_run
+    from contradish.evidence_check import check as _check1, check_legitimacy, check_run
 
     def check(cert):
-        return check_run(cert) if str(cert.get("schema", "")).startswith("contradish.run_certificate/") else _check1(cert)
+        sch = str(cert.get("schema", ""))
+        if sch.startswith("contradish.run_certificate/"):
+            return check_run(cert)
+        if sch.startswith("contradish.legitimacy_certificate/"):
+            return check_legitimacy(cert)
+        return _check1(cert)
     ex = _index()
     if args.exhibits_cmd == "path":
         print(EXHIBITS_DIR)
@@ -496,6 +540,8 @@ def cmd_exhibits(args) -> None:
             if isinstance(c, dict) and "verified" in c:
                 tag = "  [claim: " + ("verified" if c["verified"] else "proved, not authenticated" if c["proved"]
                                       else "NOT proved") + "]"
+            elif "legitimate" in cert:
+                tag = "  [change: " + ("legitimate" if cert["legitimate"] else "NOT legitimate") + "]"
             print(f"{verdict}  {e['id']}  {e['title']}{tag}")
             for x in r["problems"] + hard:
                 print(f"  problem: {x}")
@@ -617,6 +663,17 @@ def cmd_versions(args) -> None:
         else:
             print(json.dumps(k, indent=2))
         return
+    if args.versions_cmd == "approve":
+        from contradish.charter import approve_pin
+        if len(args.files) != 1 or not (args.key and args.role):
+            sys.exit("usage: contradish versions approve V2.pin.json --key KEY.json --role ROLE [--out F]")
+        pv = read_pin(args.files[0])
+        with open(args.key) as f:
+            approve_pin(pv, json.load(f), args.role)
+        with open(args.out or args.files[0], "w") as f:
+            f.write(json.dumps(pv.to_dict(), indent=2, sort_keys=True) + "\n")
+        print(f"{args.role} approved {pv.id} -> {args.out or args.files[0]}")
+        return
     if args.versions_cmd == "pin":
         if len(args.files) != 1 or not (args.id and args.verified_by and args.method):
             sys.exit("usage: contradish versions pin PROGRAM.json --id ID --verified-by WHO --method HOW "
@@ -626,7 +683,8 @@ def cmd_versions(args) -> None:
         spec.pop("updates", None)
         sup = read_pin(args.supersedes).digest if args.supersedes else None
         pv = pin(PolicyProgram(spec), args.id, args.verified_by, args.method, evidence=args.evidence,
-                 issued_by=args.issued_by, supersedes=sup)
+                 issued_by=args.issued_by, supersedes=sup, proposed_at=args.proposed_at,
+                 effective_at=args.effective_at)
         if args.sign:
             with open(args.sign) as f:
                 sign_pin(pv, json.load(f))
@@ -739,3 +797,71 @@ def cmd_perspectives(args) -> None:
     print("   from \\ to " + " ".join(f"[{j + 1}]".rjust(4) for j in range(len(ids))))
     for i, x in enumerate(ids):
         print(f"   [{i + 1}]".ljust(13) + " " + " ".join((" yes" if m[(x, y)]["proved"] else "  NO") for y in ids))
+
+
+def _print_legitimacy(c: dict, desc: str = "") -> None:
+    print(c["statement"])
+    if desc:
+        print(f"  ({desc})")
+    ck = c["checks"]
+    mark = lambda b: "pass" if b else "FAIL"
+    a = c["authentication"]
+    print(f"  provenance           {mark(ck['provenance'])}" + ("" if ck["provenance"] else f"  {'; '.join(a['reasons'])}"))
+    pr = c["procedure"]
+    print(f"  procedure            {mark(ck['procedure'])}  approved by {pr['approved_by'] or 'nobody'}")
+    for r in pr["rules"]:
+        print(f"      {r['id']}: {len(r['approved_by'])}/{r['approvals_required']} of {r['approvers']}"
+              f"{'' if r['approvals_ok'] else ' (too few)'}; review {r['review_days_required']}d "
+              f"{'ok' if r['review_ok'] else 'NOT met'}")
+    e = c["effects"]
+    cl = c["clause_level_authority"]["status"]
+    print(f"  authority by effect  {mark(ck['authority_by_effect'])}  issuer {e['issuer']!r} granted {e['granted_domains']}"
+          f"   (clause-level authority alone: {cl})")
+    for x in e["unauthorized"][:6]:
+        print(f"      outside grant: {x['step']} {x['channel']} {x['change']} {x['args'] or ''} in {x['regions']} regions,"
+              f" licensable only by {x['domains'] or 'no domain'}; e.g. {x['example']}")
+    print(f"  invariants           {mark(ck['invariants'])}  (proved over all {e['regions']} regions)")
+    for i in c["invariants"]:
+        line = f"      {'entrenched ' if i['entrenched'] else ''}{i['id']}: {'holds' if i['holds'] else 'VIOLATED'}"
+        if not i["holds"]:
+            v = i["violations"][0]
+            line += f" at {v['situation']} ({v['found']})"
+        print(line)
+    if c["charter_amendment"]:
+        am = c["charter_amendment"]
+        print(f"  charter amendment    {mark(ck['charter_amendment'])}  entrenched altered/removed: "
+              f"{am['entrenched_altered_or_removed'] or 'none'}")
+
+
+def cmd_legitimacy(args) -> None:
+    from contradish.charter import DEMO_CASES, demo_transition, legitimacy_certificate
+    from contradish.evidence import save
+    from contradish.versions import load_pinned
+    if args.legitimacy_cmd == "demo":
+        cases = [args.case] if args.case else list(DEMO_CASES)
+        for case in cases:
+            v1, v2, anchors, desc = demo_transition(case)
+            c = legitimacy_certificate(v1, v2, anchors)
+            if args.json:
+                print(json.dumps(c, indent=2, default=str))
+            else:
+                print(f"\n[{case}]")
+                _print_legitimacy(c, desc)
+            if args.out and len(cases) == 1:
+                save(c, args.out)
+        return
+    if len(args.files) != 2:
+        sys.exit("usage: contradish legitimacy check V1.pin.json V2.pin.json --trust PUBKEY [--out F]")
+    with open(args.files[0]) as f:
+        v1 = load_pinned(json.load(f))
+    with open(args.files[1]) as f:
+        v2 = load_pinned(json.load(f))
+    c = legitimacy_certificate(v1, v2, args.trust)
+    if args.out:
+        save(c, args.out)
+    if args.json:
+        print(json.dumps(c, indent=2, default=str))
+    else:
+        _print_legitimacy(c)
+        if args.out:
+            print(f"  certificate: {args.out}   (independent check: contradish evidence check {args.out})")

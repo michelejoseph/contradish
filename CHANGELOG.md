@@ -4,6 +4,32 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [1.62.0] - 2026-10-09
+
+Contradish now verifies the legitimacy of the change, not only obedience to it:
+"Contradish verifies that every change to an AI agent's governing specification is legitimate (authentic, procedurally valid, authorized by its effects, and within entrenched constraints) and that the agent's behavior then follows it exactly, within an explicit verification scope."
+
+### Added
+
+- **`contradish/charter.py`: the charter**, a specification's machine-readable rules of change. It defines:
+  - domains of behavioral effect (actions × channels × arguments × situation condition);
+  - grants of domains to roles;
+  - approval procedures (k of n role signatures, review period, no retroactivity);
+  - invariants (modality and bound);
+  - entrenched invariants;
+  - the procedure for amending the charter itself.
+- **Authority by effect.** `derive_effects` splits the exact symbolic difference into per-region, per-argument effects and works out which domains license each one. A change must be licensed for every effect it has, not just every clause it edits. Clause-level authority is reported alongside for comparison.
+- **Invariants proved over the whole situation space.** Modality invariants are checked per region. Bound invariants are checked exactly at the extreme grid situations of each region, and every violation comes with a witness.
+- **Legitimacy certificate** (`contradish.legitimacy_certificate/1.0`) covering provenance, procedure, authority by effect, invariants and charter amendment. `approve_pin` adds role approvals. Pins gain `proposed_at` and `effective_at`.
+- **Independent checker** `check_legitimacy`. It re-derives the augmented decomposition, the effects and their licensing, the approvals and signatures, the procedure, every invariant (by its own vertex check) and the amendment.
+- **Run certificates can embed a legitimacy certificate.** `verified` then also requires the change to be legitimate, and the checker re-checks the chain.
+- **Built-in charter** for the returns policy, with roles legal, consumer_protection and pricing_team, plus six demonstration cases (`contradish legitimacy demo`).
+- **CLI:** `contradish legitimacy demo|check`, `contradish versions approve`, and `versions pin --proposed-at --effective-at`.
+- **Exhibits:**
+  - EX-0007: authorized by clause, unauthorized by effect, and an entrenched invariant broken.
+  - EX-0008: a legitimate change followed by a verified run.
+- `docs/BUF-SPEC.md` §15. `tests/test_legitimacy.py` (13 tests).
+
 ## [1.61.0] - 2026-10-09
 
 Contradish now answers its verification claim in full:

@@ -1,9 +1,239 @@
 {
   "after": {
-    "digest": "sha256:b7832f9c8c71222c7afb2b0074821459d3a22143bf7de8be617b058f7104dfed",
+    "digest": "sha256:fc52519db01032f405b5996133e761fcc4137412538a21825b8edcc3c0df5a34",
     "id": "returns-v2-exchange-closed-late",
     "issued_by": "policy_owner",
     "program": {
+      "charter": {
+        "about": "Rules of change for this policy: who may cause which behavioral effects, by what procedure, and what no change may break.",
+        "amendment": {
+          "approvals_min": 3,
+          "approvers": [
+            "policy_owner",
+            "legal",
+            "consumer_protection"
+          ],
+          "review_days": 30
+        },
+        "domains": {
+          "communications": {
+            "actions": [
+              "notify"
+            ],
+            "args": [
+              "channel"
+            ],
+            "channels": [
+              "content"
+            ],
+            "text": "How the customer is told."
+          },
+          "defective_remedies": {
+            "actions": [
+              "refund",
+              "ledger",
+              "notify",
+              "label"
+            ],
+            "channels": [
+              "obligation",
+              "permission",
+              "content"
+            ],
+            "text": "Remedies for defective goods (consumer protection).",
+            "where": [
+              "==",
+              "reason",
+              [
+                "q",
+                "defective"
+              ]
+            ]
+          },
+          "eligibility": {
+            "actions": [
+              "deny",
+              "refund",
+              "ledger",
+              "label",
+              "loyalty",
+              "exchange",
+              "notify"
+            ],
+            "args": [
+              "reason",
+              "outcome",
+              "amount",
+              "credit"
+            ],
+            "channels": [
+              "obligation",
+              "permission",
+              "content"
+            ],
+            "text": "Which returns are accepted, and what follows from that."
+          },
+          "fulfillment": {
+            "actions": [
+              "label"
+            ],
+            "channels": [
+              "obligation",
+              "permission",
+              "content"
+            ],
+            "text": "Return labels."
+          },
+          "offers": {
+            "actions": [
+              "exchange",
+              "loyalty"
+            ],
+            "channels": [
+              "obligation",
+              "permission",
+              "content"
+            ],
+            "text": "Exchanges and loyalty credit."
+          },
+          "pricing": {
+            "actions": [
+              "refund",
+              "ledger",
+              "notify",
+              "loyalty"
+            ],
+            "args": [
+              "amount"
+            ],
+            "channels": [
+              "content"
+            ],
+            "text": "Amounts on non-defective returns.",
+            "where": [
+              "!=",
+              "reason",
+              [
+                "q",
+                "defective"
+              ]
+            ]
+          }
+        },
+        "entrenched": [
+          "INV-final-sale",
+          "INV-refund-cap",
+          "INV-defective-full"
+        ],
+        "grants": {
+          "consumer_protection": [
+            "defective_remedies"
+          ],
+          "customer": [
+            "communications"
+          ],
+          "policy_owner": [
+            "pricing",
+            "eligibility",
+            "fulfillment",
+            "offers",
+            "communications"
+          ],
+          "pricing_team": [
+            "pricing"
+          ]
+        },
+        "invariants": [
+          {
+            "id": "INV-final-sale",
+            "kind": "modality",
+            "modality_in": [
+              "F"
+            ],
+            "step": "refund",
+            "text": "Final-sale items are never refunded.",
+            "when": [
+              "==",
+              "category",
+              [
+                "q",
+                "final_sale"
+              ]
+            ]
+          },
+          {
+            "arg": "amount",
+            "id": "INV-refund-cap",
+            "kind": "bound",
+            "op": "<=",
+            "rhs": "price",
+            "rhs_text": "price",
+            "step": "refund",
+            "text": "A refund never exceeds the price."
+          },
+          {
+            "arg": "amount",
+            "id": "INV-defective-full",
+            "kind": "bound",
+            "op": "==",
+            "rhs": "price",
+            "rhs_text": "price",
+            "step": "refund",
+            "text": "Defective items returned within the window are refunded in full.",
+            "when": [
+              "and",
+              [
+                "==",
+                "reason",
+                [
+                  "q",
+                  "defective"
+                ]
+              ],
+              "eligible"
+            ]
+          },
+          {
+            "id": "INV-notice",
+            "kind": "modality",
+            "modality_in": [
+              "O"
+            ],
+            "step": "notify",
+            "text": "Every return gets an outcome notice."
+          }
+        ],
+        "no_retroactivity": true,
+        "procedures": [
+          {
+            "approvals_min": 2,
+            "approvers": [
+              "policy_owner",
+              "legal",
+              "consumer_protection"
+            ],
+            "domains": [
+              "eligibility",
+              "defective_remedies"
+            ],
+            "id": "P-eligibility",
+            "review_days": 7
+          },
+          {
+            "approvals_min": 1,
+            "approvers": [
+              "policy_owner",
+              "pricing_team",
+              "consumer_protection",
+              "legal",
+              "customer"
+            ],
+            "domains": "*",
+            "id": "P-default",
+            "review_days": 0
+          }
+        ]
+      },
       "clauses": {
         "C1": {
           "params": {
@@ -389,11 +619,27 @@
       ],
       "schema": "contradish.policy_program/1.0",
       "sources": {
+        "consumer_protection": {
+          "governs": [],
+          "key_note": "contradish public fixture key; replace with your own",
+          "keys": [
+            "ed179feeca4e3b8207874c89dcf6dc8cbe9cd643a61ffe4fb4cb9bfe0c571897"
+          ],
+          "role": "consumer_protection"
+        },
         "customer": {
           "governs": [
             "C1"
           ],
           "role": "user"
+        },
+        "legal": {
+          "governs": [],
+          "key_note": "contradish public fixture key; replace with your own",
+          "keys": [
+            "5134905c4e15032864a216e4dcb32c3e244c2f16df626ef7566837a8342cfada"
+          ],
+          "role": "legal"
         },
         "policy_owner": {
           "governs": [
@@ -404,6 +650,18 @@
             "145ac8574457b164c46db7b0743406f2a0a4925337134af21cda52f5bb377525"
           ],
           "role": "policy_owner"
+        },
+        "pricing_team": {
+          "governs": [
+            "R3",
+            "R4",
+            "R5"
+          ],
+          "key_note": "contradish public fixture key; replace with your own",
+          "keys": [
+            "e57615ad45290b5f4dc33334dff3b0ef7c2f55922c523665907649796df55e70"
+          ],
+          "role": "pricing_team"
         },
         "tool_output": {
           "governs": [],
@@ -417,9 +675,9 @@
     "signature": {
       "alg": "ed25519",
       "key": "145ac8574457b164c46db7b0743406f2a0a4925337134af21cda52f5bb377525",
-      "sig": "a26c199ae874f7233205510bdebcc5b8d07e443127e74d0a09936a4df0226d8136dc1497d6ff08898067e9370d65cf5aa426ff1f45caca382c3a304e7fe8cf07"
+      "sig": "c2c1626f701d4a47945de1b0f1819aa572ee3f0beccb8a02e2e979e675e9fee720cc70ffaf3f9652e2760a0957b4515371c2fc2ac5cb5020e2dd95c98ff38504"
     },
-    "supersedes": "sha256:32f7bbbcfc839c354c59c0e5e765f185cb314490d7f10dc0bdb14363b6c8bb1a",
+    "supersedes": "sha256:49e443f97862f0c69928da4d27f814f3b5f8fb43e329e4019e9aeeb1af5f7fc4",
     "verification": {
       "date": "2026-10-09",
       "evidence": "",
@@ -447,9 +705,239 @@
     "v2_signed": true
   },
   "before": {
-    "digest": "sha256:32f7bbbcfc839c354c59c0e5e765f185cb314490d7f10dc0bdb14363b6c8bb1a",
+    "digest": "sha256:49e443f97862f0c69928da4d27f814f3b5f8fb43e329e4019e9aeeb1af5f7fc4",
     "id": "returns-v1",
     "program": {
+      "charter": {
+        "about": "Rules of change for this policy: who may cause which behavioral effects, by what procedure, and what no change may break.",
+        "amendment": {
+          "approvals_min": 3,
+          "approvers": [
+            "policy_owner",
+            "legal",
+            "consumer_protection"
+          ],
+          "review_days": 30
+        },
+        "domains": {
+          "communications": {
+            "actions": [
+              "notify"
+            ],
+            "args": [
+              "channel"
+            ],
+            "channels": [
+              "content"
+            ],
+            "text": "How the customer is told."
+          },
+          "defective_remedies": {
+            "actions": [
+              "refund",
+              "ledger",
+              "notify",
+              "label"
+            ],
+            "channels": [
+              "obligation",
+              "permission",
+              "content"
+            ],
+            "text": "Remedies for defective goods (consumer protection).",
+            "where": [
+              "==",
+              "reason",
+              [
+                "q",
+                "defective"
+              ]
+            ]
+          },
+          "eligibility": {
+            "actions": [
+              "deny",
+              "refund",
+              "ledger",
+              "label",
+              "loyalty",
+              "exchange",
+              "notify"
+            ],
+            "args": [
+              "reason",
+              "outcome",
+              "amount",
+              "credit"
+            ],
+            "channels": [
+              "obligation",
+              "permission",
+              "content"
+            ],
+            "text": "Which returns are accepted, and what follows from that."
+          },
+          "fulfillment": {
+            "actions": [
+              "label"
+            ],
+            "channels": [
+              "obligation",
+              "permission",
+              "content"
+            ],
+            "text": "Return labels."
+          },
+          "offers": {
+            "actions": [
+              "exchange",
+              "loyalty"
+            ],
+            "channels": [
+              "obligation",
+              "permission",
+              "content"
+            ],
+            "text": "Exchanges and loyalty credit."
+          },
+          "pricing": {
+            "actions": [
+              "refund",
+              "ledger",
+              "notify",
+              "loyalty"
+            ],
+            "args": [
+              "amount"
+            ],
+            "channels": [
+              "content"
+            ],
+            "text": "Amounts on non-defective returns.",
+            "where": [
+              "!=",
+              "reason",
+              [
+                "q",
+                "defective"
+              ]
+            ]
+          }
+        },
+        "entrenched": [
+          "INV-final-sale",
+          "INV-refund-cap",
+          "INV-defective-full"
+        ],
+        "grants": {
+          "consumer_protection": [
+            "defective_remedies"
+          ],
+          "customer": [
+            "communications"
+          ],
+          "policy_owner": [
+            "pricing",
+            "eligibility",
+            "fulfillment",
+            "offers",
+            "communications"
+          ],
+          "pricing_team": [
+            "pricing"
+          ]
+        },
+        "invariants": [
+          {
+            "id": "INV-final-sale",
+            "kind": "modality",
+            "modality_in": [
+              "F"
+            ],
+            "step": "refund",
+            "text": "Final-sale items are never refunded.",
+            "when": [
+              "==",
+              "category",
+              [
+                "q",
+                "final_sale"
+              ]
+            ]
+          },
+          {
+            "arg": "amount",
+            "id": "INV-refund-cap",
+            "kind": "bound",
+            "op": "<=",
+            "rhs": "price",
+            "rhs_text": "price",
+            "step": "refund",
+            "text": "A refund never exceeds the price."
+          },
+          {
+            "arg": "amount",
+            "id": "INV-defective-full",
+            "kind": "bound",
+            "op": "==",
+            "rhs": "price",
+            "rhs_text": "price",
+            "step": "refund",
+            "text": "Defective items returned within the window are refunded in full.",
+            "when": [
+              "and",
+              [
+                "==",
+                "reason",
+                [
+                  "q",
+                  "defective"
+                ]
+              ],
+              "eligible"
+            ]
+          },
+          {
+            "id": "INV-notice",
+            "kind": "modality",
+            "modality_in": [
+              "O"
+            ],
+            "step": "notify",
+            "text": "Every return gets an outcome notice."
+          }
+        ],
+        "no_retroactivity": true,
+        "procedures": [
+          {
+            "approvals_min": 2,
+            "approvers": [
+              "policy_owner",
+              "legal",
+              "consumer_protection"
+            ],
+            "domains": [
+              "eligibility",
+              "defective_remedies"
+            ],
+            "id": "P-eligibility",
+            "review_days": 7
+          },
+          {
+            "approvals_min": 1,
+            "approvers": [
+              "policy_owner",
+              "pricing_team",
+              "consumer_protection",
+              "legal",
+              "customer"
+            ],
+            "domains": "*",
+            "id": "P-default",
+            "review_days": 0
+          }
+        ]
+      },
       "clauses": {
         "C1": {
           "params": {
@@ -823,11 +1311,27 @@
       ],
       "schema": "contradish.policy_program/1.0",
       "sources": {
+        "consumer_protection": {
+          "governs": [],
+          "key_note": "contradish public fixture key; replace with your own",
+          "keys": [
+            "ed179feeca4e3b8207874c89dcf6dc8cbe9cd643a61ffe4fb4cb9bfe0c571897"
+          ],
+          "role": "consumer_protection"
+        },
         "customer": {
           "governs": [
             "C1"
           ],
           "role": "user"
+        },
+        "legal": {
+          "governs": [],
+          "key_note": "contradish public fixture key; replace with your own",
+          "keys": [
+            "5134905c4e15032864a216e4dcb32c3e244c2f16df626ef7566837a8342cfada"
+          ],
+          "role": "legal"
         },
         "policy_owner": {
           "governs": [
@@ -838,6 +1342,18 @@
             "145ac8574457b164c46db7b0743406f2a0a4925337134af21cda52f5bb377525"
           ],
           "role": "policy_owner"
+        },
+        "pricing_team": {
+          "governs": [
+            "R3",
+            "R4",
+            "R5"
+          ],
+          "key_note": "contradish public fixture key; replace with your own",
+          "keys": [
+            "e57615ad45290b5f4dc33334dff3b0ef7c2f55922c523665907649796df55e70"
+          ],
+          "role": "pricing_team"
         },
         "tool_output": {
           "governs": [],
@@ -851,7 +1367,7 @@
     "signature": {
       "alg": "ed25519",
       "key": "145ac8574457b164c46db7b0743406f2a0a4925337134af21cda52f5bb377525",
-      "sig": "1dd8e2bb9edf4a017d768100a7c2175b0af10834a1a8efe4affd74e9971d3166ad01e1239a74934a418e410ced1187c48a4292b022f524cd177944fd1efd9f05"
+      "sig": "8ad81c0f1e6487c5b603c177b0cd2a3dd6c7345ec8d3e456cd5f503795e61d058667caf5c77ad4b0a435b1b457f05cf46637bc1117fe6c5ae032ce2446e1ed0e"
     },
     "verification": {
       "date": "2026-10-09",
@@ -866,9 +1382,10 @@
     "every_cell_exercised": true,
     "every_required_change_happened": true,
     "every_unrelated_obligation_held": true,
+    "legitimate": null,
     "per_region_violation_bound": 0.95,
     "proved": true,
-    "statement": "VERIFIED: across the authenticated governing-state transition returns-v1 (sha256:32f7bbbcfc83) -> returns-v2-exchange-closed-late (sha256:b7832f9c8c71), for every action, over price in {'min': 0, 'max': 1000}, with 1 trial(s) per region: every required change happened and every unaffected constraint was preserved. Per-region violation rate <= 0.95 at 95% confidence. Scope assumptions are listed in the certificate.",
+    "statement": "VERIFIED: across the authenticated governing-state transition returns-v1 (sha256:49e443f97862) -> returns-v2-exchange-closed-late (sha256:fc52519db010), for every action, over price in {'min': 0, 'max': 1000}, with 1 trial(s) per region: every required change happened and every unaffected constraint was preserved. Per-region violation rate <= 0.95 at 95% confidence. Scope assumptions are listed in the certificate.",
     "verified": true
   },
   "derivation": {
@@ -896,8 +1413,9 @@
       "step:exchange"
     ]
   },
-  "digest": "sha256:d9e49337557cab1594a804df5ae82e18110089a1c977ce7cf5019f570e154660",
+  "digest": "sha256:747e8013a8516c9b08444abdbf58f989e29103249af1bb7e20a78e6a5f70522e",
   "failures": [],
+  "legitimacy": null,
   "observations": [
     {
       "after": [
@@ -31489,7 +32007,7 @@
   "provenance": {
     "agent": "witness:faithful",
     "agent_kind": "scripted",
-    "created": "2026-10-09T20:40:18+00:00",
+    "created": "2026-10-09T20:57:05+00:00",
     "model": null
   },
   "result": {

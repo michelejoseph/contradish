@@ -352,14 +352,16 @@ from .versions import (
     pin, load_pinned, run_certificate, atlas, load_perspectives, sign_pin, new_key,
     authenticate_transition, VerificationScope,
 )
+from .charter import legitimacy_certificate, approve_pin, derive_effects
 
-__version__ = "1.61.0"
+__version__ = "1.62.0"
 __all__ = [
     "PolicyProgram", "ProgramUpdate", "Edit", "Call", "load_builtin_program",
     "derive_action_frontier", "verify_trajectories", "run_agent", "witness_agent", "llm_tool_agent",
     "ActionFrontier", "ActionTransitionResult", "minimize_unauthorized_change",
     "Norm", "diff_versions", "regions", "pin", "load_pinned", "run_certificate", "atlas", "load_perspectives",
     "sign_pin", "new_key", "authenticate_transition", "VerificationScope",
+    "legitimacy_certificate", "approve_pin", "derive_effects",
     "Suite",
     "RegressionSuite",
     "Firewall",

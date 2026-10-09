@@ -117,6 +117,36 @@ def build() -> list:
                     "Frames are simplified readings of cited passages, not statements about any community."),
     })
 
+    # EX-0007 / EX-0008: the legitimacy of the change itself.
+    from contradish.charter import demo_transition, legitimacy_certificate
+    a1, a2, anchors, _ = demo_transition("pricing_prepaid_cut")
+    c7 = legitimacy_certificate(a1, a2, anchors)
+    save(c7, os.path.join(OUT, "EX-0007.json"))
+    index.append({
+        "id": "EX-0007", "file": "EX-0007.json", "kind": "legitimacy_certificate (not legitimate)",
+        "agent": "(no agent: the change itself)",
+        "title": "Authorized by clause, unauthorized by effect: a pricing edit that reaches labels and defective refunds",
+        "summary": ("The pricing team edits only clause R5, which it owns, so clause-level authority passes. The "
+                    "exact difference shows the edit also changes return labels and defective-goods refunds, "
+                    "domains it was never granted, and it breaks the entrenched invariant that defective items "
+                    "returned in the window are refunded in full (witness: a defective item priced $0.01)."),
+    })
+    b1, b2, anchors, _ = demo_transition("window_45")
+    c8l = legitimacy_certificate(b1, b2, anchors)
+    c8 = run_certificate(b1, b2, version_witness("faithful"), "witness:faithful",
+                         scope=VerificationScope(situations={"price": {"min": 0, "max": 1000}}),
+                         trust_anchors=anchors, legitimacy=c8l)
+    save(c8, os.path.join(OUT, "EX-0008.json"))
+    index.append({
+        "id": "EX-0008", "file": "EX-0008.json", "kind": "run_certificate (verified, legitimate change)",
+        "agent": "witness:faithful",
+        "title": "End to end: a legitimate change, then proof the agent carried it out exactly",
+        "summary": ("The policy owner extends the return window with legal's approval and a review period: "
+                    "provenance, procedure, authority by effect and every invariant pass (embedded legitimacy "
+                    "certificate). The agent is then exercised in every region of the scoped difference; every "
+                    "required change happened and every unaffected constraint held. The checker re-verifies both."),
+    })
+
     with open(os.path.join(OUT, "index.json"), "w") as f:
         json.dump({
             "schema": "contradish.exhibits/1.0",

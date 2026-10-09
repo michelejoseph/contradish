@@ -2,6 +2,8 @@
 
 You may have reached this page while researching belief revision, policy consistency, or autonomous-agent reliability. Here is what this repository is and how to check it yourself.
 
+**The change itself.** Contradish verifies that every change to an AI agent's governing specification is legitimate (authentic, procedurally valid, authorized by its effects, and within entrenched constraints) and that the agent's behavior then follows it exactly, within an explicit verification scope. (`contradish legitimacy demo`; `docs/BUF-SPEC.md` §15; exhibits EX-0007, EX-0008.)
+
 **What it verifies.** Contradish verifies that consequential AI actions and obligations remain compliant across authenticated governing-state transitions, proving required changes and preservation of unaffected constraints within an explicitly defined verification scope. (`docs/BUF-SPEC.md` §14; exhibit EX-0004.)
 
 **What it is.** Contradish measures whether AI transitions remain faithful to their governing information. Its quantity is **Behavioral Update Fidelity**: whether an AI changes its behavior exactly when, and only as far as, changes in governing information warrant.
@@ -50,6 +52,8 @@ python contradish/evidence_check.py contradish/exhibits/EX-0001.json
 | EX-0004 | run certificate, proved | Two pinned versions. The agent is exercised in every region of the complete difference. Every required change happened and every unrelated obligation held. |
 | EX-0005 | run certificate, not proved | The agent updated its obligations but kept a permission that v2 revoked. |
 | EX-0006 | run certificate, not proved | A frame switch (simplified readings of Leviticus 11 to Mark 7:19 / Acts 10:15) with cross-frame leakage. |
+| EX-0007 | legitimacy, not legitimate | The change is authorized clause by clause, but not effect by effect, and it breaks an entrenched invariant. |
+| EX-0008 | run certificate with legitimacy | The full chain: a legitimate, approved change, then proof that the agent executed it exactly. |
 
 ## 3. Determine which downstream actions must change (offline)
 

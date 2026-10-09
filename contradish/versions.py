@@ -85,6 +85,9 @@ class PinnedVersion:
     issued_by: Optional[str] = None
     supersedes: Optional[str] = None
     signature: Optional[dict] = None     # {"alg": "ed25519", "key": hex, "sig": hex}
+    proposed_at: Optional[str] = None    # ISO date the change was proposed (a signed statement)
+    effective_at: Optional[str] = None   # ISO date it takes effect (a signed statement)
+    approvals: list = field(default_factory=list)   # [{"role", "key", "sig"}] over body()
 
     @property
     def digest(self) -> str:
@@ -98,23 +101,30 @@ class PinnedVersion:
             d["issued_by"] = self.issued_by
         if self.supersedes:
             d["supersedes"] = self.supersedes
+        if self.proposed_at:
+            d["proposed_at"] = self.proposed_at
+        if self.effective_at:
+            d["effective_at"] = self.effective_at
         return d
 
     def to_dict(self) -> dict:
         d = self.body()
         if self.signature:
             d["signature"] = dict(self.signature)
+        if self.approvals:
+            d["approvals"] = [dict(a) for a in self.approvals]
         return d
 
 
 def pin(program: PolicyProgram, id: str, verified_by: str, method: str, date: Optional[str] = None,
-        evidence: str = "", issued_by: Optional[str] = None, supersedes: Optional[str] = None) -> PinnedVersion:
+        evidence: str = "", issued_by: Optional[str] = None, supersedes: Optional[str] = None,
+        proposed_at: Optional[str] = None, effective_at: Optional[str] = None) -> PinnedVersion:
     """Pin a program with a record of its independent verification."""
     if not verified_by or not method:
         raise ValueError("a pinned version needs who verified it and how")
     rec = {"verified_by": verified_by, "method": method,
            "date": date or _dt.date.today().isoformat(), "evidence": evidence}
-    return PinnedVersion(id, program, rec, issued_by, supersedes)
+    return PinnedVersion(id, program, rec, issued_by, supersedes, None, proposed_at, effective_at)
 
 
 def load_pinned(d: dict) -> PinnedVersion:
@@ -127,7 +137,8 @@ def load_pinned(d: dict) -> PinnedVersion:
         if not (d.get("verification") or {}).get(k):
             raise ProgramError(f"pinned version {d.get('id')!r} lacks verification.{k}")
     return PinnedVersion(d["id"], prog, dict(d["verification"]), d.get("issued_by"), d.get("supersedes"),
-                         d.get("signature"))
+                         d.get("signature"), d.get("proposed_at"), d.get("effective_at"),
+                         [dict(a) for a in d.get("approvals") or []])
 
 
 def transition_authority(v1: PinnedVersion, v2: PinnedVersion) -> dict:
@@ -461,7 +472,8 @@ def _statement(v1, v2, scope: VerificationScope, proved: bool, authenticated: bo
 
 def run_certificate(v1: PinnedVersion, v2: PinnedVersion, agent, agent_name: str = "",
                     agent_kind: str = "scripted", model: Optional[str] = None,
-                    scope: Optional[VerificationScope] = None, trust_anchors: Optional[list] = None) -> dict:
+                    scope: Optional[VerificationScope] = None, trust_anchors: Optional[list] = None,
+                    legitimacy: Optional[dict] = None) -> dict:
     """
     Verify that the agent's consequential actions and obligations remain
     compliant across the governing-state transition v1 -> v2, within `scope`.
@@ -486,6 +498,12 @@ def run_certificate(v1: PinnedVersion, v2: PinnedVersion, agent, agent_name: str
     proved = (verdict["cells_covered"] == verdict["cells"] and not verdict["failures"])
     auth = authenticate_transition(v1, v2, trust_anchors)
     bound = _zero_failure_bound(scope.trials, scope.confidence) if proved else 1.0
+    legit_ok = None
+    if legitimacy is not None:
+        if (legitimacy.get("before", {}).get("digest") != v1.digest
+                or legitimacy.get("after", {}).get("digest") != v2.digest):
+            raise ProgramError("the legitimacy certificate is for a different transition")
+        legit_ok = bool(legitimacy.get("legitimate"))
     doc = {
         "schema": RUN_SCHEMA,
         "before": v1.to_dict(),
@@ -499,6 +517,7 @@ def run_certificate(v1: PinnedVersion, v2: PinnedVersion, agent, agent_name: str
             "changes": [{"step": k, **r} for k in steps for r in regions(diff, k)],
         },
         "observations": obs,
+        "legitimacy": legitimacy,
         "result": {k: v for k, v in verdict.items() if k != "failures"},
         "failures": verdict["failures"][:200],
         "claim": {
@@ -508,7 +527,8 @@ def run_certificate(v1: PinnedVersion, v2: PinnedVersion, agent, agent_name: str
             "every_required_change_happened": verdict["required_changes_made"] == verdict["required_changes"],
             "every_unrelated_obligation_held": verdict["preserved_held"] == verdict["preserved_cases"],
             "proved": proved,
-            "verified": proved and auth["authorized"],
+            "legitimate": legit_ok,
+            "verified": proved and auth["authorized"] and legit_ok is not False,
             "per_region_violation_bound": bound,
             "statement": _statement(v1, v2, scope, proved, auth["authorized"], bound),
         },

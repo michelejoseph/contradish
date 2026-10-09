@@ -1,0 +1,1724 @@
+{
+  "after": {
+    "digest": "sha256:770869ef7ae0de0b91e016ae78b4d9b39486705f170d80d0e3e3067aca9cc6e8",
+    "effective_at": "2026-10-02",
+    "id": "returns-v2-pricing_prepaid_cut",
+    "issued_by": "pricing_team",
+    "program": {
+      "charter": {
+        "about": "Rules of change for this policy: who may cause which behavioral effects, by what procedure, and what no change may break.",
+        "amendment": {
+          "approvals_min": 3,
+          "approvers": [
+            "policy_owner",
+            "legal",
+            "consumer_protection"
+          ],
+          "review_days": 30
+        },
+        "domains": {
+          "communications": {
+            "actions": [
+              "notify"
+            ],
+            "args": [
+              "channel"
+            ],
+            "channels": [
+              "content"
+            ],
+            "text": "How the customer is told."
+          },
+          "defective_remedies": {
+            "actions": [
+              "refund",
+              "ledger",
+              "notify",
+              "label"
+            ],
+            "channels": [
+              "obligation",
+              "permission",
+              "content"
+            ],
+            "text": "Remedies for defective goods (consumer protection).",
+            "where": [
+              "==",
+              "reason",
+              [
+                "q",
+                "defective"
+              ]
+            ]
+          },
+          "eligibility": {
+            "actions": [
+              "deny",
+              "refund",
+              "ledger",
+              "label",
+              "loyalty",
+              "exchange",
+              "notify"
+            ],
+            "args": [
+              "reason",
+              "outcome",
+              "amount",
+              "credit"
+            ],
+            "channels": [
+              "obligation",
+              "permission",
+              "content"
+            ],
+            "text": "Which returns are accepted, and what follows from that."
+          },
+          "fulfillment": {
+            "actions": [
+              "label"
+            ],
+            "channels": [
+              "obligation",
+              "permission",
+              "content"
+            ],
+            "text": "Return labels."
+          },
+          "offers": {
+            "actions": [
+              "exchange",
+              "loyalty"
+            ],
+            "channels": [
+              "obligation",
+              "permission",
+              "content"
+            ],
+            "text": "Exchanges and loyalty credit."
+          },
+          "pricing": {
+            "actions": [
+              "refund",
+              "ledger",
+              "notify",
+              "loyalty"
+            ],
+            "args": [
+              "amount"
+            ],
+            "channels": [
+              "content"
+            ],
+            "text": "Amounts on non-defective returns.",
+            "where": [
+              "!=",
+              "reason",
+              [
+                "q",
+                "defective"
+              ]
+            ]
+          }
+        },
+        "entrenched": [
+          "INV-final-sale",
+          "INV-refund-cap",
+          "INV-defective-full"
+        ],
+        "grants": {
+          "consumer_protection": [
+            "defective_remedies"
+          ],
+          "customer": [
+            "communications"
+          ],
+          "policy_owner": [
+            "pricing",
+            "eligibility",
+            "fulfillment",
+            "offers",
+            "communications"
+          ],
+          "pricing_team": [
+            "pricing"
+          ]
+        },
+        "invariants": [
+          {
+            "id": "INV-final-sale",
+            "kind": "modality",
+            "modality_in": [
+              "F"
+            ],
+            "step": "refund",
+            "text": "Final-sale items are never refunded.",
+            "when": [
+              "==",
+              "category",
+              [
+                "q",
+                "final_sale"
+              ]
+            ]
+          },
+          {
+            "arg": "amount",
+            "id": "INV-refund-cap",
+            "kind": "bound",
+            "op": "<=",
+            "rhs": "price",
+            "rhs_text": "price",
+            "step": "refund",
+            "text": "A refund never exceeds the price."
+          },
+          {
+            "arg": "amount",
+            "id": "INV-defective-full",
+            "kind": "bound",
+            "op": "==",
+            "rhs": "price",
+            "rhs_text": "price",
+            "step": "refund",
+            "text": "Defective items returned within the window are refunded in full.",
+            "when": [
+              "and",
+              [
+                "==",
+                "reason",
+                [
+                  "q",
+                  "defective"
+                ]
+              ],
+              "eligible"
+            ]
+          },
+          {
+            "id": "INV-notice",
+            "kind": "modality",
+            "modality_in": [
+              "O"
+            ],
+            "step": "notify",
+            "text": "Every return gets an outcome notice."
+          }
+        ],
+        "no_retroactivity": true,
+        "procedures": [
+          {
+            "approvals_min": 2,
+            "approvers": [
+              "policy_owner",
+              "legal",
+              "consumer_protection"
+            ],
+            "domains": [
+              "eligibility",
+              "defective_remedies"
+            ],
+            "id": "P-eligibility",
+            "review_days": 7
+          },
+          {
+            "approvals_min": 1,
+            "approvers": [
+              "policy_owner",
+              "pricing_team",
+              "consumer_protection",
+              "legal",
+              "customer"
+            ],
+            "domains": "*",
+            "id": "P-default",
+            "review_days": 0
+          }
+        ]
+      },
+      "clauses": {
+        "C1": {
+          "params": {
+            "notify_channel": "email"
+          },
+          "steps": {
+            "notify": {
+              "args": {
+                "amount": [
+                  "if",
+                  "eligible",
+                  "refund_amount",
+                  0
+                ],
+                "channel": "notify_channel",
+                "outcome": [
+                  "if",
+                  "eligible",
+                  [
+                    "q",
+                    "approved"
+                  ],
+                  [
+                    "q",
+                    "denied"
+                  ]
+                ]
+              },
+              "description": "Tell the customer the outcome.",
+              "tool": "notify_customer",
+              "when": true
+            }
+          },
+          "text": "Send the outcome notice by {notify_channel}."
+        },
+        "R1": {
+          "define": {
+            "in_window": [
+              "<=",
+              "days_since_delivery",
+              "return_window_days"
+            ]
+          },
+          "params": {
+            "return_window_days": 30
+          },
+          "text": "Returns are accepted within {return_window_days} days of delivery."
+        },
+        "R10": {
+          "define": {
+            "exchange_eligible": [
+              "and",
+              "eligible",
+              [
+                "==",
+                "category",
+                [
+                  "q",
+                  "apparel"
+                ]
+              ]
+            ]
+          },
+          "steps": {
+            "exchange": {
+              "allowed_when": "exchange_eligible",
+              "args": {
+                "credit": "price"
+              },
+              "description": "Offer an exchange (store credit at full price) instead of a refund.",
+              "tool": "offer_exchange",
+              "when": false
+            }
+          },
+          "text": "Agents may offer an exchange instead of a refund on eligible apparel returns."
+        },
+        "R2": {
+          "define": {
+            "eligible": [
+              "and",
+              "in_window",
+              [
+                "!=",
+                "category",
+                [
+                  "q",
+                  "final_sale"
+                ]
+              ]
+            ]
+          },
+          "text": "Final-sale items cannot be returned."
+        },
+        "R3": {
+          "define": {
+            "fee": [
+              "if",
+              [
+                "and",
+                "opened",
+                [
+                  "==",
+                  "reason",
+                  [
+                    "q",
+                    "changed_mind"
+                  ]
+                ],
+                [
+                  "==",
+                  "category",
+                  [
+                    "q",
+                    "electronics"
+                  ]
+                ]
+              ],
+              [
+                "*",
+                "price",
+                [
+                  "/",
+                  "restocking_fee_pct",
+                  100
+                ]
+              ],
+              0
+            ]
+          },
+          "params": {
+            "restocking_fee_pct": 15
+          },
+          "text": "Opened electronics returned for a change of mind carry a {restocking_fee_pct}% restocking fee.",
+          "units": {
+            "restocking_fee_pct": "pct"
+          }
+        },
+        "R4": {
+          "define": {
+            "fee_after_discount": [
+              "if",
+              [
+                "==",
+                "tier",
+                [
+                  "q",
+                  "gold"
+                ]
+              ],
+              [
+                "*",
+                "fee",
+                [
+                  "-",
+                  1,
+                  [
+                    "/",
+                    "gold_fee_discount_pct",
+                    100
+                  ]
+                ]
+              ],
+              "fee"
+            ]
+          },
+          "params": {
+            "gold_fee_discount_pct": 50
+          },
+          "text": "Gold members pay {gold_fee_discount_pct}% less restocking fee.",
+          "units": {
+            "gold_fee_discount_pct": "pct"
+          }
+        },
+        "R5": {
+          "define": {
+            "prepaid_label": false,
+            "shipping_charge": [
+              "if",
+              "prepaid_label",
+              0,
+              "return_shipping_fee"
+            ]
+          },
+          "params": {
+            "return_shipping_fee": 8
+          },
+          "text": "Defective items get a prepaid return label. Other returns pay ${return_shipping_fee} return shipping, deducted from the refund.",
+          "units": {
+            "return_shipping_fee": "usd"
+          }
+        },
+        "R6": {
+          "define": {
+            "refund_amount": [
+              "max",
+              0,
+              [
+                "-",
+                "price",
+                "fee_after_discount",
+                "shipping_charge"
+              ]
+            ]
+          },
+          "steps": {
+            "ledger": {
+              "args": {
+                "account": [
+                  "q",
+                  "returns"
+                ],
+                "amount": "refund_amount"
+              },
+              "description": "Record the refund in the ledger.",
+              "tool": "post_ledger_credit",
+              "when": "eligible"
+            },
+            "refund": {
+              "args": {
+                "amount": "refund_amount"
+              },
+              "description": "Refund the customer.",
+              "tool": "issue_refund",
+              "when": "eligible"
+            }
+          },
+          "text": "An eligible return is refunded the price less any restocking fee and return shipping, and the refund is posted to the returns ledger."
+        },
+        "R7": {
+          "steps": {
+            "deny": {
+              "args": {
+                "reason": [
+                  "if",
+                  "in_window",
+                  [
+                    "q",
+                    "final_sale"
+                  ],
+                  [
+                    "q",
+                    "outside_window"
+                  ]
+                ]
+              },
+              "description": "Deny the return.",
+              "tool": "deny_return",
+              "when": [
+                "not",
+                "eligible"
+              ]
+            }
+          },
+          "text": "An ineligible return is denied, with the reason."
+        },
+        "R8": {
+          "steps": {
+            "label": {
+              "args": {
+                "prepaid": "prepaid_label"
+              },
+              "description": "Send the return label.",
+              "tool": "send_return_label",
+              "when": "eligible"
+            }
+          },
+          "text": "Every eligible return gets a return label."
+        },
+        "R9": {
+          "params": {
+            "loyalty_credit_pct": 5
+          },
+          "steps": {
+            "loyalty": {
+              "args": {
+                "amount": [
+                  "*",
+                  "price",
+                  [
+                    "/",
+                    "loyalty_credit_pct",
+                    100
+                  ]
+                ]
+              },
+              "description": "Grant loyalty store credit.",
+              "tool": "grant_store_credit",
+              "when": [
+                "and",
+                "eligible",
+                [
+                  "==",
+                  "tier",
+                  [
+                    "q",
+                    "gold"
+                  ]
+                ]
+              ]
+            }
+          },
+          "text": "Gold members receive a loyalty credit of {loyalty_credit_pct}% of the price on eligible returns.",
+          "units": {
+            "loyalty_credit_pct": "pct"
+          }
+        }
+      },
+      "facts": {
+        "category": {
+          "default": "apparel",
+          "type": "enum",
+          "values": [
+            "apparel",
+            "electronics",
+            "final_sale"
+          ]
+        },
+        "days_since_delivery": {
+          "default": 10,
+          "max": 120,
+          "min": 0,
+          "type": "int"
+        },
+        "opened": {
+          "default": false,
+          "type": "bool"
+        },
+        "price": {
+          "default": 100.0,
+          "max": 5000,
+          "min": 0,
+          "resolution": 0.01,
+          "type": "number",
+          "values": [
+            100.0
+          ]
+        },
+        "reason": {
+          "default": "changed_mind",
+          "type": "enum",
+          "values": [
+            "changed_mind",
+            "defective"
+          ]
+        },
+        "tier": {
+          "default": "standard",
+          "type": "enum",
+          "values": [
+            "standard",
+            "gold"
+          ]
+        }
+      },
+      "id": "returns",
+      "procedure": [
+        "deny",
+        "refund",
+        "ledger",
+        "label",
+        "loyalty",
+        "exchange",
+        "notify"
+      ],
+      "schema": "contradish.policy_program/1.0",
+      "sources": {
+        "consumer_protection": {
+          "governs": [],
+          "key_note": "contradish public fixture key; replace with your own",
+          "keys": [
+            "ed179feeca4e3b8207874c89dcf6dc8cbe9cd643a61ffe4fb4cb9bfe0c571897"
+          ],
+          "role": "consumer_protection"
+        },
+        "customer": {
+          "governs": [
+            "C1"
+          ],
+          "role": "user"
+        },
+        "legal": {
+          "governs": [],
+          "key_note": "contradish public fixture key; replace with your own",
+          "keys": [
+            "5134905c4e15032864a216e4dcb32c3e244c2f16df626ef7566837a8342cfada"
+          ],
+          "role": "legal"
+        },
+        "policy_owner": {
+          "governs": [
+            "*"
+          ],
+          "key_note": "contradish public fixture key (see versions.fixture_key); replace with your own",
+          "keys": [
+            "145ac8574457b164c46db7b0743406f2a0a4925337134af21cda52f5bb377525"
+          ],
+          "role": "policy_owner"
+        },
+        "pricing_team": {
+          "governs": [
+            "R3",
+            "R4",
+            "R5"
+          ],
+          "key_note": "contradish public fixture key; replace with your own",
+          "keys": [
+            "e57615ad45290b5f4dc33334dff3b0ef7c2f55922c523665907649796df55e70"
+          ],
+          "role": "pricing_team"
+        },
+        "tool_output": {
+          "governs": [],
+          "role": "tool"
+        }
+      },
+      "title": "Returns and refunds policy (retail)",
+      "version": "1"
+    },
+    "proposed_at": "2026-10-01",
+    "schema": "contradish.pinned_version/1.0",
+    "signature": {
+      "alg": "ed25519",
+      "key": "e57615ad45290b5f4dc33334dff3b0ef7c2f55922c523665907649796df55e70",
+      "sig": "b94f3fe163d6f4d1d2d4198c94337aeb615b0b7e48c913d5dd2a5c0620a54232725fd1fadecf92d7d2ee24dfbd6be2d3f263e4a30bfc9a6d35b93c3748c5e604"
+    },
+    "supersedes": "sha256:49e443f97862f0c69928da4d27f814f3b5f8fb43e329e4019e9aeeb1af5f7fc4",
+    "verification": {
+      "date": "2026-10-09",
+      "evidence": "",
+      "method": "built-in example",
+      "verified_by": "contradish fixture"
+    }
+  },
+  "attribution": "Behavioral Update Fidelity was introduced by Michele Joseph in 2026.",
+  "authentication": {
+    "authenticated": true,
+    "authorized": true,
+    "chained": true,
+    "changed_clauses": [
+      "R5"
+    ],
+    "issuer": "pricing_team",
+    "issuer_key_listed": true,
+    "outside_authority": [],
+    "reasons": [],
+    "trust_anchors": [
+      "145ac8574457b164c46db7b0743406f2a0a4925337134af21cda52f5bb377525"
+    ],
+    "v1_anchored": true,
+    "v1_signed": true,
+    "v2_signed": true
+  },
+  "baseline_invariants_hold": {
+    "INV-defective-full": true,
+    "INV-final-sale": true,
+    "INV-notice": true,
+    "INV-refund-cap": true
+  },
+  "before": {
+    "digest": "sha256:49e443f97862f0c69928da4d27f814f3b5f8fb43e329e4019e9aeeb1af5f7fc4",
+    "effective_at": "2026-10-01",
+    "id": "returns-v1",
+    "program": {
+      "charter": {
+        "about": "Rules of change for this policy: who may cause which behavioral effects, by what procedure, and what no change may break.",
+        "amendment": {
+          "approvals_min": 3,
+          "approvers": [
+            "policy_owner",
+            "legal",
+            "consumer_protection"
+          ],
+          "review_days": 30
+        },
+        "domains": {
+          "communications": {
+            "actions": [
+              "notify"
+            ],
+            "args": [
+              "channel"
+            ],
+            "channels": [
+              "content"
+            ],
+            "text": "How the customer is told."
+          },
+          "defective_remedies": {
+            "actions": [
+              "refund",
+              "ledger",
+              "notify",
+              "label"
+            ],
+            "channels": [
+              "obligation",
+              "permission",
+              "content"
+            ],
+            "text": "Remedies for defective goods (consumer protection).",
+            "where": [
+              "==",
+              "reason",
+              [
+                "q",
+                "defective"
+              ]
+            ]
+          },
+          "eligibility": {
+            "actions": [
+              "deny",
+              "refund",
+              "ledger",
+              "label",
+              "loyalty",
+              "exchange",
+              "notify"
+            ],
+            "args": [
+              "reason",
+              "outcome",
+              "amount",
+              "credit"
+            ],
+            "channels": [
+              "obligation",
+              "permission",
+              "content"
+            ],
+            "text": "Which returns are accepted, and what follows from that."
+          },
+          "fulfillment": {
+            "actions": [
+              "label"
+            ],
+            "channels": [
+              "obligation",
+              "permission",
+              "content"
+            ],
+            "text": "Return labels."
+          },
+          "offers": {
+            "actions": [
+              "exchange",
+              "loyalty"
+            ],
+            "channels": [
+              "obligation",
+              "permission",
+              "content"
+            ],
+            "text": "Exchanges and loyalty credit."
+          },
+          "pricing": {
+            "actions": [
+              "refund",
+              "ledger",
+              "notify",
+              "loyalty"
+            ],
+            "args": [
+              "amount"
+            ],
+            "channels": [
+              "content"
+            ],
+            "text": "Amounts on non-defective returns.",
+            "where": [
+              "!=",
+              "reason",
+              [
+                "q",
+                "defective"
+              ]
+            ]
+          }
+        },
+        "entrenched": [
+          "INV-final-sale",
+          "INV-refund-cap",
+          "INV-defective-full"
+        ],
+        "grants": {
+          "consumer_protection": [
+            "defective_remedies"
+          ],
+          "customer": [
+            "communications"
+          ],
+          "policy_owner": [
+            "pricing",
+            "eligibility",
+            "fulfillment",
+            "offers",
+            "communications"
+          ],
+          "pricing_team": [
+            "pricing"
+          ]
+        },
+        "invariants": [
+          {
+            "id": "INV-final-sale",
+            "kind": "modality",
+            "modality_in": [
+              "F"
+            ],
+            "step": "refund",
+            "text": "Final-sale items are never refunded.",
+            "when": [
+              "==",
+              "category",
+              [
+                "q",
+                "final_sale"
+              ]
+            ]
+          },
+          {
+            "arg": "amount",
+            "id": "INV-refund-cap",
+            "kind": "bound",
+            "op": "<=",
+            "rhs": "price",
+            "rhs_text": "price",
+            "step": "refund",
+            "text": "A refund never exceeds the price."
+          },
+          {
+            "arg": "amount",
+            "id": "INV-defective-full",
+            "kind": "bound",
+            "op": "==",
+            "rhs": "price",
+            "rhs_text": "price",
+            "step": "refund",
+            "text": "Defective items returned within the window are refunded in full.",
+            "when": [
+              "and",
+              [
+                "==",
+                "reason",
+                [
+                  "q",
+                  "defective"
+                ]
+              ],
+              "eligible"
+            ]
+          },
+          {
+            "id": "INV-notice",
+            "kind": "modality",
+            "modality_in": [
+              "O"
+            ],
+            "step": "notify",
+            "text": "Every return gets an outcome notice."
+          }
+        ],
+        "no_retroactivity": true,
+        "procedures": [
+          {
+            "approvals_min": 2,
+            "approvers": [
+              "policy_owner",
+              "legal",
+              "consumer_protection"
+            ],
+            "domains": [
+              "eligibility",
+              "defective_remedies"
+            ],
+            "id": "P-eligibility",
+            "review_days": 7
+          },
+          {
+            "approvals_min": 1,
+            "approvers": [
+              "policy_owner",
+              "pricing_team",
+              "consumer_protection",
+              "legal",
+              "customer"
+            ],
+            "domains": "*",
+            "id": "P-default",
+            "review_days": 0
+          }
+        ]
+      },
+      "clauses": {
+        "C1": {
+          "params": {
+            "notify_channel": "email"
+          },
+          "steps": {
+            "notify": {
+              "args": {
+                "amount": [
+                  "if",
+                  "eligible",
+                  "refund_amount",
+                  0
+                ],
+                "channel": "notify_channel",
+                "outcome": [
+                  "if",
+                  "eligible",
+                  [
+                    "q",
+                    "approved"
+                  ],
+                  [
+                    "q",
+                    "denied"
+                  ]
+                ]
+              },
+              "description": "Tell the customer the outcome.",
+              "tool": "notify_customer",
+              "when": true
+            }
+          },
+          "text": "Send the outcome notice by {notify_channel}."
+        },
+        "R1": {
+          "define": {
+            "in_window": [
+              "<=",
+              "days_since_delivery",
+              "return_window_days"
+            ]
+          },
+          "params": {
+            "return_window_days": 30
+          },
+          "text": "Returns are accepted within {return_window_days} days of delivery."
+        },
+        "R10": {
+          "define": {
+            "exchange_eligible": [
+              "and",
+              "eligible",
+              [
+                "==",
+                "category",
+                [
+                  "q",
+                  "apparel"
+                ]
+              ]
+            ]
+          },
+          "steps": {
+            "exchange": {
+              "allowed_when": "exchange_eligible",
+              "args": {
+                "credit": "price"
+              },
+              "description": "Offer an exchange (store credit at full price) instead of a refund.",
+              "tool": "offer_exchange",
+              "when": false
+            }
+          },
+          "text": "Agents may offer an exchange instead of a refund on eligible apparel returns."
+        },
+        "R2": {
+          "define": {
+            "eligible": [
+              "and",
+              "in_window",
+              [
+                "!=",
+                "category",
+                [
+                  "q",
+                  "final_sale"
+                ]
+              ]
+            ]
+          },
+          "text": "Final-sale items cannot be returned."
+        },
+        "R3": {
+          "define": {
+            "fee": [
+              "if",
+              [
+                "and",
+                "opened",
+                [
+                  "==",
+                  "reason",
+                  [
+                    "q",
+                    "changed_mind"
+                  ]
+                ],
+                [
+                  "==",
+                  "category",
+                  [
+                    "q",
+                    "electronics"
+                  ]
+                ]
+              ],
+              [
+                "*",
+                "price",
+                [
+                  "/",
+                  "restocking_fee_pct",
+                  100
+                ]
+              ],
+              0
+            ]
+          },
+          "params": {
+            "restocking_fee_pct": 15
+          },
+          "text": "Opened electronics returned for a change of mind carry a {restocking_fee_pct}% restocking fee.",
+          "units": {
+            "restocking_fee_pct": "pct"
+          }
+        },
+        "R4": {
+          "define": {
+            "fee_after_discount": [
+              "if",
+              [
+                "==",
+                "tier",
+                [
+                  "q",
+                  "gold"
+                ]
+              ],
+              [
+                "*",
+                "fee",
+                [
+                  "-",
+                  1,
+                  [
+                    "/",
+                    "gold_fee_discount_pct",
+                    100
+                  ]
+                ]
+              ],
+              "fee"
+            ]
+          },
+          "params": {
+            "gold_fee_discount_pct": 50
+          },
+          "text": "Gold members pay {gold_fee_discount_pct}% less restocking fee.",
+          "units": {
+            "gold_fee_discount_pct": "pct"
+          }
+        },
+        "R5": {
+          "define": {
+            "prepaid_label": [
+              "==",
+              "reason",
+              [
+                "q",
+                "defective"
+              ]
+            ],
+            "shipping_charge": [
+              "if",
+              "prepaid_label",
+              0,
+              "return_shipping_fee"
+            ]
+          },
+          "params": {
+            "return_shipping_fee": 8
+          },
+          "text": "Defective items get a prepaid return label. Other returns pay ${return_shipping_fee} return shipping, deducted from the refund.",
+          "units": {
+            "return_shipping_fee": "usd"
+          }
+        },
+        "R6": {
+          "define": {
+            "refund_amount": [
+              "max",
+              0,
+              [
+                "-",
+                "price",
+                "fee_after_discount",
+                "shipping_charge"
+              ]
+            ]
+          },
+          "steps": {
+            "ledger": {
+              "args": {
+                "account": [
+                  "q",
+                  "returns"
+                ],
+                "amount": "refund_amount"
+              },
+              "description": "Record the refund in the ledger.",
+              "tool": "post_ledger_credit",
+              "when": "eligible"
+            },
+            "refund": {
+              "args": {
+                "amount": "refund_amount"
+              },
+              "description": "Refund the customer.",
+              "tool": "issue_refund",
+              "when": "eligible"
+            }
+          },
+          "text": "An eligible return is refunded the price less any restocking fee and return shipping, and the refund is posted to the returns ledger."
+        },
+        "R7": {
+          "steps": {
+            "deny": {
+              "args": {
+                "reason": [
+                  "if",
+                  "in_window",
+                  [
+                    "q",
+                    "final_sale"
+                  ],
+                  [
+                    "q",
+                    "outside_window"
+                  ]
+                ]
+              },
+              "description": "Deny the return.",
+              "tool": "deny_return",
+              "when": [
+                "not",
+                "eligible"
+              ]
+            }
+          },
+          "text": "An ineligible return is denied, with the reason."
+        },
+        "R8": {
+          "steps": {
+            "label": {
+              "args": {
+                "prepaid": "prepaid_label"
+              },
+              "description": "Send the return label.",
+              "tool": "send_return_label",
+              "when": "eligible"
+            }
+          },
+          "text": "Every eligible return gets a return label."
+        },
+        "R9": {
+          "params": {
+            "loyalty_credit_pct": 5
+          },
+          "steps": {
+            "loyalty": {
+              "args": {
+                "amount": [
+                  "*",
+                  "price",
+                  [
+                    "/",
+                    "loyalty_credit_pct",
+                    100
+                  ]
+                ]
+              },
+              "description": "Grant loyalty store credit.",
+              "tool": "grant_store_credit",
+              "when": [
+                "and",
+                "eligible",
+                [
+                  "==",
+                  "tier",
+                  [
+                    "q",
+                    "gold"
+                  ]
+                ]
+              ]
+            }
+          },
+          "text": "Gold members receive a loyalty credit of {loyalty_credit_pct}% of the price on eligible returns.",
+          "units": {
+            "loyalty_credit_pct": "pct"
+          }
+        }
+      },
+      "facts": {
+        "category": {
+          "default": "apparel",
+          "type": "enum",
+          "values": [
+            "apparel",
+            "electronics",
+            "final_sale"
+          ]
+        },
+        "days_since_delivery": {
+          "default": 10,
+          "max": 120,
+          "min": 0,
+          "type": "int"
+        },
+        "opened": {
+          "default": false,
+          "type": "bool"
+        },
+        "price": {
+          "default": 100.0,
+          "max": 5000,
+          "min": 0,
+          "resolution": 0.01,
+          "type": "number",
+          "values": [
+            100.0
+          ]
+        },
+        "reason": {
+          "default": "changed_mind",
+          "type": "enum",
+          "values": [
+            "changed_mind",
+            "defective"
+          ]
+        },
+        "tier": {
+          "default": "standard",
+          "type": "enum",
+          "values": [
+            "standard",
+            "gold"
+          ]
+        }
+      },
+      "id": "returns",
+      "procedure": [
+        "deny",
+        "refund",
+        "ledger",
+        "label",
+        "loyalty",
+        "exchange",
+        "notify"
+      ],
+      "schema": "contradish.policy_program/1.0",
+      "sources": {
+        "consumer_protection": {
+          "governs": [],
+          "key_note": "contradish public fixture key; replace with your own",
+          "keys": [
+            "ed179feeca4e3b8207874c89dcf6dc8cbe9cd643a61ffe4fb4cb9bfe0c571897"
+          ],
+          "role": "consumer_protection"
+        },
+        "customer": {
+          "governs": [
+            "C1"
+          ],
+          "role": "user"
+        },
+        "legal": {
+          "governs": [],
+          "key_note": "contradish public fixture key; replace with your own",
+          "keys": [
+            "5134905c4e15032864a216e4dcb32c3e244c2f16df626ef7566837a8342cfada"
+          ],
+          "role": "legal"
+        },
+        "policy_owner": {
+          "governs": [
+            "*"
+          ],
+          "key_note": "contradish public fixture key (see versions.fixture_key); replace with your own",
+          "keys": [
+            "145ac8574457b164c46db7b0743406f2a0a4925337134af21cda52f5bb377525"
+          ],
+          "role": "policy_owner"
+        },
+        "pricing_team": {
+          "governs": [
+            "R3",
+            "R4",
+            "R5"
+          ],
+          "key_note": "contradish public fixture key; replace with your own",
+          "keys": [
+            "e57615ad45290b5f4dc33334dff3b0ef7c2f55922c523665907649796df55e70"
+          ],
+          "role": "pricing_team"
+        },
+        "tool_output": {
+          "governs": [],
+          "role": "tool"
+        }
+      },
+      "title": "Returns and refunds policy (retail)",
+      "version": "1"
+    },
+    "schema": "contradish.pinned_version/1.0",
+    "signature": {
+      "alg": "ed25519",
+      "key": "145ac8574457b164c46db7b0743406f2a0a4925337134af21cda52f5bb377525",
+      "sig": "34cca08b586a93da84679534d2e96edb31b00b3f149a70311f24ab8eaeb5cab8383825514757083e0d93ff7a4d5255e31e313a9f898e67903216c3a722f47904"
+    },
+    "verification": {
+      "date": "2026-10-09",
+      "evidence": "",
+      "method": "built-in example",
+      "verified_by": "contradish fixture"
+    }
+  },
+  "charter_amendment": null,
+  "charter_digest": "sha256:9ba551eedfc0d6fb2c645d368d92162d402633cc346c4e9343ae12f4c6c37904",
+  "checks": {
+    "authority_by_effect": false,
+    "charter_amendment": true,
+    "invariants": false,
+    "procedure": false,
+    "provenance": true
+  },
+  "clause_level_authority": {
+    "changed_clauses": [
+      "R5"
+    ],
+    "issued_by": "pricing_team",
+    "outside_authority": [],
+    "status": "authorized"
+  },
+  "digest": "sha256:8fe464bc8d2d4d14e9740d7f0dac086bc04d67c2f2bb084132f640efe72bc086",
+  "effects": {
+    "granted_domains": [
+      "pricing"
+    ],
+    "issuer": "pricing_team",
+    "regions": 510,
+    "summary": [
+      {
+        "args": [
+          "prepaid"
+        ],
+        "change": "changed",
+        "channel": "content",
+        "domains": [
+          "defective_remedies",
+          "fulfillment"
+        ],
+        "example": "category = 'apparel' \u2227 not opened \u2227 reason = 'defective' \u2227 tier = 'standard' \u2227 days_since_delivery = 0 \u2227 price = 0",
+        "example_situation": {
+          "category": "apparel",
+          "days_since_delivery": 0,
+          "opened": false,
+          "price": 0,
+          "reason": "defective",
+          "tier": "standard"
+        },
+        "regions": 120,
+        "step": "label"
+      },
+      {
+        "args": [
+          "amount"
+        ],
+        "change": "changed",
+        "channel": "content",
+        "domains": [
+          "defective_remedies",
+          "eligibility"
+        ],
+        "example": "category = 'apparel' \u2227 not opened \u2227 reason = 'defective' \u2227 tier = 'standard' \u2227 days_since_delivery = 0 \u2227 0 < price < 8",
+        "example_situation": {
+          "category": "apparel",
+          "days_since_delivery": 0,
+          "opened": false,
+          "price": 4,
+          "reason": "defective",
+          "tier": "standard"
+        },
+        "regions": 96,
+        "step": "ledger"
+      },
+      {
+        "args": [
+          "amount"
+        ],
+        "change": "changed",
+        "channel": "content",
+        "domains": [
+          "defective_remedies",
+          "eligibility"
+        ],
+        "example": "category = 'apparel' \u2227 not opened \u2227 reason = 'defective' \u2227 tier = 'standard' \u2227 days_since_delivery = 0 \u2227 0 < price < 8",
+        "example_situation": {
+          "category": "apparel",
+          "days_since_delivery": 0,
+          "opened": false,
+          "price": 4,
+          "reason": "defective",
+          "tier": "standard"
+        },
+        "regions": 96,
+        "step": "notify"
+      },
+      {
+        "args": [
+          "amount"
+        ],
+        "change": "changed",
+        "channel": "content",
+        "domains": [
+          "defective_remedies",
+          "eligibility"
+        ],
+        "example": "category = 'apparel' \u2227 not opened \u2227 reason = 'defective' \u2227 tier = 'standard' \u2227 days_since_delivery = 0 \u2227 0 < price < 8",
+        "example_situation": {
+          "category": "apparel",
+          "days_since_delivery": 0,
+          "opened": false,
+          "price": 4,
+          "reason": "defective",
+          "tier": "standard"
+        },
+        "regions": 96,
+        "step": "refund"
+      }
+    ],
+    "touched_domains": [
+      "defective_remedies",
+      "eligibility",
+      "fulfillment"
+    ],
+    "unauthorized": [
+      {
+        "args": [
+          "prepaid"
+        ],
+        "change": "changed",
+        "channel": "content",
+        "domains": [
+          "defective_remedies",
+          "fulfillment"
+        ],
+        "example": "category = 'apparel' \u2227 not opened \u2227 reason = 'defective' \u2227 tier = 'standard' \u2227 days_since_delivery = 0 \u2227 price = 0",
+        "example_situation": {
+          "category": "apparel",
+          "days_since_delivery": 0,
+          "opened": false,
+          "price": 0,
+          "reason": "defective",
+          "tier": "standard"
+        },
+        "regions": 120,
+        "step": "label"
+      },
+      {
+        "args": [
+          "amount"
+        ],
+        "change": "changed",
+        "channel": "content",
+        "domains": [
+          "defective_remedies",
+          "eligibility"
+        ],
+        "example": "category = 'apparel' \u2227 not opened \u2227 reason = 'defective' \u2227 tier = 'standard' \u2227 days_since_delivery = 0 \u2227 0 < price < 8",
+        "example_situation": {
+          "category": "apparel",
+          "days_since_delivery": 0,
+          "opened": false,
+          "price": 4,
+          "reason": "defective",
+          "tier": "standard"
+        },
+        "regions": 96,
+        "step": "ledger"
+      },
+      {
+        "args": [
+          "amount"
+        ],
+        "change": "changed",
+        "channel": "content",
+        "domains": [
+          "defective_remedies",
+          "eligibility"
+        ],
+        "example": "category = 'apparel' \u2227 not opened \u2227 reason = 'defective' \u2227 tier = 'standard' \u2227 days_since_delivery = 0 \u2227 0 < price < 8",
+        "example_situation": {
+          "category": "apparel",
+          "days_since_delivery": 0,
+          "opened": false,
+          "price": 4,
+          "reason": "defective",
+          "tier": "standard"
+        },
+        "regions": 96,
+        "step": "notify"
+      },
+      {
+        "args": [
+          "amount"
+        ],
+        "change": "changed",
+        "channel": "content",
+        "domains": [
+          "defective_remedies",
+          "eligibility"
+        ],
+        "example": "category = 'apparel' \u2227 not opened \u2227 reason = 'defective' \u2227 tier = 'standard' \u2227 days_since_delivery = 0 \u2227 0 < price < 8",
+        "example_situation": {
+          "category": "apparel",
+          "days_since_delivery": 0,
+          "opened": false,
+          "price": 4,
+          "reason": "defective",
+          "tier": "standard"
+        },
+        "regions": 96,
+        "step": "refund"
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "entrenched": true,
+      "holds": true,
+      "id": "INV-final-sale",
+      "regions_checked": 120,
+      "text": "Final-sale items are never refunded.",
+      "violation_count": 0,
+      "violations": []
+    },
+    {
+      "entrenched": true,
+      "holds": true,
+      "id": "INV-refund-cap",
+      "regions_checked": 510,
+      "text": "A refund never exceeds the price.",
+      "violation_count": 0,
+      "violations": []
+    },
+    {
+      "entrenched": true,
+      "holds": false,
+      "id": "INV-defective-full",
+      "regions_checked": 120,
+      "text": "Defective items returned within the window are refunded in full.",
+      "violation_count": 96,
+      "violations": [
+        {
+          "condition": "category = 'apparel' \u2227 not opened \u2227 reason = 'defective' \u2227 tier = 'standard' \u2227 days_since_delivery = 0 \u2227 0 < price < 8",
+          "found": "amount - (price) = -0.01",
+          "situation": {
+            "category": "apparel",
+            "days_since_delivery": 0,
+            "opened": false,
+            "price": 0.01,
+            "reason": "defective",
+            "tier": "standard"
+          }
+        },
+        {
+          "condition": "category = 'apparel' \u2227 not opened \u2227 reason = 'defective' \u2227 tier = 'standard' \u2227 days_since_delivery = 0 \u2227 price = 8",
+          "found": "amount - (price) = -8",
+          "situation": {
+            "category": "apparel",
+            "days_since_delivery": 0,
+            "opened": false,
+            "price": 8,
+            "reason": "defective",
+            "tier": "standard"
+          }
+        },
+        {
+          "condition": "category = 'apparel' \u2227 not opened \u2227 reason = 'defective' \u2227 tier = 'standard' \u2227 days_since_delivery = 0 \u2227 8 < price < 5000",
+          "found": "amount - (price) = -8",
+          "situation": {
+            "category": "apparel",
+            "days_since_delivery": 0,
+            "opened": false,
+            "price": 8.01,
+            "reason": "defective",
+            "tier": "standard"
+          }
+        },
+        {
+          "condition": "category = 'apparel' \u2227 not opened \u2227 reason = 'defective' \u2227 tier = 'standard' \u2227 days_since_delivery = 0 \u2227 price = 5000",
+          "found": "amount - (price) = -8",
+          "situation": {
+            "category": "apparel",
+            "days_since_delivery": 0,
+            "opened": false,
+            "price": 5000,
+            "reason": "defective",
+            "tier": "standard"
+          }
+        },
+        {
+          "condition": "category = 'apparel' \u2227 not opened \u2227 reason = 'defective' \u2227 tier = 'standard' \u2227 0 < days_since_delivery < 30 \u2227 0 < price < 8",
+          "found": "amount - (price) = -0.01",
+          "situation": {
+            "category": "apparel",
+            "days_since_delivery": 1,
+            "opened": false,
+            "price": 0.01,
+            "reason": "defective",
+            "tier": "standard"
+          }
+        }
+      ]
+    },
+    {
+      "entrenched": false,
+      "holds": true,
+      "id": "INV-notice",
+      "regions_checked": 510,
+      "text": "Every return gets an outcome notice.",
+      "violation_count": 0,
+      "violations": []
+    }
+  ],
+  "legitimate": false,
+  "procedure": {
+    "approved_by": [
+      "pricing_team"
+    ],
+    "effective_at": "2026-10-02",
+    "no_retroactivity_ok": true,
+    "proposed_at": "2026-10-01",
+    "rules": [
+      {
+        "approvals_ok": false,
+        "approvals_required": 2,
+        "approved_by": [],
+        "approvers": [
+          "policy_owner",
+          "legal",
+          "consumer_protection"
+        ],
+        "id": "P-eligibility",
+        "ok": false,
+        "review_days_required": 7,
+        "review_ok": false
+      },
+      {
+        "approvals_ok": true,
+        "approvals_required": 1,
+        "approved_by": [
+          "pricing_team"
+        ],
+        "approvers": [
+          "policy_owner",
+          "pricing_team",
+          "consumer_protection",
+          "legal",
+          "customer"
+        ],
+        "id": "P-default",
+        "ok": true,
+        "review_days_required": 0,
+        "review_ok": true
+      }
+    ]
+  },
+  "schema": "contradish.legitimacy_certificate/1.0",
+  "scope_note": "Effects and invariants are derived over the entire declared situation space of both versions (exact decomposition). Dates are the signers' statements, not trusted timestamps. Trust anchors are the verifier's choice.",
+  "statement": "NOT LEGITIMATE: change returns-v1 -> returns-v2-pricing_prepaid_cut issued by 'pricing_team' fails procedure, authority by effect, invariants; NOTE: the issuer owns every clause it edited (clause-level authority would pass), but 408 of the change's behavioral effects lie outside its granted domains; violated invariants: INV-defective-full."
+}

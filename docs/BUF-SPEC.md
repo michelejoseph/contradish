@@ -385,3 +385,56 @@ If a certificate's scope is widened after the fact, or it reports fewer trials t
 - The pinned programs are taken to encode the governing information faithfully, on the verifiers' word.
 - Trust anchors are the verifier's own choice.
 - The fixture key in the built-in examples is public and secures nothing.
+
+## 15. Legitimacy of a change to the governing specification
+
+> Contradish verifies that every change to an AI agent's governing specification is legitimate (authentic, procedurally valid, authorized by its effects, and within entrenched constraints) and that the agent's behavior then follows it exactly, within an explicit verification scope.
+
+§14 verifies that an agent follows a governing specification. This section verifies the change to the specification itself. Implementation: `contradish/charter.py`. Independent checker: `evidence_check.check_legitimacy`.
+
+**Charter.** Every specification carries its rules of change (Hart's secondary rules) as data, under the `charter` key:
+
+| field | meaning |
+|---|---|
+| `domains` | Named domains of behavioral effect. Each lists `actions` (steps), `channels` (obligation, permission, content), optional `args` for content, and an optional `where` condition on the situation. The condition is evaluated under v1. |
+| `grants` | Which roles (sources) may cause effects in which domains. |
+| `procedures` | Rules with `domains` (or `*`), `approvers` (roles), `approvals_min` and `review_days`. |
+| `no_retroactivity` | When true, v2 must carry an effective date that is not earlier than v1's. |
+| `invariants` | Constraints every version must satisfy, of two kinds. *Modality*: under `when`, `step`'s modality ∈ `modality_in`. *Bound*: under `when`, `arg` of `step` (`<=`, `>=`, `==`) `rhs`, to within half a cent. |
+| `entrenched` | Invariant ids that no amendment may alter or remove. |
+| `amendment` | The procedure for changing the charter itself. |
+
+A change v1 → v2 is judged under v1's charter. v2's charter then governs later changes.
+
+**Effects.** The exact decomposition of §12 is computed over v1 and v2. Hidden guard steps are added for every domain condition and invariant condition, so that every such condition is constant within every region. Each region × step yields effects:
+- obligation gained or lost;
+- permission granted or revoked;
+- content changed, one effect per changed argument.
+
+An effect is *licensable* by a domain if four things hold:
+- its step is in the domain's actions;
+- its channel is in the domain's channels;
+- for a content effect, the changed argument is in the domain's args (if the domain lists any);
+- the domain's condition holds in the region.
+
+**The four checks.**
+1. **Provenance.** `authenticate_transition` (§14).
+2. **Procedure.** Approvals are role signatures over v2's body, made by keys that v1 lists for each role. The issuer's own signature counts as its role's approval. A rule *governs* an effect when every domain that could license the effect is under the rule, so an effect cannot route around a procedure through a laxer overlapping domain. Each governing rule needs `approvals_min` distinct approving roles from its `approvers`, and at least `review_days` between `proposed_at` and `effective_at`. Retroactivity is checked as stated in the charter.
+3. **Authority by effect.** Every effect must be licensable by some domain granted to the issuer. Clause-level authority (the issuer governs every edited clause) is reported alongside for comparison. A change can pass clause-level authority and fail authority by effect, because editing a clause you own can change behavior someone else governs.
+4. **Invariants**, proved over every region of v2. Modality is constant within a region. For a bound, the argument and the right-hand side are linear within a region, so their difference attains its extremes at the extreme situations on the resolution grid in each coordinate. Checking those vertices exactly proves the bound over the whole region, or yields a witness situation.
+
+If v2's charter differs from v1's, the charter's `amendment` procedure applies, and every entrenched invariant must appear unchanged and still entrenched.
+
+**The certificate** (`contradish.legitimacy_certificate/1.0`) holds the pins, the authentication, every effect with its licensing domains, the unauthorized effects, the procedure results, every invariant result with its witnesses, the amendment result, the clause-level comparison, and `legitimate`. The checker re-derives every part with its own code: signatures, approvals, the augmented decomposition, the effects and their licensing, the procedure, every invariant (by its own vertex check), and the amendment.
+
+A run certificate may embed a legitimacy certificate for the same transition. Its `verified` claim then also requires the change to be legitimate, and the checker re-checks the embedded certificate.
+
+**Prior art, and what is new.**
+- Procedural legitimacy is established practice in software supply-chain security: in-toto (named functionaries, threshold signatures), TUF (delegated roles, thresholds, expiry), and policy-as-code change gates.
+- The rule-of-change idea is Hart's.
+- New here: authorization by derived behavioral effect rather than by edited text. Also new: invariants on an AI agent's obligations, permissions and argument values, proved over the entire situation space of each new version. Both are checked by an independent re-derivation and chained to proof that the agent then executed the change.
+
+**Limits.**
+- Dates are signed statements, not trusted timestamps.
+- The charter is only as good as its authors. That is why the charter's own amendment is governed and its entrenched core protected.
+- Conditions and invariants must stay within the decidable fragment of §12.
