@@ -7,3 +7,21 @@ dist/
 mnt/
 venv/
 _sync*.bundle
+
+# local environments and caches
+.venv/
+.pytest_cache/
+
+# LaTeX build products (paper.pdf is kept)
+paper.aux
+paper.log
+paper.blg
+paper.out
+
+# scratch
+_patch_tmp/
+_to_delete/
+dry_run_outputs/
+
+# study output from `contradish study demo`
+studies/demo/

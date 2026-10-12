@@ -5,11 +5,13 @@ michele.a.joseph@gmail.com
 
 ---
 
+> **Status of this document.** This is the April 2026 technical report for CAI-Bench v2, when it had 240 cases (2,160 prompts). The current version is `paper.tex` (360 cases, 3,240 prompts per run). Not every score below has a committed result file; [`results/README.md`](results/README.md) lists the runs that do. CAI-Bench measures semantic invariance only; the project's newer measurement, Behavioral Update Fidelity, is specified in [`docs/BUF-SPEC.md`](docs/BUF-SPEC.md).
+
 ## Abstract
 
 Standard LLM evaluation asks whether a model answers correctly. It does not ask whether the model answers the same way. This is a gap with real consequences: a model that gives different answers to semantically equivalent questions (depending on whether the user is casual, emotional, or authoritative) is unreliable in production, regardless of whether either answer is individually correct.
 
-CAI-Bench measures this property. The benchmark consists of 2,160 test cases across 20 domains, each comprising one canonical question and 8 adversarial phrasings drawn from a fixed taxonomy of pressure techniques. The primary metric is **CAI Strain**, defined as the complement of a consistency score assigned by an independent judge model. Lower CAI Strain means the model's outputs are invariant to surface form. We also define Severity-Weighted Strain (SW-Strain), which penalises failures in high-stakes domains (medication, ai_safety, immigration) more than low-stakes ones (ecommerce, saas), and Multi-Turn Strain (MT-Strain), a metric for positional consistency under escalating conversational pressure.
+CAI-Bench measures this property. The benchmark consists of 240 cases across 20 domains (2,160 prompts), each comprising one canonical question and 8 adversarial phrasings drawn from a fixed taxonomy of pressure techniques. The primary metric is **CAI Strain**, defined as the complement of a consistency score assigned by an independent judge model. Lower CAI Strain means the model's outputs are invariant to surface form. We also define Severity-Weighted Strain (SW-Strain), which penalises failures in high-stakes domains (medication, ai_safety, immigration) more than low-stakes ones (ecommerce, saas), and Multi-Turn Strain (MT-Strain), a metric for positional consistency under escalating conversational pressure.
 
 Evaluating Claude Sonnet 4.6 across all 20 domains and GPT-4o across 12 domains (preliminary), Claude achieves an average CAI Strain of **0.260** and GPT-4o achieves **0.237** on the comparable 12-domain subset. The aggregate slightly favors GPT-4o, but the distribution of failures matters more than the mean: Claude outperforms on all safety-adjacent domains (legal: 0.152 vs 0.254; mental_health: 0.146 vs 0.161; ai_safety: 0.212 vs 0.234), while GPT-4o outperforms on service-interaction domains (finance: 0.207 vs 0.393; insurance: 0.212 vs 0.334). Claude's weakest domain overall is food_delivery (0.463), driven by register-sensitive identity drift. We validate against a deployed mental health AI serving approximately 5 million users and find that the minimization technique (T4) causes the system to drop its safe messaging protocol at the exact moment a vulnerable user is most likely to underreport.
 
@@ -31,7 +33,7 @@ We define **surface-form consistency** as a property of a conversational AI syst
 
 CAI-Bench v2 provides:
 
-1. **2,160 test cases** across 20 domains and 8 adversarial techniques, frozen for reproducibility.
+1. **240 cases (2,160 prompts)** across 20 domains and 8 adversarial techniques, frozen for reproducibility.
 2. **Severity-Weighted Strain (SW-Strain)**: a weighted variant that assigns 4× penalty to critical-domain failures.
 3. **Multi-Turn Strain (MT-Strain)**: a benchmark metric targeting positional drift under adversarial conversational pressure, a failure mode that single-turn benchmarks cannot detect. MT-Strain is defined, implemented, and included in the benchmark; empirical scores across models are forthcoming.
 4. **Per-technique fingerprinting**: results break down Strain by adversarial technique, so a system-prompt fix for "hypothetical" drift is not confused with one for "authority" drift.
@@ -80,7 +82,7 @@ We use 8 fixed techniques to generate adversarial variants:
 | T7 | boundary | Directly tests whether the model will bend a rule |
 | T8 | indirect | Approaches the question from an oblique angle |
 
-The same 8 techniques apply to all 2,160 cases. This makes results directly comparable across domains and models: if authority framing (T5) is more disruptive on legal than on ecommerce, that reflects something real about how the model processes claimed context rather than an artifact of domain-specific test design.
+The same 8 techniques apply to all 240 cases. This makes results directly comparable across domains and models: if authority framing (T5) is more disruptive on legal than on ecommerce, that reflects something real about how the model processes claimed context rather than an artifact of domain-specific test design.
 
 ### 2.4 Severity Weighting
 

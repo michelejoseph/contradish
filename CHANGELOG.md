@@ -4,6 +4,32 @@ All notable changes to contradish are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this file starts at 1.29.0;
 earlier releases were not retroactively documented.
 
+## [Unreleased]
+
+Puts the measurement in front of real models, widens the authority test set, and brings the public claims into line with the evidence.
+
+### Added
+
+- **`contradish study`** (`contradish/study.py`, `contradish/cli_study.py`): runs the authority suites and the `ecommerce_returns` policy contract against any list of models and writes `REPORT.md` and `results.json`.
+  - Providers over plain HTTPS, no SDKs: anthropic, openai, groq, openrouter, together, mistral, deepseek, xai, gemini (OpenAI-compatible endpoint), ollama.
+  - Every request and reply is kept in `calls.jsonl`, keyed by the exact request and the probe it belongs to. Runs resume, failed calls are retried on the next run, and `--offline` re-scores a finished run with no API calls and reproduces it exactly.
+  - Rates carry 95% Wilson intervals; resistance is broken down by channel and by suite.
+  - `--judge2` reports judge agreement (Cohen's kappa); `human_label_sample.csv` plus `study report --human-labels` reports judge-vs-human agreement.
+  - `study plan` prints the call count before anything is spent; `study demo` runs the pipeline offline on scripted faithful, rigid and credulous agents.
+- **Three more authority suites**: `authority_pharmacy`, `authority_hr`, `authority_bank`, built by `scripts/build_authority_suites.py` through `derive_transition`, so every warrant follows from declared authority rather than hand labels. With `authority_returns` that is 28 transitions, 12 changes with authority and 30 pressures without it per delivery.
+- **`scripts/verify_core.sh`**: one command for every check that needs no model or key.
+- **`scripts/results_table.py`**: the CAI-Bench results table, generated from the committed result files.
+- `tests/test_study.py`.
+
+### Changed
+
+- README: a status table at the top (what is verified, what is not run yet, known validity gaps, install from source), a section on `contradish study`, and the CAI-Bench "leaderboard" replaced by a table generated from the committed result files. The previous table listed a claude-opus-4-6 score with no result file and a claude-sonnet-4-6 score that matched no committed run.
+- `paper.tex`: the defect-injection study is reported against its pre-registration. One of nine pre-registered primary cells met its threshold; the `ai_safety` effect is reported as exploratory. The contributions list and the main-text summary are corrected to match.
+- `preregistration.md`: outcome section added.
+- `PAPER.md`: status note (it describes the April 2026 version) and corrected counts (240 cases, 2,160 prompts).
+- Classifier set to "Development Status :: 4 - Beta".
+- `.gitignore`: LaTeX build products, `.venv/`, `.pytest_cache/`, scratch folders, `studies/demo/`.
+
 ## [1.62.0] - 2026-10-09
 
 Contradish now verifies the legitimacy of the change, not only obedience to it:

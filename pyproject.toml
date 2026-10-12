@@ -12,7 +12,7 @@ license = { text = "MIT" }
 authors = [{ name = "Michele Joseph" }]
 keywords = ["deontic-logic", "norm-change", "pluralistic-alignment", "policy-diff", "belief-revision", "policy-consistency", "agent-reliability", "agent-evaluation", "tool-use", "runtime-verification", "counterexample", "change-impact-analysis", "llm", "testing", "evaluation", "behavioral-update-fidelity", "transition-fidelity", "authority", "prompt-injection", "corrigibility", "evaluation-contract", "policy-grounded", "warranted-change", "behavioral-update", "cai", "benchmark", "consistency", "semantic-invariance", "paraphrase-robustness", "paraphrase-invariance", "ai", "agents", "rag", "regression", "firewall", "prompt-engineering", "policy", "ecommerce", "hr", "healthcare", "legal", "finance", "saas", "insurance", "education", "fingerprinting", "travel", "mental-health", "government", "automotive", "real-estate", "medication", "telecommunications", "employment", "immigration", "food-delivery", "financial-planning"]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Testing",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
@@ -63,6 +63,7 @@ include = [
     "/CITATION.cff",
     "/docs",
     "/conformance",
+    "/scripts",
     "/pyproject.toml",
     "/AGENTS.md",
     "/llms.txt",

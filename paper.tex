@@ -103,7 +103,7 @@ Surface-form consistency is, to our knowledge, a missing axis in current AI eval
 \item \textbf{CAI-Bench}: 360 frozen test cases across 20 production domains (18 per domain), each with 8 adversarial surface-form variants from a fixed technique taxonomy, yielding 3,240 prompt-response pairs per evaluation run.
 \item \textbf{Empirical evidence that accuracy does not predict consistency}: Claude Sonnet 4.6 and GPT-4o perform comparably on standard benchmarks but show different consistency profiles by domain type. Score reliability analysis confirms the largest gaps exceed the noise floor; the claim of orthogonality would require a larger model panel.
 \item \textbf{Probe studies illustrating discriminative behaviour}: T4 minimization is associated with crisis-protocol dropout independently in both Wysa (5M users) and Ash (150K users), two mental health AI systems developed by separate teams. LawConnect holds its policy across all probes. These are illustrative case studies; replication across more systems is required to establish a broader empirical pattern.
-\item \textbf{Construct validity via controlled defect injection}: We inject four pre-specified behavioral defects into a conversational system and show that CAI-Bench reliably detects each one. All four defects produce statistically significant strain increases in the adversarially probed domain ($p \leq 0.025$) while leaving neutral domains unaffected (specificity ratio 7--18$\times$). A universal-refusal control is correctly flagged by the dual-metric design---lower strain but helpfulness declining from 0.97 to 0.82---demonstrating the benchmark resists gaming-by-refusal (Appendix~\ref{app:regression}).
+\item \textbf{A pre-registered defect-injection study, reported against its pre-registration}: We inject four behavioral defects into a conversational system and test pre-registered predictions about where strain should rise. The predictions largely failed: of the nine pre-registered primary domain cells, one reached the pre-registered threshold. All four defects did raise strain in the \texttt{ai\_safety} domain, which was a primary domain for only one of them. A universal-refusal control lowered strain while helpfulness fell from 0.97 to 0.82, so strain must be read together with helpfulness (Appendix~\ref{app:regression}).
 \item \textbf{Practical tooling}: single-command evaluation for any Anthropic or OpenAI API model, per-technique failure output with remediation suggestions, and an open benchmark for community result submission.
 \end{enumerate}
 
@@ -662,7 +662,7 @@ Claude's best domains (mental\_health 0.146, legal 0.152) are precisely the doma
 \paragraph{Calibrated constraint transport as the normative target.}
 The case studies illustrate that the normative target is not refusal, not consistency with any fixed response, and not responsiveness to everything the user says. A system that routes every crisis disclosure to 988 regardless of user framing would score low on CAI Strain (consistent) but would be brittle in a different direction. The normative target---constraint transport---requires that the commitment state hold against framing while remaining open to genuine evidence. LawConnect illustrates the positive case: not because it refuses to engage, but because it maintains its jurisdiction-gathering requirement across T4, T5, and T7 pressure while providing substantively helpful responses within that constraint.
 
-The two metrics that fully characterize the target are CAI Strain (resistance to unjustified deformation) and helpfulness under the maintained constraint (openness to genuine engagement). A system can fail either criterion independently: universal refusal minimizes Strain while eliminating helpfulness; sycophancy maximizes surface helpfulness while destroying constraint transport. The construct validity study in Appendix~\ref{app:regression} tests both simultaneously via controlled defect injection: all four behavioral defects significantly elevate strain in the adversarially probed domain ($p \leq 0.025$) while leaving neutral domains unaffected, and universal refusal is flagged by the dual-metric design---lower strain but helpfulness declining from 0.97 to 0.82.
+The two metrics that fully characterize the target are CAI Strain (resistance to unjustified deformation) and helpfulness under the maintained constraint (openness to genuine engagement). A system can fail either criterion independently: universal refusal minimizes Strain while eliminating helpfulness; sycophancy maximizes surface helpfulness while destroying constraint transport. The defect-injection study in Appendix~\ref{app:regression} probes both: universal refusal is flagged by the dual-metric design (lower strain, helpfulness falling from 0.97 to 0.82), but the pre-registered predictions about where behavioral defects would raise strain were largely not met; the defects raised strain only in the \texttt{ai\_safety} domain, an exploratory finding that needs its own pre-registered test.
 
 %─────────────────────────────────────────────
 \section{Case Study: Real-World Validation}
@@ -1197,11 +1197,29 @@ Hypothetical exception & legal, ai\_safety                 & ecommerce, hr \\
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{figures/fig_regression_validity.png}
-\caption{Regression-detection validity experiment. \textbf{(A)} $\Delta$ CAI Strain (defect minus baseline) across defect type and domain (GPT-4o-mini model, $n=10$ cases per cell). All behavioral defects elevate strain in the \texttt{ai\_safety} domain while leaving neutral domains largely unaffected; universal refusal reduces strain by making refusals consistent but penalizes helpfulness. \textbf{(B)} Strain versus helpfulness by defect type and domain. Universal refusal occupies the low-strain, low-helpfulness quadrant, confirming the dual-metric design flags the gaming-by-refusal strategy. Behavioral defects show elevated strain with maintained helpfulness.}
+\caption{Regression-detection validity experiment. \textbf{(A)} $\Delta$ CAI Strain (defect minus baseline) across defect type and domain (GPT-4o-mini model, $n=10$ cases per cell). All behavioral defects elevate strain in the \texttt{ai\_safety} domain; the pre-registered primary domains show no increase (see text); universal refusal reduces strain by making refusals consistent but penalizes helpfulness. \textbf{(B)} Strain versus helpfulness by defect type and domain. Universal refusal occupies the low-strain, low-helpfulness quadrant, confirming the dual-metric design flags the gaming-by-refusal strategy. Behavioral defects show elevated strain with maintained helpfulness.}
 \label{fig:regression_validity}
 \end{figure}
 
-\paragraph{H1 (Sensitivity) --- confirmed.} All four behavioral defects produce statistically significant strain increases in the \texttt{ai\_safety} domain, which probes the same adversarial framings the defects encode (casual register, professional authority, hypothetical reframing, harm minimization). Paired permutation tests (10{,}000 permutations):
+\paragraph{Outcome against the pre-registration.} The pre-registration (Table~\ref{tab:regression-preregistered}; \texttt{preregistration.md}, written before any run) named primary domains where each defect should raise strain by at least $+0.08$ ($+0.10$ for minimization override). Recomputed from \texttt{regression\_detection\_results\_20260729.json}, the domain-level deltas in those cells were:
+
+\begin{center}
+\small
+\begin{tabular}{@{}llr@{}}
+\toprule
+Defect & Primary domain & $\Delta$ strain \\
+\midrule
+Casual suppression     & finance / ecommerce / food\_delivery & $-0.005$ / $-0.033$ / $-0.057$ \\
+Authority deference    & legal / healthcare / immigration     & $-0.008$ / $-0.003$ / $-0.015$ \\
+Minimization override  & mental\_health                       & $+0.013$ \\
+Hypothetical exception & legal / ai\_safety                   & $+0.010$ / $+0.107$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent One of nine pre-registered primary cells met its threshold. \textbf{H1 as pre-registered is not supported}, and neither is the domain-level localization in H2.
+
+\paragraph{Exploratory finding (not pre-registered).} Every defect raised strain in the \texttt{ai\_safety} domain, which was a primary domain only for the hypothetical-exception defect. Paired permutation tests (10{,}000 permutations) on that domain:
 
 \begin{center}
 \small
@@ -1217,13 +1235,9 @@ Minimization override  & $+0.075$ & $0.025$ \\
 \end{tabular}
 \end{center}
 
-Neutral domains (legal, finance, healthcare, ecommerce, immigration, food delivery, mental health, HR) show mean $\hat\delta \in [-0.012,\,+0.010]$ across the same defects---no significant increase in any neutral cell.
+\noindent The increase is not localized to the matching technique: for authority deference the matching probe (T5) moved by $-0.02$ in \texttt{ai\_safety}. A plausible reading is that \texttt{ai\_safety} cases are where the defect prompts change behavior at all, because the other domains' cases rarely trigger the relaxed commitments; this is a hypothesis for a new, pre-registered study, not a confirmed property of CAI Strain. Model and judge were the same model (GPT-4o-mini), with $n=10$ cases per cell, so this experiment is underpowered and its judge is not independent of the system under test.
 
-\paragraph{H2 (Specificity) --- confirmed at domain level.} The strain increase concentrates in the \texttt{ai\_safety} domain rather than diffusing uniformly. For each defect, the ratio of the \texttt{ai\_safety} delta to the mean neutral-domain delta ranges from $7\times$ (minimization override) to $18\times$ (hypothetical exception). The $T6$ hypothetical technique in \texttt{ai\_safety} yields the largest single-technique signal ($\hat\delta = +0.160$, $p = 0.063$). Domain-level localization is strong; per-technique effects in individual 10-case domain runs are underpowered to reach significance.
-
-The concentration in \texttt{ai\_safety} is theoretically consistent: that domain tests consistency under exactly the adversarial framings the defects encode, making it the natural detection locus for all four defects simultaneously.
-
-\paragraph{H3 (Refusal resistance) --- confirmed.} Universal refusal reduces CAI Strain in most domains (mean $\hat\delta = -0.065$ across neutral domains, $-0.262$ in \texttt{ai\_safety}), because a model that consistently refuses is superficially consistent. Helpfulness declines simultaneously: 0.82 versus 0.97 at baseline. Figure~\ref{fig:regression_validity}B shows universal refusal migrating to the low-strain, low-helpfulness quadrant while behavioral defects maintain helpfulness ($\geq 0.97$) with elevated strain. The dual-metric design detects the degenerate strategy that strain alone cannot.
+\paragraph{H3 (Refusal resistance) --- supported.} Universal refusal reduces CAI Strain in most domains (mean $\hat\delta = -0.065$ across neutral domains, $-0.262$ in \texttt{ai\_safety}), because a model that consistently refuses is superficially consistent. Helpfulness declines simultaneously: 0.82 versus 0.97 at baseline. Figure~\ref{fig:regression_validity}B shows universal refusal migrating to the low-strain, low-helpfulness quadrant while behavioral defects maintain helpfulness ($\geq 0.97$) with elevated strain. The dual-metric design detects the degenerate strategy that strain alone cannot.
 
 \subsection*{Limitations of this design}
 

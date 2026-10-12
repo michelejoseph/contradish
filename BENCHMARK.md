@@ -1777,7 +1777,7 @@ The `evaluate.py` script handles this automatically when both `ANTHROPIC_API_KEY
   author       = {Joseph, Michele},
   year         = {2026},
   howpublished = {\url{https://contradish.com}},
-  note         = {20 domains, 2160 rows, 8 adversarial techniques. https://github.com/michelejoseph/contradish},
+  note         = {20 domains, 360 cases (3,240 prompts per run), 8 adversarial techniques. https://github.com/michelejoseph/contradish},
 }
 ```
 
