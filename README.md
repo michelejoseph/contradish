@@ -71,6 +71,17 @@ Both say the same thing: behavior should be a function of the policy-relevant co
 
 ## Running it against real models (`contradish study`)
 
+**Free, no API key:** `contradish study local` runs on your own computer through [Ollama](https://ollama.com). Install Ollama, download a model once (`ollama pull qwen2.5:3b`, about 2 GB), then:
+
+```bash
+contradish study local                                   # every installed Ollama model, authority contrasts
+contradish study local --models qwen2.5:3b,llama3.2:3b --components authority,contrast
+```
+
+Local runs use no judge: each model ends its reply with `OUTCOME: <label>`, which the runner reads. That halves the number of calls, but the model sees the outcome labels, which a judged run does not show it, so the report records the method and local scores are not directly comparable with judged ones. Defaults are sized for a laptop (one sample, `fresh` delivery, about 240 calls per model for the contrasts); pass `--samples 3 --deliveries fresh,in_conversation` for the full design. `--self-label` gives the same no-judge mode with hosted models.
+
+With API keys:
+
 ```bash
 contradish study demo                                      # offline: scripted agents, checks the pipeline
 contradish study plan --models anthropic:claude-haiku-4-5,openai:gpt-4.1-mini --judge openai:gpt-4.1-mini

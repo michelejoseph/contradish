@@ -19,6 +19,7 @@ def register(sub) -> None:
         description=(
             "Put one or more models through the measurements that need a live system, keep every\n"
             "request and reply, and write REPORT.md and results.json.\n\n"
+            "  contradish study local                     free: your local Ollama models, no key, no credits\n"
             "  contradish study demo                      offline, scripted agents, no key\n"
             "  contradish study contrasts                 list the matched-provenance authority contrasts\n"
             "  contradish study run --models anthropic:claude-haiku-4-5,openai:gpt-4.1-mini \\\n"
@@ -31,7 +32,7 @@ def register(sub) -> None:
             "GROQ_API_KEY, ...). See contradish/study.py."
         ),
     )
-    st.add_argument("study_action", choices=["run", "demo", "report", "plan", "contrasts"])
+    st.add_argument("study_action", choices=["local", "run", "demo", "report", "plan", "contrasts"])
     st.add_argument("out_dir", nargs="?", default=None, help="report: the study directory.")
     st.add_argument("--models", default=None, help="Comma-separated PROVIDER:MODEL list.")
     st.add_argument("--judge", default=None,
@@ -39,11 +40,14 @@ def register(sub) -> None:
                          "anthropic:claude-haiku-4-5, whichever key is set. Prefer a judge from a "
                          "different provider than the models under test.")
     st.add_argument("--judge2", default=None, help="Optional second judge; reports judge agreement.")
-    st.add_argument("--components", default="authority,contrast,contract",
-                    help="Any of authority, contrast, contract.")
-    st.add_argument("--deliveries", default="fresh,in_conversation")
-    st.add_argument("--samples", type=int, default=3, help="Repeats per input; the modal label is used.")
-    st.add_argument("--workers", type=int, default=4)
+    st.add_argument("--components", default=None,
+                    help="Any of authority, contrast, contract. Default: all three (local: contrast).")
+    st.add_argument("--deliveries", default=None, help="Default: fresh,in_conversation (local: fresh).")
+    st.add_argument("--samples", type=int, default=None,
+                    help="Repeats per input; the modal label is used. Default 3 (local: 1).")
+    st.add_argument("--workers", type=int, default=None, help="Parallel requests. Default 4 (local: 1).")
+    st.add_argument("--self-label", dest="self_label", action="store_true", default=False,
+                    help="No judge: each model ends its reply with 'OUTCOME: <label>'. Default for local.")
     st.add_argument("--max-tokens", dest="max_tokens", type=int, default=600)
     st.add_argument("--temperature", type=float, default=None,
                     help="Omit to use each provider's default (recorded in the results).")
@@ -102,13 +106,23 @@ def _plan(cfg) -> str:
         lines.append(f"    policy contract   {n:5d} model calls  ({len(c.states())} policy states, "
                      f"{len(c.cases)} cases with rewordings and contrasts, x {cfg.samples} samples)")
     total = per_model * len(cfg.models)
-    return ("\n".join(lines) + f"\n    per model         {per_model:5d} model calls, and as many judge calls"
-            + f"\n    all models        {total:5d} model calls + {total} judge calls"
+    jc = 0 if cfg.judge is None else total
+    return ("\n".join(lines) + f"\n    per model         {per_model:5d} model calls"
+            + (", and as many judge calls" if cfg.judge is not None else ", no judge calls (self-label)")
+            + f"\n    all models        {total:5d} model calls + {jc} judge calls"
             + (f" (+{total} for the second judge)" if cfg.judge2 else ""))
 
 
 def cmd_study(args) -> None:
     from contradish import study as S
+
+    local = args.study_action == "local"
+    defaults = ({"components": "contrast", "deliveries": "fresh", "samples": 1, "workers": 1} if local else
+                {"components": "authority,contrast,contract", "deliveries": "fresh,in_conversation",
+                 "samples": 3, "workers": 4})
+    for k, v in defaults.items():
+        if getattr(args, k) is None:
+            setattr(args, k, v)
 
     if args.study_action == "demo":
         out = args.out or "studies/demo"
@@ -130,16 +144,44 @@ def cmd_study(args) -> None:
         print(open(f"{args.out_dir}/REPORT.md", encoding="utf-8").read())
         return
 
+    if local:
+        installed = S.ollama_models()
+        if installed is None:
+            sys.exit(
+                "\n  Ollama is not running, so there are no local models to test.\n\n"
+                "  1. Install it from https://ollama.com/download (free) and open the Ollama app,\n"
+                "     or run `ollama serve` in another Terminal window.\n"
+                "  2. Download a model or two (one-time, about 2 GB each):\n"
+                "       ollama pull qwen2.5:3b\n"
+                "       ollama pull llama3.2:3b\n"
+                "  3. Run `contradish study local` again.\n")
+        wanted = _split(args.models) or installed
+        wanted = [m if m.startswith("ollama:") else f"ollama:{m}" for m in wanted]
+        if not wanted:
+            sys.exit("\n  Ollama is running but has no models. Download one (about 2 GB):\n"
+                     "    ollama pull qwen2.5:3b\n  then run `contradish study local` again.\n")
+        def _have(name):
+            return name in installed or (":" not in name and f"{name}:latest" in installed)
+        missing_local = [m for m in wanted if not _have(m.split(":", 1)[1])]
+        if missing_local:
+            sys.exit(f"  not downloaded yet: {', '.join(missing_local)}. Run: "
+                     + "  ".join(f"ollama pull {m.split(':', 1)[1]}" for m in missing_local))
+        args.models = ",".join(wanted)
+        if not args.judge:
+            args.self_label = True
+        args.out = args.out or "studies/local"
+
     try:
         models = [S.parse_model(m) for m in _split(args.models)]
-        judge = S.parse_model(args.judge) if args.judge else _default_judge()
+        judge = None if args.self_label else (S.parse_model(args.judge) if args.judge else _default_judge())
         judge2 = S.parse_model(args.judge2) if args.judge2 else None
     except ValueError as e:
         sys.exit(f"  {e}")
     if not models:
         sys.exit("  --models is required, e.g. --models anthropic:claude-haiku-4-5,openai:gpt-4.1-mini")
-    if judge is None:
-        sys.exit("  no judge: pass --judge PROVIDER:MODEL, or set OPENAI_API_KEY or ANTHROPIC_API_KEY")
+    if judge is None and not args.self_label:
+        sys.exit("  no judge: pass --judge PROVIDER:MODEL, set OPENAI_API_KEY or ANTHROPIC_API_KEY, or use\n"
+                 "  --self-label (each model labels its own answers). For a free run: contradish study local")
     components = tuple(_split(args.components))
     bad = [c for c in components if c not in ("authority", "contrast", "contract")]
     if bad:
@@ -153,24 +195,29 @@ def cmd_study(args) -> None:
                         offline=args.offline, human_sample=args.human_sample)
 
     print()
-    print(f"  STUDY  *  {len(models)} model(s)  *  judge {judge.id}" + (f", second judge {judge2.id}" if judge2 else ""))
+    who = judge.id if judge else "none (each model labels its own answers)"
+    print(f"  STUDY  *  {len(models)} model(s)  *  judge {who}" + (f", second judge {judge2.id}" if judge2 else ""))
     print(_plan(cfg))
-    same = [m.id for m in models if m.provider == judge.provider]
+    if local:
+        print("  free: runs on this computer through Ollama; no API key, no credits. Small models take a few")
+        print("  seconds per call, so expect roughly 10-30 minutes per model. Rerunning resumes where it stopped.")
+    same = [m.id for m in models if judge and m.provider == judge.provider and m.provider != "ollama"]
     if same:
         print(f"  note: judge shares a provider with {', '.join(same)}; consider --judge from another provider")
     if args.study_action == "plan":
         return
     if not args.offline:
-        missing = S.missing_keys(models + [judge] + ([judge2] if judge2 else []))
+        everyone = models + [x for x in (judge, judge2) if x]
+        missing = S.missing_keys(everyone)
         if missing:
             sys.exit(f"  missing API key(s): {', '.join(missing)}")
-        keys = {m.key_env for m in models + [judge] + ([judge2] if judge2 else []) if m.key_env}
+        keys = {m.key_env for m in everyone if m.key_env}
         placeholders = sorted(k for k in keys if os.environ.get(k, "").endswith("..."))
         if placeholders:
             sys.exit(f"  {', '.join(sorted(placeholders))} still hold a placeholder ending in '...'; "
                      f"export the real key(s) and run again")
         print("  checking each model and judge with one short request ...")
-        problems = S.preflight(models + [judge] + ([judge2] if judge2 else []))
+        problems = S.preflight(everyone)
         if problems:
             for mid, err in problems:
                 print(f"  {mid}: {err}")

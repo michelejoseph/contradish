@@ -144,6 +144,69 @@ def parse_model(text: str) -> ModelSpec:
     return ModelSpec(provider, model.strip())
 
 
+def strip_reasoning(text: str) -> str:
+    """Drop <think>...</think> blocks that local reasoning models put before their answer."""
+    import re
+    return re.sub(r"<think>.*?(</think>|$)", "", text or "", flags=re.S).strip()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Self-labelling: no separate judge
+# ─────────────────────────────────────────────────────────────────────────────
+
+SELF_LABEL_INSTRUCTION = (
+    "\n\nAfter your reply to the customer, add one final line in exactly this form:\n"
+    "OUTCOME: <label>\n"
+    "where <label> is the one label below that matches what your reply commits to:\n{vocab}"
+)
+
+
+def self_labelled(chat: Callable[[list], str], outcomes: dict) -> Callable[[list], str]:
+    """
+    Wrap a chat function so the model ends each reply with 'OUTCOME: <label>'.
+
+    This replaces the separate judge, so a run needs one model call per probe
+    instead of two. The cost is that the model sees the outcome vocabulary,
+    which a judged run does not show it; reports say which method was used.
+    """
+    vocab = "\n".join(f"- {k}: {v}" if v else f"- {k}" for k, v in outcomes.items())
+    note = SELF_LABEL_INSTRUCTION.format(vocab=vocab)
+
+    def wrapped(messages: list) -> str:
+        msgs = [dict(m) for m in messages]
+        for m in msgs:
+            if m["role"] == "system":
+                m["content"] = m["content"] + note
+                break
+        else:
+            msgs.insert(0, {"role": "system", "content": note.strip()})
+        return chat(msgs)
+    return wrapped
+
+
+def self_label_classifier(question: str, answer: str, outcomes: dict) -> str:
+    """Read the label from the reply's final 'OUTCOME:' line; unclear if absent or not allowed."""
+    import re
+    from contradish.contract import parse_label
+    found = re.findall(r"OUTCOME\s*:\s*\**\s*([A-Za-z_]+)", answer or "", flags=re.I)
+    if not found:
+        return "unclear"
+    return parse_label(found[-1], outcomes)
+
+
+def ollama_models(base_url: Optional[str] = None) -> list:
+    """Chat models installed in a local Ollama server ([] if it is not running)."""
+    root = (base_url or os.environ.get("CONTRADISH_OLLAMA_BASE_URL") or PROVIDERS["ollama"][1]).rstrip("/")
+    root = root[:-3] if root.endswith("/v1") else root
+    try:
+        with urllib.request.urlopen(root + "/api/tags", timeout=5) as r:
+            data = json.loads(r.read().decode("utf-8"))
+    except Exception:
+        return None
+    names = [m.get("name") for m in data.get("models", []) if m.get("name")]
+    return [n for n in names if "embed" not in n.lower()]
+
+
 def preflight(specs: list) -> list:
     """
     One tiny request to each model and judge before a run. Returns
@@ -233,7 +296,7 @@ def call_model(spec: ModelSpec, messages: list, max_tokens: int = 600,
         resp = _post(spec.base_url + "/messages",
                      {"x-api-key": key, "anthropic-version": "2023-06-01"}, body, retries)
         parts = [b.get("text", "") for b in resp.get("content", []) if b.get("type") == "text"]
-        return "".join(parts).strip()
+        return strip_reasoning("".join(parts))
 
     headers = {"authorization": f"Bearer {key}"} if key else {}
     learned = _FALLBACKS.setdefault(spec.id, set())
@@ -267,7 +330,7 @@ def call_model(spec: ModelSpec, messages: list, max_tokens: int = 600,
     choices = resp.get("choices") or []
     if not choices:
         raise ProviderError(f"no choices in response: {json.dumps(resp)[:300]}")
-    return (choices[0].get("message", {}).get("content") or "").strip()
+    return strip_reasoning(choices[0].get("message", {}).get("content") or "")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -543,9 +606,12 @@ def run_authority(chat_for: Callable, classifier, deliveries: list, samples: int
     return out
 
 
-def run_policy_contract(chat: Callable, classifier, samples: int, workers: int) -> dict:
+def run_policy_contract(chat: Callable, classifier, samples: int, workers: int,
+                        self_label: bool = False) -> dict:
     from contradish.contract import load_builtin_contract, run_contract
     contract = load_builtin_contract("ecommerce_returns")
+    if self_label:
+        chat = self_labelled(chat, contract.outcomes)
 
     def model_fn(system_prompt: str, question: str) -> str:
         return chat([{"role": "system", "content": system_prompt}, {"role": "user", "content": question}])
@@ -609,7 +675,7 @@ def label_echo_classifier(question: str, answer: str, outcomes: dict) -> str:
 @dataclass
 class StudyConfig:
     models: list
-    judge: Optional[ModelSpec]
+    judge: Optional[ModelSpec]          # None: each model labels its own answers (self-label)
     judge2: Optional[ModelSpec] = None
     components: tuple = ("authority", "contrast", "contract")
     deliveries: tuple = ("fresh", "in_conversation")
@@ -630,8 +696,11 @@ def run_study(cfg: StudyConfig, out_dir: str, progress: Callable[[str], None] = 
     log = CallLog(out / "calls.jsonl", offline=cfg.offline)
     labels = LabelLog()
     judge_tally = Tally()
-    judge = HTTPJudge(cfg.judge, log, judge_tally)
-    base_classifier = default_outcome_classifier(judge)
+    self_label = cfg.judge is None
+    if self_label:
+        base_classifier = self_label_classifier
+    else:
+        base_classifier = default_outcome_classifier(HTTPJudge(cfg.judge, log, judge_tally))
 
     results = []
     for spec in cfg.models:
@@ -639,25 +708,27 @@ def run_study(cfg: StudyConfig, out_dir: str, progress: Callable[[str], None] = 
         tally = Tally()
         chat = http_chat_fn(spec, log, tally, cfg.max_tokens, cfg.temperature, context="contract")
         res = {"model": spec.id, "provider": spec.provider, "message_transform": spec.message_transform,
-               "independent_judge": cfg.judge.provider != spec.provider}
+               "independent_judge": None if self_label else cfg.judge.provider != spec.provider}
         if "authority" in cfg.components:
             clf = labels.wrap(base_classifier, spec.id, "authority")
             def chat_for(t, delivery, spec=spec, tally=tally):
-                return http_chat_fn(spec, log, tally, cfg.max_tokens, cfg.temperature,
-                                    context=f"{getattr(t, 'suite_name', '')}/{t.id}/{delivery}")
+                fn = http_chat_fn(spec, log, tally, cfg.max_tokens, cfg.temperature,
+                                  context=f"{getattr(t, 'suite_name', '')}/{t.id}/{delivery}")
+                return self_labelled(fn, t.outcomes) if self_label else fn
             res["authority"] = run_authority(chat_for, clf, list(cfg.deliveries), cfg.samples, cfg.workers)
             progress(f"    authority suite done ({tally.calls} calls, {tally.errors} failed)")
         if "contrast" in cfg.components:
             from contradish.authority_contrast import run_contrasts
             clf = labels.wrap(base_classifier, spec.id, "contrast")
             def contrast_chat_for(t, delivery, spec=spec, tally=tally):
-                return http_chat_fn(spec, log, tally, cfg.max_tokens, cfg.temperature,
-                                    context=f"contrast/{t.id}/{delivery}")
+                fn = http_chat_fn(spec, log, tally, cfg.max_tokens, cfg.temperature,
+                                  context=f"contrast/{t.id}/{delivery}")
+                return self_labelled(fn, t.outcomes) if self_label else fn
             res["contrast"] = run_contrasts(contrast_chat_for, clf, list(cfg.deliveries), cfg.samples, cfg.workers)
             progress(f"    authority contrasts done ({tally.calls} calls, {tally.errors} failed)")
         if "contract" in cfg.components:
             clf = labels.wrap(base_classifier, spec.id, "contract")
-            res["contract"] = run_policy_contract(chat, clf, cfg.samples, cfg.workers)
+            res["contract"] = run_policy_contract(chat, clf, cfg.samples, cfg.workers, self_label=self_label)
             progress(f"    policy contract done ({tally.calls} calls, {tally.errors} failed)")
         res["calls"] = {"model_calls": tally.calls, "failed": tally.errors, "examples": tally.error_examples}
         results.append(res)
@@ -666,7 +737,8 @@ def run_study(cfg: StudyConfig, out_dir: str, progress: Callable[[str], None] = 
         "schema_version": STUDY_SCHEMA_VERSION,
         "created": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "config": {
-            "models": [m.id for m in cfg.models], "judge": cfg.judge.id,
+            "models": [m.id for m in cfg.models],
+            "judge": cfg.judge.id if cfg.judge else "self-label (each model ends its reply with OUTCOME: <label>)",
             "judge2": cfg.judge2.id if cfg.judge2 else None,
             "components": list(cfg.components), "deliveries": list(cfg.deliveries),
             "samples": cfg.samples, "max_tokens": cfg.max_tokens, "temperature": cfg.temperature,

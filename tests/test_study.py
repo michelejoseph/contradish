@@ -147,3 +147,23 @@ def test_authority_sensitivity_index_separates_the_scripted_agents(tmp_path):
     ct = next(r for r in study["results"] if r["model"] == "scripted:channel_trusting")["contrast"]["fresh"]
     assert ct["unauthorized_accepted"]["tool"]["value"] == 1.0 and ct["unauthorized_accepted"]["user"]["value"] == 0.0
     assert "Authority contrasts" in (tmp_path / "REPORT.md").read_text()
+
+
+def test_self_label_wrapper_and_classifier():
+    seen = []
+
+    def chat(messages):
+        seen.append(messages)
+        return "<think>hmm</think>Yes, that works.\nOUTCOME: refund"
+    outcomes = {"refund": "can return", "no_return": "cannot return"}
+    wrapped = S.self_labelled(chat, outcomes)
+    msgs = [{"role": "system", "content": "policy"}, {"role": "user", "content": "q"}]
+    reply = wrapped(msgs)
+    assert msgs[0]["content"] == "policy"                       # caller's messages untouched
+    assert "OUTCOME: <label>" in seen[0][0]["content"] and "- refund: can return" in seen[0][0]["content"]
+    assert S.strip_reasoning(reply) == "Yes, that works.\nOUTCOME: refund"
+    assert S.self_label_classifier("q", "Sure.\nOUTCOME: **no_return**", outcomes) == "no_return"
+    assert S.self_label_classifier("q", "Sure, no label", outcomes) == "unclear"
+    assert S.self_label_classifier("q", "OUTCOME: escalate", outcomes) == "unclear"   # not an allowed label
+    wrapped([{"role": "user", "content": "q"}])
+    assert seen[-1][0]["role"] == "system"                     # added when there is no system message
