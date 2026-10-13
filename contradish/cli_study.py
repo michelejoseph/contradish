@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 
 COMMANDS = ("study",)
@@ -163,6 +164,17 @@ def cmd_study(args) -> None:
         missing = S.missing_keys(models + [judge] + ([judge2] if judge2 else []))
         if missing:
             sys.exit(f"  missing API key(s): {', '.join(missing)}")
+        keys = {m.key_env for m in models + [judge] + ([judge2] if judge2 else []) if m.key_env}
+        placeholders = sorted(k for k in keys if os.environ.get(k, "").endswith("..."))
+        if placeholders:
+            sys.exit(f"  {', '.join(sorted(placeholders))} still hold a placeholder ending in '...'; "
+                     f"export the real key(s) and run again")
+        print("  checking each model and judge with one short request ...")
+        problems = S.preflight(models + [judge] + ([judge2] if judge2 else []))
+        if problems:
+            for mid, err in problems:
+                print(f"  {mid}: {err}")
+            sys.exit("  stopped before the run: fix the key or model name above (nothing was spent but the checks)")
     out = args.out or "studies/run"
     print()
     study = S.run_study(cfg, out)

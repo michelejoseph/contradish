@@ -1,4 +1,4 @@
-"""
+r"""
 contradish/directional_fidelity.py -- closing the E-gap: did a relevant
 factor move the decision to the CORRECT place, not just move it.
 

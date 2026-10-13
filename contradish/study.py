@@ -144,6 +144,27 @@ def parse_model(text: str) -> ModelSpec:
     return ModelSpec(provider, model.strip())
 
 
+def preflight(specs: list) -> list:
+    """
+    One tiny request to each model and judge before a run. Returns
+    [(model id, error)] for those that fail with an error retrying cannot fix
+    (a bad or placeholder key, an unknown model name, no access), so a run
+    never spends hours scoring failed calls as unclassifiable answers.
+    """
+    problems = []
+    seen = set()
+    for s in specs:
+        if s.id in seen:
+            continue
+        seen.add(s.id)
+        try:
+            call_model(s, [{"role": "user", "content": "Reply with the single word OK."}], max_tokens=16, retries=1)
+        except ProviderError as e:
+            if e.status is None or e.status in (400, 401, 402, 403, 404, 422):
+                problems.append((s.id, str(e)[:300]))
+    return problems
+
+
 def missing_keys(specs: list) -> list:
     """The environment variables a run would need but are not set."""
     out = []
@@ -153,11 +174,11 @@ def missing_keys(specs: list) -> list:
     return out
 
 
-def _post(url: str, headers: dict, body: dict) -> dict:
+def _post(url: str, headers: dict, body: dict, retries: int = _RETRIES) -> dict:
     data = json.dumps(body).encode("utf-8")
     delay = 2.0
     last: Optional[Exception] = None
-    for attempt in range(_RETRIES + 1):
+    for attempt in range(retries + 1):
         req = urllib.request.Request(url, data=data, headers={"content-type": "application/json", **headers},
                                      method="POST")
         try:
@@ -177,7 +198,7 @@ def _post(url: str, headers: dict, body: dict) -> dict:
         except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as e:
             last = ProviderError(f"{type(e).__name__}: {e}")
             wait = delay
-        if attempt < _RETRIES:
+        if attempt < retries:
             time.sleep(min(60.0, wait) + random.uniform(0, 0.5))
             delay = min(60.0, delay * 2)
     raise last if last else ProviderError("request failed")
@@ -202,7 +223,7 @@ def _anthropic_payload(messages: list, model: str, max_tokens: int, temperature:
 
 
 def call_model(spec: ModelSpec, messages: list, max_tokens: int = 600,
-               temperature: Optional[float] = None) -> str:
+               temperature: Optional[float] = None, retries: int = _RETRIES) -> str:
     """One chat completion; returns the assistant's text."""
     key = spec.api_key()
     if spec.key_env and not key:
@@ -210,7 +231,7 @@ def call_model(spec: ModelSpec, messages: list, max_tokens: int = 600,
     if spec.kind == "anthropic":
         body = _anthropic_payload(messages, spec.model, max_tokens, temperature)
         resp = _post(spec.base_url + "/messages",
-                     {"x-api-key": key, "anthropic-version": "2023-06-01"}, body)
+                     {"x-api-key": key, "anthropic-version": "2023-06-01"}, body, retries)
         parts = [b.get("text", "") for b in resp.get("content", []) if b.get("type") == "text"]
         return "".join(parts).strip()
 
@@ -226,7 +247,7 @@ def call_model(spec: ModelSpec, messages: list, max_tokens: int = 600,
     url = spec.base_url + "/chat/completions"
     for _ in range(3):
         try:
-            resp = _post(url, headers, body)
+            resp = _post(url, headers, body, retries)
             break
         except ProviderError as e:
             low = (e.body or str(e)).lower()
