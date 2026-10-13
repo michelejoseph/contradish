@@ -19,6 +19,7 @@ def register(sub) -> None:
             "Put one or more models through the measurements that need a live system, keep every\n"
             "request and reply, and write REPORT.md and results.json.\n\n"
             "  contradish study demo                      offline, scripted agents, no key\n"
+            "  contradish study contrasts                 list the matched-provenance authority contrasts\n"
             "  contradish study run --models anthropic:claude-haiku-4-5,openai:gpt-4.1-mini \\\n"
             "        --judge openai:gpt-4.1-mini --out studies/run1\n"
             "  contradish study run --models ollama:llama3.1:8b --judge ollama:qwen2.5:14b --out studies/local\n"
@@ -29,7 +30,7 @@ def register(sub) -> None:
             "GROQ_API_KEY, ...). See contradish/study.py."
         ),
     )
-    st.add_argument("study_action", choices=["run", "demo", "report", "plan"])
+    st.add_argument("study_action", choices=["run", "demo", "report", "plan", "contrasts"])
     st.add_argument("out_dir", nargs="?", default=None, help="report: the study directory.")
     st.add_argument("--models", default=None, help="Comma-separated PROVIDER:MODEL list.")
     st.add_argument("--judge", default=None,
@@ -37,7 +38,8 @@ def register(sub) -> None:
                          "anthropic:claude-haiku-4-5, whichever key is set. Prefer a judge from a "
                          "different provider than the models under test.")
     st.add_argument("--judge2", default=None, help="Optional second judge; reports judge agreement.")
-    st.add_argument("--components", default="authority,contract", help="authority, contract, or both.")
+    st.add_argument("--components", default="authority,contrast,contract",
+                    help="Any of authority, contrast, contract.")
     st.add_argument("--deliveries", default="fresh,in_conversation")
     st.add_argument("--samples", type=int, default=3, help="Repeats per input; the modal label is used.")
     st.add_argument("--workers", type=int, default=4)
@@ -81,6 +83,13 @@ def _plan(cfg) -> str:
         per_model += n
         lines.append(f"    authority suites  {n:5d} model calls  ({len(suite)} transitions x cases x 2 turns "
                      f"x {cfg.samples} samples x {len(cfg.deliveries)} deliveries)")
+    if "contrast" in cfg.components:
+        from contradish.authority_contrast import build_contrasts
+        con = build_contrasts()
+        n = sum(len(t.cases) for t in con) * 2 * cfg.samples * len(cfg.deliveries)
+        per_model += n
+        lines.append(f"    authority contrasts {n:3d} model calls  ({len(con)} deliveries of 8 claims x cases x 2 "
+                     f"turns x {cfg.samples} samples x {len(cfg.deliveries)} deliveries)")
     if "contract" in cfg.components:
         c = load_builtin_contract("ecommerce_returns")
         n = 0
@@ -107,6 +116,12 @@ def cmd_study(args) -> None:
         print(f"  wrote {out}/REPORT.md and {out}/results.json")
         return
 
+    if args.study_action == "contrasts":
+        from contradish.authority_contrast import describe
+        print()
+        print(describe())
+        return
+
     if args.study_action == "report":
         if not args.out_dir:
             sys.exit("  usage: contradish study report STUDY_DIR [--human-labels FILE]")
@@ -125,7 +140,7 @@ def cmd_study(args) -> None:
     if judge is None:
         sys.exit("  no judge: pass --judge PROVIDER:MODEL, or set OPENAI_API_KEY or ANTHROPIC_API_KEY")
     components = tuple(_split(args.components))
-    bad = [c for c in components if c not in ("authority", "contract")]
+    bad = [c for c in components if c not in ("authority", "contrast", "contract")]
     if bad:
         sys.exit(f"  unknown component(s): {bad}")
     deliveries = tuple(_split(args.deliveries))

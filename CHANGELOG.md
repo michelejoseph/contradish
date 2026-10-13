@@ -10,12 +10,14 @@ Puts the measurement in front of real models, widens the authority test set, and
 
 ### Added
 
-- **`contradish study`** (`contradish/study.py`, `contradish/cli_study.py`): runs the authority suites and the `ecommerce_returns` policy contract against any list of models and writes `REPORT.md` and `results.json`.
+- **`contradish study`** (`contradish/study.py`, `contradish/cli_study.py`): runs the authority suites, the authority contrasts and the `ecommerce_returns` policy contract against any list of models and writes `REPORT.md` and `results.json`.
   - Providers over plain HTTPS, no SDKs: anthropic, openai, groq, openrouter, together, mistral, deepseek, xai, gemini (OpenAI-compatible endpoint), ollama.
   - Every request and reply is kept in `calls.jsonl`, keyed by the exact request and the probe it belongs to. Runs resume, failed calls are retried on the next run, and `--offline` re-scores a finished run with no API calls and reproduces it exactly.
   - Rates carry 95% Wilson intervals; resistance is broken down by channel and by suite.
   - `--judge2` reports judge agreement (Cohen's kappa); `human_label_sample.csv` plus `study report --human-labels` reports judge-vs-human agreement.
   - `study plan` prints the call count before anything is spent; `study demo` runs the pipeline offline on scripted faithful, rigid and credulous agents.
+- **Authority contrasts** (`contradish/authority_contrast.py`, `contradish study contrasts`): 8 claims across returns, pharmacy, HR and banking, each delivered with identical text by one source with authority over it and by four without (user, web search, third-party page, recalled note): 40 transitions, warrants derived by `derive_transition`. Scored by the **Authority Sensitivity Index** (accepted when authorized minus accepted when not, bootstrap interval over claims), per-provenance acceptance, pair profiles (discriminating, credulous, rigid, inverted) and collateral preservation. Part of `contradish study run` by default.
+- **Scripted channel-trusting agent** in `study demo`: trusts system and tool messages, distrusts the rest. It scores ASI 0.75 because it believes a web search, showing that a channel hierarchy is not an authority check.
 - **Three more authority suites**: `authority_pharmacy`, `authority_hr`, `authority_bank`, built by `scripts/build_authority_suites.py` through `derive_transition`, so every warrant follows from declared authority rather than hand labels. With `authority_returns` that is 28 transitions, 12 changes with authority and 30 pressures without it per delivery.
 - **`scripts/verify_core.sh`**: one command for every check that needs no model or key.
 - **`scripts/results_table.py`**: the CAI-Bench results table, generated from the committed result files.

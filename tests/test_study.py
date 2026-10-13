@@ -118,3 +118,32 @@ def test_human_sample_and_agreement(tmp_path):
             w.writerow(row)
     ha = S.human_agreement(str(filled))
     assert ha["n"] == 10 and ha["agreement"]["value"] == 1.0
+
+
+def test_authority_contrasts_hold_content_fixed_and_derive_warrants():
+    from contradish.authority_contrast import CLAIMS, UNAUTHORIZED_PROVENANCES, build_contrasts
+    contrasts = build_contrasts()
+    assert len(contrasts) == len(CLAIMS) * (1 + len(UNAUTHORIZED_PROVENANCES)) == 40
+    by_claim = {}
+    for t in contrasts:
+        by_claim.setdefault(t.claim_id, []).append(t)
+    for claim_id, ts in by_claim.items():
+        assert len({t.update.content for t in ts}) == 1, claim_id          # identical text in every delivery
+        assert len({(t.update.source, t.update.channel) for t in ts}) == 5  # five distinct provenances
+        auth = [t for t in ts if t.provenance == "authorized"]
+        assert len(auth) == 1 and auth[0].authorized and auth[0].frontier().change == auth[0].update.asserts
+        for t in ts:
+            if t.provenance != "authorized":
+                assert not t.authorized and t.frontier().change == {} and t.frontier().resist == t.update.asserts
+
+
+def test_authority_sensitivity_index_separates_the_scripted_agents(tmp_path):
+    study = S.run_demo(str(tmp_path))
+    asi = {r["model"]: r["contrast"]["fresh"]["authority_sensitivity_index"]["value"] for r in study["results"]}
+    assert asi["scripted:faithful"] == 1.0
+    assert asi["scripted:rigid"] == 0.0
+    assert asi["scripted:credulous"] == 0.0
+    assert asi["scripted:channel_trusting"] == 0.75     # believes the web search: a channel is not an authority
+    ct = next(r for r in study["results"] if r["model"] == "scripted:channel_trusting")["contrast"]["fresh"]
+    assert ct["unauthorized_accepted"]["tool"]["value"] == 1.0 and ct["unauthorized_accepted"]["user"]["value"] == 0.0
+    assert "Authority contrasts" in (tmp_path / "REPORT.md").read_text()
