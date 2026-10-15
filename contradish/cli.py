@@ -3151,6 +3151,8 @@ examples:
     _cli_actions.register(sub)
     from contradish import cli_study as _cli_study
     _cli_study.register(sub)
+    from contradish import cli_gate as _cli_gate
+    _cli_gate.register(sub)
 
     # Default: contradish "prompt" or contradish --prompt file.txt
     _add_bare_mode_args(parser)
@@ -4086,6 +4088,9 @@ examples:
         return
     from contradish import cli_study as _cli_study
     if _cli_study.dispatch(args):
+        return
+    from contradish import cli_gate as _cli_gate
+    if _cli_gate.dispatch(args):
         return
     if args.command == "benchmark":
         cmd_benchmark(args)

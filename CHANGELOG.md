@@ -24,6 +24,27 @@ Puts the measurement in front of real models, widens the authority test set, and
 - **`scripts/verify_core.sh`**: one command for every check that needs no model or key.
 - **`scripts/results_table.py`**: the CAI-Bench results table, generated from the committed result files.
 - `tests/test_study.py`.
+- **Baseline competence** (`transition.py`, `study.py`, `authority_contrast.py`): every outcome records whether each case was answered correctly under the previous information (`baseline_ok`, `baseline_accuracy`). Every rate is reported given a correct baseline (`change_given_baseline`, `preservation_given_baseline`, `authority_respected_given_baseline`; suite and study aggregates likewise). `TransitionOutcome.diagnosis` labels such cases `baseline_error` while leaving the spec statuses unchanged. The Authority Sensitivity Index counts a pair only when both deliveries answered the asserted case correctly before the claim; the raw index, raw profiles and raw collateral preservation are kept. Motivated by the first local run: llama3.2:3b answered 60% of cases correctly before any change, and its raw collateral preservation of 50% was 78% given a correct baseline.
+- **Scripted `base_errors` agent** in `study demo`: handles every update correctly but gets untouched cases wrong. It preserves 18% raw and 100% given a correct baseline.
+- **Temporal scope** (`transition.py`, `contradish/temporal_contrast.py`, `contradish study temporal`, study component `temporal`):
+  - `Update.effective` and `Update.applies_to` (`event` | `all`), `TransitionCase.event_date` and `in_force`, and `governs_event()`.
+  - `derive_transition` warrants a change only with standing, meaning authority AND in force.
+  - New status `retroactive`; lint codes T008, T009 and T104.
+  - Temporal contrasts: 3 amendments × 2 scopes, scored by the Temporal and Scope Sensitivity Indexes and by pair profiles (discriminating, retroactive, stale, inverted).
+- **Provider-spec authority** (`contradish/provider_spec.py`, `contradish study provider`, study component `provider`, `--provider-spec`):
+  - Anthropic's published precedence rules for mid-conversation system messages are encoded as authority, cited and dated.
+  - The same owner-level change is delivered as a mid-conversation system message, a user message and tool content.
+  - Scored by the Provider Conformance Index.
+  - Placements the provider documents as model-dependent are excluded.
+- **`system_turn` channel**: a real mid-conversation system message, placed after the user's turn. The Anthropic adapter now sends a later system message that follows a user turn natively in `messages`, rather than joining it into the system prompt. If a model rejects that, the call is retried joined and the model is remembered; `message_transform` records which happened.
+- **Gate amendment fidelity** (`contradish/gate_fidelity.py`, `contradish gate check|compile|demo`):
+  - Scores a pair of compiled tool-call gates across a policy amendment, exhaustively over the exact situation partition, with optional obligation probes.
+  - Statuses: rigid (stale gate), drift (overreach), captured (unauthorized edit compiled in), baseline_error (the old gate was already wrong).
+  - Includes `RuleGate` (JSON rules a compiler emits), `ProgramGate`, `FunctionGate`, the reference compiler `compile_rules`, and `run_compiler` for testing a compiler on the text a recompiling pipeline actually sees.
+  - Mutant gate pairs: faithful, compiled, stale, obeys_everything, overreach.
+- `scripts/verify_core.sh` step 7 (gate fidelity), and step 6 extended to baseline, temporal and provider checks.
+- `docs/BUF-SPEC.md` §16 (standing, baseline competence) and §17 (gate amendment fidelity).
+- Tests: `test_baseline_competence.py`, `test_temporal.py`, `test_provider_spec.py`, `test_gate_fidelity.py`.
 
 ### Changed
 

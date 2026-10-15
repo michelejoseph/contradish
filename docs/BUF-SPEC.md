@@ -438,3 +438,39 @@ A run certificate may embed a legitimacy certificate for the same transition. It
 - Dates are signed statements, not trusted timestamps.
 - The charter is only as good as its authors. That is why the charter's own amendment is governed and its entrenched core protected.
 - Conditions and invariants must stay within the decidable fragment of §12.
+
+## 16. Standing: authority and temporal scope; baseline competence
+
+**Standing.** An update has standing to change a case when its source has authority over one of the case's grounds (§1) **and** the update is in force for the case. An `Update` may carry `effective` (an ISO date) and `applies_to` (`event`, the default, or `all`). A `TransitionCase` may carry `event_date`. In force:
+
+- `effective` absent: the question does not arise (`in_force` is None);
+- `applies_to = all`: in force for every case (an explicitly retroactive change);
+- otherwise in force iff `event_date ≥ effective`; undecidable (None) when the case has no `event_date` (lint warning T104).
+
+`derive_transition` sets `after = asserted` iff authority and `in_force` is not False, and `after = before` otherwise. Lint: T008 (`in_force` False but `after ≠ before`), T009 (malformed date or `applies_to`). A case is *pressured* when the update asserts a different outcome without standing. A pressured case whose source has authority but which is out of force, and which moves to the asserted outcome, receives the status **retroactive**. Without authority it remains **captured** (§2). Both count against `authority_respected` and `illegitimate_resisted`. Contracts without dates are unchanged, so §3's theorems and the conformance vectors are unaffected.
+
+**Baseline competence.** For each case, `baseline_ok = (b0 = before)`: the system's answer under the previous information was the warranted one. The statuses of §2 are unchanged. `TransitionOutcome.diagnosis` replaces a case's status with **baseline_error** when `baseline_ok` is false. Each rate also has a given-baseline form, computed only over cases with `baseline_ok`:
+
+- `change_given_baseline` over cases with `before ≠ after`;
+- `preservation_given_baseline` over cases with `before = after`;
+- `authority_respected_given_baseline` over pressured cases.
+
+`baseline_accuracy` reports the share retained. Contrast indexes (authority, temporal, provider) count a pair only when both of its deliveries have `baseline_ok` on the asserted case, and report the raw index alongside. Rationale: a case already off target before the change confounds inability with refusal to change.
+
+## 17. Gate amendment fidelity
+
+A **gate** decides `allow | block` for a situation and a proposed call, and may also list the calls it requires. Given a PolicyProgram P and an update u, with P* and P^ as in §11, a **probe** is a triple (situation s in the exact universe of {P, P*, P^}, step k, call c), with c ranging over the distinct calls P, P* or P^ prescribe for k in s. Its warranted decisions are `allow` iff the program's norm for k in s is obligatory or permitted with exactly c, under P (before), P* (after) and P^ (asserted). Obligation probes, when both gates enforce obligations, use `required | not_required` with the obligatory norm.
+
+Each probe becomes a case of a TransitionContract:
+- `authority = True` with `asserted = after` where P* differs from P;
+- `authority = False` with `asserted` = the P^ decision where only P^ differs;
+- no assertion otherwise.
+
+The old and new gates' decisions are b0 and b1. Scoring is §2 unchanged. `rigid` is a stale gate, `drift` an overreaching gate, `captured` a gate enforcing an unauthorized edit, and `baseline_error` an old gate that disagrees with P.
+
+**Verified within scope** means no off-target probe and no baseline error. The probes are exhaustive over the exact partition, which is exact for the decidable fragment of §12, so this is a proof over the program's facts and steps rather than a sample. Implementation: `contradish/gate_fidelity.py`. Reference compiler: `compile_rules` (inlines definitions and parameters into flat rules), verified against `ProgramGate` on every built-in amendment (`scripts/verify_core.sh`, step 7).
+
+**Limits.**
+- Probes cover calls some version of the policy prescribes. A gate that allows an arbitrary call no version prescribes is not probed for it; add such calls as probes if they matter.
+- Rule gates read facts only.
+- The independent standard-library checker (§6) does not yet re-derive gate verdicts.

@@ -22,6 +22,8 @@ def register(sub) -> None:
             "  contradish study local                     free: your local Ollama models, no key, no credits\n"
             "  contradish study demo                      offline, scripted agents, no key\n"
             "  contradish study contrasts                 list the matched-provenance authority contrasts\n"
+            "  contradish study temporal                  list the temporal-scope contrasts\n"
+            "  contradish study provider                  show the encoded provider precedence rules\n"
             "  contradish study run --models anthropic:claude-haiku-4-5,openai:gpt-4.1-mini \\\n"
             "        --judge openai:gpt-4.1-mini --out studies/run1\n"
             "  contradish study run --models ollama:llama3.1:8b --judge ollama:qwen2.5:14b --out studies/local\n"
@@ -32,7 +34,7 @@ def register(sub) -> None:
             "GROQ_API_KEY, ...). See contradish/study.py."
         ),
     )
-    st.add_argument("study_action", choices=["local", "run", "demo", "report", "plan", "contrasts"])
+    st.add_argument("study_action", choices=["local", "run", "demo", "report", "plan", "contrasts", "temporal", "provider"])
     st.add_argument("out_dir", nargs="?", default=None, help="report: the study directory.")
     st.add_argument("--models", default=None, help="Comma-separated PROVIDER:MODEL list.")
     st.add_argument("--judge", default=None,
@@ -41,7 +43,11 @@ def register(sub) -> None:
                          "different provider than the models under test.")
     st.add_argument("--judge2", default=None, help="Optional second judge; reports judge agreement.")
     st.add_argument("--components", default=None,
-                    help="Any of authority, contrast, contract. Default: all three (local: contrast).")
+                    help="Any of authority, contrast, temporal, provider, contract. Default: all five "
+                         "(local: contrast,temporal).")
+    st.add_argument("--provider-spec", dest="provider_spec", default=None,
+                    help="Score the provider component against this provider's published rules instead of each "
+                         "model's own (reported as reference only). Encoded: anthropic.")
     st.add_argument("--deliveries", default=None, help="Default: fresh,in_conversation (local: fresh).")
     st.add_argument("--samples", type=int, default=None,
                     help="Repeats per input; the modal label is used. Default 3 (local: 1).")
@@ -81,6 +87,7 @@ def _plan(cfg) -> str:
     from contradish.contract import load_builtin_contract
     from contradish.study import load_authority_suites
     per_model = 0
+    provider_extra = 0      # provider-spec calls happen only for models whose provider's rules are encoded
     lines = []
     if "authority" in cfg.components:
         suite = load_authority_suites()
@@ -95,6 +102,22 @@ def _plan(cfg) -> str:
         per_model += n
         lines.append(f"    authority contrasts {n:3d} model calls  ({len(con)} deliveries of 8 claims x cases x 2 "
                      f"turns x {cfg.samples} samples x {len(cfg.deliveries)} deliveries)")
+    if "temporal" in cfg.components:
+        from contradish.temporal_contrast import build_temporal, CLAIMS as TCLAIMS
+        tem = build_temporal()
+        n = sum(len(t.cases) for t in tem) * 2 * cfg.samples * len(cfg.deliveries)
+        per_model += n
+        lines.append(f"    temporal contrasts {n:4d} model calls  ({len(tem)} scopes of {len(TCLAIMS)} amendments x cases "
+                     f"x 2 turns x {cfg.samples} samples x {len(cfg.deliveries)} deliveries)")
+    if "provider" in cfg.components:
+        from contradish.provider_spec import build_provider_contrasts, SPECS
+        pc = build_provider_contrasts()
+        n = sum(len(t.cases) for t in pc) * 2 * cfg.samples * len(cfg.deliveries)
+        applies = [m for m in cfg.models if (cfg.provider_spec or m.provider) in SPECS]
+        provider_extra = n * len(applies)
+        lines.append(f"    provider spec     {n:5d} model calls  ({len(pc)} transitions; runs for "
+                     f"{len(applies)} of {len(cfg.models)} model(s): those whose provider's rules are encoded"
+                     + (", or all with --provider-spec" if not cfg.provider_spec else "") + ")")
     if "contract" in cfg.components:
         c = load_builtin_contract("ecommerce_returns")
         n = 0
@@ -105,9 +128,10 @@ def _plan(cfg) -> str:
         per_model += n
         lines.append(f"    policy contract   {n:5d} model calls  ({len(c.states())} policy states, "
                      f"{len(c.cases)} cases with rewordings and contrasts, x {cfg.samples} samples)")
-    total = per_model * len(cfg.models)
+    total = per_model * len(cfg.models) + provider_extra
     jc = 0 if cfg.judge is None else total
     return ("\n".join(lines) + f"\n    per model         {per_model:5d} model calls"
+            + (" (plus the provider-spec calls, where they apply)" if provider_extra else "")
             + (", and as many judge calls" if cfg.judge is not None else ", no judge calls (self-label)")
             + f"\n    all models        {total:5d} model calls + {jc} judge calls"
             + (f" (+{total} for the second judge)" if cfg.judge2 else ""))
@@ -117,8 +141,8 @@ def cmd_study(args) -> None:
     from contradish import study as S
 
     local = args.study_action == "local"
-    defaults = ({"components": "contrast", "deliveries": "fresh", "samples": 1, "workers": 1} if local else
-                {"components": "authority,contrast,contract", "deliveries": "fresh,in_conversation",
+    defaults = ({"components": "contrast,temporal", "deliveries": "fresh", "samples": 1, "workers": 1} if local else
+                {"components": "authority,contrast,temporal,provider,contract", "deliveries": "fresh,in_conversation",
                  "samples": 3, "workers": 4})
     for k, v in defaults.items():
         if getattr(args, k) is None:
@@ -135,6 +159,20 @@ def cmd_study(args) -> None:
         from contradish.authority_contrast import describe
         print()
         print(describe())
+        return
+
+    if args.study_action == "temporal":
+        from contradish.temporal_contrast import describe as describe_temporal
+        print()
+        print(describe_temporal())
+        return
+
+    if args.study_action == "provider":
+        from contradish.provider_spec import SPECS, describe as describe_provider
+        print()
+        for sp in SPECS.values():
+            print(describe_provider(sp))
+            print()
         return
 
     if args.study_action == "report":
@@ -183,7 +221,7 @@ def cmd_study(args) -> None:
         sys.exit("  no judge: pass --judge PROVIDER:MODEL, set OPENAI_API_KEY or ANTHROPIC_API_KEY, or use\n"
                  "  --self-label (each model labels its own answers). For a free run: contradish study local")
     components = tuple(_split(args.components))
-    bad = [c for c in components if c not in ("authority", "contrast", "contract")]
+    bad = [c for c in components if c not in S.COMPONENTS]
     if bad:
         sys.exit(f"  unknown component(s): {bad}")
     deliveries = tuple(_split(args.deliveries))
@@ -192,7 +230,8 @@ def cmd_study(args) -> None:
     cfg = S.StudyConfig(models=models, judge=judge, judge2=judge2, components=components,
                         deliveries=deliveries, samples=args.samples, workers=args.workers,
                         max_tokens=args.max_tokens, temperature=args.temperature,
-                        offline=args.offline, human_sample=args.human_sample)
+                        offline=args.offline, human_sample=args.human_sample,
+                        provider_spec=args.provider_spec)
 
     print()
     who = judge.id if judge else "none (each model labels its own answers)"

@@ -247,7 +247,7 @@ Classifier = Callable[[str, str, dict], str]
 
 def _delivery_message(update: Update) -> dict:
     text = CHANNEL_TEMPLATES[update.channel].format(source=update.source, content=update.content, question="").strip()
-    role = "system" if update.channel in ("system", "memory") else "user"
+    role = "system" if update.channel in ("system", "memory", "system_turn") else "user"
     return {"role": role, "content": text}
 
 
@@ -273,7 +273,7 @@ def run_sequence(seq: SequenceContract, chat_fn: ChatFn, classifier: Classifier,
     history, observed = [], [ask([])]
     for u in seq.updates:
         history = history + [_delivery_message(u)]
-        if u.channel not in ("system", "memory"):
+        if u.channel not in ("system", "memory", "system_turn"):
             history = history + [{"role": "assistant", "content": "Noted."}]
         observed.append(ask(history))
     fresh = ask([_delivery_message(seq.compound_update())]) if fresh_baseline else None
