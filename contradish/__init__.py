@@ -236,8 +236,13 @@ from .transition import (
     TransitionContract, TransitionCase, GoverningState, Distinction,
     TransitionOutcome, evaluate_transition, run_transition,
     Source, Update, WarrantedChangeFrontier, derive_transition,
-    run_suite, summarize_outcomes, load_builtin_transitions,
+    run_suite, summarize_outcomes, load_builtin_transitions, VERIFY,
 )
+from .relay_contrast import build_relay, score_relay, run_relay
+from .relational_contrast import build_relational, score_relational, run_relational
+from .protected_contrast import build_protected, score_protected, run_protected
+from .experience_contrast import build_experience, score_experience, run_experience
+from .release_gate import release_gate, to_markdown as release_markdown, to_junit as release_junit, export_examples
 from .contract import (
     PolicyContract, Clause, DecisionCase, Contrast, Amendment, Thresholds, LintIssue,
     ClassifierCalibration, calibration_sample,
@@ -514,6 +519,23 @@ __all__ = [
     "Update",
     "WarrantedChangeFrontier",
     "derive_transition",
+    "VERIFY",
+    "build_relay",
+    "score_relay",
+    "run_relay",
+    "build_relational",
+    "score_relational",
+    "run_relational",
+    "build_protected",
+    "score_protected",
+    "run_protected",
+    "build_experience",
+    "score_experience",
+    "run_experience",
+    "release_gate",
+    "release_markdown",
+    "release_junit",
+    "export_examples",
     "run_suite",
     "summarize_outcomes",
     "load_builtin_transitions",

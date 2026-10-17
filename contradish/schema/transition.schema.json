@@ -161,6 +161,10 @@
           "in_force": {
             "type": "boolean",
             "description": "Whether the update is in force for this case's event. If false, after must equal before."
+          },
+          "relayed": {
+            "type": "boolean",
+            "description": "The update attributes the change to a source with authority over this case but is delivered by one without it. If the change is in force and would alter the outcome, after is \"verify\"."
           }
         }
       }
@@ -229,6 +233,10 @@
             "all"
           ],
           "description": "event: governs cases whose event is on or after the effective date (default); all: explicitly retroactive."
+        },
+        "issuer": {
+          "type": "string",
+          "description": "Source the content attributes the change to, when it differs from the deliverer. An issuer with authority relayed by a deliverer without it warrants \"verify\", not change."
         }
       }
     }

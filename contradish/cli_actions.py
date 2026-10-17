@@ -46,6 +46,7 @@ ABOUT = {
     "cite": "CITATION.cff / CITATION.bib in the repository (key: joseph2026buf)",
     "spec": "docs/BUF-SPEC.md",
     "entry_points": {
+        "gate a release": "contradish release check v1.pin.json v2.pin.json --app mymodule:chat --suite cases.jsonl --audit",
         "derive what must change": "contradish actions derive --update restocking_fee_20",
         "verify an agent": "contradish actions verify --update customer_claims --app mymodule:chat",
         "complete difference of two versions": "contradish versions demo --update exchange_closed_late",

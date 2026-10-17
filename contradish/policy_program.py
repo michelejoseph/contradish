@@ -668,6 +668,8 @@ class PolicyProgram:
         if source not in self.sources:
             raise ProgramError(f"unknown source {source!r}")
         gov = self.sources[source].get("governs", [])
+        if clause.startswith("protected:"):
+            return False
         return "*" in gov or clause in gov
 
     def split_edits(self, update: ProgramUpdate) -> tuple:

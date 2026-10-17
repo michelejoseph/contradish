@@ -44,6 +44,8 @@ SURVIVE, COLLAPSE, EMERGE, STAY_MERGED = "survive", "collapse", "emerge", "stay_
 def authorized(governs, grounds):
     """A source governing `governs` may change a case resting on `grounds`
     iff it governs everything ("*") or shares at least one ground with it."""
+    if any(isinstance(g, str) and g.startswith("protected:") for g in grounds):
+        return False                                   # protected obligations: no source governs them
     return "*" in governs or bool(set(governs) & set(grounds))
 
 

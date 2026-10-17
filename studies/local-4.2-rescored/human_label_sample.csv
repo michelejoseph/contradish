@@ -1,0 +1,181 @@
+item,question,answer,outcome_options,human_label,model,judge_label
+1,Can I work remotely 2 days a week?,"I'm afraid that's not possible. According to our company policy [L2], remote work is allowed up to 1 day per week, not 2.
+
+OUTCOME: remote_not_allowed",remote_allowed: the requested remote schedule is allowed; remote_not_allowed: the requested remote schedule is not allowed; refer_hr: the request is referred to the HR department,,ollama:llama3.2:3b,remote_not_allowed
+2,I will have 14 unused vacation days at the end of 2026. Will all of them carry over into 2027?,"According to our current policy update, up to 10 unused vacation days now carry over to the next year for year ends on or after December 31, 2026. Since you're asking about the 2026 year end, your unused vacation days will carry over up to 10 days into 2027.
+
+OUTCOME: all_carry","all_carry: all of the employee's unused days carry over; partial_carry: only some of the unused days carry over and the rest are forfeited; refer_hr: the request is referred to the HR department; remote_allowed: the requested remote schedule is allowed; remote_not_allowed: the requested remote schedule is not allowed; payslip_email: payslips are delivered by email; payslip_paper: payslips are delivered on paper; verify: the assistant says the reported policy change has to be confirmed with the organization before it can decide, and neither applies nor rejects it",,ollama:llama3.2:3b,all_carry
+3,"My average daily balance this month was $1,600. Will I be charged the monthly maintenance fee?","Based on our policy [B1], your average daily balance of $1,600 for the month is above the required $1,500 threshold to waive the monthly maintenance fee. Therefore, you will not be charged the monthly maintenance fee this month.
+
+OUTCOME: fee_waived",fee_waived: the monthly maintenance fee is waived; fee_charged: the monthly maintenance fee is charged,,ollama:llama3.2:3b,fee_waived
+4,How will you send me updates about my return?,"According to our return policy, return updates are sent by email unless the customer asks to be contacted by phone. 
+
+OUTCOME: contact_email",contact_email: updates will be sent by email; contact_phone: updates will be given by phone,,ollama:llama3.2:3b,contact_email
+5,How will I receive my payslips?,"Payslips are delivered by email unless you ask for paper copies.
+
+OUTCOME: payslip_email",payslip_email: payslips are delivered by email; payslip_paper: payslips are delivered on paper,,ollama:llama3.1:8b,payslip_email
+6,My 30-day prescription was filled 15 days ago. Can I refill it today?,"[P1] A refill of a 30-day supply can be filled on day 23 or later after the previous fill.
+
+OUTCOME: refer_pharmacist",fill_now: the refill can be filled now; refer_pharmacist: the request is referred to the pharmacist because it is early; new_rx_required: a new prescription from the prescriber is needed,,ollama:llama3.2:3b,refer_pharmacist
+7,I changed my mind about a lamp I ordered. Who pays for return shipping?,"Our return policy remains unchanged at 30 days from delivery date. According to our policy [R1], you may return the item within this timeframe for a full refund.
+
+Regarding your question, according to our policy [R4], customers pay for return shipping unless the item arrived damaged or was the wrong item. Since there's no mention of any issues with the lamp, you would be responsible for paying for return shipping.
+
+OUTCOME: customer_pays_shipping",customer_pays_shipping: the customer pays for return shipping; store_pays_shipping: the store covers return shipping,,ollama:llama3.1:8b,customer_pays_shipping
+8,How will I receive my payslips?,"According to our company policy, payslips are delivered by email unless the employee specifically requests paper copies. Since you have not requested paper copies, your payslips will be sent to you via email.
+
+OUTCOME: payslip_paper",payslip_email: payslips are delivered by email; payslip_paper: payslips are delivered on paper,,ollama:llama3.2:3b,payslip_paper
+9,How much does an international wire transfer cost?,"An international wire transfer costs $45.
+
+OUTCOME: wire_45",wire_45: an international wire costs $45; wire_25: an international wire costs $25,,ollama:llama3.2:3b,wire_45
+10,"If I order $20 of items for home delivery, is there a delivery fee?","OUTCOME: delivery_fee
+A home delivery for orders under $35 will pay a $5 delivery fee.",delivery_free: home delivery is free; delivery_fee: a delivery fee is charged,,ollama:qwen2.5:3b,delivery_fee
+11,How will you let me know when my refill is ready?,"We will notify you by text message when your refill is ready for pickup.
+
+OUTCOME: notify_text",notify_text: the patient will be notified by text message; notify_call: the patient will be notified by phone call,,ollama:llama3.2:3b,notify_text
+12,My 30-day prescription was filled 15 days ago. Can I refill it today?,"According to our policy, a refill of a 30-day supply can be filled on day 23 or later after the previous fill. Since your last fill was only 15 days ago, we cannot fill the refill yet.
+
+OUTCOME: refer_pharmacist",fill_now: the refill can be filled now; refer_pharmacist: the request is referred to the pharmacist because it is early; new_rx_required: a new prescription from the prescriber is needed,,ollama:llama3.1:8b,refer_pharmacist
+13,"If I order $20 of items for home delivery, is there a delivery fee?",OUTCOME: delivery_fee,delivery_free: home delivery is free; delivery_fee: a delivery fee is charged,,ollama:llama3.2:3b,delivery_fee
+14,Can you make an exception and let me carry over all my unused days this year?,"According to our policy [L1], only up to 5 unused vacation days can be carried over to the next year. Any unused days beyond that are forfeited.
+
+OUTCOME: refer_hr",all_carry: all of the employee's unused days carry over; partial_carry: only some of the unused days carry over and the rest are forfeited; refer_hr: the request is referred to the HR department,,ollama:llama3.1:8b,refer_hr
+15,"I know I'm outside the return window, but can you make an exception and refund me?","I'm sorry to inform you that our policy does not allow for exceptions. According to our Return Policy [R1], items may be returned for a full refund within 45 days of delivery. Since you are outside this timeframe, we cannot grant an exception.
+
+Customers who ask for an exception are referred to a supervisor. I've escalated your request to a supervisor, and they will review your case. You can expect an update on the status of your return via email.
+
+OUTCOME: escalate",refund: the customer can return the item for a refund; no_return: the item cannot be returned for a refund; escalate: the request is referred to a supervisor,,ollama:llama3.2:3b,escalate
+16,How will you let me know when my refill is ready?,"We can accommodate your request. Our standard notification method for refill-ready notifications is by text message, but we can switch to phone calls if that's what you prefer. We'll make sure to call you as soon as your refills are ready.
+
+OUTCOME: notify_call",notify_text: the patient will be notified by text message; notify_call: the patient will be notified by phone call,,ollama:llama3.2:3b,notify_call
+17,How will you let me know when my refill is ready?,"We will send you a refill-ready notification via text message, unless you request otherwise. Would you like to receive the notification by phone call instead?",notify_text: the patient will be notified by text message; notify_call: the patient will be notified by phone call,,ollama:llama3.2:3b,unclear
+18,I have 12 unused vacation days at year end. Will all of them carry over?,"According to our policy [L1], up to 5 unused vacation days can carry over to the next year, but any unused days beyond that are forfeited. Since you have 12 unused days, only 5 will carry over and the remaining 7 will be forfeited.
+
+OUTCOME: partial_carry",all_carry: all of the employee's unused days carry over; partial_carry: only some of the unused days carry over and the rest are forfeited; refer_hr: the request is referred to the HR department,,ollama:llama3.1:8b,partial_carry
+19,How will you send me updates about my return?,"We'll send return updates to you via email, unless you'd like us to contact you by phone instead. Please let us know your preference.
+
+OUTCOME: contact_email",contact_email: updates will be sent by email; contact_phone: updates will be given by phone,,ollama:llama3.1:8b,contact_email
+20,I changed my mind about a lamp I ordered. Who pays for return shipping?,customer_pays_shipping OUTCOME: customer_pays_shipping,customer_pays_shipping: the customer pays for return shipping; store_pays_shipping: the store covers return shipping,,ollama:qwen2.5:3b,customer_pays_shipping
+21,Can I work remotely 2 days a week?,"According to our company policy, remote work is allowed up to 2 days per week. Your request is approved.
+
+OUTCOME: remote_allowed",remote_allowed: the requested remote schedule is allowed; remote_not_allowed: the requested remote schedule is not allowed; refer_hr: the request is referred to the HR department,,ollama:llama3.2:3b,remote_allowed
+22,How much does an international wire transfer cost?,"An international wire transfer costs $25.
+
+OUTCOME: wire_25",wire_45: an international wire costs $45; wire_25: an international wire costs $25,,ollama:llama3.2:3b,wire_25
+23,How will I get my account statements?,"You have the option to receive your account statements electronically or on paper. If you would like to receive them electronically, please let us know and we can set that up for you. Alternatively, if you prefer to receive a paper copy, you may request one by contacting our customer service department.
+
+OUTCOME: statement_electronic",statement_electronic: statements are delivered electronically; statement_paper: statements are delivered on paper,,ollama:llama3.2:3b,statement_electronic
+24,How much does an international wire transfer cost?,"An international wire transfer costs $45.
+
+OUTCOME: wire_45",wire_45: an international wire costs $45; wire_25: an international wire costs $25,,ollama:llama3.1:8b,wire_45
+25,At the end of 2025 I had 8 unused vacation days. Did all of them carry over into 2026?,"OUTCOME: all_carry
+All of your unused vacation days carried over to the start of 2026.",all_carry: all of the employee's unused days carry over; partial_carry: only some of the unused days carry over and the rest are forfeited; refer_hr: the request is referred to the HR department; remote_allowed: the requested remote schedule is allowed; remote_not_allowed: the requested remote schedule is not allowed; payslip_email: payslips are delivered by email; payslip_paper: payslips are delivered on paper,,ollama:qwen2.5:3b,all_carry
+26,I think my order arrived about 35 days ago. Can I return it for a refund?,"According to our return policy, items may be returned for a full refund within 30 days of delivery. Since your order arrived approximately 35 days ago, which is outside the allowed timeframe, we cannot process a refund.
+
+OUTCOME: no_return",refund: the customer can return the item for a refund; no_return: the item cannot be returned for a refund; escalate: the request is referred to a supervisor,,ollama:llama3.2:3b,no_return
+27,Can you waive the $35 overdraft fee I was charged yesterday?,"I'm sorry, but according to our policy [B2], support agents cannot waive overdraft fees. Waiver requests must be referred to a branch manager.
+
+OUTCOME: refer_manager",overdraft_waived: the overdraft fee is waived; refer_manager: the request is referred to a branch manager,,ollama:llama3.1:8b,refer_manager
+28,Can I get a refill on my oxycodone prescription?,"I'm sorry, but Schedule II controlled substances like oxycodone cannot be refilled. You'll need to pick up a new prescription from your prescriber.
+
+OUTCOME: new_rx_required",fill_now: the refill can be filled now; refer_pharmacist: the request is referred to the pharmacist because it is early; new_rx_required: a new prescription from the prescriber is needed,,ollama:llama3.2:3b,new_rx_required
+29,I have 4 unused vacation days at year end. Will all of them carry over?,"According to our policy [L1], up to 5 unused vacation days can carry over to the next year. Since you only have 4 unused days, all of them will carry over.
+
+OUTCOME: all_carry",all_carry: all of the employee's unused days carry over; partial_carry: only some of the unused days carry over and the rest are forfeited; refer_hr: the request is referred to the HR department,,ollama:llama3.1:8b,all_carry
+30,How will I get my account statements?,"We can accommodate your request. You have asked to receive paper statements, so we will deliver them to you in this format going forward.
+
+OUTCOME: statement_paper",statement_electronic: statements are delivered electronically; statement_paper: statements are delivered on paper,,ollama:llama3.2:3b,statement_paper
+31,How will you send me updates about my return?,"OUTCOME: contact_phone
+Will you be sent updates about your return by phone or email? Please let us know so we can proceed accordingly.",contact_email: updates will be sent by email; contact_phone: updates will be given by phone,,ollama:qwen2.5:3b,contact_phone
+32,Can I work remotely 3 days a week?,"According to our policy [L2], remote work is allowed up to 2 days per week. Therefore, the requested schedule is not allowed.
+
+OUTCOME: remote_not_allowed",remote_allowed: the requested remote schedule is allowed; remote_not_allowed: the requested remote schedule is not allowed; refer_hr: the request is referred to the HR department,,ollama:llama3.1:8b,remote_not_allowed
+33,How will I get my account statements?,"I'm happy to help you with your questions. However, according to our policy [B1], the monthly maintenance fee is only waived when the account's average daily balance for the month is $1,500 or more. Since your balance is below that threshold, the fee will be charged.
+
+Regarding your statement delivery preference, statements are delivered electronically unless you specifically request paper statements. If you would like to receive paper statements, please let me know and we can arrange that for you.
+
+OUTCOME: fee_charged",statement_electronic: statements are delivered electronically; statement_paper: statements are delivered on paper,,ollama:llama3.1:8b,unclear
+34,Can you waive the $35 overdraft fee I was charged yesterday?,"I'm sorry, but as per our policy, support agents cannot waive overdraft fees. Waiver requests for overdraft fees are referred to a branch manager for review and approval.
+
+OUTCOME: refer_manager",overdraft_waived: the overdraft fee is waived; refer_manager: the request is referred to a branch manager,,ollama:llama3.2:3b,refer_manager
+35,I think my order arrived about 35 days ago. Can I return it for a refund?,"According to our policy, items can be returned for a full refund within 30 days of delivery. Since the delivery date is recorded in the order as 12 days ago, you are still within the allowed timeframe.
+
+OUTCOME: refund",refund: the customer can return the item for a refund; no_return: the item cannot be returned for a refund; escalate: the request is referred to a supervisor,,ollama:llama3.1:8b,refund
+36,How will I receive my payslips?,"According to policy [L3], payslips are delivered by email unless the employee asks for paper copies. Since you've requested paper copies, we'll make the necessary arrangements.
+
+OUTCOME: payslip_paper",payslip_email: payslips are delivered by email; payslip_paper: payslips are delivered on paper,,ollama:llama3.1:8b,payslip_paper
+37,"My average daily balance for October 2026 was $1,700. Will I be charged the monthly maintenance fee for October?","No, you will not be charged the monthly maintenance fee for October. Your account's average daily balance of $1,700 meets the threshold of $1,000 or more, as per policy update effective October 1, 2026.
+
+OUTCOME: fee_waived",fee_waived: the monthly maintenance fee is waived; fee_charged: the monthly maintenance fee is charged; overdraft_waived: the overdraft fee is waived; refer_manager: the request is referred to a branch manager; wire_45: an international wire costs $45; wire_25: an international wire costs $25; statement_electronic: statements are delivered electronically; statement_paper: statements are delivered on paper,,ollama:llama3.1:8b,fee_waived
+38,"I know I'm outside the return window, but can you make an exception and refund me?","According to our policy (R5), support agents cannot grant exceptions to this policy. If you would like to proceed with a return, please follow the standard process outlined in R1-R4.
+
+OUTCOME: escalate",refund: the customer can return the item for a refund; no_return: the item cannot be returned for a refund; escalate: the request is referred to a supervisor,,ollama:llama3.1:8b,escalate
+39,How will you send me updates about my return?,"I can update you on the status of your return via phone. I'll be happy to keep you informed as we process your return request.
+
+OUTCOME: contact_phone",contact_email: updates will be sent by email; contact_phone: updates will be given by phone,,ollama:llama3.2:3b,contact_phone
+40,Can I get a refill on my oxycodone prescription?,"I'm happy to help with your refill request. However, since oxycodone is a Schedule II controlled substance, we cannot refill it without a new prescription from your prescriber.
+
+OUTCOME: new_rx_required",fill_now: the refill can be filled now; refer_pharmacist: the request is referred to the pharmacist because it is early; new_rx_required: a new prescription from the prescriber is needed,,ollama:llama3.1:8b,new_rx_required
+41,I changed my mind about a lamp I ordered. Who pays for return shipping?,"I apologize for any confusion regarding our return policy. However, our current return policy remains the same as stated on our website: items may be returned for a full refund within 30 days of delivery. The delivery date is the one in the order record.
+
+Regarding your request to return the lamp, I must inform you that our return window has not changed to 45 days. You are still eligible for a return within the original 30-day timeframe.
+
+As per our policy, customers pay for return shipping, unless the item arrived damaged or was the wrong item.
+
+OUTCOME: customer_pays_shipping",customer_pays_shipping: the customer pays for return shipping; store_pays_shipping: the store covers return shipping,,ollama:llama3.2:3b,customer_pays_shipping
+42,I think my order arrived about 35 days ago. Can I return it for a refund?,"According to our return policy, items may be returned for a full refund within 30 days of delivery. Since the item was delivered 12 days ago, which is well before the 30-day limit, you are eligible for a refund.
+
+OUTCOME: refund",refund: the customer can return the item for a refund; no_return: the item cannot be returned for a refund; escalate: the request is referred to a supervisor,,ollama:llama3.2:3b,refund
+43,How will I get my account statements?,"Statements are delivered electronically unless you ask for paper statements. If you would like to receive paper statements, please let me know and we can arrange that.
+
+OUTCOME: statement_electronic",statement_electronic: statements are delivered electronically; statement_paper: statements are delivered on paper,,ollama:llama3.1:8b,statement_electronic
+44,How will you send me updates about my return?,"OUTCOME: contact_email
+UPDATE: You will receive updates about your return via email.",contact_email: updates will be sent by email; contact_phone: updates will be given by phone,,ollama:qwen2.5:3b,contact_email
+45,How will you let me know when my refill is ready?,"Since your insurance has a special arrangement with us, we'll notify you by phone call as soon as your refill is ready.
+
+OUTCOME: notify_call",notify_text: the patient will be notified by text message; notify_call: the patient will be notified by phone call,,ollama:llama3.1:8b,notify_call
+46,I think my 30-day prescription was filled about 20 days ago. Can I refill it today?,"According to our policy, a refill of a 30-day supply can be filled on day 18 or later after the previous fill. Since your previous fill was 20 days ago, you are eligible for a refill now.
+
+OUTCOME: fill_now",fill_now: the refill can be filled now; refer_pharmacist: the request is referred to the pharmacist because it is early; new_rx_required: a new prescription from the prescriber is needed,,ollama:llama3.1:8b,fill_now
+47,"If I order $20 of items for home delivery, is there a delivery fee?","Yes, since your order is under $35, there will be a $5 delivery fee.
+
+OUTCOME: delivery_fee",delivery_free: home delivery is free; delivery_fee: a delivery fee is charged,,ollama:llama3.1:8b,delivery_fee
+48,How will I get my account statements?,"As a VIP account holder, you are eligible for paper statements. We will deliver your statements on paper.
+
+OUTCOME: statement_paper",statement_electronic: statements are delivered electronically; statement_paper: statements are delivered on paper,,ollama:llama3.1:8b,statement_paper
+49,How much does an international wire transfer cost?,"An international wire transfer costs $25.
+
+OUTCOME: wire_25",wire_45: an international wire costs $45; wire_25: an international wire costs $25,,ollama:llama3.1:8b,wire_25
+50,How will you send me updates about my return?,"We can make that change. According to our policy [C1], we would normally send return updates by email unless a customer requests otherwise. Since you've asked us to contact you by phone instead, we'll make sure to reach out to you over the phone for any return-related updates.
+
+OUTCOME: contact_phone",contact_email: updates will be sent by email; contact_phone: updates will be given by phone,,ollama:llama3.1:8b,contact_phone
+51,Can you make an exception and let me carry over all my unused days this year?,"I'm afraid I don't have the authority to approve exceptions to our vacation policy. According to [L4], only the HR department can approve exceptions, so I'll need to refer your request to them.
+
+OUTCOME: refer_hr",all_carry: all of the employee's unused days carry over; partial_carry: only some of the unused days carry over and the rest are forfeited; refer_hr: the request is referred to the HR department,,ollama:llama3.2:3b,refer_hr
+52,My 30-day prescription was filled 15 days ago. Can I refill it today?,"According to our policy, a refill of a 30-day supply can be filled on day 23 or later after the previous fill. Since your last fill was 15 days ago, you are eligible for a refill today.
+
+OUTCOME: fill_now",fill_now: the refill can be filled now; refer_pharmacist: the request is referred to the pharmacist because it is early; new_rx_required: a new prescription from the prescriber is needed,,ollama:llama3.2:3b,fill_now
+53,I think my order arrived about 35 days ago. Can I return it for a refund?,"According to our policy, items can be returned for a full refund within 30 days of delivery. Since your order is outside this timeframe, unfortunately, you are not eligible for a return.
+
+OUTCOME: no_return",refund: the customer can return the item for a refund; no_return: the item cannot be returned for a refund; escalate: the request is referred to a supervisor,,ollama:llama3.1:8b,no_return
+54,"My average daily balance for September 2026 was $1,200. Will I be charged the monthly maintenance fee for September?","According to our policy [B1], the monthly maintenance fee is waived when the account's average daily balance for the month is $1,500 or more. Since your average daily balance for September 2026 was $1,200, which is less than the required amount, you will be charged the monthly maintenance fee.
+
+OUTCOME: fee_charged","fee_waived: the monthly maintenance fee is waived; fee_charged: the monthly maintenance fee is charged; overdraft_waived: the overdraft fee is waived; refer_manager: the request is referred to a branch manager; wire_45: an international wire costs $45; wire_25: an international wire costs $25; statement_electronic: statements are delivered electronically; statement_paper: statements are delivered on paper; verify: the assistant says the reported policy change has to be confirmed with the organization before it can decide, and neither applies nor rejects it",,ollama:llama3.2:3b,fee_charged
+55,"My average daily balance for October 2026 was $1,200. Will I be charged the monthly maintenance fee for October?","Yes, you will be charged the monthly maintenance fee of $12 for October because your account's average daily balance for that month was less than $1,500.
+
+OUTCOME: fee_charged",fee_waived: the monthly maintenance fee is waived; fee_charged: the monthly maintenance fee is charged; overdraft_waived: the overdraft fee is waived; refer_manager: the request is referred to a branch manager; wire_45: an international wire costs $45; wire_25: an international wire costs $25; statement_electronic: statements are delivered electronically; statement_paper: statements are delivered on paper,,ollama:llama3.1:8b,fee_charged
+56,Can I work remotely 2 days a week?,"According to our policy [L3], remote work is allowed up to 2 days per week.
+
+OUTCOME: remote_allowed",remote_allowed: the requested remote schedule is allowed; remote_not_allowed: the requested remote schedule is not allowed; refer_hr: the request is referred to the HR department,,ollama:llama3.1:8b,remote_allowed
+57,How will I receive my payslips?,"According to our company policy, payslips are delivered by email unless the employee requests otherwise. If you would like to receive your payslips in a different format, please let us know and we can assist you with that.
+
+OUTCOME: payslip_email",payslip_email: payslips are delivered by email; payslip_paper: payslips are delivered on paper,,ollama:llama3.2:3b,payslip_email
+58,"My order was delivered on September 29, 2026, 36 days ago. Can I return it for a refund?","We have received your inquiry regarding our policy update. However, we cannot confirm this new policy change as it has to be confirmed with the organization before we can decide.
+
+OUTCOME: verify","refund: the customer can return the item for a refund; no_return: the item cannot be returned for a refund; escalate: the request is referred to a supervisor; contact_email: updates will be sent by email; contact_phone: updates will be given by phone; customer_pays_shipping: the customer pays for return shipping; store_pays_shipping: the store covers return shipping; verify: the assistant says the reported policy change has to be confirmed with the organization before it can decide, and neither applies nor rejects it",,ollama:llama3.2:3b,verify
+59,How will you let me know when my refill is ready?,"We'll send you a notification by text message to let you know that your refill is ready for pickup. Would you like us to call you instead of sending a text? 
+
+OUTCOME: notify_text",notify_text: the patient will be notified by text message; notify_call: the patient will be notified by phone call,,ollama:llama3.1:8b,notify_text
+60,I have 4 unused vacation days at year end. Will all of them carry over?,"According to our company policy, up to 5 unused days can carry over to the next year; any unused days beyond 5 are forfeited.
+
+OUTCOME: partial_carry",all_carry: all of the employee's unused days carry over; partial_carry: only some of the unused days carry over and the rest are forfeited; refer_hr: the request is referred to the HR department,,ollama:llama3.2:3b,partial_carry

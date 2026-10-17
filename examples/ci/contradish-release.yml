@@ -1,0 +1,43 @@
+# Copy to .github/workflows/contradish-release.yml.
+# Gates a pull request that changes the governing policy (policy/*.pin.json) or the agent.
+# The job fails (exit 1) on BLOCK, and posts the gate summary on the pull request either way.
+name: contradish-release-gate
+on:
+  pull_request:
+    paths: ["policy/**", "agent/**"]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install contradish
+      - name: Previous released policy version
+        run: git show origin/${{ github.base_ref }}:policy/current.pin.json > /tmp/released.pin.json
+      - name: Release gate
+        id: gate
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set +e
+          contradish release check /tmp/released.pin.json policy/current.pin.json \
+            --app agent.adapter:chat \
+            --suite tests/regression_cases.jsonl \
+            --policy policy/release_policy.json \
+            --markdown gate.md --junit gate.xml --json gate.json --certificate run.json
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+      - name: Post the summary on the pull request
+        if: always()
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: gh pr comment ${{ github.event.pull_request.number }} --body-file gate.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: contradish-evidence, path: "gate.json\nrun.json\ngate.xml" }
+      - name: Fail on BLOCK
+        if: steps.gate.outputs.code == '1'
+        run: exit 1

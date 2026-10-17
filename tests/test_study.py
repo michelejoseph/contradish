@@ -167,3 +167,11 @@ def test_self_label_wrapper_and_classifier():
     assert S.self_label_classifier("q", "OUTCOME: escalate", outcomes) == "unclear"   # not an allowed label
     wrapped([{"role": "user", "content": "q"}])
     assert seen[-1][0]["role"] == "system"                     # added when there is no system message
+
+
+def test_self_label_classifier_reads_labels_with_digits():
+    # Regression: labels such as wire_45 were read as "unclear" because the OUTCOME pattern excluded digits.
+    from contradish.study import self_label_classifier
+    out = {"wire_45": "an international wire costs $45", "wire_25": "an international wire costs $25"}
+    assert self_label_classifier("q", "It costs $45.\n\nOUTCOME: wire_45", out) == "wire_45"
+    assert self_label_classifier("q", "OUTCOME: **wire_25**", out) == "wire_25"

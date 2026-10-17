@@ -23,6 +23,10 @@ def register(sub) -> None:
             "  contradish study demo                      offline, scripted agents, no key\n"
             "  contradish study contrasts                 list the matched-provenance authority contrasts\n"
             "  contradish study temporal                  list the temporal-scope contrasts\n"
+            "  contradish study relay                     list the relayed-change (verify) contrasts\n"
+            "  contradish study relational                list the relational (care survives the relationship) contrasts\n"
+            "  contradish study protected                 list the protected obligations (what an operator cannot change)\n"
+            "  contradish study experience                list the experience contrasts (only the person governs what they feel)\n"
             "  contradish study provider                  show the encoded provider precedence rules\n"
             "  contradish study run --models anthropic:claude-haiku-4-5,openai:gpt-4.1-mini \\\n"
             "        --judge openai:gpt-4.1-mini --out studies/run1\n"
@@ -34,7 +38,8 @@ def register(sub) -> None:
             "GROQ_API_KEY, ...). See contradish/study.py."
         ),
     )
-    st.add_argument("study_action", choices=["local", "run", "demo", "report", "plan", "contrasts", "temporal", "provider"])
+    st.add_argument("study_action", choices=["local", "run", "demo", "report", "plan", "contrasts", "temporal", "relay", "relational",
+                                                    "protected", "experience", "provider"])
     st.add_argument("out_dir", nargs="?", default=None, help="report: the study directory.")
     st.add_argument("--models", default=None, help="Comma-separated PROVIDER:MODEL list.")
     st.add_argument("--judge", default=None,
@@ -43,8 +48,8 @@ def register(sub) -> None:
                          "different provider than the models under test.")
     st.add_argument("--judge2", default=None, help="Optional second judge; reports judge agreement.")
     st.add_argument("--components", default=None,
-                    help="Any of authority, contrast, temporal, provider, contract. Default: all five "
-                         "(local: contrast,temporal).")
+                    help="Any of authority, contrast, temporal, relay, relational, protected, experience, provider, contract. Default: all nine "
+                         "(local: contrast,temporal,relay).")
     st.add_argument("--provider-spec", dest="provider_spec", default=None,
                     help="Score the provider component against this provider's published rules instead of each "
                          "model's own (reported as reference only). Encoded: anthropic.")
@@ -109,6 +114,34 @@ def _plan(cfg) -> str:
         per_model += n
         lines.append(f"    temporal contrasts {n:4d} model calls  ({len(tem)} scopes of {len(TCLAIMS)} amendments x cases "
                      f"x 2 turns x {cfg.samples} samples x {len(cfg.deliveries)} deliveries)")
+    if "relay" in cfg.components:
+        from contradish.relay_contrast import build_relay
+        rel = build_relay()
+        n = sum(len(t.cases) for t in rel) * 2 * cfg.samples * len(cfg.deliveries)
+        per_model += n
+        lines.append(f"    relay contrasts   {n:5d} model calls  ({len(rel)} deliveries of the temporal amendments x "
+                     f"cases x 2 turns x {cfg.samples} samples x {len(cfg.deliveries)} deliveries)")
+    if "relational" in cfg.components:
+        from contradish.relational_contrast import build_relational
+        rc = build_relational()
+        n = sum(len(t.cases) for t in rc) * 2 * cfg.samples * len(cfg.deliveries)
+        per_model += n
+        lines.append(f"    relational contrasts {n:3d} model calls  ({len(rc)} frames x clause changes x cases "
+                     f"x 2 turns x {cfg.samples} samples x {len(cfg.deliveries)} deliveries)")
+    if "protected" in cfg.components:
+        from contradish.protected_contrast import build_protected
+        pt = build_protected()
+        n = sum(len(t.cases) for t in pt) * 2 * cfg.samples * len(cfg.deliveries)
+        per_model += n
+        lines.append(f"    protected obligations {n:2d} model calls  ({len(pt)} operator briefs x 2 cases x 2 turns x "
+                     f"{cfg.samples} samples x {len(cfg.deliveries)} deliveries)")
+    if "experience" in cfg.components:
+        from contradish.experience_contrast import build_experience
+        et = build_experience()
+        n = sum(len(t.cases) for t in et) * 2 * cfg.samples * len(cfg.deliveries)
+        per_model += n
+        lines.append(f"    experience contrasts {n:3d} model calls  ({len(et)} deliveries x 2 turns x {cfg.samples} samples "
+                     f"x {len(cfg.deliveries)} deliveries)")
     if "provider" in cfg.components:
         from contradish.provider_spec import build_provider_contrasts, SPECS
         pc = build_provider_contrasts()
@@ -141,8 +174,8 @@ def cmd_study(args) -> None:
     from contradish import study as S
 
     local = args.study_action == "local"
-    defaults = ({"components": "contrast,temporal", "deliveries": "fresh", "samples": 1, "workers": 1} if local else
-                {"components": "authority,contrast,temporal,provider,contract", "deliveries": "fresh,in_conversation",
+    defaults = ({"components": "contrast,temporal,relay", "deliveries": "fresh", "samples": 1, "workers": 1} if local else
+                {"components": "authority,contrast,temporal,relay,relational,protected,experience,provider,contract", "deliveries": "fresh,in_conversation",
                  "samples": 3, "workers": 4})
     for k, v in defaults.items():
         if getattr(args, k) is None:
@@ -165,6 +198,30 @@ def cmd_study(args) -> None:
         from contradish.temporal_contrast import describe as describe_temporal
         print()
         print(describe_temporal())
+        return
+
+    if args.study_action == "relay":
+        from contradish.relay_contrast import describe as describe_relay
+        print()
+        print(describe_relay())
+        return
+
+    if args.study_action == "relational":
+        from contradish.relational_contrast import describe as describe_relational
+        print()
+        print(describe_relational())
+        return
+
+    if args.study_action == "protected":
+        from contradish.protected_contrast import describe as describe_protected
+        print()
+        print(describe_protected())
+        return
+
+    if args.study_action == "experience":
+        from contradish.experience_contrast import describe as describe_experience
+        print()
+        print(describe_experience())
         return
 
     if args.study_action == "provider":

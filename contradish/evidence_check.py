@@ -248,6 +248,8 @@ def redefined(a, b):
 
 def governs(spec, source, clause):
     g = spec["sources"][source].get("governs", [])
+    if clause.startswith("protected:"):
+        return False
     return "*" in g or clause in g
 
 

@@ -1,0 +1,7 @@
+{
+  "block_on": ["failed_to_change", "unwarranted_change", "coverage_gap", "unauthorized"],
+  "review_on": ["unauthenticated", "discretionary_drift"],
+  "high_risk_steps": ["refund", "ledger", "deny", "label"],
+  "trials": 1,
+  "plan": "suite"
+}
