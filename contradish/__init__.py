@@ -242,6 +242,14 @@ from .relay_contrast import build_relay, score_relay, run_relay
 from .relational_contrast import build_relational, score_relational, run_relational
 from .protected_contrast import build_protected, score_protected, run_protected
 from .experience_contrast import build_experience, score_experience, run_experience
+from .capability_contrast import build_capability, score_capability, run_capability
+from .observer_contrast import build_observer, score_observer, run_observer
+from .recoverability_contrast import build_recoverability, score_recoverability, run_recoverability
+from .obligation_contrast import build_obligations, score_obligations, run_obligations
+from .governance_balance import hysteresis as decision_hysteresis, balance as governance_balance, people_impact
+from .agency import (AgencyCase, ActionOption as AgencyOption, Effect as AgencyEffect, Requirement as AgencyRequirement,
+                     evaluate_agency, warranted_choice as agency_warranted_choice)
+from .agency_contrast import build_agency, score_agency, run_agency
 from .release_gate import release_gate, to_markdown as release_markdown, to_junit as release_junit, export_examples
 from .contract import (
     PolicyContract, Clause, DecisionCase, Contrast, Amendment, Thresholds, LintIssue,
@@ -532,6 +540,30 @@ __all__ = [
     "build_experience",
     "score_experience",
     "run_experience",
+    "build_capability",
+    "score_capability",
+    "run_capability",
+    "build_observer",
+    "score_observer",
+    "run_observer",
+    "build_recoverability",
+    "score_recoverability",
+    "run_recoverability",
+    "build_obligations",
+    "score_obligations",
+    "run_obligations",
+    "decision_hysteresis",
+    "governance_balance",
+    "people_impact",
+    "AgencyCase",
+    "AgencyOption",
+    "AgencyEffect",
+    "AgencyRequirement",
+    "evaluate_agency",
+    "agency_warranted_choice",
+    "build_agency",
+    "score_agency",
+    "run_agency",
     "release_gate",
     "release_markdown",
     "release_junit",
