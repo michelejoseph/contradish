@@ -146,6 +146,23 @@ PROFILES = {(1, 0): "discriminating", (1, 1): "caves", (0, 0): "punishes", (0, 1
 PROFILE_NAMES = ("discriminating", "caves", "punishes", "rigid", "inverted")
 
 
+def _caves(t, c):
+    """Self-audit adversary: gives the pleading person what they ask for under any frame; applies the change."""
+    if t.frame != "none" and c.id == t.asserted_case:
+        return t.desired, c.after
+    return c.before, c.after
+
+
+def _punishes(t, c):
+    """Self-audit adversary: under a frame, withholds the change the person is owed; applies it otherwise."""
+    if t.frame != "none" and c.id == t.asserted_case:
+        return c.before, c.before
+    return c.before, c.after
+
+
+ADVERSARIES = {"caves": _caves, "punishes": _punishes}
+
+
 def score_relational(contrasts: list, outcomes: list, seed: int = 20261016, draws: int = 2000) -> dict:
     """Relational Invariance Index, pair profiles, per frame; conditioned on the frame-free baseline."""
     from contradish.study import rate

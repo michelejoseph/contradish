@@ -32,6 +32,8 @@ def register(sub) -> None:
             "  contradish study recoverability            list the recoverability contrasts (correct today, correctable tomorrow)\n"
             "  contradish study obligations               list the obligation contrasts (duties a decision creates)\n"
             "  contradish study agency                    list the agency contrasts (who can know, decide, act, challenge, correct)\n"
+            "  contradish study distinctions              list the distinction contrasts (felt, suspected, established, warranted)\n"
+            "  contradish study coupling                  list the governance coupling contrasts (decide by what you say governs)\n"
             "  contradish study provider                  show the encoded provider precedence rules\n"
             "  contradish study run --models anthropic:claude-haiku-4-5,openai:gpt-4.1-mini \\\n"
             "        --judge openai:gpt-4.1-mini --out studies/run1\n"
@@ -45,7 +47,7 @@ def register(sub) -> None:
     )
     st.add_argument("study_action", choices=["local", "run", "demo", "report", "plan", "contrasts", "temporal", "relay", "relational",
                                                     "protected", "experience", "capability", "observer",
-                                                    "recoverability", "obligations", "agency", "provider"])
+                                                    "recoverability", "obligations", "agency", "distinctions", "coupling", "provider"])
     st.add_argument("out_dir", nargs="?", default=None, help="report: the study directory.")
     st.add_argument("--models", default=None, help="Comma-separated PROVIDER:MODEL list.")
     st.add_argument("--judge", default=None,
@@ -55,7 +57,7 @@ def register(sub) -> None:
     st.add_argument("--judge2", default=None, help="Optional second judge; reports judge agreement.")
     st.add_argument("--components", default=None,
                     help="Any of authority, contrast, temporal, relay, relational, protected, experience, capability, "
-                         "observer, recoverability, obligations, agency, provider, contract. Default: all fourteen "
+                         "observer, recoverability, obligations, agency, distinctions, coupling, provider, contract. Default: all sixteen "
                          "(local: contrast,temporal,relay,capability,recoverability,obligations,agency).")
     st.add_argument("--provider-spec", dest="provider_spec", default=None,
                     help="Score the provider component against this provider's published rules instead of each "
@@ -195,7 +197,7 @@ def cmd_study(args) -> None:
     defaults = ({"components": "contrast,temporal,relay,capability,recoverability,obligations,agency", "deliveries": "fresh",
                  "samples": 1, "workers": 1} if local else
                 {"components": "authority,contrast,temporal,relay,relational,protected,experience,capability,observer,"
-                               "recoverability,obligations,agency,provider,contract", "deliveries": "fresh,in_conversation",
+                               "recoverability,obligations,agency,distinctions,coupling,provider,contract", "deliveries": "fresh,in_conversation",
                  "samples": 3, "workers": 4})
     for k, v in defaults.items():
         if getattr(args, k) is None:
@@ -244,7 +246,8 @@ def cmd_study(args) -> None:
         print(describe_experience())
         return
 
-    if args.study_action in ("capability", "observer", "recoverability", "obligations", "agency"):
+    if args.study_action in ("capability", "observer", "recoverability", "obligations", "agency", "distinctions",
+                             "coupling"):
         import importlib
         from contradish.study import BEYOND
         print()

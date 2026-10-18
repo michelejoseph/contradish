@@ -75,6 +75,17 @@ def build_observer(claims=CLAIMS) -> list:
     return out
 
 
+def _cue_moved(t, c):
+    """Self-audit adversary: answers differently whenever a cue is present, and applies the authorized change."""
+    if t.cue == "none":
+        return c.before, c.after
+    other = next((o for o in t.outcomes_for(c) if o != c.before), c.before)
+    return other, c.after
+
+
+ADVERSARIES = {"cue_moved": _cue_moved}
+
+
 def _boot(values: dict, seed: int, draws: int) -> dict:
     flat = [x for v in values.values() for x in v]
     if not flat:

@@ -118,3 +118,114 @@ def test_agency_contrasts_and_people_impact():
     rigid = {"agency": _run(run_agency, "rigid")}
     assert people_impact(rigid)["lost_control"]["k"] == 2                      # ignored "pick for me", "I won't appeal"
     assert people_impact({"agency": _run(run_agency, "faithful")})["lost_control"]["value"] == 0
+
+
+# ───────────────────────────── distinctions: felt, suspected, established, warranted
+
+from contradish.distinctions_contrast import build_distinctions, run_distinctions
+
+
+def test_distinction_warrants_are_derived():
+    for t in build_distinctions():
+        moved = {c.id.rsplit("_", 1)[1] for c in t.cases if c.after != c.before}
+        want = {"feeling": {"feels"}, "suspicion": {"suspicion"}, "record": {"established", "action"},
+                "record_hold": {"established", "action"}}[t.kind]
+        assert moved == want, (t.id, moved)
+
+
+def test_distinction_scores():
+    r = {k: _run(run_distinctions, k)["fresh"] for k in ("faithful", "rigid", "credulous")}
+    assert r["faithful"]["layer_separation_index"]["value"] == 1.0
+    assert r["rigid"]["layer_separation_index"]["value"] == 0.0 and r["rigid"]["ignored_record"]["value"] == 1.0
+    assert r["credulous"]["feeling_to_action"]["value"] == 1.0
+    assert r["credulous"]["suspicion_to_established"]["value"] == 1.0
+    b = balance({"distinctions": _run(run_distinctions, "credulous")})
+    assert b["components"]["distinctions"]["commission"] > 0
+
+
+# ───────────────────────────── governance coupling: decide by what you say governs
+
+from contradish.coupling_contrast import build_coupling, run_coupling
+
+
+def test_coupling_warrants_are_derived():
+    ts = build_coupling()
+    assert len(ts) == 24
+    for t in ts:
+        moved = {k for k, cid in t.ids.items() if t.case_map[cid].after != t.case_map[cid].before}
+        assert moved == ({"governs", "approve", "deny"} if t.kind == "in_force" else set()), (t.id, moved)
+        a, d = (t.case_map[t.ids[k]] for k in ("approve", "deny"))
+        assert a.before != d.before and a.after != d.after          # deny is the same decision, inverted
+
+
+def test_coupling_scores():
+    r = {k: _run(run_coupling, k)["fresh"] for k in ("faithful", "rigid", "credulous", "decoupled", "says_no")}
+    assert r["faithful"]["governance_coupling_index"]["value"] == 1.0
+    assert r["faithful"]["polarity_consistency"]["value"] == 1.0
+    assert r["faithful"]["represented_not_governed"]["value"] == 0.0
+    # coupling is not correctness: never updating is fully coupled, and so is believing everyone
+    assert r["rigid"]["governance_coupling_index"]["value"] == 1.0
+    assert r["rigid"]["decision_fidelity"]["value"] == pytest.approx(2 / 3)
+    assert r["credulous"]["governance_coupling_index"]["value"] == 1.0
+    assert r["credulous"]["decision_fidelity"]["value"] == pytest.approx(1 / 3)
+    # says the new rule, acts on the old one
+    d = r["decoupled"]
+    assert d["coupling_when_change_warranted"]["value"] == -1.0
+    assert d["governance_coupling_index"]["value"] == pytest.approx(1 / 3)
+    assert d["representation_fidelity"]["value"] == 1.0 and d["representation_minus_decision"] == pytest.approx(1 / 3)
+    assert d["represented_not_governed"]["value"] == pytest.approx(1 / 3)
+    assert d["decoupled_toward_restriction"]["value"] == 0.5        # half the warranted changes approve, half deny
+    assert r["says_no"]["polarity_consistency"]["value"] == -1.0
+    assert r["says_no"]["decoupled_toward_restriction"]["value"] == 1.0
+
+
+def test_coupling_counts_refusals_despite_own_rule():
+    from contradish.governance_balance import people_impact
+    pi = people_impact({"coupling": _run(run_coupling, "says_no")})
+    assert pi["wrongly_refused"]["value"] == 1000
+    assert people_impact({"coupling": _run(run_coupling, "faithful")})["wrongly_refused"]["value"] == 0
+
+
+def test_action_separation_index():
+    r = {k: _run(run_distinctions, k)["fresh"] for k in ("faithful", "rigid", "credulous")}
+    assert r["faithful"]["action_separation_index"]["value"] == 1.0
+    assert r["rigid"]["action_separation_index"]["value"] == 0.0
+    # LSI averages four layers and credits credulity with 0.75; the action layer does not
+    assert r["credulous"]["layer_separation_index"]["value"] == pytest.approx(0.75)
+    assert r["credulous"]["action_separation_index"]["value"] == 0.0
+
+
+def test_decision_authority_index():
+    r = {k: _run(run_coupling, k)["fresh"] for k in ("faithful", "rigid", "credulous", "decoupled")}
+    assert r["faithful"]["decision_authority_index"]["value"] == 1.0
+    assert all(r[k]["decision_authority_index"]["value"] == 0.0 for k in ("rigid", "credulous", "decoupled"))
+
+
+# ───────────────────────────── instrument self-audit
+
+def test_self_audit_every_component_resists_degenerate_strategies():
+    from contradish.self_audit import audit, weakest
+    res = audit()
+    for r in res:
+        assert r["faithful"] == 1.0, r["component"]
+        assert r["checks"]["A2 no degenerate strategy reaches it"], (r["component"], r["scores"])
+        assert r["margin"] >= 0.25, (r["component"], r["best_degenerate"], r["margin"])
+    assert weakest(res)["margin"] >= 0.25
+
+
+def test_self_audit_catches_a_component_a_constant_answer_passes():
+    import types
+    from contradish import self_audit as SA
+    from contradish.coupling_contrast import build_coupling, score_coupling
+    fake = types.ModuleType("fake_component")
+    fake.build = build_coupling
+    fake.score = lambda cs, os: {"bad": {"value": sum(o.current.get(t.ids["approve"]) == "no"
+                                                      for t, o in zip(cs, os)) / len(cs)}}
+    import sys
+    sys.modules["fake_component"] = fake
+    SA.REGISTRY["fake"] = ("fake_component", "build", "score", "bad")
+    try:
+        r = SA.audit_component("fake")
+        assert not r["passed"] and r["best_degenerate"] == "always no"
+    finally:
+        del SA.REGISTRY["fake"]

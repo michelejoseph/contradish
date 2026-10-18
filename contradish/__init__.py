@@ -250,6 +250,8 @@ from .governance_balance import hysteresis as decision_hysteresis, balance as go
 from .agency import (AgencyCase, ActionOption as AgencyOption, Effect as AgencyEffect, Requirement as AgencyRequirement,
                      evaluate_agency, warranted_choice as agency_warranted_choice)
 from .agency_contrast import build_agency, score_agency, run_agency
+from .distinctions_contrast import build_distinctions, score_distinctions, run_distinctions
+from .coupling_contrast import build_coupling, score_coupling, run_coupling
 from .release_gate import release_gate, to_markdown as release_markdown, to_junit as release_junit, export_examples
 from .contract import (
     PolicyContract, Clause, DecisionCase, Contrast, Amendment, Thresholds, LintIssue,
@@ -564,6 +566,12 @@ __all__ = [
     "build_agency",
     "score_agency",
     "run_agency",
+    "build_distinctions",
+    "score_distinctions",
+    "run_distinctions",
+    "build_coupling",
+    "score_coupling",
+    "run_coupling",
     "release_gate",
     "release_markdown",
     "release_junit",
