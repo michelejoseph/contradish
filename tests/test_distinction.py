@@ -6,6 +6,7 @@ No API key required: model_fn/commitment_extractor are deterministic
 mocks, and LLMClient is patched for the CLI path, the same pattern
 test_fairness.py uses for `contradish fairness`.
 """
+from contradish.llm import LLMClient
 import json
 from unittest.mock import patch
 
@@ -20,6 +21,11 @@ from contradish.distinction import (
 
 
 # ── BUILTIN_DISTINCTION_PAIRS structural sanity ─────────────────────────────
+
+
+def _stub_correctness_judge(pair, side, question, answer):
+    """Stands in for the default correctness judge, which `contradish distinguish` wires in by default."""
+    return True
 
 def test_builtin_pairs_cover_medication_and_immigration():
     # scriptural_ethics was added as a third built-in domain (CHANGELOG 1.x).
@@ -165,7 +171,7 @@ def test_cmd_distinguish_runs_end_to_end_with_mocked_llm(capsys):
 
     with patch("contradish.llm.LLMClient", _FakeLLM), \
          patch.object(cli, "_check_api_key", lambda: None), \
-         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor), \
+         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor), patch.object(cli, "_default_commitment_judge", lambda llm: _stub_correctness_judge), \
          patch.object(cli, "_default_commitment_judge", lambda llm: _identity_true_judge):
         with pytest.raises(SystemExit) as exc:
             cli.cmd_distinguish(_Args())
@@ -200,7 +206,7 @@ def test_cmd_distinguish_wires_correctness_judge_into_prober(capsys):
 
     with patch("contradish.llm.LLMClient", _FakeLLM), \
          patch.object(cli, "_check_api_key", lambda: None), \
-         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor), \
+         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor), patch.object(cli, "_default_commitment_judge", lambda llm: _stub_correctness_judge), \
          patch.object(cli, "_default_commitment_judge", lambda llm: _identity_true_judge), \
          patch("contradish.distinction.DistinctionProber", _SpyProber):
         with pytest.raises(SystemExit):
@@ -327,6 +333,11 @@ class _FakeOpenAIClient:
 
 
 class _FakeJudgeLLM:
+    # route through the real LLMClient.chat, so the SDK-shaped fake client sees exactly what production sends
+    chat = getattr(LLMClient, "chat", None)              # None only when the CLI re-imports this module under a patch
+    _call_with_retry = getattr(LLMClient, "_call_with_retry", None)
+    _sleep = staticmethod(lambda s: None)
+    judge_model = "fake-judge-model"
     def __init__(self, verdict_text):
         self.provider = "openai"
         self.fast_model = "fake-model"
@@ -444,7 +455,7 @@ def test_compare_live_distinctions_detects_regression_between_two_apps(tmp_path,
 
     with patch("contradish.llm.LLMClient", _FakeLLM), \
          patch.object(cli, "_check_api_key", lambda: None), \
-         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor):
+         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor), patch.object(cli, "_default_commitment_judge", lambda llm: _stub_correctness_judge):
 
         class Args:
             json = True
@@ -672,6 +683,11 @@ class _FakeAnthropicClient:
 
 
 class _FakeLLMForJudge:
+    # route through the real LLMClient.chat, so the SDK-shaped fake client sees exactly what production sends
+    chat = getattr(LLMClient, "chat", None)              # None only when the CLI re-imports this module under a patch
+    _call_with_retry = getattr(LLMClient, "_call_with_retry", None)
+    _sleep = staticmethod(lambda s: None)
+    judge_model = "fake-judge-model"
     provider = "anthropic"
     fast_model = "fake-fast-model"
 
@@ -710,7 +726,7 @@ def test_cmd_distinguish_kbv_json_reports_kbv_rate(capsys):
 
     with patch("contradish.llm.LLMClient", _FakeLLM), \
          patch.object(cli, "_check_api_key", lambda: None), \
-         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor), \
+         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor), patch.object(cli, "_default_commitment_judge", lambda llm: _stub_correctness_judge), \
          patch.object(distinction, "default_restatement_judge", lambda llm: _judge_always_correct):
         with pytest.raises(SystemExit) as exc:
             cli.cmd_distinguish(_Args_KBV())
@@ -739,7 +755,7 @@ def test_cmd_distinguish_kbv_text_mode_prints_report(capsys):
 
     with patch("contradish.llm.LLMClient", _FakeLLM), \
          patch.object(cli, "_check_api_key", lambda: None), \
-         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor), \
+         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor), patch.object(cli, "_default_commitment_judge", lambda llm: _stub_correctness_judge), \
          patch.object(distinction, "default_restatement_judge", lambda llm: _judge_always_correct):
         with pytest.raises(SystemExit) as exc:
             cli.cmd_distinguish(_TextArgs())
@@ -764,7 +780,7 @@ def test_cmd_distinguish_kbv_threshold_fails_when_exceeded(capsys):
 
     with patch("contradish.llm.LLMClient", _FakeLLM), \
          patch.object(cli, "_check_api_key", lambda: None), \
-         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor), \
+         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor), patch.object(cli, "_default_commitment_judge", lambda llm: _stub_correctness_judge), \
          patch.object(distinction, "default_restatement_judge", lambda llm: _judge_always_correct):
         with pytest.raises(SystemExit) as exc:
             cli.cmd_distinguish(_ThreshArgs())

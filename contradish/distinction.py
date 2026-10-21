@@ -830,20 +830,7 @@ def default_commitment_extractor(llm):
             "phrasing. Respond with only the phrase, nothing else.\n\n"
             f"Question: {question}\nAnswer: {answer}"
         )
-        if llm.provider == "anthropic":
-            msg = llm._client.messages.create(
-                model=llm.fast_model,
-                max_tokens=32,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            return msg.content[0].text.strip().lower()
-        else:
-            resp = llm._client.chat.completions.create(
-                model=llm.fast_model,
-                max_tokens=32,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            return resp.choices[0].message.content.strip().lower()
+        return llm.chat([{"role": "user", "content": prompt}], model=llm.fast_model, max_tokens=32).strip().lower()
     return extract
 
 
@@ -873,20 +860,7 @@ def default_restatement_judge(llm):
             "correct handlings above, in substance rather than exact "
             "wording? Answer with only one word: yes or no."
         )
-        if llm.provider == "anthropic":
-            msg = llm._client.messages.create(
-                model=llm.fast_model,
-                max_tokens=8,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            verdict = msg.content[0].text.strip().lower()
-        else:
-            resp = llm._client.chat.completions.create(
-                model=llm.fast_model,
-                max_tokens=8,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            verdict = resp.choices[0].message.content.strip().lower()
+        verdict = llm.chat([{"role": "user", "content": prompt}], model=llm.fast_model, max_tokens=8).strip().lower()
         return verdict.startswith("yes")
     return judge
 
@@ -913,7 +887,7 @@ def default_commitment_judge(llm):
 
     Args:
         llm: same judge client shape as default_commitment_extractor /
-             default_restatement_judge (llm.provider, llm._client,
+             default_restatement_judge (llm.chat,
              llm.fast_model).
 
     Returns:
@@ -938,20 +912,7 @@ def default_commitment_judge(llm):
             "conclusion A, B if it reaches conclusion B, or N if it reaches "
             "neither / is unclear. Nothing else."
         )
-        if llm.provider == "anthropic":
-            msg = llm._client.messages.create(
-                model=llm.fast_model,
-                max_tokens=8,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            verdict = msg.content[0].text.strip().upper()[:1]
-        else:
-            resp = llm._client.chat.completions.create(
-                model=llm.fast_model,
-                max_tokens=8,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            verdict = resp.choices[0].message.content.strip().upper()[:1]
+        verdict = llm.chat([{"role": "user", "content": prompt}], model=llm.fast_model, max_tokens=8).strip().upper()[:1]
         return verdict == expected_label
     return judge
 

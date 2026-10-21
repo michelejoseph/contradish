@@ -121,19 +121,7 @@ class InterventionCase:
 
 def _judge_call(llm, prompt: str, max_tokens: int = 8) -> str:
     """Same calling convention as distinction.py's default judges/extractors."""
-    if llm.provider == "anthropic":
-        msg = llm._client.messages.create(
-            model=llm.fast_model,
-            max_tokens=max_tokens,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return msg.content[0].text.strip().lower()
-    resp = llm._client.chat.completions.create(
-        model=llm.fast_model,
-        max_tokens=max_tokens,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return resp.choices[0].message.content.strip().lower()
+    return llm.chat([{"role": "user", "content": prompt}], model=llm.fast_model, max_tokens=max_tokens).strip().lower()
 
 
 def default_change_judge(llm):

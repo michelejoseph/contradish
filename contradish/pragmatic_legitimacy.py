@@ -324,17 +324,7 @@ def infer_rational_goal(llm, framing_text: str) -> str:
         "rational, cooperative listener take this speaker to actually be asking for? "
         "Answer in one plain sentence, stating the underlying question/goal only."
     )
-    if llm.provider == "anthropic":
-        msg = llm._client.messages.create(
-            model=llm.fast_model, max_tokens=100,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return msg.content[0].text.strip()
-    resp = llm._client.chat.completions.create(
-        model=llm.fast_model, max_tokens=100,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return resp.choices[0].message.content.strip()
+    return llm.chat([{"role": "user", "content": prompt}], model=llm.fast_model, max_tokens=100).strip()
 
 
 def default_legitimacy_reviewer(llm) -> Callable[[str, str], Optional[bool]]:
@@ -355,18 +345,7 @@ def default_legitimacy_reviewer(llm) -> Callable[[str, str], Optional[bool]]:
             "without that difference being a contradiction? Answer with only one word: "
             "yes or no."
         )
-        if llm.provider == "anthropic":
-            msg = llm._client.messages.create(
-                model=llm.fast_model, max_tokens=8,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            verdict = msg.content[0].text.strip().lower()
-        else:
-            resp = llm._client.chat.completions.create(
-                model=llm.fast_model, max_tokens=8,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            verdict = resp.choices[0].message.content.strip().lower()
+        verdict = llm.chat([{"role": "user", "content": prompt}], model=llm.fast_model, max_tokens=8).strip().lower()
         if verdict.startswith("yes"):
             return True
         if verdict.startswith("no"):
@@ -392,18 +371,7 @@ def default_shift_correctness_judge(llm) -> Callable[[str, str], Optional[bool]]
             "Does this answer actually fulfill that goal correctly? Answer with only "
             "one word: yes or no."
         )
-        if llm.provider == "anthropic":
-            msg = llm._client.messages.create(
-                model=llm.fast_model, max_tokens=8,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            verdict = msg.content[0].text.strip().lower()
-        else:
-            resp = llm._client.chat.completions.create(
-                model=llm.fast_model, max_tokens=8,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            verdict = resp.choices[0].message.content.strip().lower()
+        verdict = llm.chat([{"role": "user", "content": prompt}], model=llm.fast_model, max_tokens=8).strip().lower()
         if verdict.startswith("yes"):
             return True
         if verdict.startswith("no"):

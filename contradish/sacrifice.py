@@ -121,20 +121,7 @@ def default_hedge_judge(llm):
             "Answer with only one word: yes (fully confident, no hedging) or "
             "no (hedged or uncertain)."
         )
-        if llm.provider == "anthropic":
-            msg = llm._client.messages.create(
-                model=llm.fast_model,
-                max_tokens=8,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            verdict = msg.content[0].text.strip().lower()
-        else:
-            resp = llm._client.chat.completions.create(
-                model=llm.fast_model,
-                max_tokens=8,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            verdict = resp.choices[0].message.content.strip().lower()
+        verdict = llm.chat([{"role": "user", "content": prompt}], model=llm.fast_model, max_tokens=8).strip().lower()
         return verdict.startswith("yes")
     return judge
 

@@ -204,24 +204,7 @@ def _make_demo_app(system_prompt: str):
     llm = LLMClient()
 
     def demo_app(question: str) -> str:
-        if llm.provider == "anthropic":
-            msg = llm._client.messages.create(
-                model=llm.fast_model,
-                max_tokens=256,
-                system=system_prompt,
-                messages=[{"role": "user", "content": question}],
-            )
-            return msg.content[0].text.strip()
-        else:
-            resp = llm._client.chat.completions.create(
-                model=llm.fast_model,
-                max_tokens=256,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": question},
-                ],
-            )
-            return resp.choices[0].message.content.strip()
+        return llm.chat([{"role": "user", "content": question}], system=system_prompt, model=llm.fast_model, max_tokens=256).strip()
 
     return demo_app, llm.provider
 
@@ -1283,23 +1266,7 @@ def _demo_update_model_fn(llm):
     call.
     """
     def fn(system_prompt: str, question: str) -> str:
-        if llm.provider == "anthropic":
-            msg = llm._client.messages.create(
-                model=llm.fast_model,
-                max_tokens=256,
-                system=system_prompt,
-                messages=[{"role": "user", "content": question}],
-            )
-            return msg.content[0].text.strip()
-        resp = llm._client.chat.completions.create(
-            model=llm.fast_model,
-            max_tokens=256,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": question},
-            ],
-        )
-        return resp.choices[0].message.content.strip()
+        return llm.chat([{"role": "user", "content": question}], system=system_prompt, model=llm.fast_model, max_tokens=256).strip()
     return fn
 
 
@@ -1728,17 +1695,7 @@ def _demo_chat_fn(llm):
     def fn(messages):
         system = "\n\n".join(m["content"] for m in messages if m["role"] == "system")
         turns = [m for m in messages if m["role"] != "system"]
-        if llm.provider == "anthropic":
-            msg = llm._client.messages.create(
-                model=llm.fast_model, max_tokens=256, system=system,
-                messages=[{"role": m["role"], "content": m["content"]} for m in turns],
-            )
-            return msg.content[0].text.strip()
-        resp = llm._client.chat.completions.create(
-            model=llm.fast_model, max_tokens=256,
-            messages=[{"role": "system", "content": system}] + turns,
-        )
-        return resp.choices[0].message.content.strip()
+        return llm.chat([{"role": m["role"], "content": m["content"]} for m in turns], system=system, model=llm.fast_model, max_tokens=256).strip()
     return fn
 
 

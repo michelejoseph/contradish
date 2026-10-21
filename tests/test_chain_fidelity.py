@@ -8,6 +8,7 @@ directional_fidelity.py's directional_correctness.
 No API key required: model_fn/commitment_extractor are deterministic mocks,
 same pattern test_distinction.py uses.
 """
+from contradish.llm import LLMClient
 import json
 
 import pytest
@@ -236,6 +237,11 @@ class _FakeOpenAIClient:
 
 
 class _FakeJudgeLLM:
+    # route through the real LLMClient.chat, so the SDK-shaped fake client sees exactly what production sends
+    chat = getattr(LLMClient, "chat", None)              # None only when the CLI re-imports this module under a patch
+    _call_with_retry = getattr(LLMClient, "_call_with_retry", None)
+    _sleep = staticmethod(lambda s: None)
+    judge_model = "fake-judge-model"
     def __init__(self, verdict_text):
         self.provider = "openai"
         self.fast_model = "fake-model"

@@ -75,7 +75,7 @@ class SequenceContract:
         u, src = self.updates[j - 1], self.sources[self.updates[j - 1].source]
         gr = self.grounds
         return {cid: lab for cid, lab in u.asserts.items()
-                if cid in gr and src.has_authority_over(gr[cid])}
+                if cid in gr and src.has_authority_over(gr[cid], getattr(u, "changes", None))}
 
     def trajectory(self) -> list:
         """[beta*_0, ..., beta*_k]: the warranted state after each prefix of the history."""

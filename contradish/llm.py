@@ -93,6 +93,29 @@ class LLMClient:
         else:
             return self._openai_complete(prompt, m, max_tokens)
 
+    def chat(self, messages: list, system: Optional[str] = None, model: Optional[str] = None,
+             max_tokens: int = 1024) -> str:
+        """
+        One chat completion with transient-error retry, for every provider: `messages` are
+        [{"role": "user"|"assistant", "content": str}], `system` the system prompt. Returns the
+        stripped text ("" if the provider returned none). Use this instead of reaching into the
+        provider SDK client, which skips the retry and ties callers to one SDK's shape.
+        """
+        m = model or self.judge_model
+        msgs = [{"role": x["role"], "content": x["content"]} for x in messages]
+
+        if self.provider == "anthropic":
+            def _do() -> str:
+                kw = {"system": system} if system else {}
+                msg = self._client.messages.create(model=m, max_tokens=max_tokens, messages=msgs, **kw)
+                return (msg.content[0].text if msg.content else "").strip()
+        else:
+            def _do() -> str:
+                full = ([{"role": "system", "content": system}] if system else []) + msgs
+                resp = self._client.chat.completions.create(model=m, max_tokens=max_tokens, messages=full)
+                return (resp.choices[0].message.content or "").strip()
+        return self._call_with_retry(_do)
+
     def complete_json(self, prompt: str, model: Optional[str] = None) -> dict:
         """Send a prompt, parse and return a JSON dict."""
         raw = self.complete(prompt, model=model)

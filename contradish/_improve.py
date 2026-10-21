@@ -207,24 +207,7 @@ def _make_app_for_prompt(
     use_model = model or llm.fast_model
 
     def app(question: str) -> str:
-        if llm.provider == "anthropic":
-            msg = llm._client.messages.create(
-                model=use_model,
-                max_tokens=max_tokens,
-                system=system_prompt,
-                messages=[{"role": "user", "content": question}],
-            )
-            return msg.content[0].text.strip()
-        else:
-            resp = llm._client.chat.completions.create(
-                model=use_model,
-                max_tokens=max_tokens,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user",   "content": question},
-                ],
-            )
-            return resp.choices[0].message.content.strip()
+        return llm.chat([{"role": "user", "content": question}], system=system_prompt, model=use_model, max_tokens=max_tokens).strip()
 
     return app
 

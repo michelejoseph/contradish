@@ -339,18 +339,7 @@ def default_chain_commitment_judge(llm):
             f"reached (1-{len(chain.points)}), or 0 if it reaches none of "
             "them / is unclear. Nothing else."
         )
-        if llm.provider == "anthropic":
-            msg = llm._client.messages.create(
-                model=llm.fast_model, max_tokens=8,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            verdict = msg.content[0].text.strip()
-        else:
-            resp = llm._client.chat.completions.create(
-                model=llm.fast_model, max_tokens=8,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            verdict = resp.choices[0].message.content.strip()
+        verdict = llm.chat([{"role": "user", "content": prompt}], model=llm.fast_model, max_tokens=8).strip()
         digits = ""
         for ch in verdict:
             if ch.isdigit():

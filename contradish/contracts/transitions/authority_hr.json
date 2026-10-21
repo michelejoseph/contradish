@@ -527,7 +527,10 @@
    "content": "HR system record: this employee's unused vacation balance for this year is 4 days.",
    "asserts": {
     "carry_8": "all_carry"
-   }
+   },
+   "changes": [
+    "balance_facts"
+   ]
   }
  },
  {

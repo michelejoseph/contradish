@@ -43,6 +43,11 @@ _POLE_B = "The hidden flag is TRUE_B."
 
 # ── structural sanity ────────────────────────────────────────────────────
 
+
+def _stub_correctness_judge(pair, side, question, answer):
+    """Stands in for the default correctness judge, which `contradish distinguish` wires in by default."""
+    return True
+
 def test_rate_distortion_point_and_result_are_dataclasses():
     point = RateDistortionPoint(
         level_name="no_information", level_index=0,
@@ -297,7 +302,7 @@ def test_cmd_distinguish_rate_distortion_runs_end_to_end(capsys):
 
     with patch("contradish.llm.LLMClient", _FakeLLMWithCandidates), \
          patch.object(cli, "_check_api_key", lambda: None), \
-         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor):
+         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor), patch.object(cli, "_default_commitment_judge", lambda llm: _stub_correctness_judge):
         with pytest.raises(SystemExit) as exc:
             cli.cmd_distinguish(_RateDistortionArgs())
         assert exc.value.code == 0

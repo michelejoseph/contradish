@@ -41,9 +41,18 @@ SURVIVE, COLLAPSE, EMERGE, STAY_MERGED = "survive", "collapse", "emerge", "stay_
 
 # ── authority semantics ─────────────────────────────────────────────────────
 
-def authorized(governs, grounds):
+def authorized(governs, grounds, changes=None):
     """A source governing `governs` may change a case resting on `grounds`
-    iff it governs everything ("*") or shares at least one ground with it."""
+    iff it governs everything ("*") or shares at least one ground with it.
+
+    When the update declares the grounds it `changes`, the source must govern
+    every declared ground the case rests on (and the case must rest on at
+    least one): sharing an unrelated ground no longer confers standing."""
+    if changes is not None:
+        if any(isinstance(g, str) and g.startswith("protected:") for g in grounds):
+            return False
+        hit = set(changes) & set(grounds)
+        return bool(hit) and ("*" in governs or hit <= set(governs))
     if any(isinstance(g, str) and g.startswith("protected:") for g in grounds):
         return False                                   # protected obligations: no source governs them
     return "*" in governs or bool(set(governs) & set(grounds))
@@ -212,14 +221,14 @@ def apply_update(state, update, sources, grounds):
     The warranted behavioral state after one update.
 
     state    {case_id: label}
-    update   {"source": id, "asserts": {case_id: label}}
+    update   {"source": id, "asserts": {case_id: label}, "changes": [grounds] (optional)}
     sources  {id: [governed grounds]}      ("*" = everything)
     grounds  {case_id: [grounds]}
     """
     gov = sources[update["source"]]
     new = dict(state)
     for cid, lab in update["asserts"].items():
-        if cid in state and authorized(gov, grounds.get(cid, ())):
+        if cid in state and authorized(gov, grounds.get(cid, ()), update.get("changes")):
             new[cid] = lab
     return new
 
@@ -236,7 +245,7 @@ def footprint(update, sources, grounds, cases):
     """Cases this update is warranted to rewrite, with the value it writes."""
     gov = sources[update["source"]]
     return {cid: lab for cid, lab in update["asserts"].items()
-            if cid in cases and authorized(gov, grounds.get(cid, ()))}
+            if cid in cases and authorized(gov, grounds.get(cid, ()), update.get("changes"))}
 
 
 def compound_update(initial, updates, sources, grounds):

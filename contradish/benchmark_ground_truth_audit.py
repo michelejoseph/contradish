@@ -87,18 +87,7 @@ def default_pair_validity_judge(llm):
             "handlings above are substantively accurate? Answer with only one word: "
             "yes or no."
         )
-        if llm.provider == "anthropic":
-            msg = llm._client.messages.create(
-                model=llm.fast_model, max_tokens=8,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            verdict = msg.content[0].text.strip().lower()
-        else:
-            resp = llm._client.chat.completions.create(
-                model=llm.fast_model, max_tokens=8,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            verdict = resp.choices[0].message.content.strip().lower()
+        verdict = llm.chat([{"role": "user", "content": prompt}], model=llm.fast_model, max_tokens=8).strip().lower()
         return verdict.startswith("yes")
     return judge
 
@@ -116,18 +105,7 @@ def default_calibration_gold_judge(llm):
             "equivalent positions on the underlying question? Answer with only "
             "one word: yes or no."
         )
-        if llm.provider == "anthropic":
-            msg = llm._client.messages.create(
-                model=llm.fast_model, max_tokens=8,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            verdict = msg.content[0].text.strip().lower()
-        else:
-            resp = llm._client.chat.completions.create(
-                model=llm.fast_model, max_tokens=8,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            verdict = resp.choices[0].message.content.strip().lower()
+        verdict = llm.chat([{"role": "user", "content": prompt}], model=llm.fast_model, max_tokens=8).strip().lower()
         return verdict.startswith("yes")
     return judge
 

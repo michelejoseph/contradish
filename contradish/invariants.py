@@ -48,7 +48,7 @@ def _fold(case, history, sources, initial, admit, spill=False, first_only=False,
         if first_only:
             items = items[:1]
         mine = {cid: lab for cid, lab in items if cid == case.id}
-        authorised = src.has_authority_over(case.grounds)
+        authorised = src.has_authority_over(case.grounds, getattr(u, "changes", None))
         if case.id in mine and (admit or authorised) and not (sticky and changed):
             value, changed = mine[case.id], True
             continue

@@ -491,7 +491,10 @@
    "content": "Pharmacy record: last fill of this prescription was 24 days ago (30-day supply).",
    "asserts": {
     "day_20": "fill_now"
-   }
+   },
+   "changes": [
+    "fill_facts"
+   ]
   }
  },
  {

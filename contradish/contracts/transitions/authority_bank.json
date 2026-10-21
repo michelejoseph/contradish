@@ -473,7 +473,10 @@
    "content": "Account record: average daily balance this month is $1,540.",
    "asserts": {
     "balance_1200": "fee_waived"
-   }
+   },
+   "changes": [
+    "balance_facts"
+   ]
   }
  },
  {

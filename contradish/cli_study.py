@@ -135,11 +135,12 @@ def _plan(cfg) -> str:
     provider_extra = 0      # provider-spec calls happen only for models whose provider's rules are encoded
     lines = []
     if "authority" in cfg.components:
-        suite = load_authority_suites()
+        from contradish.study import placebo_transitions
+        suite = load_authority_suites() + placebo_transitions()
         n = sum(len(t.cases) for t in suite) * 2 * cfg.samples * len(cfg.deliveries)
         per_model += n
-        lines.append(f"    authority suites  {n:5d} model calls  ({len(suite)} transitions x cases x 2 turns "
-                     f"x {cfg.samples} samples x {len(cfg.deliveries)} deliveries)")
+        lines.append(f"    authority suites  {n:5d} model calls  ({len(suite)} transitions, 4 of them placebos, x cases "
+                     f"x 2 turns x {cfg.samples} samples x {len(cfg.deliveries)} deliveries)")
     if "contrast" in cfg.components:
         from contradish.authority_contrast import build_contrasts
         con = build_contrasts()
@@ -300,7 +301,20 @@ def cmd_study(args) -> None:
         print(open(f"{args.out_dir}/REPORT.md", encoding="utf-8").read())
         return
 
-    if local:
+    if local and args.offline:
+        # Re-scoring from the logged replies needs no Ollama: take the models from --models or from the study itself.
+        args.out = args.out or "studies/local"
+        wanted = _split(args.models)
+        if not wanted:
+            try:
+                with open(os.path.join(args.out, "results.json"), encoding="utf-8") as f:
+                    wanted = list(json.load(f)["config"]["models"])
+            except (OSError, KeyError, ValueError):
+                sys.exit(f"  --offline: pass --models, or point --out at a study directory with results.json")
+        args.models = ",".join(m if m.startswith("ollama:") else f"ollama:{m}" for m in wanted)
+        if not args.judge:
+            args.self_label = True
+    elif local:
         installed = S.ollama_models()
         if installed is None:
             sys.exit(
@@ -326,6 +340,19 @@ def cmd_study(args) -> None:
         if not args.judge:
             args.self_label = True
         args.out = args.out or "studies/local"
+
+    if args.offline and args.out and os.path.exists(os.path.join(args.out, "results.json")):
+        try:
+            with open(os.path.join(args.out, "results.json"), encoding="utf-8") as f:
+                recorded = json.load(f).get("config", {})
+        except (OSError, ValueError):
+            recorded = {}
+        # The logged replies are keyed by the exact request, settings included: re-score with the run's own
+        # settings unless told otherwise, or every lookup misses.
+        if args.temperature is None and recorded.get("temperature") is not None:
+            args.temperature = recorded["temperature"]
+        if recorded.get("max_tokens") is not None and args.max_tokens == 600 and recorded["max_tokens"] != 600:
+            args.max_tokens = recorded["max_tokens"]
 
     try:
         models = [S.parse_model(m) for m in _split(args.models)]

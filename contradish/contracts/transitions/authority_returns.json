@@ -158,7 +158,10 @@
       "content": "[R1] is amended: items may be returned for a full refund within 45 days of delivery.",
       "asserts": {
         "day_35": "refund"
-      }
+      },
+      "changes": [
+        "R1"
+      ]
     }
   },
   {
@@ -482,7 +485,10 @@
       "content": "Order record: delivered 12 days ago (carrier scan confirmed).",
       "asserts": {
         "day_35": "refund"
-      }
+      },
+      "changes": [
+        "order_facts"
+      ]
     }
   },
   {

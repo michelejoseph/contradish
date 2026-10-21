@@ -75,7 +75,7 @@ as the v2.1 annotation pass (`equivalence-audit/`) completes.
 
 **Status as of 2026-09-13:** `v2/medication.json` has one completed
 independent annotator pass (of the 2-3 `equivalence-audit/INSTRUCTIONS.md`
-calls for) run through `compute_equivalence_confidence.py` — 14 of 18 cases
+calls for) run through `compute_equivalence_confidence.py`: 14 of 18 cases
 now carry a real EQ in `[0.75, 0.875]` (never a clean `1.0`: every case had
 at least one variant an annotator flagged as introducing a legitimately new
 circumstance) and 4 cases dropped to `0.75`, contested. This is real signal,
@@ -259,16 +259,16 @@ framing, or pressure changes but the facts don't.
 from two measurements this package already produces, with no new probing:
 
 - **relevant sensitivity** = a distinction pair's `overall_hold_rate`
-  (`contradish/distinction.py` — did the model answer differently when the
+  (`contradish/distinction.py`, did the model answer differently when the
   situation actually differs)
 - **irrelevant sensitivity** = the `cai_strain` of the CAI-Bench case(s)
   sharing that pair's reasoning junction (`contradish/predictive_validity.py`'s
-  `JUNCTION_CASE_MAP` — did the model's answer wobble across paraphrases of
+  `JUNCTION_CASE_MAP`, did the model's answer wobble across paraphrases of
   the *same* underlying question)
 
 Range is `[-1, 1]`. `+1.0` is the ideal: always distinguishes what matters,
 never reacts to what doesn't. `-1.0` is the worst signature this repo can
-name — a model that is exactly backwards, blurring situations truth
+name: a model that is exactly backwards, blurring situations truth
 requires it to separate while getting rattled by wording changes that carry
 no truth-relevant information at all. A single hold-rate or strain number
 can't tell "backwards" apart from "merely weak on one axis"; faithfulness
@@ -310,7 +310,7 @@ pressure" (shifted c, which is arguably not always a defect; see
 `contradish/pragmatic_legitimacy.py` below). A single faithfulness number
 cannot separate these two failures. `FaithfulnessJunction.sensitivity_d_prime` /
 `.criterion` / `.sdt_pattern` are populated automatically by
-`score_faithfulness()` — no separate call needed.
+`score_faithfulness()`: no separate call needed.
 
 ---
 
@@ -336,19 +336,19 @@ checkable credentials to adapt to.
 
 `score_dependency_structure()` crosses `R` against a measured sensitivity
 profile (bridged directly from `technique_scores` via
-`sensitivity_from_consistency_score()` — zero new model calls) to classify
+`sensitivity_from_consistency_score()`: zero new model calls) to classify
 every factor into one of four cells:
 
 | | sensitive | insensitive |
 |---|---|---|
 | **relevant** | tracked (correct) | **missed** (distinction loss's failure mode) |
-| **irrelevant** | **spurious** (CAI Strain's failure mode, per-factor) | invariant (correct — unnamed anywhere else in this package) |
+| **irrelevant** | **spurious** (CAI Strain's failure mode, per-factor) | invariant (correct: unnamed anywhere else in this package) |
 
 The pooled hit rate (tracked / (tracked+missed)) and false-alarm rate
 (spurious / (spurious+invariant)) are exactly faithfulness's
 `relevant_sensitivity` and `irrelevant_sensitivity`. Subtracting them is
 Youden's J statistic / informedness (Youden, W.J. 1950, "Index for rating
-diagnostic tests," *Cancer* 3(1):32–35) — which means `faithfulness.py`'s
+diagnostic tests," *Cancer* 3(1):32 to 35): which means `faithfulness.py`'s
 existing score IS a DRS score, computed over the degenerate two-factor case
 {fact, framing}. `score_dependency_structure()` reuses
 `compute_sdt_decomposition()` / `classify_sdt_pattern()` from
@@ -692,28 +692,28 @@ that ground truth itself, at the scale a general framework needs."
 DRS (above) asks a categorical question per factor: relevant or not, and did
 the model react. It has no way to say WHERE, on an ordered dimension, the
 correct decision actually changes, or where the model's decision actually
-changes — only whether the model reacted to a rhetorical technique at all.
+changes: only whether the model reacted to a rhetorical technique at all.
 `contradish/decision_boundary.py` adds that: a controlled-intervention
 boundary-finding procedure, the same experimental logic classic
 psychophysics staircase methods use to locate a perceptual threshold,
 applied to a model's decision along a real ordered semantic ladder (e.g.
 "days early requesting a refill": 0, 1, ..., 10).
 
-`BoundaryLadder` states the legitimate boundary `B*` explicitly — the rung
+`BoundaryLadder` states the legitimate boundary `B*` explicitly: the rung
 where the correct decision changes. This is authored content, not derived
 from any existing constant: nothing in `policies/*.py` currently encodes a
 numeric threshold (`expected_traits` there are qualitative), so a real `B*`
 needs the same kind of deliberate authoring, ideally reviewed, that the
 equivalence-audit CSVs needed before their numbers meant anything (see
 "Equivalence is measured, not asserted" above). `illustrative_ladder()`
-ships one synthetic, clearly-labeled example for tests — not a claim about
+ships one synthetic, clearly-labeled example for tests: not a claim about
 any real domain.
 
 `recover_boundary_via_binary_search()` recovers the model's actual
 behavioral boundary `B_M` in O(log n) queries against an oracle callable
 (the same swappable-judge pattern as `default_hedge_judge` elsewhere).
 Its local `verify` check queries one rung past each side of the candidate
-boundary — checking the boundary rung itself, or the one immediately
+boundary: checking the boundary rung itself, or the one immediately
 before it, would be tautological, since the search's own termination
 guarantees those are already consistent; the informative checks are one
 step further out, confirmed by direct computation to catch a real share of
@@ -724,7 +724,7 @@ rather than forced into a boundary that doesn't exist.
 `quantify_boundary_discrepancy()` computes `Delta = B_M - B*`: signed
 displacement in rungs, normalized for cross-ladder comparison, and a
 direction (`shifted_toward_a` / `shifted_toward_b` / `exact`). The
-direction is deliberately not labeled "conservative" or "permissive" —
+direction is deliberately not labeled "conservative" or "permissive":
 which side is the safer one depends on what decision_a/decision_b mean for
 a given commitment, which this module has no way to know; it reports the
 geometric fact and leaves the judgment call to whoever has the domain
@@ -747,7 +747,7 @@ print(quantify_boundary_discrepancy(ladder, recovery).report())
 ```
 
 As of 2026-09-13, no real `BoundaryLadder` content exists for any
-contradish domain — this is a tested recovery-and-discrepancy engine
+contradish domain: this is a tested recovery-and-discrepancy engine
 without live data yet. Authoring a reviewed `B*` for even one real
 commitment (medication is the natural first candidate, given the completed
 equivalence audit there) is the natural next step, not wiring into
@@ -762,35 +762,35 @@ handed to them in advance -- neither discovers which variables to even
 test. `contradish/behavioral_mapping.py` adds that missing first step and
 ties the other two together into one method:
 
-**Discover.** `screen_candidates()` runs a cheap, purely behavioral pass —
+**Discover.** `screen_candidates()` runs a cheap, purely behavioral pass,
 one shared baseline query plus one probe per candidate, so total cost is
-`1 + n` queries regardless of how many turn out to matter — flagging which
+`1 + n` queries regardless of how many turn out to matter, flagging which
 candidates move the decision at all. This is deliberately not the same
 kind of discovery `topology.py`'s `expand_node()` does: that asks the model
 what it depends on and clusters the free-text answer (a self-report); this
 module never asks, it perturbs and watches, in keeping with this package's
 standing position that behavior is the evidence that can't be talked
 around. The default candidate pool is seeded from
-`prompt_analyzer.py`'s real `KNOWN_TECHNIQUES` — 16 named pressure
+`prompt_analyzer.py`'s real `KNOWN_TECHNIQUES`, 16 named pressure
 techniques, a strict superset of `decision_relevance.py`'s 8-factor
-default spec — so discovery can surface sensitivity to a technique the
+default spec, so discovery can surface sensitivity to a technique the
 default spec never even considered (`roleplay`, `flattery`,
 `negation_trap`, and the other eight beyond the original set).
 
-**Map.** `build_behavioral_map()` only runs the expensive step —
+**Map.** `build_behavioral_map()` only runs the expensive step,
 `decision_boundary.py`'s `recover_boundary_via_binary_search()`, reused
-unmodified — on candidates that screened sensitive AND were given an
+unmodified, on candidates that screened sensitive AND were given an
 ordinal ladder; everything else contributes a plain 0.0/1.0 sensitivity
 value, already in the exact shape `decision_relevance.py`'s
 `score_dependency_structure()` expects.
 
 **Compare.** `compare_to_normative_structure()` takes a `NormativeStructure`
-(a `DecisionRelevanceSpec` — R — plus, optionally, a `BoundaryLadder` — B*
-— per ordinal factor) and reuses `score_dependency_structure()` and
+(a `DecisionRelevanceSpec`, R, plus, optionally, a `BoundaryLadder`, B*
+per ordinal factor) and reuses `score_dependency_structure()` and
 `quantify_boundary_discrepancy()` exactly as they already exist and are
 tested. The one thing it adds on top of simply calling both: a candidate
 that screened sensitive but has no entry anywhere in R is reported as
-`unspecified_sensitive_variables`, not silently dropped — which is what
+`unspecified_sensitive_variables`, not silently dropped: which is what
 would otherwise happen, since `score_dependency_structure()` only ever
 iterates the factors it was handed, and a genuinely novel discovery (the
 model reacts to something nobody classified as relevant or irrelevant) is
@@ -820,9 +820,9 @@ until real `BoundaryLadder` content exists for a domain.
 
 ## An AI behavioral topology: the structure governing when answers change
 
-`topology.py` already exists to answer almost exactly this question — its
+`topology.py` already exists to answer almost exactly this question, its
 own docstring opens with "WHY does a system fail where it fails? Not merely
-that it has high CAI Strain in some cases — but why those cases, and how
+that it has high CAI Strain in some cases, but why those cases, and how
 they relate to each other." `FailureTopologyMap` already has a dependency
 graph, load-bearing weight, local strain, a critical path, superspreader
 detection, certification coverage, a Gini coefficient, and
@@ -830,29 +830,29 @@ detection, certification coverage, a Gini coefficient, and
 needed to be rebuilt for this.
 
 What was missing was the data source. `topology_from_phi_star()`, the only
-existing constructor, populates every node from Phi* self-report — asking
+existing constructor, populates every node from Phi* self-report, asking
 a model what a claim depends on and clustering its free-text answer.
 `contradish/behavioral_topology.py` adds `topology_from_behavioral_map()`:
 the same `FailureTopologyMap`, `ReasoningNode`, `ReasoningEdge`, reused
 completely unmodified, fed instead from `behavioral_mapping.py`'s
-controlled-intervention measurements — from watching whether the decision
+controlled-intervention measurements, from watching whether the decision
 actually changes, never from asking the model what it thinks it depends
 on.
 
 The mapping is a deliberate reinterpretation in one place: `cai_strain` is
 1.0 exactly when a factor's four-cell classification is `missed` or
 `spurious` (the model's dependency structure is wrong, in either
-direction), 0.0 for `tracked`/`invariant` (correct) — not raw sensitivity.
+direction), 0.0 for `tracked`/`invariant` (correct): not raw sensitivity.
 A relevant factor the model correctly tracks does not read as "fragile"
 just because the answer moved; `topology_from_phi_star()` had no way to
 make this distinction, because `decision_relevance.py`'s R didn't exist
-when it was written. `reality_strain` reuses a real measured quantity —
-`abs(normalized_displacement)` from a `BoundaryDiscrepancyReport` — when a
+when it was written. `reality_strain` reuses a real measured quantity,
+`abs(normalized_displacement)` from a `BoundaryDiscrepancyReport`, when a
 boundary was recovered for that factor, rather than a placeholder.
 `lambda_weight` defaults to a uniform 1.0 (0.5 for a discovered-but-
 unspecified variable), since no validated per-factor importance weighting
 exists anywhere in this package yet; pass `lambda_weights` to override, and
-`bench/evaluate.py`'s `SEVERITY_MULTIPLIERS` is a natural — not wired-in —
+`bench/evaluate.py`'s `SEVERITY_MULTIPLIERS` is a natural, not wired-in,
 source for one. No dependency edges are invented by default: independently
 probed candidates have no implied order, unlike Phi* clusters, which at
 least arrive in a recurrence sequence.
@@ -874,18 +874,18 @@ print(topo.report())
 ```
 
 Because the result is an ordinary `FailureTopologyMap`, everything already
-built on top of one — including `topology_distance()`, letting two
+built on top of one, including `topology_distance()`, letting two
 behaviorally-measured topologies (two models, or the same model at two
 points in time) be compared structurally rather than only by aggregate
-strain — composes for free, with zero new code.
+strain, composes for free, with zero new code.
 
 ---
 
 ## Multi-witness convergence
 
 No serious finding in this package should rest on a single judge model. A
-judge call — `default_restatement_judge`, `default_commitment_extractor`,
-`default_hedge_judge`, the `Judge` class's own consistency scoring — is
+judge call, `default_restatement_judge`, `default_commitment_extractor`,
+`default_hedge_judge`, the `Judge` class's own consistency scoring, is
 already documented everywhere it appears as inheriting that judge's own
 noise. Until now, the prescribed fix was "write your own judge for anything
 you plan to rely on." `contradish/witness.py` (`WitnessPanel`) makes that
@@ -907,7 +907,7 @@ sacrifice_report = measure_sacrifice(pairs, loss_map, kbv_report,
 print(panel.convergence_report().summary())
 ```
 
-`WitnessPanel` enforces agreement, not independence — it cannot verify that
+`WitnessPanel` enforces agreement, not independence: it cannot verify that
 two witnesses are actually measuring the same thing by different means.
 Two calls to the same judge model on the same prompt are not independent;
 they share whatever blind spot that model has and will agree with each
@@ -917,11 +917,11 @@ programmatic heuristic, a restatement-based check paired with a behavioral
 one); `WitnessPanel` records the resulting disagreement rate so that choice
 can be audited afterward. By construction, requiring convergence can only
 shrink a measured rate toward zero relative to any single witness, never
-inflate it — `combine()` defaults to the conservative "not confirmed"
+inflate it: `combine()` defaults to the conservative "not confirmed"
 verdict on any disagreement.
 
 Building a `WitnessPanel` by hand for every judge slot is enough extra code
-that, in practice, most call sites won't bother — which is exactly how the
+that, in practice, most call sites won't bother: which is exactly how the
 original single-judge defaults ended up unwitnessed in the first place.
 `build_witnessed()` collapses that friction to one line: given a judge
 factory (`default_hedge_judge`, `default_restatement_judge`,
@@ -954,16 +954,16 @@ believe something, and upgrading weak evidence into settled fact.**
 directly.
 
 The model is given a claim whose evidentiary status is explicitly and
-plainly weak — a single anonymous, unverified source, flagged as such in
-the same turn — and then asked a question that invites drawing on it. A
+plainly weak, a single anonymous, unverified source, flagged as such in
+the same turn, and then asked a question that invites drawing on it. A
 provenance-faithful model either doesn't rely on the claim, or relies on it
 while preserving its weak status (hedging, attributing, flagging it as
 unconfirmed). Provenance collapse is doing neither: using the claim's
 content *and* stripping its sourcing, so the answer reads as fully
 warranted when the actual basis was one unverified comment.
 
-This is a close cousin of distinction sacrifice (`sacrifice.py`) — both are
-"knew the right epistemic status, lost it, stayed quiet about losing it" —
+This is a close cousin of distinction sacrifice (`sacrifice.py`), both are
+"knew the right epistemic status, lost it, stayed quiet about losing it",
 but the antecedent differs in an important way: provenance collapse needs
 no adversarial pressure framing to elicit. It doesn't require a model to be
 pushed, only asked, which is what makes it arguably the more common failure
@@ -983,14 +983,14 @@ report = measure_provenance(
 print(report.report())
 ```
 
-`hedge_judge` here is literally reusable from `sacrifice.py` — "was this
+`hedge_judge` here is literally reusable from `sacrifice.py`: "was this
 answer stated with no hedging, no expressed uncertainty" is the same
 question in both modules, applied to a different antecedent condition. As
 with `sacrifice.py`, no new probing is required beyond the initial answer;
 `usage_judge` and `hedge_judge` are judge-model classifications layered on
 top, and either slot accepts a `WitnessPanel`-combined judge for the same
 convergence guarantee described above. This is a new, unvalidated
-construct as of this writing — the three built-in claims are a starting
+construct as of this writing: the three built-in claims are a starting
 set, not a validated instrument, and no empirical collapse-rate result has
 been produced against a real model yet.
 
@@ -1004,13 +1004,13 @@ the honest answer to each one is either "this is checked, here's how" or
 
 | Variable | Competing explanation | Status |
 |---|---|---|
-| Distinction sacrifice | Merely token probability — the collapsed answer might just be the higher-probability continuation, nothing to do with "sacrificing" anything | **Open.** Requires per-token logprobs, which `model_fn`'s `(system_prompt, question) -> answer` signature doesn't carry. The KBV gate (`declares_correctly`) is a partial mitigation: a model that can correctly restate the rule when asked plainly is a weaker candidate for "just picking the likely token." Not a substitute for a real logprob check. |
-| Coherence pressure (sacrifice/KBV framings) | Ordinary prompt length, not pressure content | **Checked.** `predictive_validity.py`'s `length_confound_check()` re-reads each measurement's stored `framing_prefix` length per intensity (no new calls) and reports whether prompt length also ramps with intensity — flagging when length and pressure are confounded in a given probe run rather than assuming they aren't. |
+| Distinction sacrifice | Merely token probability: the collapsed answer might just be the higher-probability continuation, nothing to do with "sacrificing" anything | **Open.** Requires per-token logprobs, which `model_fn`'s `(system_prompt, question) -> answer` signature doesn't carry. The KBV gate (`declares_correctly`) is a partial mitigation: a model that can correctly restate the rule when asked plainly is a weaker candidate for "just picking the likely token." Not a substitute for a real logprob check. |
+| Coherence pressure (sacrifice/KBV framings) | Ordinary prompt length, not pressure content | **Checked.** `predictive_validity.py`'s `length_confound_check()` re-reads each measurement's stored `framing_prefix` length per intensity (no new calls) and reports whether prompt length also ramps with intensity: flagging when length and pressure are confounded in a given probe run rather than assuming they aren't. |
 | Coherence pressure vs. a one-off fluke | The rate spike at one intensity is noise, not a pressure-tracking effect | **Checked.** `pressure_specificity_verdict()` reads `SacrificeGradient.onset_intensity` / `ramps_monotonically` (already computed, no new calls) and reports whether the effect ramps with pressure or looks like a single-intensity fluke. |
-| KBV | Ordinary instruction-following failure — the model never understood the rule at all | **Checked by construction.** `KBVProfile.kbv_rate` is forced to `0.0` whenever `declares_correctly` is `False`; a knowledge/instruction gap cannot register as KBV, only a demonstrated-then-abandoned rule can. |
+| KBV | Ordinary instruction-following failure: the model never understood the rule at all | **Checked by construction.** `KBVProfile.kbv_rate` is forced to `0.0` whenever `declares_correctly` is `False`; a knowledge/instruction gap cannot register as KBV, only a demonstrated-then-abandoned rule can. |
 | Predictive validity (`sacrifice_rate` → case failure) | The signal only looks predictive because it's riding the domain's baseline failure rate | **Checked.** `PredictiveValidityReport.base_rate` and `.precision_lift` compare the probe's precision against the naive "always predict fail" baseline for covered cases; `precision_lift <= 0` means the signal isn't beating that baseline. |
 
-None of these checks make a construct true — they make it falsifiable, and
+None of these checks make a construct true: they make it falsifiable, and
 report the result of trying to falsify it rather than assuming it survives.
 Where a check is still open (token probability), that is stated plainly
 rather than left implicit.
@@ -1028,14 +1028,14 @@ conclusions, just for the vocabulary that best names what this module
 already did before this section existed.)
 
 `contradish/judge_calibration.py` (`measure_judge_floor`, `contradish
-judge-floor`) already measured one judge role's own CAI Strain — the
-original consistency/equivalence judge — against a 24-item human-labeled
+judge-floor`) already measured one judge role's own CAI Strain, the
+original consistency/equivalence judge, against a 24-item human-labeled
 calibration set, specifically so a skeptical reader can't say "the judge
 has its own drift and you never checked." That standard was never extended
 to the three judge roles added alongside sacrifice.py, KBV, and
 provenance.py: `default_restatement_judge`, `default_hedge_judge`,
 `default_usage_judge`. Each is a single LLM call asked to collapse a
-nuanced judgment into a clean yes/no under output-token pressure — reporting
+nuanced judgment into a clean yes/no under output-token pressure: reporting
 `sacrifice_rate` or provenance's `collapse_rate` without a floor number for
 the judge that produced them held the newest constructs to a *lower*
 evidentiary bar than the original CAI Strain. `contradish/judge_calibration_ext.py`
@@ -1049,19 +1049,19 @@ contradish judge-floor --judge-role restatement --judge-provider openai
 contradish judge-floor --judge-role usage --json
 ```
 
-`default_commitment_extractor` is deliberately not calibrated this way — it
+`default_commitment_extractor` is deliberately not calibrated this way: it
 returns free text, and "do two extracted strings agree" is a similarity
 question, not the same self-agreement measurement floor_strain uses
 elsewhere. Left open rather than faked with a metric that doesn't mean the
 same thing.
 
-**A single pooled `floor_strain` assumes one unidimensional trait** — the
+**A single pooled `floor_strain` assumes one unidimensional trait**: the
 same classical-test-theory assumption the LLM Psychometrics review already
 cited here flags as often false: a judge can be reliable on one domain and
 not another, and pooling hides exactly that. `score_calibration_votes_by_domain()`
 reports `floor_strain` per domain plus a `_heterogeneity` figure (max minus
 min across domains) that is `0.0` when pooling wasn't hiding anything and
-larger when it was. Additive only — it doesn't change what
+larger when it was. Additive only: it doesn't change what
 `measure_*_judge_floor()` returns, it exposes what that pooled number was
 averaging over.
 
@@ -1082,13 +1082,13 @@ model's answer, while resting the benchmark's *own* ground truth on one
 unwitnessed authoring pass, asks models to clear a bar the benchmark never
 held itself to. `BUILTIN_DISTINCTION_PAIRS`' `commit_a`/`commit_b` values
 and `judge_calibration.py`'s 24 `gold_equivalent` labels are both
-single-author artifacts — nobody had checked whether independent reviewers
+single-author artifacts: nobody had checked whether independent reviewers
 actually converge on them.
 
 `contradish/benchmark_ground_truth_audit.py` closes that gap the same way
 `witness.py` closes it for runtime judging: independent reviewer models
 (ideally different providers) each independently evaluate a piece of
-shipped ground truth — without being shown what the benchmark asserts —
+shipped ground truth, without being shown what the benchmark asserts,
 and the result reports where they converge, where they split, and, most
 importantly, where they *unanimously contradict* what's shipped:
 
@@ -1108,7 +1108,7 @@ print(report.report())   # contradicted_item_ids is the worklist that matters mo
 
 This is explicitly an audit, not an auto-correction mechanism.
 `contradicted_item_ids` is a worklist for a human maintainer, never applied
-automatically to rewrite the pair or calibration data — treating model
+automatically to rewrite the pair or calibration data: treating model
 convergence as automatically authoritative would just relocate the
 single-witness problem instead of solving it. Not yet run against the full
 shipped dataset as of this writing; the module exists so that run can
@@ -1119,14 +1119,14 @@ Perspectivist annotation methodology ("Truth Is a Lie: Crowd Truth and the
 Seven Myths of Human Annotation", Aroyo & Welty; "Beyond Consensus:
 Perspectivist Modeling and Evaluation of Annotator Disagreement in NLP",
 arXiv 2601.09065) argues that disagreement among reviewers is often not
-noise to be resolved but data about genuine ambiguity — and that treating
+noise to be resolved but data about genuine ambiguity: and that treating
 it as noise quietly encodes whichever side happened to be the majority as
 "truth." Some `BUILTIN_DISTINCTION_PAIRS` items may have no single
 determinate answer at all, and scoring a model's `kbv_rate` or
 `sacrifice_rate` against one holds that model to a standard this
 benchmark's own reviewers couldn't meet. `exclude_indeterminate_pairs()`
 recomputes a rate after dropping pairs this audit found disputed or
-contradicted from BOTH numerator and denominator — never rewriting the
+contradicted from BOTH numerator and denominator: never rewriting the
 pair itself (still never auto-applied, same standard as above), only
 declining to let an indeterminate item count for or against a model at
 all, the same way standard psychometric item analysis drops
@@ -1159,16 +1159,16 @@ both covered above. Neither asks the question that actually determines
 whether a deployed judge is safe to rely on: given an answer whose
 correctness is already known, does the judge's verdict agree with it?
 `ground_truth.py`'s `GroundTruthAuditor` uses a judge to score a model's
-answer against a rubric and simply assumes that judge is trustworthy —
+answer against a rubric and simply assumes that judge is trustworthy:
 nothing in this package checked that assumption before now.
 
 LLM judges skew overzealous: over-flagging a correct answer is a real cost
 (in a healthcare deployment, a wrong flag can delay someone's medication
-access), but it's the *visible* failure — someone notices when a good
+access), but it's the *visible* failure: someone notices when a good
 answer gets blocked. The harder-to-measure failure is the judge silently
 approving a wrong answer, because nothing downstream complains. A curated
 gold-standard dataset of only-correct answers can never surface that
-failure at all — it has no wrong answers in it to miss. `contradish/
+failure at all: it has no wrong answers in it to miss. `contradish/
 judge_criterion_validity.py` scores both directions from one dataset:
 
 ```python
@@ -1189,7 +1189,7 @@ with an LLM would reopen the same who-validates-the-perturbation problem the
 ground-truth audit above exists to catch. `build_cross_context_items()`
 needs no new authoring at all: every `DistinctionPair` already encodes two
 patient contexts whose correct commitments genuinely differ, so
-`commit_a`, given as the answer to `question_b`, is not invented noise — it
+`commit_a`, given as the answer to `question_b`, is not invented noise: it
 is a real, benchmark-grounded, clinically-fluent answer that is simply
 wrong for patient B (it's the *right* answer for a different patient).
 Cross-applying each pair's two commitments to each other's questions turns
@@ -1197,28 +1197,28 @@ every existing distinction pair into two gold items (should be approved)
 and two cross-context items (should be flagged) for free.
 
 **Scored as two rates, not one accuracy number**, because the two errors
-have different costs and call for different fixes — the same reasoning
+have different costs and call for different fixes: the same reasoning
 `faithfulness.py` gives for decomposing rather than subtracting. `hit_rate`
 and `false_alarm_rate` feed `faithfulness.py`'s existing
 `compute_sdt_decomposition`/`classify_sdt_pattern` directly (imported, not
 reimplemented) for a d'/criterion read on the judge itself: a judge with
 collapsed d' genuinely can't discriminate correct from wrong answers; a
 judge with intact d' but a shifted criterion discriminates fine but has a
-biased flagging threshold — the overzealous case is a liberal criterion, the
+biased flagging threshold: the overzealous case is a liberal criterion, the
 rubber-stamp case is a conservative one, and only the decomposition tells
 you which one you're looking at.
 
 Results stratify by domain automatically (`report.by_domain`) whenever more
 than one domain is scored, the same per-domain surfacing `judge_
 calibration_ext.score_calibration_votes_by_domain()` already does for
-`floor_strain` — a single pooled rate can hide a judge that's fine on
+`floor_strain`: a single pooled rate can hide a judge that's fine on
 immigration questions and dangerous on medication ones. And
 `disputed_pair_ids` (pass a ground-truth audit's `disputed_item_ids` /
 `contradicted_item_ids`) tags every item built from a flagged pair rather
 than silently excluding it, the same audit-not-auto-correction discipline
 as `exclude_indeterminate_pairs()` above.
 
-Not yet run against a real judge model as of this writing — the module
+Not yet run against a real judge model as of this writing: the module
 exists so that run can happen and be reported honestly, whatever it finds.
 
 ---
@@ -1483,7 +1483,7 @@ second.
 
 ## Resolution dynamics: does a correction survive interaction?
 
-Every measurement above is synchronic — it asks whether an answer is
+Every measurement above is synchronic: it asks whether an answer is
 consistent or correct at one moment. None of them ask what happens to a
 correction *after* it lands: does it hold on repeat questioning, does it
 generalize to cases it logically should cover, and if it disappears later,
@@ -1499,7 +1499,7 @@ comes in afterward, and its central postulate (C2) is the one a naive
 contradicts an earlier correction, reverting is the *rational* response,
 not decay. Scoring every reversion as a plain failure conflates a model
 that correctly abandoned a superseded correction with one that just forgot
-it — only the second should count against it.
+it: only the second should count against it.
 
 `contradish/resolution_dynamics.py` is a pure, dependency-free scoring core
 over already-collected multi-turn probe data (no model or judge calls; the
@@ -1527,13 +1527,13 @@ print(classify_resolution(event, probes).summary())
 
 **Six outcomes, not a binary held/lost.** `classify_resolution()` returns
 `integrated` (corrected, and a logically-entailed transfer cell confirms it
-generalized — AGM closure satisfied), `behaviorally_resolved` (corrected,
+generalized, AGM closure satisfied), `behaviorally_resolved` (corrected,
 generalization never tested), `distorted` (corrected, but every transfer-
-cell probe came back wrong — closure failed), `superseded` (verified, then
-reverted, but the intervening interaction genuinely contradicted it — C2's
+cell probe came back wrong, closure failed), `superseded` (verified, then
+reverted, but the intervening interaction genuinely contradicted it, C2's
 legitimate override), `forgotten` (verified, then reverted, with nothing
-that justified it — the real C3/C4 violation), or `unresolved` (never
-verified, or the deciding probe is unstable/oscillating — no number is
+that justified it, the real C3/C4 violation), or `unresolved` (never
+verified, or the deciding probe is unstable/oscillating, no number is
 forced either way, the same discipline Decision Boundary Recovery applies
 to its own `unstable` regime, above).
 
@@ -1547,7 +1547,7 @@ commitment, with no notion of choosing among several commitments under a
 stated priority ordering; `sacrifice.py` asks whether a single-turn
 distinction loss was visibly hedged, not whether a multi-turn correction
 held. `check_closure()` is the one piece that *is* a direct diachronic
-extension of something already in the package — the existing `spurious`
+extension of something already in the package: the existing `spurious`
 check (`distinction.py`) generalized over time: did a revision also disturb
 a control cell it had no logical claim on (AGM inclusion/vacuity).
 
@@ -1558,11 +1558,11 @@ several commitments, and the domain has stated in advance which one matters
 least, did the model actually sacrifice that one, or keep something
 unimportant while dropping something the domain says matters more.
 `EntrenchmentTrial` validates at construction that the recorded sacrifice
-was actually one of the elicited commitments — the same discipline
+was actually one of the elicited commitments, the same discipline
 `classify_resolution()` and `check_closure()` apply to their own inputs.
 The entrenchment-ordering *elicitation* protocol (how a domain author
 states and records that priority ordering in the first place) is still
-just named here, not designed — `EntrenchmentTrial` only scores a trial
+just named here, not designed, `EntrenchmentTrial` only scores a trial
 once that elicitation has already happened.
 
 **The Katsuno-Mendelzon revision/update distinction is carried as a tag,
@@ -1570,11 +1570,11 @@ not a new instrument.** `EventType.REVISION` (same world, purported new
 information) vs. `EventType.UPDATE` (the world itself differs between the
 two situations) is optional on `ContradictionEvent`, because the instrument
 for asking "was this purported claim about a fixed world real" already
-exists — `pragmatic_legitimacy.py`'s `infer_rational_goal`/`default_
+exists: `pragmatic_legitimacy.py`'s `infer_rational_goal`/`default_
 legitimacy_reviewer` pipeline. `check_event_type_consistency()` checks one
 narrow, concrete consequence: `pragmatically_excused` presupposes a
 REVISION event, so setting it on a tagged UPDATE event is a category error.
-Returns a warning, not an exception — the function can't tell whether the
+Returns a warning, not an exception: the function can't tell whether the
 mistake is a wrong tag or a wrong excusal upstream.
 
 **An ex-ante-signal permutation test, deterministic and effect-size-first.**
@@ -1590,7 +1590,7 @@ confidence, hedging, and defended-under-challenge together doesn't silently
 inflate the false-positive rate the way testing them separately would.
 
 Like the judge criterion validity module above, this hasn't been run
-against real multi-turn model transcripts as of this writing — the
+against real multi-turn model transcripts as of this writing: the
 re-probing pipeline that would generate `ContradictionEvent`/
 `ResolutionProbe` records from live behavior is still open work. What
 exists is the scoring core that consumes that data honestly once it's

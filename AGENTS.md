@@ -83,7 +83,7 @@ contradish perspectives atlas             # consensus, contest and blocs across 
 contradish perspectives switch --agent witness:leaky
 ```
 
-Each action is required, allowed or forbidden. Permission changes are tracked separately from obligation changes. The difference is computed by an exact decomposition of the whole situation space, and the run certificate is **proved** only when every required change happened and every unrelated obligation held. Exhibits EX-0004 to EX-0006 show one run that is proved and two that are not. The specification is `docs/BUF-SPEC.md` §12–13.
+Each action is required, allowed or forbidden. Permission changes are tracked separately from obligation changes. The difference is computed by an exact decomposition of the whole situation space, and the run certificate is **proved** only when every required change happened and every unrelated obligation held. Exhibits EX-0004 to EX-0006 show one run that is proved and two that are not. The specification is `docs/BUF-SPEC.md` §12 to 13.
 
 ## 4. Verify an agent and produce evidence
 
@@ -112,7 +112,7 @@ contradish benchmark --model <model> --provider anthropic|openai --output-json r
 
 | Path | Contents |
 |---|---|
-| `docs/BUF-SPEC.md` | The formal specification: definitions, theorems T1–T10 with proofs, sequences, action-level transitions (§11), and what is not established |
+| `docs/BUF-SPEC.md` | The formal specification: definitions, theorems T1 to T10 with proofs, sequences, action-level transitions (§11), and what is not established |
 | `contradish/reference.py` | Independent reference scorer and exhaustive model checker (`python -m contradish.reference`) |
 | `conformance/vectors.json` | Language-neutral conformance vectors |
 | `contradish/policy_program.py`, `action_frontier.py` | Machine-readable policy, dependency model, derived action frontier |

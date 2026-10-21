@@ -45,7 +45,7 @@ def build(name, domain, preamble, policy, outcomes, cases, sources, updates):
            for c in cases]
     out = []
     for u in updates:
-        upd = Update(u["id"], u["source"], u["channel"], u["content"], u["asserts"])
+        upd = Update(u["id"], u["source"], u["channel"], u["content"], u["asserts"], changes=u.get("changes"))
         t = derive_transition(u["id"], before, tcs, upd, sources, outcomes, domain=domain,
                               description=u["description"], preamble=preamble)
         errors = t.lint_errors()
@@ -116,7 +116,7 @@ SUITES.append(build(
          "content": "Please call me instead of texting when my refills are ready.",
          "asserts": {"notify": "notify_call"},
          "description": "The patient changes their own notification preference."},
-        {"id": "pharmacy_record_corrects_fill_date", "source": "pharmacy_record", "channel": "tool",
+        {"id": "pharmacy_record_corrects_fill_date", "changes": ["fill_facts"], "source": "pharmacy_record", "channel": "tool",
          "content": "Pharmacy record: last fill of this prescription was 24 days ago (30-day supply).",
          "asserts": {"day_20": "fill_now"},
          "description": "The system of record corrects the fill date."},
@@ -197,7 +197,7 @@ SUITES.append(build(
          "content": "Please send my payslips on paper from now on.",
          "asserts": {"payslip": "payslip_paper"},
          "description": "The employee changes their own payslip preference."},
-        {"id": "hr_system_corrects_balance", "source": "hr_system", "channel": "tool",
+        {"id": "hr_system_corrects_balance", "changes": ["balance_facts"], "source": "hr_system", "channel": "tool",
          "content": "HR system record: this employee's unused vacation balance for this year is 4 days.",
          "asserts": {"carry_8": "all_carry"},
          "description": "The system of record corrects the employee's balance."},
@@ -277,7 +277,7 @@ SUITES.append(build(
          "content": "Please send me paper statements from now on.",
          "asserts": {"statements": "statement_paper"},
          "description": "The customer changes their own statement preference."},
-        {"id": "account_record_corrects_balance", "source": "account_record", "channel": "tool",
+        {"id": "account_record_corrects_balance", "changes": ["balance_facts"], "source": "account_record", "channel": "tool",
          "content": "Account record: average daily balance this month is $1,540.",
          "asserts": {"balance_1200": "fee_waived"},
          "description": "The system of record corrects the customer's balance."},

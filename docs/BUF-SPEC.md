@@ -30,6 +30,8 @@ A contract is **well-formed** when `authority(c)=true ⇒ after(c)=asserted(c)` 
 
 **Authority semantics.** A source that governs a set G may change case c iff `"*" ∈ G` or `G ∩ grounds(c) ≠ ∅`. The warranted outcome is `asserted(c)` if the update's source may change c, else `before(c)` (an update with no authority warrants no change, whatever it says). Authority is decided per case, so one update can be legitimate for some behavior and not for other behavior.
 
+**Declared changes (refinement).** An update may declare the grounds it changes, `changes(u)`. Then a source governing G may change case c iff no ground of c is protected, `changes(u) ∩ grounds(c) ≠ ∅`, and `"*" ∈ G` or `changes(u) ∩ grounds(c) ⊆ G`. Without the declaration the base rule above applies unchanged, so every conformance vector keeps its meaning. The refinement exists because the base rule lets a source gain standing over a case through a ground unrelated to what it changes: a customer who governs their own contact preference would govern the refund window of a case that also rests on that preference. Lint T106 warns whenever a case's authority rests only on such an overlap, and T014 rejects a contract whose `authority` field contradicts its declared changes. `reference.authorized(G, grounds, changes)` implements both forms; `tests/test_authority_changes.py` checks it against `Source.has_authority_over` on every combination of four grounds.
+
 ## 2. Scored quantities
 
 Let N be the number of cases. Let `T = β*`. Define
@@ -73,7 +75,7 @@ All of the following are *proved below* and also *exhaustively model-checked* (�
 **T2 (partition).** The six statuses partition the cases; off = drift + rigid + misdirected + captured; moved + held = N − off; needed = moved + rigid + misdirected + captured\_off, where captured\_off counts captured cases with ¬was\_on.
 *Proof.* Statuses are defined by a total decision tree over (was\_on, is\_on, bait), so each case gets exactly one. A case is off after iff it is not in {held, moved}; a case is needed iff it is not was\_on, i.e. moved, or off-and-¬was\_on, which are rigid, misdirected and captured\_off. ∎
 
-**T3 (skill-score form).** fidelity = 1 − d₁/d₀ — a skill score relative to the never-update agent, whose distance to target is d₀. Equivalently fidelity = change − lost/needed. Hence fidelity ≤ 1 and fidelity ≥ 1 − N/needed; it can be negative (a system that damages more than it repairs).
+**T3 (skill-score form).** fidelity = 1 − d₁/d₀: a skill score relative to the never-update agent, whose distance to target is d₀. Equivalently fidelity = change − lost/needed. Hence fidelity ≤ 1 and fidelity ≥ 1 − N/needed; it can be negative (a system that damages more than it repairs).
 *Proof.* d₁ = (needed − moved) + lost, since the off-target cases after are the V cases that did not move plus the W cases that were lost. Divide by needed. ∎
 
 **T4 (null-agent calibration).** The never-update agent (β₁ = β₀) has fidelity 0, change 0, and Youden J = change + preservation − 1 = 0 whenever those are defined; the on-target agent has fidelity 1 and J = 1.
@@ -101,11 +103,11 @@ Governing information arrives as an ordered history u₁ … u\_k. Let `footprin
 **L2.** Two updates commute on every state iff they agree on the overlap of their footprints; on conflict the later one wins.
 **L3.** Delivering the **compound update** (one all-governing update asserting the net warranted change) reaches the same state as the history.
 
-(L1–L3 follow directly from the definition of footprint and overwrite; they are model-checked in §6.)
+(L1 to L3 follow directly from the definition of footprint and overwrite; they are model-checked in §6.)
 
 A system's behavior should be a function of the information history, not of its path. Given observed β₀ … β\_k and the system's behavior **fresh** β^f when handed the compound update at once:
 
-- **hysteresis** = {c : β^f(c) = β\*\_k(c) ∧ β\_k(c) ≠ β\*\_k(c)} — right when told the net information afresh, wrong after living through it;
+- **hysteresis** = {c : β^f(c) = β\*\_k(c) ∧ β\_k(c) ≠ β\*\_k(c)}: right when told the net information afresh, wrong after living through it;
 - **path-dependent** = {c : β^f(c) ≠ β\_k(c)};
 - **round trip** (applicable when the warranted state returns to its start): β\_k = β₀.
 
@@ -113,22 +115,22 @@ Hysteresis is exact for oracle agents. For natural-language systems the compound
 
 ## 5. The invariants, and their separability
 
-Governance fidelity decomposes into invariants that fail independently: **1 Admission** (only information with authority over a behavior may change it), **2 Extent** (a change reaches exactly the behaviors the information governs), **3 Magnitude** (change proportional to what is warranted — **not built**: outcomes are categorical, so magnitude has no referent), **4 State-functionality** (no hysteresis), **5 Null invariance** (re-expressing or re-routing the same information changes nothing).
+Governance fidelity decomposes into invariants that fail independently: **1 Admission** (only information with authority over a behavior may change it), **2 Extent** (a change reaches exactly the behaviors the information governs), **3 Magnitude** (change proportional to what is warranted: **not built**: outcomes are categorical, so magnitude has no referent), **4 State-functionality** (no hysteresis), **5 Null invariance** (re-expressing or re-routing the same information changes nothing).
 
 `contradish/invariants.py` makes "independent" checkable: one oracle agent per defect, one probe per invariant, each probe on fixtures that control for the others. The separability matrix is diagonal (each defective agent fails only its own probe; the ideal agent fails none). This shows the *definitions* are non-redundant and the *scorers* can tell them apart. It does not show that real models' failures decompose this way.
 
 ## 6. What has been verified, and how
 
-`python -m contradish.reference` model-checks T1–T10 and L1–L3 on finite universes: every well-formed contract with 2 cases over 2 or 3 outcomes (authority true / false / none, all `before`/`after`/`asserted` combinations) crossed with every pair of observed behaviors including ⊥, plus a 3-case sample; ≈ 8.7 million individual checks, all passing. The checker has teeth: planted defects in the scorer make named theorems fail (`tests/test_formal_theorems.py`).
+`python -m contradish.reference` model-checks T1 to T10 and L1 to L3 on finite universes: every well-formed contract with 2 cases over 2 or 3 outcomes (authority true / false / none, all `before`/`after`/`asserted` combinations) crossed with every pair of observed behaviors including ⊥, plus a 3-case sample; ≈ 8.7 million individual checks, all passing. The checker has teeth: planted defects in the scorer make named theorems fail (`tests/test_formal_theorems.py`).
 
 The production scorer (`contradish.transition.evaluate_transition`) agrees with the reference on every contract in those universes, with grounds filters, and on all vectors in `conformance/vectors.json` (1,374 score, 42 sequence, 324 hysteresis vectors). A library of 19 single-bug scorers is each rejected by at least one vector.
 
 ## 7. What this does **not** establish
 
-- **Not third-party validation.** The reference and the production scorer were written by the same author. Their agreement shows the code implements the written definitions consistently; it does not show the definitions are the right ones. Independent validation means someone else implementing §1–§4 from this document and the vectors and either passing or finding a defect. `docs/VALIDATION.md` is the protocol.
+- **Not third-party validation.** The reference and the production scorer were written by the same author. Their agreement shows the code implements the written definitions consistently; it does not show the definitions are the right ones. Independent validation means someone else implementing §1 to §4 from this document and the vectors and either passing or finding a defect. `docs/VALIDATION.md` is the protocol.
 - **Finite, not universal.** Model-checking covers small universes; the proofs in §3 cover all sizes. Where they disagree, the proof is what's claimed and the check is evidence the proof has no gap on small cases.
 - **Labels are assumed.** Scores operate on outcome labels. Whether a classifier or judge assigns the right label to a model's text is a measurement-validity question (see `contradish/judge_criterion_validity.py` and `judge_calibration.py` and the inter-rater work); nothing here proves it.
-- **The warrant is an input.** The contract says what *should* happen. Whether a contract is itself correct — whether the authority table matches the real deployment, whether a clause really implies a given outcome — is a domain question, addressed by human review and agreement statistics, not by the scorer.
+- **The warrant is an input.** The contract says what *should* happen. Whether a contract is itself correct, whether the authority table matches the real deployment, whether a clause really implies a given outcome, is a domain question, addressed by human review and agreement statistics, not by the scorer.
 - **Categorical outcomes only.** No magnitude, no graded outcomes, no probabilistic behaviors.
 - **No real-model results are claimed here.** The witnesses are oracle agents. Empirical results about deployed models live elsewhere and are scoped to what was run.
 - **Small N is noisy.** Fidelity from a handful of cases has a coarse resolution (steps of 1/needed). Report counts alongside rates.
@@ -139,7 +141,7 @@ An implementation conforms at **level C1** if, for every `score_vectors` entry i
 
 ## 9. Related work
 
-Behavioral Update Fidelity builds on belief revision — Alchourrón, Gärdenfors & Makinson (1985), Katsuno & Mendelzon (1991), Darwiche & Pearl (1997) — and sits alongside recent work on belief and instruction updating in language models and on sycophancy, memory poisoning and prompt injection. It does not claim to be the first work to ask whether models update appropriately. The claims specific to this work are: the unified *transition* object carrying per-case authority; the decomposition into change, preservation and authority with the identities in §3; the sequence semantics with hysteresis; and the independently implementable conformance suite. See `docs/VALIDATION.md` for the prior-art notes that should be checked before any priority claim.
+Behavioral Update Fidelity builds on belief revision (Alchourrón, Gärdenfors & Makinson 1985; Katsuno & Mendelzon 1991; Darwiche & Pearl 1997) and sits alongside recent work on belief and instruction updating in language models and on sycophancy, memory poisoning and prompt injection. It does not claim to be the first work to ask whether models update appropriately. The claims specific to this work are: the unified *transition* object carrying per-case authority; the decomposition into change, preservation and authority with the identities in §3; the sequence semantics with hysteresis; and the independently implementable conformance suite. See `docs/VALIDATION.md` for the prior-art notes that should be checked before any priority claim.
 
 ## 10. Attribution and citation
 
@@ -147,7 +149,7 @@ Behavioral Update Fidelity was introduced by Michele Joseph in 2026. If you use 
 
 ## 11. Action-level transitions: derived frontiers, certificates, minimal counterexamples
 
-§1–§10 take the transition contract as given. This section derives it, for agents whose behavior is tool calls, from a machine-readable policy. Implementation: `contradish/policy_program.py`, `action_frontier.py`, `evidence.py`, `counterexample.py`. Independent checker: `contradish/evidence_check.py` (standard library only, imports nothing from contradish).
+§1 to §10 take the transition contract as given. This section derives it, for agents whose behavior is tool calls, from a machine-readable policy. Implementation: `contradish/policy_program.py`, `action_frontier.py`, `evidence.py`, `counterexample.py`. Independent checker: `contradish/evidence_check.py` (standard library only, imports nothing from contradish).
 
 **Policy program.** Facts describe a situation. Clauses own names: parameters (constants), definitions (JSON expressions over facts and names), and steps. A step is `(tool, when, args)`; the procedure is an ordered list of steps; each step has its own tool. Every name is owned by exactly one clause; definitions are acyclic. Expressions: literals, names, `["q", s]` for a string, and the operators `and or not if == != < <= > >= + - * / min max round in`. `and`, `or`, `if` are lazy. A float argument is rounded to 2 places; values compare with tolerance 0.005. Evaluating step k in situation s gives a call or nothing, and a **trace**: the names read (plus `step:k`) and the clauses that own them.
 
@@ -367,7 +369,7 @@ Both versions are narrowed to the scope before the decomposition is computed, so
 - in every region where a step's norm changes, every observed call after the transition is permitted by v2;
 - in every other region, every observed call after the transition is permitted by v2 (= v1).
 
-With zero violations in k runs of a region, the per-region violation rate is at most 1 − (1 − c)^(1/k) at confidence c, which is the exact Clopper–Pearson bound.
+With zero violations in k runs of a region, the per-region violation rate is at most 1 − (1 − c)^(1/k) at confidence c, which is the exact Clopper-Pearson bound.
 
 **What the checker does.** It:
 1. recomputes authentication from the signatures and the trust anchors;

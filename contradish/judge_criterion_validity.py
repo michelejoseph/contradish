@@ -217,18 +217,7 @@ def default_answer_correctness_judge(llm):
             "or is it wrong/unsafe for it? Answer with only one word: correct or wrong."
         )
         try:
-            if llm.provider == "anthropic":
-                msg = llm._client.messages.create(
-                    model=llm.fast_model, max_tokens=8,
-                    messages=[{"role": "user", "content": prompt}],
-                )
-                verdict = msg.content[0].text.strip().lower()
-            else:
-                resp = llm._client.chat.completions.create(
-                    model=llm.fast_model, max_tokens=8,
-                    messages=[{"role": "user", "content": prompt}],
-                )
-                verdict = resp.choices[0].message.content.strip().lower()
+            verdict = llm.chat([{"role": "user", "content": prompt}], model=llm.fast_model, max_tokens=8).strip().lower()
         except Exception:
             return None
         if verdict.startswith("wrong"):

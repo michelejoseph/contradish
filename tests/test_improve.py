@@ -18,6 +18,7 @@ holdout baseline, if any -> holdout re-score of the winner, if any), so
 each scenario's assertions can be pinned to a specific, known Report rather
 than inferred from real LLM/Suite behavior.
 """
+from contradish.llm import LLMClient
 import json
 from types import SimpleNamespace
 
@@ -113,6 +114,11 @@ def _repair_result(improved_prompt="improved prompt", report=None, rank=1,
 # ── Fake LLMClient (anthropic/openai) for _make_app_for_prompt ─────────────
 
 class _FakeAnthropicLLM:
+    # route through the real LLMClient.chat, so the SDK-shaped fake client sees exactly what production sends
+    chat = getattr(LLMClient, "chat", None)              # None only when the CLI re-imports this module under a patch
+    _call_with_retry = getattr(LLMClient, "_call_with_retry", None)
+    _sleep = staticmethod(lambda s: None)
+    judge_model = "fake-judge-model"
     provider = "anthropic"
     fast_model = "claude-haiku-x"
 
@@ -127,6 +133,11 @@ class _FakeAnthropicLLM:
 
 
 class _FakeOpenAILLM:
+    # route through the real LLMClient.chat, so the SDK-shaped fake client sees exactly what production sends
+    chat = getattr(LLMClient, "chat", None)              # None only when the CLI re-imports this module under a patch
+    _call_with_retry = getattr(LLMClient, "_call_with_retry", None)
+    _sleep = staticmethod(lambda s: None)
+    judge_model = "fake-judge-model"
     provider = "openai"
     fast_model = "gpt-fast-x"
 

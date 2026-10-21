@@ -235,12 +235,33 @@ class Source:
     role: str = ""
     governs: list = field(default_factory=list)
 
-    def has_authority_over(self, grounds: list) -> bool:
+    def has_authority_over(self, grounds: list, changes: Optional[list] = None) -> bool:
+        """
+        May this source change a case resting on `grounds`?
+
+        changes None   (the spec's base rule) it governs "*" or at least one of the grounds.
+        changes given  the update declares which grounds it changes: the source must govern every
+                       declared ground the case rests on, and the case must rest on one. A customer who
+                       governs their own contact preference does not thereby govern the refund window of
+                       a case that also rests on that preference.
+        No source governs a protected ground, in either form.
+        """
         if any(is_protected(g) for g in grounds):
             return False
+        if changes is not None:
+            hit = set(changes) & set(grounds)
+            return bool(hit) and ("*" in self.governs or hit <= set(self.governs))
         if "*" in self.governs:
             return True
         return bool(set(self.governs) & set(grounds))
+
+    def overlap_only(self, grounds: list) -> bool:
+        """It has authority under the base rule only because it shares SOME ground: it governs neither "*" nor
+        every ground of the case. Undeclared `changes` then let an unrelated ground confer standing."""
+        if "*" in self.governs or any(is_protected(g) for g in grounds):
+            return False
+        shared = set(self.governs) & set(grounds)
+        return bool(shared) and not set(grounds) <= set(self.governs)
 
     def to_dict(self) -> dict:
         return {"id": self.id, "role": self.role, "governs": list(self.governs)}
@@ -265,6 +286,8 @@ class Update:
     asserts  {case_id: outcome} -- the outcome the update calls for on each
              case it bears on. Whether that is WARRANTED is a separate
              question, settled by authority and by temporal scope.
+    changes  the grounds the update changes (clause ids, fact names), or None. When declared,
+             authority is decided against exactly these: see Source.has_authority_over.
     issuer   id of the Source the content attributes the change to, when
              that differs from who delivers it ("the store announced X",
              delivered by a customer). None: the deliverer is the issuer.
@@ -287,10 +310,13 @@ class Update:
     effective: Optional[str] = None
     applies_to: str = "event"
     issuer: Optional[str] = None
+    changes: Optional[list] = None
 
     def to_dict(self) -> dict:
         d = {"id": self.id, "source": self.source, "channel": self.channel,
              "content": self.content, "asserts": dict(self.asserts)}
+        if self.changes is not None:
+            d["changes"] = list(self.changes)
         if self.issuer is not None:
             d["issuer"] = self.issuer
         if self.effective is not None:
@@ -549,6 +575,17 @@ class TransitionContract:
                                                 "so it cannot warrant a change (after must equal before)"))
             if c.asserted is not None and c.asserted not in self.outcomes:
                 issues.append(("error", "T003", f"case {c.id!r} asserted outcome {c.asserted!r} is not declared"))
+            u = self.update
+            if (u is not None and u.changes is None and c.asserted is not None and c.authority
+                    and u.source in self.sources and self.sources[u.source].overlap_only(c.grounds)):
+                issues.append(("warning", "T106", f"case {c.id!r}: source {u.source!r} has authority only because it "
+                               f"shares a ground with the case (it governs {sorted(set(self.sources[u.source].governs) & set(c.grounds))}, "
+                               f"not {sorted(set(c.grounds) - set(self.sources[u.source].governs))}). Declare the "
+                               "update's `changes` so authority is decided on the ground it actually changes."))
+            if u is not None and u.changes is not None and u.source in self.sources and c.asserted is not None:
+                if c.authority is not None and c.authority != self.sources[u.source].has_authority_over(c.grounds, u.changes):
+                    issues.append(("error", "T014", f"case {c.id!r}: authority={c.authority} contradicts the update's "
+                                   f"declared changes {u.changes}"))
             if c.authority is True and c.in_force is not False and c.asserted is not None and c.after != c.asserted:
                 issues.append(("error", "T006", f"case {c.id!r}: the update has authority and asserts "
                                                 f"{c.asserted!r}, but after is {c.after!r}"))
@@ -673,7 +710,8 @@ class TransitionContract:
                         asserts={str(k): str(v) for k, v in (u.get("asserts") or {}).items()},
                         effective=str(u["effective"]) if u.get("effective") is not None else None,
                         applies_to=str(u.get("applies_to", "event")),
-                        issuer=str(u["issuer"]) if u.get("issuer") is not None else None) if u else None
+                        issuer=str(u["issuer"]) if u.get("issuer") is not None else None,
+                        changes=[str(g) for g in u["changes"]] if u.get("changes") is not None else None) if u else None
         return cls(
             id=str(d["id"]), domain=str(d.get("domain", "")), description=str(d.get("description", "")),
             preamble=str(d.get("preamble", "")), meaning_preserving=bool(d.get("meaning_preserving", False)),
@@ -768,12 +806,12 @@ def derive_transition(id: str, before: GoverningState, cases: list, update: Upda
             out.append(TransitionCase(c.id, c.question, c.before, c.before, list(c.variants),
                                       c.outcomes, list(c.grounds), event_date=c.event_date))
             continue
-        auth = src.has_authority_over(c.grounds)
+        auth = src.has_authority_over(c.grounds, update.changes)
         in_force = governs_event(update, c.event_date)
         warranted = auth and in_force is not False
         after = asserted if warranted else c.before
         relayed = None
-        if not auth and issuer is not None and issuer.has_authority_over(c.grounds):
+        if not auth and issuer is not None and issuer.has_authority_over(c.grounds, update.changes):
             relayed = True
             allowed = VERIFY in outcomes and (c.outcomes is None or VERIFY in c.outcomes)
             if in_force is not False and asserted != c.before and allowed:

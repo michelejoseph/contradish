@@ -46,6 +46,11 @@ def _one_candidate_proposer(pair: DistinctionPair, n: int) -> list[dict]:
 
 # -- structural sanity -------------------------------------------------------
 
+
+def _stub_correctness_judge(pair, side, question, answer):
+    """Stands in for the default correctness judge, which `contradish distinguish` wires in by default."""
+    return True
+
 def test_resolution_result_and_candidate_are_dataclasses():
     candidate = ResolutionCandidate(
         condition="c", rationale="r", pole_a_statement="a", pole_b_statement="b",
@@ -298,7 +303,7 @@ def test_cmd_distinguish_resolve_runs_end_to_end(capsys):
 
     with patch("contradish.llm.LLMClient", _FakeLLMWithCandidates), \
          patch.object(cli, "_check_api_key", lambda: None), \
-         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor):
+         patch.object(cli, "_default_commitment_extractor", lambda llm: _identity_extractor), patch.object(cli, "_default_commitment_judge", lambda llm: _stub_correctness_judge):
         with pytest.raises(SystemExit) as exc:
             cli.cmd_distinguish(_ResolveArgs())
         assert exc.value.code == 0
