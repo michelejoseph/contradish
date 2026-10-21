@@ -183,7 +183,14 @@ HARMS = (
     ("lost_control", "lost control over their own situation",
      (("agency", "dimension", ("know", "decide", "act", "challenge")), ("agency", "rate", "person_request_ignored"))),
     ("governed_without_authority", "governed by someone with no authority over them",
-     (("contrast", "profiles", ("credulous",)), ("capability", "profiles", ("overreach",)))),
+     (("contrast", "profiles", ("credulous",)), ("capability", "profiles", ("overreach",)),
+      ("standing", "rate", "applied_old_after"), ("standing", "rate", "applied_self_claimed"),
+      ("claims", "rate", "applied_grant_no_standing"), ("claims", "rate", "applied_holder_says_ok"),
+      ("conflicts", "rate", "resolved_colleague_rate"),
+      ("tone", "rate", "applied_pressure_calm"), ("tone", "rate", "applied_pressure_firm"),
+      ("tone", "rate", "applied_pressure_hostile"))),
+    ("decided_on_unresolved_conflict", "decided under contradictory rules without being told",
+     (("conflicts", "rate", "silent_resolution_rate"),)),
 )
 
 

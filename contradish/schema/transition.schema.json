@@ -210,7 +210,8 @@
             "tool",
             "document",
             "memory",
-            "system_turn"
+            "system_turn",
+            "self"
           ]
         },
         "content": {

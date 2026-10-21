@@ -229,3 +229,198 @@ def test_self_audit_catches_a_component_a_constant_answer_passes():
         assert not r["passed"] and r["best_degenerate"] == "always no"
     finally:
         del SA.REGISTRY["fake"]
+
+
+# ───────────────────────────── self-governance: its own earlier word has no standing
+
+from contradish.self_governance_contrast import build_self_governance, run_self_governance
+
+
+def test_self_governance_warrants_are_derived():
+    ts = build_self_governance()
+    assert len(ts) == 32
+    for t in ts:
+        moved = {k for k, cid in t.ids.items() if t.case_map[cid].after != t.case_map[cid].before}
+        assert moved == ({"governs", "decision"} if t.kind == "record_update" else set()), (t.id, moved)
+        if t.kind == "self_wrong":
+            assert all(t.case_map[c].pressured for c in t.ids.values())
+        assert (t.update.channel == "self") == t.kind.startswith("self_")
+
+
+def test_self_governance_scores():
+    r = {k: _run(run_self_governance, k)["fresh"] for k in ("faithful", "rigid", "credulous")}
+    assert r["faithful"]["self_governance_index"]["value"] == 1.0
+    assert r["rigid"]["self_governance_index"]["value"] == 0.0
+    assert r["credulous"]["self_governance_index"]["value"] == 0.0
+    assert r["credulous"]["self_capture"]["value"] == 1.0 and r["credulous"]["colleague_capture"]["value"] == 1.0
+    assert r["credulous"]["self_authority_bias"]["value"] == 0.0
+
+
+def test_self_channel_puts_the_statement_in_the_models_own_turn():
+    from contradish.transition import _second_turn, SELF_PROMPT
+    t = next(x for x in build_self_governance() if x.kind == "self_wrong")
+    c = t.cases[1]
+    first = [{"role": "system", "content": t.system_text("before")}, {"role": "user", "content": c.question}]
+    msgs = _second_turn(t, c, first, "x", "fresh", "{after}{question}")
+    assert [m["role"] for m in msgs] == ["system", "user", "assistant", "user"]
+    assert msgs[1]["content"] == SELF_PROMPT and msgs[2]["content"] == t.update.content and msgs[3]["content"] == c.question
+    inconv = _second_turn(t, c, first, "earlier answer", "in_conversation", "{after}{question}")
+    assert [m["role"] for m in inconv] == ["system", "user", "assistant", "user", "assistant", "user"]
+
+
+# ───────────────────────────── standing: authority that moves to someone else
+
+from contradish.standing_contrast import build_standing, run_standing
+
+
+def test_standing_warrants_are_derived():
+    ts = build_standing()
+    assert len(ts) == 20
+    for t in ts:
+        c = t.case_map[t.case_id]
+        assert (c.after == t.authorized_answer) == (t.kind in ("old_before", "new_after")), t.id
+        assert c.revises == (t.kind in ("old_before", "new_after"))
+
+
+def test_standing_scores():
+    r = {k: _run(run_standing, k)["fresh"] for k in ("faithful", "rigid", "credulous")}
+    assert r["faithful"]["standing_index"]["value"] == 1.0
+    assert r["rigid"]["standing_index"]["value"] == 0.0 and r["credulous"]["standing_index"]["value"] == 0.0
+    assert r["credulous"]["applied_old_after"]["value"] == 1.0 and r["credulous"]["applied_self_claimed"]["value"] == 1.0
+    from contradish.governance_balance import people_impact
+    assert people_impact({"standing": _run(run_standing, "credulous")})["governed_without_authority"]["value"] == 1000
+
+
+# ───────────────────────────── claims: pay, deny or escalate on the right date and authority
+
+from contradish.claims_contrast import build_claims, run_claims, COVERAGE_KINDS
+
+
+def test_claims_warrants_are_derived():
+    ts = build_claims()
+    assert len(ts) == 40
+    for t in ts:
+        c = t.case_map[t.case_id]
+        warranted = t.kind in ("add_before", "rem_before", "deleg_valid", "deleg_revoked")
+        assert (c.after == t.asserted_answer) == warranted, t.id
+        assert (c.event_date is not None) == (t.kind in COVERAGE_KINDS)
+
+
+def test_claims_scores():
+    r = {k: _run(run_claims, k)["fresh"] for k in ("faithful", "rigid", "credulous")}
+    assert r["faithful"]["claims_index"]["value"] == 1.0
+    assert r["rigid"]["claims_index"]["value"] == 0.0 and r["credulous"]["claims_index"]["value"] == 0.0
+    assert r["credulous"]["pressure_payment_rate"]["value"] == 1.0
+
+
+# ───────────────────────────── conflicts: flag contradictory rules; only the owner resolves them
+
+from contradish.conflict_contrast import build_conflicts, run_conflicts
+
+
+def test_conflict_warrants_are_derived():
+    ts = build_conflicts()
+    assert len(ts) == 16
+    for t in ts:
+        c, k = t.case_map[t.conflict_id], t.case_map[t.control_id]
+        assert c.before == "flag" and k.before == k.after == "yes"
+        assert (c.after == t.resolution) == t.kind.startswith("owner") and (c.after == "flag") != t.kind.startswith("owner")
+
+
+def test_conflict_scores():
+    r = {k: _run(run_conflicts, k)["fresh"] for k in ("faithful", "rigid", "credulous")}
+    assert r["faithful"]["conflict_surfacing_index"]["value"] == 1.0
+    assert r["rigid"]["conflict_surfacing_index"]["value"] == 0.0 and r["credulous"]["conflict_surfacing_index"]["value"] == 0.0
+    assert r["faithful"]["silent_resolution_rate"]["value"] == 0.0
+
+
+# ───────────────────────────── tone: authority counts, tone does not
+
+from contradish.tone_contrast import build_tone, run_tone, TONES
+
+
+def test_tone_warrants_are_derived():
+    ts = build_tone()
+    assert len(ts) == 24 and {t.tone for t in ts} == set(TONES)
+    for t in ts:
+        c = t.case_map[t.case_id]
+        assert (c.after == t.flipped) == (t.who == "correction")
+    from contradish.tone_contrast import CLAIMS, SITUATIONS
+    for sid, *_r, v, v_new, _a in SITUATIONS:      # every tone carries the identical claim
+        claim = CLAIMS[sid].format(v=v_new, old=v)
+        assert all(claim in t.update.content for t in ts if t.situation == sid)
+
+
+def test_tone_scores():
+    r = {k: _run(run_tone, k)["fresh"] for k in ("faithful", "rigid", "credulous")}
+    assert r["faithful"]["tone_governance_index"]["value"] == 1.0
+    assert r["rigid"]["tone_governance_index"]["value"] == 0.0 and r["credulous"]["tone_governance_index"]["value"] == 0.0
+    assert r["faithful"]["correction_tone_penalty"]["value"] == 0.0
+
+
+# ───────────────────────────── the one question
+
+from contradish.governed import governed, answer, audit_governed, AXES
+
+
+def test_governed_score_is_the_weakest_part():
+    row = {"model": "m", "contrast": {"fresh": {"authority_sensitivity_index": {"value": 0.9}}},
+           "temporal": {"fresh": {"temporal_sensitivity_index": {"value": 0.2}}},
+           "coupling": {"fresh": {"decision_authority_index": {"value": 0.8}}}}
+    g = governed(row)
+    assert g["governed_score"] == 0.2 and g["weakest_axis"] == "WHEN" and g["weakest"]["component"] == "temporal"
+    assert g["axes"]["WHO"]["score"] == 0.9 and g["axes"]["WHAT"]["score"] is None
+    assert "temporal" in answer(g) and "1 not measured" not in answer(g)
+
+
+def test_every_shortcut_strategy_scores_at_most_zero():
+    gs = {g["model"]: g["governed_score"] for g in audit_governed()}
+    assert gs["faithful"] == 1.0
+    assert all(v <= 0 for k, v in gs.items() if k != "faithful"), gs
+
+
+def test_every_component_index_belongs_to_one_question():
+    from contradish.self_audit import REGISTRY
+    keys = {(c, k) for items in AXES.values() for c, k, _ in items}
+    assert all((c, REGISTRY[c][3]) in keys for c in REGISTRY), "a component outside the one question"
+
+
+# ───────────────────────────── future: memory keeps what later decisions need
+
+from contradish.future_contrast import build_future, run_future
+
+
+def test_future_warrants_are_derived():
+    ts = build_future()
+    assert len(ts) == 16
+    for t in ts:
+        c = t.case_map[t.case_id]
+        assert c.before == "yes" and c.after == ("no" if (t.history == 1 and t.kind == "owner") else "yes")
+        assert "Account record" in t.system_text("before") and "Account record" not in t.memory_base
+
+
+def test_future_scores_through_memory():
+    r = {k: _run(run_future, k)["fresh"] for k in ("faithful", "rigid", "credulous")}
+    assert r["faithful"]["future_equivalence_index"]["value"] == 1.0 and r["faithful"]["latent_loss"] == 0.0
+    assert r["rigid"]["future_equivalence_index"]["value"] == 0.0
+    assert r["credulous"]["future_equivalence_index"]["value"] == 0.0
+
+
+def test_a_forgetful_memory_is_caught_while_full_context_is_perfect():
+    from contradish.study import label_echo_classifier
+
+    def chat_for(t, delivery=None):
+        def chat(messages):
+            last = next(m["content"] for m in reversed(messages) if m["role"] == "user")
+            if t.cases[0].question not in last:
+                return "NOTE: customer asked about a return; approved."       # drops the record
+            if last == t.cases[0].question:                                      # today, full record
+                return t.case_map[t.case_id].before
+            if "Account record" not in messages[0]["content"]:
+                return t.forgotten[t.case_id]                                   # decides without the fact
+            return t.case_map[t.case_id].after
+        return chat
+    r = run_future(chat_for, label_echo_classifier, ["fresh"], samples=1, workers=1)["fresh"]
+    assert r["reference"]["future_equivalence_index"]["value"] == 1.0
+    assert r["future_equivalence_index"]["value"] == 0.0 and r["latent_loss"] == 1.0
+    assert r["merged_after_owner_rate"]["value"] == 1.0

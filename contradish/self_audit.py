@@ -64,6 +64,13 @@ REGISTRY = {
     "distinctions": ("contradish.distinctions_contrast", "build_distinctions", "score_distinctions",
                      "action_separation_index"),
     "coupling": ("contradish.coupling_contrast", "build_coupling", "score_coupling", "decision_authority_index"),
+    "self_governance": ("contradish.self_governance_contrast", "build_self_governance", "score_self_governance",
+                        "self_governance_index"),
+    "standing": ("contradish.standing_contrast", "build_standing", "score_standing", "standing_index"),
+    "claims": ("contradish.claims_contrast", "build_claims", "score_claims", "claims_index"),
+    "conflicts": ("contradish.conflict_contrast", "build_conflicts", "score_conflicts", "conflict_surfacing_index"),
+    "tone": ("contradish.tone_contrast", "build_tone", "score_tone", "tone_governance_index"),
+    "future": ("contradish.future_contrast", "build_future", "score_future", "future_equivalence_index"),
 }
 WEAK = 0.25
 

@@ -252,6 +252,13 @@ from .agency import (AgencyCase, ActionOption as AgencyOption, Effect as AgencyE
 from .agency_contrast import build_agency, score_agency, run_agency
 from .distinctions_contrast import build_distinctions, score_distinctions, run_distinctions
 from .coupling_contrast import build_coupling, score_coupling, run_coupling
+from .self_governance_contrast import build_self_governance, score_self_governance, run_self_governance
+from .standing_contrast import build_standing, score_standing, run_standing
+from .claims_contrast import build_claims, score_claims, run_claims
+from .conflict_contrast import build_conflicts, score_conflicts, run_conflicts
+from .tone_contrast import build_tone, score_tone, run_tone
+from .future_contrast import build_future, score_future, run_future
+from .governed import governed, answer as governed_answer, QUESTION as GOVERNED_QUESTION
 from .release_gate import release_gate, to_markdown as release_markdown, to_junit as release_junit, export_examples
 from .contract import (
     PolicyContract, Clause, DecisionCase, Contrast, Amendment, Thresholds, LintIssue,
@@ -572,6 +579,27 @@ __all__ = [
     "build_coupling",
     "score_coupling",
     "run_coupling",
+    "build_self_governance",
+    "score_self_governance",
+    "run_self_governance",
+    "build_standing",
+    "score_standing",
+    "run_standing",
+    "build_claims",
+    "score_claims",
+    "run_claims",
+    "build_conflicts",
+    "score_conflicts",
+    "run_conflicts",
+    "build_tone",
+    "score_tone",
+    "run_tone",
+    "build_future",
+    "score_future",
+    "run_future",
+    "governed",
+    "governed_answer",
+    "GOVERNED_QUESTION",
     "release_gate",
     "release_markdown",
     "release_junit",

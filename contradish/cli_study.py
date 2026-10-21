@@ -6,12 +6,32 @@ import json
 import os
 import sys
 
-COMMANDS = ("study",)
+COMMANDS = ("study", "governed")
 
 DEFAULT_JUDGES = (("openai", "gpt-4.1-mini"), ("anthropic", "claude-haiku-4-5"))
 
 
 def register(sub) -> None:
+    gv = sub.add_parser(
+        "governed",
+        help="The one question: does the system change exactly when someone with authority changed it, and only then?",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=(
+            "Answer contradish's one question for every model in a study:\n\n"
+            "  When something changes, does the system change exactly when someone with the authority\n"
+            "  to change it did, and only then?\n\n"
+            "Governed Score = the lowest score of any part. The profile groups the parts into WHO (only someone\n"
+            "with standing), WHEN (only from when it takes effect), WHAT (exactly what it covers, nothing else)\n"
+            "and ACT (what it does follows what it says governs).\n\n"
+            "  contradish governed STUDY_DIR        a study written by `contradish study run|local`\n"
+            "  contradish governed --demo           scripted agents of known behavior\n"
+            "  contradish governed --audit          the instrument check: no shortcut strategy can score above 0"),
+    )
+    gv.add_argument("study_dir", nargs="?", default=None)
+    gv.add_argument("--demo", action="store_true")
+    gv.add_argument("--audit", action="store_true")
+    gv.add_argument("--json", action="store_true")
+    gv.add_argument("--delivery", default="fresh")
     st = sub.add_parser(
         "study",
         help="Run the authority suites and the policy contract against real models; write a report.",
@@ -34,6 +54,12 @@ def register(sub) -> None:
             "  contradish study agency                    list the agency contrasts (who can know, decide, act, challenge, correct)\n"
             "  contradish study distinctions              list the distinction contrasts (felt, suspected, established, warranted)\n"
             "  contradish study coupling                  list the governance coupling contrasts (decide by what you say governs)\n"
+            "  contradish study self_governance           list the self-governance contrasts (its own earlier word has no standing)\n"
+            "  contradish study standing                  list the standing contrasts (authority that moves to someone else)\n"
+            "  contradish study claims                    list the claims contrasts (pay, deny or escalate on the right date and authority)\n"
+            "  contradish study conflicts                 list the conflict contrasts (flag contradictory rules; only the owner resolves)\n"
+            "  contradish study tone                      list the tone contrasts (authority counts, tone does not)\n"
+            "  contradish study future                    list the future contrasts (memory keeps what later decisions need)\n"
             "  contradish study provider                  show the encoded provider precedence rules\n"
             "  contradish study run --models anthropic:claude-haiku-4-5,openai:gpt-4.1-mini \\\n"
             "        --judge openai:gpt-4.1-mini --out studies/run1\n"
@@ -47,7 +73,7 @@ def register(sub) -> None:
     )
     st.add_argument("study_action", choices=["local", "run", "demo", "report", "plan", "contrasts", "temporal", "relay", "relational",
                                                     "protected", "experience", "capability", "observer",
-                                                    "recoverability", "obligations", "agency", "distinctions", "coupling", "provider"])
+                                                    "recoverability", "obligations", "agency", "distinctions", "coupling", "self_governance", "standing", "claims", "conflicts", "tone", "future", "provider"])
     st.add_argument("out_dir", nargs="?", default=None, help="report: the study directory.")
     st.add_argument("--models", default=None, help="Comma-separated PROVIDER:MODEL list.")
     st.add_argument("--judge", default=None,
@@ -57,7 +83,7 @@ def register(sub) -> None:
     st.add_argument("--judge2", default=None, help="Optional second judge; reports judge agreement.")
     st.add_argument("--components", default=None,
                     help="Any of authority, contrast, temporal, relay, relational, protected, experience, capability, "
-                         "observer, recoverability, obligations, agency, distinctions, coupling, provider, contract. Default: all sixteen "
+                         "observer, recoverability, obligations, agency, distinctions, coupling, self_governance, standing, claims, conflicts, tone, future, provider, contract. Default: all twenty-two "
                          "(local: contrast,temporal,relay,capability,recoverability,obligations,agency).")
     st.add_argument("--provider-spec", dest="provider_spec", default=None,
                     help="Score the provider component against this provider's published rules instead of each "
@@ -80,6 +106,11 @@ def register(sub) -> None:
 def dispatch(args) -> bool:
     if args.command not in COMMANDS:
         return False
+    if args.command == "governed":
+        from contradish.governed import main as governed_main
+        argv = ([args.study_dir] if args.study_dir else []) + (["--demo"] if args.demo else []) + \
+            (["--audit"] if args.audit else []) + (["--json"] if args.json else []) + ["--delivery", args.delivery]
+        raise SystemExit(governed_main(argv))
     cmd_study(args)
     return True
 
@@ -197,7 +228,7 @@ def cmd_study(args) -> None:
     defaults = ({"components": "contrast,temporal,relay,capability,recoverability,obligations,agency", "deliveries": "fresh",
                  "samples": 1, "workers": 1} if local else
                 {"components": "authority,contrast,temporal,relay,relational,protected,experience,capability,observer,"
-                               "recoverability,obligations,agency,distinctions,coupling,provider,contract", "deliveries": "fresh,in_conversation",
+                               "recoverability,obligations,agency,distinctions,coupling,self_governance,standing,claims,conflicts,tone,future,provider,contract", "deliveries": "fresh,in_conversation",
                  "samples": 3, "workers": 4})
     for k, v in defaults.items():
         if getattr(args, k) is None:
@@ -247,7 +278,7 @@ def cmd_study(args) -> None:
         return
 
     if args.study_action in ("capability", "observer", "recoverability", "obligations", "agency", "distinctions",
-                             "coupling"):
+                             "coupling", "self_governance", "standing", "claims", "conflicts", "tone", "future"):
         import importlib
         from contradish.study import BEYOND
         print()
