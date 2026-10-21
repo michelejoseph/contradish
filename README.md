@@ -132,6 +132,17 @@ On the built-in returns policy with scripted agents (a first measurement, not a 
 
 A CI template is in `examples/ci/`. Details, numbers and limits: [docs/RELEASE-GATE.md](docs/RELEASE-GATE.md).
 
+## Justified action before execution (`contradish justify`)
+
+**An incomplete representation is not sufficient grounds for an irreversible decision.** Before an agent's tool call runs, contradish checks whether what has been established (evidence from a source with standing over each fact; claims count for nothing) settles what the policy requires. If it does not, an irreversible call is blocked and contradish derives the verification that would make action justified: which facts, from which source, at the granularity the policy needs ("within 30 days?", not "what date?"), in the fewest questions in the worst case. No model or judge is involved in the check or the plan.
+
+```bash
+contradish justify demo
+contradish justify check --state state.json --calls calls.json     # exit 0 allow, 1 block, 2 review
+```
+
+On the built-in returns policy with scripted agents: walking each plan against the true situation restored justified and correct action in all 5,840 states where an over-confident agent was blocked, with 2.0 questions asked on average for 3.4 unknown facts. Of the agents' unjustified commitments, 66 to 83% happened to be right, so outcome scoring would have passed them. Details and limits: [docs/JUSTIFY.md](docs/JUSTIFY.md).
+
 ## What contradish measures, and what it does not
 
 **A system can be consistently wrong.** Consistency is valuable, but it is not truth and it is not intelligence: a system that ignores every amendment answers the same way every time and is wrong every time an answer should change. contradish therefore does not score agreement with the system's own other answers. It scores **warranted update fidelity** against outcomes derived from the governing information: change exactly what a legitimate, in-force update requires, verify what is relayed without authority, and preserve everything else. Its headline indexes are differences between legitimate and illegitimate versions of the same change, so always-hold, always-accept and always-verify all score 0. On the first local runs of CAI-Bench 4.2.0, the most consistent model was the least accurate on the temporal split (`consistency_vs_correctness.py` in the CAI-Bench release).

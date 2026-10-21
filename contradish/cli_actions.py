@@ -199,6 +199,37 @@ def register(sub) -> None:
     ex.add_argument("id", nargs="?", default=None)
     ex.add_argument("--json", action="store_true", default=False)
 
+    js = sub.add_parser(
+        "justify",
+        help="Before an irreversible action: is it justified by what has been established? If not, the fewest "
+             "verifications that would make it so.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=(
+            "Detects, before execution, an agent acting as if it had enough information when it does not, and\n"
+            "derives the verification plan that restores justified action. No model or judge is involved in\n"
+            "the check or the plan.\n\n"
+            "  contradish justify demo\n"
+            "  contradish justify check --state state.json --calls calls.json\n"
+            "  contradish justify plan --state state.json --steps refund,notify\n"
+            "  contradish justify evaluate --agent scripted:assumes_defaults\n"
+            "  contradish justify evaluate --app mymodule:chat --model-name M --limit 100 --out run.json\n\n"
+            "state.json: {\"evidence\": [{\"fact\": \"days_since_delivery\", \"value\": 12, \"source\": \"customer\"}, ...]}\n"
+            "Evidence counts only from a source with standing over the fact (built-in for returns; otherwise\n"
+            "give \"fact_authority\" in the state file). calls.json: a JSON array of tool calls."
+        ),
+    )
+    js.add_argument("justify_cmd", choices=["demo", "check", "plan", "evaluate"])
+    js.add_argument("--program", default="returns", help="Built-in program name or a .json path (default: returns).")
+    js.add_argument("--state", default=None, help="Information state JSON.")
+    js.add_argument("--calls", default=None, help="Proposed tool calls JSON (check).")
+    js.add_argument("--steps", default=None, help="Comma-separated steps to settle (plan; default: every step).")
+    js.add_argument("--agent", default=None, help="scripted:justified|assumes_defaults|trusts_claims|always_verifies")
+    js.add_argument("--app", default=None, metavar="MODULE:FUNCTION", help="A chat function to evaluate.")
+    js.add_argument("--model-name", default=None)
+    js.add_argument("--limit", type=int, default=None, help="Evaluate on an evenly spaced subset of pairs.")
+    js.add_argument("--out", default=None, help="Write the full evaluation (every pair, every gate) to this file.")
+    js.add_argument("--json", action="store_true", default=False)
+
 
 def _program_args(p) -> None:
     p.add_argument("--program", default="returns", help="Built-in program name or a .json path (default: returns).")
@@ -206,7 +237,7 @@ def _program_args(p) -> None:
 
 
 COMMANDS = ("about", "actions", "counterexample", "evidence", "exhibits", "cai-bench", "versions", "perspectives",
-            "legitimacy")
+            "legitimacy", "justify")
 
 
 def dispatch(args) -> bool:
@@ -214,7 +245,8 @@ def dispatch(args) -> bool:
         return False
     {"about": cmd_about, "actions": cmd_actions, "counterexample": cmd_counterexample,
      "evidence": cmd_evidence, "exhibits": cmd_exhibits, "cai-bench": cmd_cai_bench,
-     "versions": cmd_versions, "perspectives": cmd_perspectives, "legitimacy": cmd_legitimacy}[args.command](args)
+     "versions": cmd_versions, "perspectives": cmd_perspectives, "legitimacy": cmd_legitimacy,
+     "justify": cmd_justify}[args.command](args)
     return True
 
 
@@ -866,3 +898,99 @@ def cmd_legitimacy(args) -> None:
         _print_legitimacy(c)
         if args.out:
             print(f"  certificate: {args.out}   (independent check: contradish evidence check {args.out})")
+
+
+def cmd_justify(args) -> None:
+    from contradish import justification as J
+    from contradish.policy_program import Call, PolicyProgram, load_builtin_program
+    if args.program.endswith(".json") or os.path.sep in args.program:
+        with open(args.program) as f:
+            spec = json.load(f)
+        spec.pop("updates", None)
+        program = PolicyProgram(spec)
+        default_auth, irreversible = {}, set(spec.get("irreversible_tools", []))
+    else:
+        program = load_builtin_program(args.program)[0]
+        default_auth, irreversible = J.RETURNS_FACT_AUTHORITY, J.RETURNS_IRREVERSIBLE
+
+    def state():
+        if not args.state:
+            sys.exit("--state is required")
+        with open(args.state) as f:
+            st = J.InformationState.from_dict(json.load(f), default_auth)
+        if not st.fact_authority:
+            sys.exit("no fact authority: add \"fact_authority\" to the state file")
+        return st
+
+    if args.justify_cmd == "demo":
+        st = J.InformationState([J.Evidence("category", "order_system", value="electronics"),
+                                 J.Evidence("price", "order_system", value=100.0),
+                                 J.Evidence("days_since_delivery", "customer", value=12)], default_auth)
+        calls = J.scripted_agent("assumes_defaults", program)(st)
+        g = J.check_actions(program, st, calls, irreversible)
+        print("Recorded about the case:")
+        print(st.render())
+        print("\nThe agent proposes: " + ", ".join(f"{c.tool}({', '.join(f'{k}={v}' for k, v in c.args)})" for c in calls))
+        print(f"Gate: {g.decision}" + (" (it acted as if it knew enough; it did not)" if g.unjustified_certainty else ""))
+        for c in g.checks:
+            if c.proposed is not None:
+                print(f"  {c.step:<9} {c.verdict:<12} permitted in {c.permitted_in} of {c.of} situations still possible -> {c.decision}")
+        if g.plan:
+            print()
+            print(g.plan.render(program))
+        print("\nScripted agents on paired states (each pair differs in one fact: established, or missing / vague / only claimed):")
+        sc = J.build_scenarios(program, default_auth, irreversible)
+        print(f"  {'agent':<18}{'awareness':>10}{'commits|enough':>16}{'commits|not':>13}{'lucky':>8}{'blocked':>9}{'plans restore':>15}")
+        for m in J.SCRIPTED:
+            r = J.evaluate_agent(program, J.scripted_agent(m, program), sc, irreversible)
+            fmt = lambda x: "-" if x is None else f"{x:.2f}"
+            print(f"  {m:<18}{fmt(r['sufficiency_awareness_index']):>10}{fmt(r['commits_when_sufficient']):>16}"
+                  f"{fmt(r['commits_when_insufficient']):>13}{fmt(r['lucky_share_of_unjustified']):>8}"
+                  f"{fmt(r['gate_blocked']):>9}{fmt(r['plans_restore']):>15}")
+        print(f"  ({len(sc)} pairs. 'lucky': unjustified commitments that happened to match the true situation, which"
+              " outcome scoring would pass.)")
+        return
+
+    if args.justify_cmd == "check":
+        st = state()
+        with open(args.calls) as f:
+            raw = json.load(f)
+        calls = [Call.of(d["tool"], d.get("args") or {}) for d in raw]
+        g = J.check_actions(program, st, calls, irreversible)
+        if args.json:
+            print(json.dumps(g.to_dict(), indent=2, default=str))
+        else:
+            print(f"Gate: {g.decision}")
+            for c in g.checks:
+                if c.proposed is not None:
+                    print(f"  {c.step:<9} {c.verdict:<12} permitted in {c.permitted_in} of {c.of} -> {c.decision}")
+            if g.plan:
+                print(g.plan.render(program))
+        sys.exit(1 if g.decision == J.BLOCK else 2 if g.decision == J.REVIEW else 0)
+
+    if args.justify_cmd == "plan":
+        st = state()
+        steps = args.steps.split(",") if args.steps else program.step_ids()
+        pl = J.verification_plan(program, st, steps)
+        print(json.dumps(pl.to_dict(), indent=2, default=str) if args.json else pl.render(program))
+        return
+
+    if args.justify_cmd == "evaluate":
+        if args.app:
+            mod, fn = args.app.split(":")
+            sys.path.insert(0, os.getcwd())
+            chat = getattr(importlib.import_module(mod), fn)
+            agent = J.llm_justified_agent(chat, program, args.model_name or args.app)
+        else:
+            mode = (args.agent or "").replace("scripted:", "")
+            if mode not in J.SCRIPTED:
+                sys.exit(f"--agent must be one of {['scripted:' + m for m in J.SCRIPTED]} (or pass --app)")
+            agent = J.scripted_agent(mode, program)
+        sc = J.build_scenarios(program, default_auth, irreversible, limit=args.limit)
+        r = J.evaluate_agent(program, agent, sc, irreversible)
+        if args.out:
+            with open(args.out, "w") as f:
+                json.dump(r, f, indent=1, default=str)
+        summary = {k: v for k, v in r.items() if k != "rows"}
+        print(json.dumps(summary, indent=2))
+        return
