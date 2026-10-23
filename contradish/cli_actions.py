@@ -46,6 +46,7 @@ ABOUT = {
     "cite": "CITATION.cff / CITATION.bib in the repository (key: joseph2026buf)",
     "spec": "docs/BUF-SPEC.md",
     "entry_points": {
+        "contradish guard demo": "start here: the product, one call before tool calls run (docs/INTEGRATE.md)",
         "gate a release": "contradish release check v1.pin.json v2.pin.json --app mymodule:chat --suite cases.jsonl --audit",
         "derive what must change": "contradish actions derive --update restocking_fee_20",
         "verify an agent": "contradish actions verify --update customer_claims --app mymodule:chat",
@@ -230,6 +231,72 @@ def register(sub) -> None:
     js.add_argument("--out", default=None, help="Write the full evaluation (every pair, every gate) to this file.")
     js.add_argument("--json", action="store_true", default=False)
 
+    en = sub.add_parser(
+        "entitled",
+        help="Before a refusal goes out: does what is established already entitle the person to more? Catches "
+             "withholding caused by a missed amendment, sufficient evidence not recognized, or evidence not sought.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=(
+            "The other half of `justify`: stops an AI from withholding what a person is entitled to. No model or\n"
+            "judge is involved in the check.\n\n"
+            "  contradish entitled demo                                   pharmacy refills, scripted agents\n"
+            "  contradish entitled check --as-of 2026-10-20 --state s.json --calls c.json\n"
+            "  contradish entitled evaluate --agent scripted:stale\n"
+            "  contradish entitled evaluate --app mymodule:chat --limit 200 --out run.json\n\n"
+            "Exit codes for check: 0 allow, 1 withholding (deliver or verify), 2 review (over-asking or a grant)."
+        ),
+    )
+    gd = sub.add_parser(
+        "guard",
+        help="The product: one call before an agent's tool calls run. Blocks unjustified irreversible actions, catches "
+             "withheld entitlements, says what to verify; every decision is a certificate anyone can re-check.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=(
+            "  contradish guard demo                          the whole loop offline, in under a minute\n"
+            "  contradish guard init DIR                      a starter policy, examples and an integration file\n"
+            "  contradish guard lint POLICY                   what would make the guard wrong or unusable\n"
+            "  contradish guard test POLICY                   the policy's examples, in your own terms\n"
+            "  contradish guard check POLICY --evidence E.json --calls C.json [--as-of DATE] [--log L.jsonl]\n"
+            "  contradish guard verify L.jsonl                re-derive every decision independently (stdlib only)\n"
+            "  contradish guard report L.jsonl [--out R.md]   what a period of decisions shows\n\n"
+            "check exits 0 allow, 1 deliver or block, 2 verify or review. See docs/INTEGRATE.md."
+        ),
+    )
+    gd.add_argument("guard_cmd", choices=["demo", "init", "draft", "review", "approve", "lint", "test", "check",
+                                          "verify", "report"])
+    gd.add_argument("target", nargs="?", default=None, help="POLICY, DIR or LOG depending on the command")
+    gd.add_argument("--evidence", default=None)
+    gd.add_argument("--calls", default=None)
+    gd.add_argument("--as-of", default=None)
+    gd.add_argument("--log", default=None)
+    gd.add_argument("--mode", default="shadow", choices=["shadow", "enforce"])
+    gd.add_argument("--examples", default=None, help="Examples JSON (default: the policy file's own).")
+    gd.add_argument("--out", default=None)
+    gd.add_argument("--no-verify", action="store_true", default=False)
+    gd.add_argument("--json", action="store_true", default=False)
+    gd.add_argument("--model", default=None, help="draft: the encoder model, provider:model (e.g. anthropic:claude-sonnet-4-5)")
+    gd.add_argument("--examiner", default=None, help="draft: the independent examiner model (default: --model)")
+    gd.add_argument("--tools", default=None, help="draft: comma-separated tool names your agent already has")
+    gd.add_argument("--demo", action="store_true", default=False, help="draft: offline, with scripted stand-in replies")
+    gd.add_argument("--text", default=None, help="review: the policy text (default: the copy stored in the draft)")
+    gd.add_argument("--by", default=None, help="approve: the name of the person approving")
+    gd.add_argument("--role", default="", help="approve: their role")
+    gd.add_argument("--note", default="", help="approve: a note kept with the approval")
+    gd.add_argument("--despite-disagreements", action="store_true", default=False,
+                    help="approve: you checked each disagreement with the independent reading and the encoding is right")
+
+    en.add_argument("entitled_cmd", choices=["demo", "check", "evaluate"])
+    en.add_argument("--policy", default="pharmacy_refills", help="Built-in program name or a .json path.")
+    en.add_argument("--as-of", default="2026-10-20", help="Date of the request (YYYY-MM-DD): decides what is in force.")
+    en.add_argument("--state", default=None)
+    en.add_argument("--calls", default=None)
+    en.add_argument("--agent", default=None)
+    en.add_argument("--app", default=None, metavar="MODULE:FUNCTION")
+    en.add_argument("--model-name", default=None)
+    en.add_argument("--limit", type=int, default=None)
+    en.add_argument("--out", default=None)
+    en.add_argument("--json", action="store_true", default=False)
+
 
 def _program_args(p) -> None:
     p.add_argument("--program", default="returns", help="Built-in program name or a .json path (default: returns).")
@@ -237,7 +304,7 @@ def _program_args(p) -> None:
 
 
 COMMANDS = ("about", "actions", "counterexample", "evidence", "exhibits", "cai-bench", "versions", "perspectives",
-            "legitimacy", "justify")
+            "legitimacy", "justify", "entitled", "guard")
 
 
 def dispatch(args) -> bool:
@@ -246,7 +313,7 @@ def dispatch(args) -> bool:
     {"about": cmd_about, "actions": cmd_actions, "counterexample": cmd_counterexample,
      "evidence": cmd_evidence, "exhibits": cmd_exhibits, "cai-bench": cmd_cai_bench,
      "versions": cmd_versions, "perspectives": cmd_perspectives, "legitimacy": cmd_legitimacy,
-     "justify": cmd_justify}[args.command](args)
+     "justify": cmd_justify, "entitled": cmd_entitled, "guard": cmd_guard}[args.command](args)
     return True
 
 
@@ -317,6 +384,8 @@ def cmd_about(args) -> None:
     print(f"repository  {info['repository']}")
     print(f"spec        {info['spec']}")
     print(f"cite        {info['cite']}")
+    print()
+    print("Integrating it into an agent: contradish guard demo, then docs/INTEGRATE.md.")
     print()
     for k, v in info["entry_points"].items():
         print(f"  {k:<28} {v}")
@@ -994,3 +1063,235 @@ def cmd_justify(args) -> None:
         summary = {k: v for k, v in r.items() if k != "rows"}
         print(json.dumps(summary, indent=2))
         return
+
+
+def cmd_entitled(args) -> None:
+    from contradish import entitlement as E
+    from contradish.justification import Evidence, InformationState
+    from contradish.policy_program import Call
+
+    if args.entitled_cmd == "demo":
+        print("A patient asks for a refill on day 22 of a 30-day supply. The pharmacy's own systems have established")
+        print("every fact. The insurer lowered the early-refill threshold to 70% (day 21), effective 2026-10-01.\n")
+        g = E.governing_version(args.policy, args.as_of)
+        a = g.fact_authority
+        st = InformationState([Evidence("days_since_fill", "pharmacy_record", value=22),
+                               Evidence("refills_remaining", "pharmacy_record", value=1),
+                               Evidence("schedule", "pharmacy_record", value="none"),
+                               Evidence("prescriber_reachable", "prescriber_office", value=True),
+                               Evidence("identity_verified", "identity_check", value=True)], a)
+        for mode in ("stale", "over_cautious"):
+            calls = E.scripted_agent(mode)(g, st)
+            print(f"-- scripted:{mode} proposes: " + (", ".join(c.tool for c in calls) or "nothing"))
+            print(E.check_entitlement(g, st, calls).render())
+            print()
+        print("Scripted agents across every situation, three dates and three evidence states (1 = never withholds what is")
+        print("owed, never refuses without asking for what would settle it):")
+        sc = E.build_scenarios(args.policy, limit=args.limit or 3000)
+        print(f"  {'agent':<20}{'guard':>7}{'entitlement':>13}{'settlement':>12}{'withheld when owed':>20}")
+        for m in E.SCRIPTED:
+            r = E.evaluate_agent(E.scripted_agent(m), sc, args.policy)
+            print(f"  {m:<20}{r['withholding_guard']:>7.2f}{r['entitlement_index']:>13.2f}{r['settlement_index']:>12.2f}"
+                  f"{r['withheld_when_entitled']:>20.2f}")
+        return
+
+    if args.entitled_cmd == "check":
+        if not (args.state and args.calls):
+            sys.exit("--state and --calls are required")
+        g = E.governing_version(args.policy, args.as_of)
+        with open(args.state) as f:
+            st = InformationState.from_dict(json.load(f), g.fact_authority)
+        with open(args.calls) as f:
+            calls = [Call.of(d["tool"], d.get("args") or {}) for d in json.load(f)]
+        gate = E.check_entitlement(g, st, calls)
+        print(json.dumps(gate.to_dict(), indent=2, default=str) if args.json else gate.render())
+        sys.exit({"ALLOW": 0, "DELIVER": 1, "VERIFY": 1}.get(gate.decision, 2))
+
+    if args.entitled_cmd == "evaluate":
+        if args.app:
+            mod, fn = args.app.split(":")
+            sys.path.insert(0, os.getcwd())
+            agent = E.llm_entitlement_agent(getattr(importlib.import_module(mod), fn), args.model_name or args.app)
+        else:
+            mode = (args.agent or "").replace("scripted:", "")
+            if mode not in E.SCRIPTED:
+                sys.exit(f"--agent must be one of {['scripted:' + m for m in E.SCRIPTED]} (or pass --app)")
+            agent = E.scripted_agent(mode)
+        r = E.evaluate_agent(agent, E.build_scenarios(args.policy, limit=args.limit), args.policy)
+        if args.out:
+            with open(args.out, "w") as f:
+                json.dump(r, f, indent=1, default=str)
+        print(json.dumps({k: v for k, v in r.items() if k != "rows"}, indent=2))
+
+
+def _guard_draft(args) -> None:
+    from contradish import drafting as D
+    tpl = os.path.join(os.path.dirname(__file__), "templates")
+    if args.demo:
+        with open(os.path.join(tpl, "drafting_demo.json")) as f:
+            demo = json.load(f)
+        src = args.target or os.path.join(tpl, "refill_policy.md")
+        encoder = lambda m: json.dumps(demo["encoder"])       # noqa: E731
+        examiner = lambda m: json.dumps(demo["examiner"])     # noqa: E731
+        models = {"encoder": "scripted stand-in (demo)", "examiner": "scripted stand-in (demo)"}
+        print("Demo: the encoder and examiner replies are scripted stand-ins, fixed so this runs offline. The")
+        print("encoder's reply has one deliberate error. Everything after the replies is the real pipeline.\n")
+    else:
+        if not args.target:
+            sys.exit("contradish guard draft POLICY_TEXT --model provider:model  (or --demo)")
+        if not args.model:
+            sys.exit("contradish guard draft: --model provider:model is required (or --demo)")
+        src = args.target
+        encoder = D.chat_for_model(args.model)
+        examiner = D.chat_for_model(args.examiner or args.model)
+        models = {"encoder": args.model, "examiner": args.examiner or args.model}
+    with open(src, encoding="utf-8") as f:
+        text = f.read()
+    tools = [t.strip() for t in args.tools.split(",")] if args.tools else None
+    d = D.draft_policy(text, encoder, tools=tools, examiner=examiner, models=models)
+    out = args.out or ("policy.draft.json" if args.demo else os.path.splitext(src)[0] + ".policy.json")
+    with open(out, "w", encoding="utf-8") as f:
+        json.dump(d.spec, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+    review = os.path.splitext(out)[0] + ".review.md"
+    with open(review, "w", encoding="utf-8") as f:
+        f.write(D.review_markdown(d.spec, text, d) + "\n")
+    n_rules = len(d.spec.get("clauses") or {})
+    print(f"  drafted {n_rules} rules over {len(d.spec.get('facts') or {})} facts from {src}")
+    print(f"  {len(d.errors)} error(s): source quotes not in the text, numbers not in their quote, or a policy that does not load")
+    print(f"  {len(d.disagreements)} disagreement(s) with an independent reading of the text")
+    print(f"  {len(d.boundary)} boundary question(s) for a person to confirm")
+    print(f"  {len(d.uncovered)} sentence(s) of the text no rule cites")
+    for x in d.disagreements[:5]:
+        print(f"    disagreement: {x['case']}: missing {x.get('missing')}, unexpected {x.get('unexpected')}")
+    print(f"\n  wrote {out} (status: draft; the guard will not enforce it)")
+    print(f"  wrote {review}")
+    print(f"\nNext: work through {review}, fix {out}, then\n"
+          f"  contradish guard review {out}\n  contradish guard approve {out} --by \"Your Name\" --role \"...\"")
+
+
+def cmd_guard(args) -> None:
+    from contradish import guard as G
+
+    cmd = args.guard_cmd
+    if cmd == "demo":
+        import tempfile
+        from contradish import entitlement as E
+        d = tempfile.mkdtemp(prefix="contradish-guard-")
+        log = os.path.join(d, "decisions.jsonl")
+        print("A pharmacy's refill agent runs behind the guard in shadow mode for three dates, across every situation")
+        print("the policy distinguishes, with five scripted agents of known behavior standing in for models.\n")
+        g = G.Guard("pharmacy_refills", mode="shadow", log=log)
+        import random
+        rng = random.Random(7)
+        for sc in E.build_scenarios(limit=600):
+            gv = E.governing_version("pharmacy_refills", sc["as_of"])
+            calls = E.scripted_agent(rng.choice(E.SCRIPTED))(gv, sc["state"])
+            g.check(sc["state"].evidence, calls, as_of=sc["as_of"], request_id=sc["id"])
+        md, _ = G.value_report(log)
+        print(md)
+        print(f"\nThe log is {log}. Re-check it yourself: python {os.path.join(os.path.dirname(__file__), 'evidence_check.py')} {log}")
+        return
+
+    if cmd == "init":
+        import shutil
+        out = args.target or "contradish_guard"
+        os.makedirs(out, exist_ok=True)
+        tpl = os.path.join(os.path.dirname(__file__), "templates")
+        for name in ("starter_policy.json", "guard_example.py"):
+            dst = os.path.join(out, "policy.json" if name == "starter_policy.json" else name)
+            if os.path.exists(dst):
+                print(f"  kept existing {dst}")
+            else:
+                shutil.copy(os.path.join(tpl, name), dst)
+                print(f"  wrote {dst}")
+        print(f"\nNext: edit {out}/policy.json (facts, who establishes them, clauses, examples), then\n"
+              f"  contradish guard lint {out}/policy.json\n  contradish guard test {out}/policy.json\n"
+              f"  python {out}/guard_example.py\nand see docs/INTEGRATE.md.")
+        return
+
+    if cmd == "draft":
+        return _guard_draft(args)
+
+    if not args.target:
+        sys.exit(f"contradish guard {cmd}: give the "
+                 f"{'policy' if cmd in ('lint', 'test', 'check', 'review', 'approve') else 'log'} file")
+
+    if cmd == "review":
+        from contradish import drafting as D
+        with open(args.target) as f:
+            spec = json.load(f)
+        text = None
+        if args.text:
+            with open(args.text, encoding="utf-8") as f:
+                text = f.read()
+        md = D.review_markdown(spec, text)
+        out = args.out or os.path.splitext(args.target)[0] + ".review.md"
+        with open(out, "w", encoding="utf-8") as f:
+            f.write(md + "\n")
+        b = D.blockers(spec)
+        print(f"  status: {D.approval_status(spec)['state']}")
+        print(f"  {len(b['errors'])} error(s) to fix, {len(b['disagreements'])} disagreement(s) to decide")
+        print(f"  wrote {out}")
+        sys.exit(1 if b["errors"] or b["disagreements"] else 0)
+
+    if cmd == "approve":
+        from contradish import drafting as D
+        if not args.by:
+            sys.exit("contradish guard approve: --by NAME is required (the person taking responsibility)")
+        with open(args.target) as f:
+            spec = json.load(f)
+        try:
+            out = D.approve(spec, args.by, args.role, args.note, despite_disagreements=args.despite_disagreements)
+        except ValueError as e:
+            sys.exit(f"  {e}")
+        with open(args.target, "w", encoding="utf-8") as f:
+            json.dump(out, f, indent=2, ensure_ascii=False)
+            f.write("\n")
+        ap = out["approval"]
+        print(f"  approved by {ap['by']}" + (f" ({ap['role']})" if ap["role"] else "") + f" at {ap['at']}")
+        print(f"  bound to {ap['digest']}: any later change to the rules or updates needs a new approval")
+        if ap.get("overrode"):
+            print(f"  recorded: approved despite {len(ap['overrode'])} disagreement(s): {', '.join(map(str, ap['overrode']))}")
+        return
+
+    if cmd == "lint":
+        issues = G.check_policy(args.target)
+        for lvl, msg in issues:
+            print(f"  {lvl.upper():7s} {msg}")
+        sys.exit(1 if any(l == "error" for l, _ in issues) else 0)
+
+    if cmd == "test":
+        ex = None
+        if args.examples:
+            with open(args.examples) as f:
+                ex = json.load(f)
+        problems = G.run_examples(args.target, ex)
+        n = len(ex) if ex is not None else len(G.load_policy_examples(args.target))
+        for name, msg in problems:
+            print(f"  FAIL  {name}: {msg}")
+        print(f"  {n - len({p[0] for p in problems})} of {n} examples pass")
+        sys.exit(1 if problems else 0)
+
+    if cmd == "check":
+        if not (args.evidence and args.calls):
+            sys.exit("--evidence and --calls are required")
+        with open(args.evidence) as f:
+            ev = json.load(f)
+        with open(args.calls) as f:
+            calls = json.load(f)
+        d = G.Guard(args.target, mode=args.mode, log=args.log).check(ev, calls, as_of=args.as_of)
+        print(json.dumps(d.to_dict(), indent=2, default=str) if args.json else d.explain())
+        sys.exit({"allow": 0, "deliver": 1, "block": 1}.get(d.outcome, 2))
+
+    if cmd == "verify":
+        from contradish.evidence_check import main as check_main
+        sys.exit(check_main([args.target] + (["--json"] if args.json else [])))
+
+    if cmd == "report":
+        md, summary = G.value_report(args.target, verify=not args.no_verify)
+        if args.out:
+            with open(args.out, "w", encoding="utf-8") as f:
+                f.write(md + "\n")
+            print(f"  wrote {args.out}")
+        print(json.dumps(summary, indent=2) if args.json else md)

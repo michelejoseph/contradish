@@ -170,8 +170,8 @@ class Region:
         return f"{self.lo} to {self.hi}"
 
 
-def _int_regions(p: PolicyProgram, fact: str, lo: int, hi: int) -> list:
-    th = sorted({x for t in _thresholds(p, fact) for x in (math.floor(t), math.ceil(t))})
+def _int_regions(p: PolicyProgram, fact: str, lo: int, hi: int, also: tuple = ()) -> list:
+    th = sorted({x for q in (p, *also) for t in _thresholds(q, fact) for x in (math.floor(t), math.ceil(t))})
     cuts = sorted({lo, hi + 1} | {t for t in th if lo < t <= hi} | {t + 1 for t in th if lo <= t < hi})
     out = []
     for a, b in zip(cuts, cuts[1:]):
@@ -179,8 +179,9 @@ def _int_regions(p: PolicyProgram, fact: str, lo: int, hi: int) -> list:
     return out
 
 
-def fact_regions(p: PolicyProgram, state: InformationState) -> dict:
-    """{fact: [Region]} consistent with the established evidence."""
+def fact_regions(p: PolicyProgram, state: InformationState, also: tuple = ()) -> dict:
+    """{fact: [Region]} consistent with the established evidence. `also`: other versions of the policy whose cut
+    points must be respected too, so every version is constant on every region (for comparing versions)."""
     est = {}
     for e in state.established():
         est.setdefault(e.fact, []).append(e)
@@ -198,7 +199,7 @@ def fact_regions(p: PolicyProgram, state: InformationState) -> dict:
                     hi = min(hi, e.hi if e.hi is not None else hi)
             if lo > hi:
                 raise ValueError(f"established evidence about {f} is contradictory")
-            out[f] = _int_regions(p, f, lo, hi)
+            out[f] = _int_regions(p, f, lo, hi, also)
         elif t in ("enum", "bool"):
             vals = [False, True] if t == "bool" else list(spec["values"])
             for e in ev:

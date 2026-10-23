@@ -2,6 +2,30 @@
 
 > *The quality of an intelligence is not measured solely by what it can accomplish, but also by what it knows it must not change, claim, control, or exploit.*
 
+## Integrate in a day: the guard
+
+```python
+from contradish import Guard
+
+guard = Guard("policy.json", mode="shadow", log="decisions.jsonl")
+decision = guard.check(evidence, proposed_calls, as_of=today)   # before your agent's tool calls run
+```
+
+Before a proposed tool call runs, the guard answers two questions exactly, from your policy file, with no model and no judge: **may it act?** (an irreversible call the established evidence does not justify is blocked) and **is it withholding?** (something the person is already entitled to under every amendment in force is flagged as owed). When the case is not settled, it names the fewest facts to ask for and who can establish them. It reads OpenAI and Anthropic tool calls directly. Every decision is a certificate that `contradish/evidence_check.py`, a single standard-library file that imports nothing from contradish, re-derives by a different method; on the built-in policies 2,300 decisions agreed with no exceptions.
+
+```bash
+contradish guard demo                 # the whole loop offline: shadow decisions, independent check, value report
+contradish guard init guard/          # a starter policy (readable conditions, examples) and an integration file
+contradish guard test guard/policy.json
+contradish guard report decisions.jsonl
+```
+
+Day one, verification and the first month: **[docs/INTEGRATE.md](docs/INTEGRATE.md)**.
+
+Already have the policy written down? `contradish guard draft policy.md --model provider:model` drafts the encoding with a source quote for every rule. It checks every quote and number against your text, has a second reading that never sees the draft test it, and asks plain questions at every boundary where the decision changes. The guard will not enforce the result until a named person approves it: `contradish guard approve`. Offline: `contradish guard draft --demo`. See **[docs/DRAFTING.md](docs/DRAFTING.md)**.
+
+---
+
 ## One question
 
 **When something changes, does the system change exactly when someone with the authority to change it did, and only then?**
@@ -132,6 +156,19 @@ On the built-in returns policy with scripted agents (a first measurement, not a 
 
 A CI template is in `examples/ci/`. Details, numbers and limits: [docs/RELEASE-GATE.md](docs/RELEASE-GATE.md).
 
+## Withholding what a person is entitled to (`contradish entitled`)
+
+**A refusal is a decision too.** Before a refusal, a delay or a smaller benefit goes out, contradish checks whether what has been established already entitles the person to more, under every amendment that is in force and comes from someone with authority. It catches the three ways an AI withholds what is owed: it **missed the change** (still applying the rule an authorized amendment replaced), it **did not recognize the evidence was enough** (withholding, or asking again, when the sources with standing have already settled it), or it **did not seek the evidence** (refusing instead of asking for the one fact that would settle it). Each finding states the exact call owed, the amendment it rests on, what the old rule would have said, and the smallest set of established evidence that already entitles the person.
+
+First built for people asking a pharmacy for a refill, where a wrongful "not yet" means going without medicine (`contradish/contracts/programs/pharmacy_refills.json`, fictional, modeled on common practice; the returns policy works too).
+
+```bash
+contradish entitled demo
+contradish entitled check --as-of 2026-10-20 --state state.json --calls calls.json   # exit 0 allow, 1 withholding
+```
+
+Scripted agents: the faithful one scores 1.00 on the Withholding Guard; one that never applies amendments 0.56; one that refuses whenever unsure 0.00 (it would have scored a perfect 1.00 on entitlement alone, which is why the guard also requires asking for what would settle the case). Details and limits: [docs/ENTITLEMENT.md](docs/ENTITLEMENT.md).
+
 ## Justified action before execution (`contradish justify`)
 
 **An incomplete representation is not sufficient grounds for an irreversible decision.** Before an agent's tool call runs, contradish checks whether what has been established (evidence from a source with standing over each fact; claims count for nothing) settles what the policy requires. If it does not, an irreversible call is blocked and contradish derives the verification that would make action justified: which facts, from which source, at the granularity the policy needs ("within 30 days?", not "what date?"), in the fewest questions in the worst case. No model or judge is involved in the check or the plan.
@@ -157,7 +194,7 @@ What it does not establish: truth about the world (it scores fidelity to the gov
 | **Gate amendment fidelity** (compiled policy gates across an amendment) | Exhaustive, no model: `contradish gate` scores a gate pair on every probe of the exact situation partition. The reference compiler is verified on all 11 built-in amendments; stale, overreaching and captured recompiles are caught (`verify_core.sh` step 7). Not yet run on a third-party compiler's output. |
 | **Behavioral Update Fidelity on real models** | **First full local runs, 2026-10-15/16 (CAI-Bench 4.2.0).** Four Ollama models (qwen2.5:7b, qwen2.5:3b, llama3.2:3b, llama3.1:8b), temperature 0, one sample, about 2,000 prompts each across the authority, temporal, provider, real-federal-rule, relay and dynamics splits. Every correct answer is derived from authority, scope and timing, and the temporal, provider, real, relay and floor splits were cross-checked against `derive_transition` (about 1,200 labels, 0 disagreements). Scored against 13 predictions registered before scoring: 5 held, 5 failed, 3 were inconclusive. **What they show:** no model distinguishes authority well (Authority Sensitivity Index 0.15 or lower on templated policies; best 0.50 on real federal text); the dominant error is rigidity (at most 61% of authorized amendments applied), yet under conversational pushback 30-69% abandon a correct answer; the person in the conversation usually outranks every other channel, including the operator's mid-conversation system message (unpredicted: three predictions failed in that direction); timing errors are mostly retroactive on templated policies but almost all stale on real regulatory text; and no model answered every prompt of any multi-turn scenario correctly. **Limits:** small local models only, no frontier model yet; Ollama's llama template returns empty replies after a trailing system message, so provider-spec scores for llama are unscorable; the correct-answer checks share an author with the code. Results, the pre-registration and every reply are in the CAI-Bench 4.2.0 release. **contradish's own `study` runner, same four models (2026-10-16, `studies/local-4.2-rescored`, 2,936 calls, self-labelled):** given a correct baseline, authorized changes were made 70 to 91% of the time and unauthorized ones resisted 73 to 86%, but only 7 to 39% of transitions were exactly right. The Authority Sensitivity Index was +0.00 to +0.29, with every interval including 0. Relayed changes were almost never verified (RDI 0.00 to 0.04; qwen2.5:7b applied 8 of 9 on the relayer's word). Instructions embedded in tool results were the least resisted channel (42 to 67%). This agrees with the CAI-Bench runs: standing is not tracked, and verification is rare. The run exposed a scorer bug: outcome labels containing digits (`wire_45`) were read as unclear. It was fixed and re-scored from the logged replies with no new calls, which raised exact transitions for the two larger models from 21% and 18% to 39% and 29%. Temporal contrasts have only 3 pairs per model and are not interpreted. |
 | **CAI-Bench on real models** | 4.2.0 local runs above. Earlier preliminary runs used partial domain sets with different judges; see [the committed results](#the-cai-benchmark). Not a leaderboard. |
-| **Installing** | PyPI has 1.34.0 (checked 2026-10-21); the source is 1.62.0, and most of this page describes features newer than the PyPI release. Install from source: `pip install git+https://github.com/michelejoseph/contradish`. |
+| **Installing** | PyPI has 1.34.0 (checked 2026-10-21); the source is 1.63.0, and most of this page describes features newer than the PyPI release. Install from source: `pip install git+https://github.com/michelejoseph/contradish`. |
 | **Known validity gaps** | Equivalence of CAI-Bench rewordings is expert-audited in 4 of 20 domains, double-rated in 1 (Cohen's kappa 0.018). The defect-injection study met 1 of 9 pre-registered predictions ([preregistration.md](preregistration.md)). Automatic warrant derivation agreed with a lawyer on 6 of 12 cases. |
 
 ---

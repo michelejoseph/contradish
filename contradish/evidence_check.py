@@ -1203,6 +1203,171 @@ def _verdict(cert, problems, notes):
             "claim": cert.get("claim") if cert.get("claim") is not None else cert.get("statement")}
 
 
+# ------------------------------------------------------- runtime decisions (contradish.guard)
+
+def _domain(spec, fact, evid):
+    """Every value the established evidence allows for one fact. Ints: every integer, not regions."""
+    fs = spec["facts"][fact]
+    t = fs.get("type")
+    if t == "int":
+        lo, hi = fs["min"], fs["max"]
+        for e in evid:
+            if "value" in e:
+                lo, hi = max(lo, e["value"]), min(hi, e["value"])
+            else:
+                lo, hi = max(lo, e.get("lo", lo)), min(hi, e.get("hi", hi))
+        return list(range(lo, hi + 1))
+    if t in ("enum", "bool"):
+        vals = [False, True] if t == "bool" else list(fs["values"])
+        for e in evid:
+            allowed = [e["value"]] if "value" in e else list(e.get("values") or vals)
+            vals = [v for v in vals if v in allowed]
+        return vals
+    exact = [e["value"] for e in evid if "value" in e]
+    if exact:
+        return [exact[0]]
+    return sorted({fs.get("min", 0), fs.get("max", 0), fs.get("default", 0), *(fs.get("values") or [])}, key=float)
+
+
+def check_decision(cert, max_situations=500000):
+    """
+    Re-derive a runtime decision from its certificate alone, by enumeration: every integer value of every int
+    fact the evidence leaves open (the producer uses regions; agreement is established by two methods).
+    """
+    import itertools
+    problems, notes = [], []
+
+    def need(cond, msg):
+        if not cond:
+            problems.append(msg)
+        return cond
+
+    body = {k: v for k, v in cert.items() if k != "digest"}
+    need(cert.get("digest") == sha(body), "integrity: digest does not match content")
+    need(cert.get("schema") == "contradish.decision/1", "unknown schema")
+    if problems:
+        return _verdict(cert, problems, notes)
+    spec, as_of, d = cert["policy"], cert["as_of"], cert["derivation"]
+    auth = cert["fact_authority"]
+    irreversible = set(cert["irreversible_tools"])
+
+    # 1. the governing version: updates in force, edits from a source with authority over their clause
+    edits, applied = [], []
+    for u in cert["updates"]:
+        ok = [e for e in u.get("edits", []) if governs(spec, u["source"], e["clause"])]
+        bad = [e for e in u.get("edits", []) if not governs(spec, u["source"], e["clause"])]
+        if bad and not ok:
+            continue
+        if u.get("effective") is not None and u["effective"] > as_of:
+            continue
+        edits += ok
+        applied.append(u["id"])
+    need(applied == d["applied_updates"], f"governing version: in force with authority {applied}, "
+                                          f"certificate says {d['applied_updates']}")
+    gov = Policy(amend(spec, edits))
+    steps = list(gov.steps)
+    tool_of = {sid: gov.steps[sid][1]["tool"] for sid in steps}
+
+    # 2. what is established: evidence from a source with standing over the fact
+    est = {}
+    for e in cert["evidence"]:
+        if e["source"] in auth.get(e["fact"], []):
+            est.setdefault(e["fact"], []).append(e)
+    facts = list(spec["facts"])
+    domains = [_domain(spec, f, est.get(f, [])) for f in facts]
+    size = _prod([len(x) for x in domains])
+    if size > max_situations:
+        notes.append(f"NOT CHECKED: {size} situations exceed the limit of {max_situations}")
+        return {"verdict": "UNCHECKED", "kind": "decision", "digest": cert.get("digest"), "problems": [],
+                "notes": notes, "claim": d.get("outcome")}
+    if size == 0:
+        need(False, "the established evidence is contradictory: no situation is consistent with it")
+        return _verdict(cert, problems, notes)
+    sits = [dict(zip(facts, combo)) for combo in itertools.product(*domains)]
+    norms = [{sid: gov.norm(sid, s)[0] for sid in steps} for s in sits]
+
+    proposed = {}
+    for c in cert["proposed"]:
+        if c["tool"] != "request_verification":
+            proposed.setdefault(c["tool"], c)
+
+    # 3. each step: is the proposed call (or its absence) permitted in every situation the evidence allows?
+    verdict = {}
+    for sid in steps:
+        obs = proposed.get(tool_of[sid])
+        k = sum(permits(n[sid], obs) for n in norms)
+        verdict[sid] = "JUSTIFIED" if k == len(norms) else "WRONG" if k == 0 else "UNJUSTIFIED"
+        need(d["steps"][sid]["verdict"] == verdict[sid],
+             f"step {sid}: {verdict[sid]} by enumeration, certificate says {d['steps'][sid]['verdict']}")
+
+    # 4. benefits: entitled (obligatory, same call, everywhere), possible, excluded
+    owed, unsettled = [], []
+    for sid in cert["benefit_steps"]:
+        ns = [n[sid] for n in norms]
+        if all(n["modality"] == "O" for n in ns) and all(same_norm(n, ns[0]) for n in ns):
+            st, ow = "ENTITLED", ns[0]["call"]
+        elif any(n["modality"] == "O" for n in ns):
+            st, ow = "POSSIBLE", None
+        else:
+            st, ow = "EXCLUDED", None
+        b = d["benefits"][sid]
+        need(b["status"] == st, f"benefit {sid}: {st} by enumeration, certificate says {b['status']}")
+        need((ow is None and b["owed"] is None) or (ow is not None and same_call(ow, b["owed"])),
+             f"benefit {sid}: owed {ow} by enumeration, certificate says {b['owed']}")
+        obs = proposed.get(tool_of[sid])
+        if st == "ENTITLED" and not same_call(obs, ow):
+            owed.append(ow)
+        if st == "POSSIBLE" and obs is None:
+            unsettled.append(sid)
+
+    # 5. the decision
+    blocked = [proposed[tool_of[s]] for s in steps
+               if tool_of[s] in proposed and tool_of[s] in irreversible and verdict[s] != "JUSTIFIED"]
+    review = [proposed[tool_of[s]] for s in steps
+              if tool_of[s] in proposed and tool_of[s] not in irreversible and verdict[s] != "JUSTIFIED"]
+    unsettled = [s for s in steps if tool_of[s] in proposed and tool_of[s] in irreversible
+                 and verdict[s] == "UNJUSTIFIED"] + [s for s in unsettled]
+    key = lambda c: canon(c)
+    need(sorted(map(key, blocked)) == sorted(map(key, d["blocked"])), "blocked calls differ")
+    need(sorted(map(key, review)) == sorted(map(key, d["review"])), "calls for review differ")
+    need(sorted(map(key, owed)) == sorted(map(key, d["owed"])), "owed calls differ")
+
+    # 6. the facts to ask for: they settle every unsettled step, and no smaller set does
+    asked = [a["fact"] for a in d["ask"]]
+    unknown = [f for f, dom in zip(facts, domains) if len(dom) > 1]
+
+    def settles(fs):
+        groups = {}
+        for s, n in zip(sits, norms):
+            groups.setdefault(tuple(s[f] for f in fs), []).append(n)
+        return all(all(same_norm(n[sid], g[0][sid]) for n in g) for g in groups.values() for sid in set(unsettled))
+
+    if unsettled:
+        need(bool(asked) or settles([]), "unsettled steps, and nothing to ask for")
+        if asked:
+            need(settles(asked), f"asking for {asked} does not settle {sorted(set(unsettled))}")
+            smaller = [c for r in range(len(asked)) for c in itertools.combinations(unknown, r) if settles(list(c))]
+            need(not smaller, f"a smaller set settles it: {list(smaller[0]) if smaller else ''}")
+            for a in d["ask"]:
+                need(a["from"] == list(auth.get(a["fact"], [])), f"ask {a['fact']}: wrong sources")
+    else:
+        need(not asked, "facts asked for, though nothing is unsettled")
+    outcome = ("deliver" if owed else "block" if blocked else "verify" if asked else "review" if review else "allow")
+    need(outcome == d["outcome"], f"outcome: {outcome} by enumeration, certificate says {d['outcome']}")
+
+    # 7. the required calls, when the evidence settles every step
+    settled = all(all(same_norm(n[sid], norms[0][sid]) for n in norms) for sid in steps)
+    if settled:
+        req = [norms[0][sid]["call"] for sid in steps if norms[0][sid]["modality"] == "O"]
+        need(d.get("required") is not None and sorted(map(key, req)) == sorted(map(key, d["required"])),
+             "required calls differ")
+    else:
+        need(d.get("required") is None, "required calls stated, but the evidence does not settle every step")
+    notes.append(f"{len(sits)} situations enumerated; outcome {outcome}")
+    return {"verdict": "VERIFIED" if not problems else "REJECTED", "kind": "decision", "digest": cert.get("digest"),
+            "problems": problems, "notes": notes, "claim": f"{cert.get('request_id') or ''} {outcome}".strip()}
+
+
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     as_json = "--json" in argv
@@ -1214,14 +1379,23 @@ def main(argv=None):
     for p in paths:
         try:
             with open(p) as f:
-                cert = json.load(f)
-            sch = str(cert.get("schema", ""))
-            r = (check_run(cert) if sch.startswith("contradish.run_certificate/") else
-                 check_legitimacy(cert) if sch.startswith("contradish.legitimacy_certificate/") else check(cert))
+                text = f.read()
+            # a .jsonl decision log holds one certificate per line
+            certs = ([json.loads(l) for l in text.splitlines() if l.strip()] if p.endswith(".jsonl")
+                     else [json.loads(text)])
         except Exception as exc:  # malformed input is a rejection, not a crash
-            r = {"verdict": "REJECTED", "problems": [f"could not check: {exc!r}"], "notes": []}
-        r["file"] = p
-        results.append(r)
+            results.append({"verdict": "REJECTED", "problems": [f"could not read: {exc!r}"], "notes": [], "file": p})
+            continue
+        for i, cert in enumerate(certs):
+            try:
+                sch = str(cert.get("schema", ""))
+                r = (check_run(cert) if sch.startswith("contradish.run_certificate/") else
+                     check_legitimacy(cert) if sch.startswith("contradish.legitimacy_certificate/") else
+                     check_decision(cert) if sch.startswith("contradish.decision/") else check(cert))
+            except Exception as exc:  # malformed input is a rejection, not a crash
+                r = {"verdict": "REJECTED", "problems": [f"could not check: {exc!r}"], "notes": []}
+            r["file"] = p if len(certs) == 1 else f"{p}:{i + 1}"
+            results.append(r)
     if as_json:
         print(json.dumps(results, indent=2))
     else:

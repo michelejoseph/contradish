@@ -6,6 +6,43 @@ earlier releases were not retroactively documented.
 
 ## [Unreleased]
 
+## [1.64.0] - 2026-10-22
+
+From a team's written policy to an approved policy.json, and no enforcement without a named approver.
+
+### Added
+
+- **Policy drafting** (`contradish/drafting.py`, `contradish guard draft`). A model drafts `policy.json` from the policy text, citing for every rule and fact the exact sentence it came from, and lists its assumptions. Deterministic grounding then checks the draft:
+  - every quote must be in the text;
+  - every number must be in its quote, and a rescaled percent is flagged for review;
+  - every sentence no rule cites is listed;
+  - the draft must load and lint clean.
+
+  Any provider over HTTPS (the study runner's transport) or any `chat(messages)` function can do the drafting.
+- **Independent examiner.** A second model call sees only the text and the names of the facts and tools, never the draft's conditions. It writes test cases at the limits and exceptions the text states, and every case the draft fails is listed as a disagreement for a person to decide. `--examiner` can name a different model.
+- **Boundary questions.** Derived from the draft's exact situation partition: one plain-language question at every point where its decision changes (just below and at every threshold; every value of every bool and enum fact), each with the draft's answer.
+- **Review sheet** (`contradish guard review`), regenerable from the policy file alone. It shows what must be fixed, the disagreements, each rule next to its source sentence, who establishes each fact (assumed until confirmed), the boundary questions, uncited text and assumptions.
+- **Sign-off** (`contradish guard approve --by NAME --role ROLE`). The approval is bound to a digest of the rules and updates; examples and notes are outside it. Approval is refused while there are errors, failing examples, quotes not in the text or open disagreements; disagreements can be overridden explicitly (`--despite-disagreements`, recorded).
+- **The guard enforces only approved policies.** `Guard(..., mode="enforce")` raises on a draft or on a policy changed after its approval, and shadow mode warns. `require_approval=True` also refuses hand-written policies with no approval. Every certificate carries the approval (state, by, role, at, digest), and the independent checker still verifies certificates unchanged.
+- `contradish guard draft --demo`: offline, with scripted stand-in replies (labeled as such) and one deliberate encoding error (`>` for "once 80% has elapsed"). The examiner and the boundary questions catch it, and approval is refused until it is fixed. `docs/DRAFTING.md`; `tests/test_drafting.py` (13 tests).
+
+## [1.63.0] - 2026-10-21
+
+The deterministic core as a product a team can integrate in a day.
+
+### Added
+
+- **The guard** (`contradish/guard.py`, `from contradish import Guard`). `Guard(policy, mode="shadow"|"enforce", log=...)`; `guard.check(evidence, proposed_calls, as_of, request_id)` before tool calls run: blocks irreversible calls the established evidence does not justify (`justify`), flags benefits withheld or cut short that the evidence already entitles (`entitled`), names the fewest facts to ask for and who establishes them, and, when the evidence settles every step, the exact calls the policy requires. Outcomes: deliver, block, verify, review, allow. Adapters read OpenAI chat messages and `tool_calls`, Anthropic `tool_use` blocks, and plain dicts; evidence as `{fact: (value, source)}` or dicts. `decision.calls_to_run(deliver_owed=...)`; `guard.wrap(agent, evidence)`. Every decision is a certificate (`contradish.decision/1`), appended to the JSONL log.
+- **Independent re-derivation of decisions** (`evidence_check.check_decision`, standard library only). From the certificate alone: updates in force with authority, established evidence, every situation by enumerating every value (the guard uses regions), each step's verdict, each benefit's status and owed call, that the facts to ask for settle the case and that no smaller set does, the outcome and the required calls. Reads `.jsonl` logs. 2,300 decisions on the pharmacy and returns policies, every outcome, re-derived with no disagreement; tampering with the outcome, the owed calls, the updates in force or the facts to ask for is rejected.
+- **`contradish guard demo|init|lint|test|check|verify|report`**: the front door. `init` writes a starter policy and an integration file that runs as-is; `lint` reports what would make the guard wrong (facts no source establishes, unknown tools, missing bounds); `test` checks the policy's `examples` in the team's own terms; `report` turns a period of decisions into a value report, counting only decisions the independent checker verified.
+- **Readable conditions** (`contradish/policy_source.py`): definitions, guards and arguments may be written as expressions (`"identity_verified and days_since_fill >= refill_day"`, `"'a' if c else 'b'"`, `"x in ('a', 'b')"`, `min max round`), compiled to the canonical form when a program is built. Existing programs are byte-identical, so every digest and certificate is unchanged; parse errors name the clause and the definition.
+- **Starter template** (`contradish/templates/starter_policy.json`, `guard_example.py`): the pharmacy refill policy in readable form with five examples; it compiles to exactly the built-in program.
+- `docs/INTEGRATE.md`: day one by the hour, verification, month one by the week, and what the guard does not do. `tests/test_guard.py` (16 tests, including a fresh-directory day-one run through the CLI).
+
+## [1.63.0, continued] - 2026-10-21
+
+Everything else since 1.62.0: justified action, entitlement, the authority refinement, the green test suite, the placebo noise floor and the robust Governed Score.
+
 Puts the measurement in front of real models, widens the authority test set, and brings the public claims into line with the evidence.
 
 ### Fixed
@@ -17,6 +54,9 @@ Puts the measurement in front of real models, widens the authority test set, and
 
 ### Added
 
+- **Withholding what a person is entitled to** (`contradish/entitlement.py`, `contradish entitled demo|check|evaluate`, `docs/ENTITLEMENT.md`). The other half of `justify`: before a refusal, a delay or a smaller benefit goes out, checks whether what is established already entitles the person to more under the governing version (the policy plus every update in force on the request date from a source with authority over what it edits). Per benefit: ENTITLED, POSSIBLE or EXCLUDED, exact over the situation space with old and new versions cut at both of their thresholds. Verdicts WITHHELD, SHORTCHANGED, NEEDLESS_DELAY, PREMATURE_DENIAL, UNDER_ASK, OVER_ASK, PROPER_VERIFY, UNVERIFIED_GRANT, WRONGFUL_GRANT, each withholding one with its cause (missed the change, evidence already sufficient, evidence not sought), the call owed, the amendments relied on, what the old rule would have said, and the smallest established evidence that already entitles. **Entitlement Index**, **Settlement Index** (without it, refusing whenever unsure scored a perfect entitlement index) and **Withholding Guard** = their minimum. Scripted agents: faithful 1.00, stale 0.56, over-cautious 0.00, refuses when unsure 0.00, doubts the records -1.00; every remedy correct in the true situation, every verification plan settles its case.
+- **Pharmacy refills policy program** (`contradish/contracts/programs/pharmacy_refills.json`): fictional, modeled on common practice. Early-refill threshold (insurer), refills remaining, Schedule II, identity, emergency supply (state board); declared fact authority, benefit steps and irreversible tools; three updates: the insurer lowers the threshold to 70% (effective 2026-10-01), a declared emergency extends emergency supplies to 30 days (2026-10-15), and a patient's claim with no authority.
+- `justification.fact_regions(..., also=(other versions,))`: regions cut at every version's thresholds, so versions can be compared region by region. `tests/test_entitlement.py` (11 tests).
 - **Placebo noise floor** in the authority suites (`study.placebo_transitions`, `score_placebo`; every study report). In each suite the policy owner reissues one clause word for word: an update with authority that changes nothing, so every case must hold. Drift under it (the model's own answer moving) is the floor against which every preservation rate should be read. Scored apart from the suites, so no existing count changes; failed or unclassifiable answers are excluded and counted, never read as holding. `study plan` includes its calls. `tests/test_placebo.py`: a faithful agent drifts 0%, an agent knocked off its answer by any new message drifts 100%, an agent whose answers cannot be classified gets no drift figure at all.
 
 - **Justified action before execution** (`contradish/justification.py`, `contradish justify demo|check|plan|evaluate`, `docs/JUSTIFY.md`). An information state is evidence with its source; only a source with standing over a fact establishes it, so a claim (or a memory note that kept a fact and lost who said it) constrains nothing. Each proposed call is JUSTIFIED (permitted in every situation the evidence allows), WRONG (in none) or UNJUSTIFIED (in some); an UNJUSTIFIED irreversible call is blocked before execution, and one that matches the true situation is marked lucky. For blocked steps, a verification plan: questions to sources with standing, at the granularity the policy needs, as a tree with the fewest questions in the worst case (exhaustive search), with every branch checked to settle the steps. **Sufficiency Awareness Index** = P(commits | sufficient twin) - P(commits | insufficient twin), on pairs that differ in one fact (missing, vague or only claimed) and leave a required irreversible step undetermined. Scripted agents: justified 1.00, assumes defaults 0.07, trusts claims 0.04, always verifies 0.00. Walking the plan restored justified and correct action in 5,840 of 5,840 blocked states. Fact authority for the returns policy is declared in the module, so the program's digest and every certificate are unchanged. `tests/test_justification.py` (13 tests).

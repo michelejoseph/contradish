@@ -325,6 +325,11 @@ class PolicyProgram:
     def __init__(self, spec: dict):
         if spec.get("schema") not in (SCHEMA, None):
             raise ProgramError(f"unsupported schema {spec.get('schema')!r}")
+        from contradish.policy_source import SourceError, compile_spec
+        try:
+            spec = compile_spec(spec)            # readable conditions -> canonical expressions (no-op for canonical)
+        except SourceError as e:
+            raise ProgramError(str(e)) from None
         self.spec = copy.deepcopy(spec)
         self.spec["schema"] = SCHEMA
         self.id = spec["id"]

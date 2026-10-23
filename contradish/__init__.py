@@ -376,8 +376,12 @@ from .versions import (
 )
 from .charter import legitimacy_certificate, approve_pin, derive_effects
 
-__version__ = "1.62.0"
+__version__ = "1.64.0"
+# The product surface: one call before an agent's tool calls run (see docs/INTEGRATE.md).
+from contradish.guard import Guard, Decision, calls_from, evidence_from  # noqa: E402
+
 __all__ = [
+    "Guard", "Decision", "calls_from", "evidence_from",
     "PolicyProgram", "ProgramUpdate", "Edit", "Call", "load_builtin_program",
     "derive_action_frontier", "verify_trajectories", "run_agent", "witness_agent", "llm_tool_agent",
     "ActionFrontier", "ActionTransitionResult", "minimize_unauthorized_change",
