@@ -783,7 +783,10 @@ def scripted_chat_for(kind: str) -> Callable:
             case = next((c for c in t.cases if c.question in last_user), None)
             if case is None:                     # a request for its case note (through_memory): it keeps everything
                 return "NOTE: " + t.system_text("before")
-            after = messages != first_turn[case.id]
+            # a scripted agent ignores added instructions (contradish.distinction_repair marks them)
+            seen = [dict(m, content=m["content"].split("\n\n[Repair rule] ")[0]) if m["role"] == "system" else m
+                    for m in messages]
+            after = seen != first_turn[case.id]
             if kind == "base_errors" and case.asserted is None and not case.revises:
                 wrong = [o for o in t.outcomes_for(case) if o != case.before]
                 return wrong[0] if wrong else case.before

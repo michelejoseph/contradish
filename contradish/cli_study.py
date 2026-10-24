@@ -6,12 +6,29 @@ import json
 import os
 import sys
 
-COMMANDS = ("study", "governed")
+COMMANDS = ("study", "governed", "repair")
 
 DEFAULT_JUDGES = (("openai", "gpt-4.1-mini"), ("anthropic", "claude-haiku-4-5"))
 
 
 def register(sub) -> None:
+    rp = sub.add_parser(
+        "repair",
+        help="Find the smallest missing distinction and verify a repair that restores it without blocking legitimate actions.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=(
+            "Find which distinction a system fails to keep (who has standing, when a change applies, what a memory\n"
+            "must keep, whether rules conflict), show a minimal counterexample, and try repairs from least to most\n"
+            "intrusive (an instruction, a memory field, a code guard). A repair passes only if, on held-out cases,\n"
+            "the distinction is restored, no legitimate change is newly refused, and nothing else moved.\n\n"
+            "  contradish repair --demo                          scripted agents of known behavior, no key\n"
+            "  contradish repair --model ollama:qwen2.5:7b       a real model (judge: the model labels itself)\n"
+            "  contradish repair --model ... --components standing,claims,tone --json report.json"),
+    )
+    rp.add_argument("--demo", action="store_true")
+    rp.add_argument("--model", default=None, help="PROVIDER:MODEL, as in `contradish study`.")
+    rp.add_argument("--components", default="standing,claims,tone,conflicts,future,contrast,temporal")
+    rp.add_argument("--json", default=None, help="Write the full report, with its certificate, here.")
     gv = sub.add_parser(
         "governed",
         help="The one question: does the system change exactly when someone with authority changed it, and only then?",
@@ -106,6 +123,27 @@ def register(sub) -> None:
 def dispatch(args) -> bool:
     if args.command not in COMMANDS:
         return False
+    if args.command == "repair":
+        from contradish import distinction_repair as DR
+        if args.demo or not args.model:
+            print(DR.demo())
+            return True
+        import tempfile
+        from pathlib import Path
+        from contradish import study as S
+        spec = S.parse_model(args.model)
+        log, tally = S.CallLog(Path(tempfile.mkdtemp(prefix="contradish-repair-")) / "calls.jsonl"), S.Tally()
+
+        def chat_for(t, delivery=None):
+            fn = S.http_chat_fn(spec, log, tally, 600, 0.0, context=f"repair/{t.id}/{delivery}")
+            return S.self_labelled(fn, t.outcomes)
+        report = DR.find_and_repair(chat_for, S.self_label_classifier, components=tuple(_split(args.components)))
+        print(f"  ({tally.calls} calls, {tally.errors} failed)")
+        print(DR.render(report))
+        if args.json:
+            with open(args.json, "w") as f:
+                json.dump(report, f, indent=1, default=str)
+        return True
     if args.command == "governed":
         from contradish.governed import main as governed_main
         argv = ([args.study_dir] if args.study_dir else []) + (["--demo"] if args.demo else []) + \

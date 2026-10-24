@@ -129,6 +129,17 @@ assert all(v <= 0 for v in others.values()), others
 print("the one question: faithful Governed Score 1.00; every other scripted agent 0.00 or below, each with its weakest "
       "part named; anchored 1.00 asked cold and %+.2f in conversation" % gv["scripted:anchored"]["in_conversation"]["governed_score"])
 PYEOF
+echo "== repair: the smallest missing distinction, and a repair verified on held-out cases"
+$PY - <<'PYEOF'
+from contradish import distinction_repair as DR
+from contradish.study import scripted_chat_for, label_echo_classifier
+r = DR.find_and_repair(scripted_chat_for("credulous"), label_echo_classifier, components=("standing", "tone"))
+assert r["missing_distinction"]["ground"] == "provenance" and r["smallest_passing_repair"]["kind"] == "guard"
+r2 = DR.find_and_repair(scripted_chat_for("rigid"), label_echo_classifier, components=("standing",))
+assert r2["smallest_passing_repair"] is None
+print("repair: credulous agent missing provenance, restored by a code guard on held-out cases with no new refusals; "
+      "rigid agent: no repair certified")
+PYEOF
 echo "== the one question: no shortcut strategy, and no component's own adversary, can score above 0"
 $PY -m contradish.governed --audit | tail -1
 echo "== agency impact: built-in cases evaluate as designed"

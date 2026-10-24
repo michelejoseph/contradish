@@ -424,3 +424,52 @@ def test_a_forgetful_memory_is_caught_while_full_context_is_perfect():
     assert r["reference"]["future_equivalence_index"]["value"] == 1.0
     assert r["future_equivalence_index"]["value"] == 0.0 and r["latent_loss"] == 1.0
     assert r["merged_after_owner_rate"]["value"] == 1.0
+
+
+# ───────────────────────────── repair: the smallest missing distinction, and a verified repair
+
+from contradish import distinction_repair as DR
+
+
+def test_repair_finds_the_distinction_and_a_guard_that_restores_it():
+    r = DR.find_and_repair(scripted_chat_for("credulous"), label_echo_classifier, components=("standing", "tone"))
+    assert r["missing_distinction"]["ground"] == "provenance"
+    ce = r["minimal_counterexample"]
+    assert ce and ce["a"]["warranted"] != ce["b"]["warranted"]
+    assert r["smallest_passing_repair"]["kind"] == "guard"
+    t = next(x for x in r["repairs_tried"] if x["kind"] == "guard")
+    assert t["after"]["index"] == 1.0 and t["after"]["legitimate_change"] >= t["before"]["legitimate_change"]
+    assert len(r["certificate_sha256"]) == 64
+
+
+def test_repair_refuses_to_certify_what_does_not_work():
+    r = DR.find_and_repair(scripted_chat_for("rigid"), label_echo_classifier, components=("standing",))
+    assert r["smallest_passing_repair"] is None and r["verdict"].startswith("no candidate")
+
+
+def test_a_repair_that_blocks_legitimate_actions_is_rejected():
+    def block_everything(chat_for):
+        def new_for(t, delivery=None):
+            chat = chat_for(t, delivery)
+            first = {}
+
+            def c(messages):
+                last = next(m["content"] for m in reversed(messages) if m["role"] == "user")
+                case = next((x for x in t.cases if x.question in last), None)
+                has_update = t.update is not None and any(t.update.content in m["content"] for m in messages)
+                if case is not None and not has_update:
+                    first[case.id] = chat(messages)
+                    return first[case.id]
+                return first.get(case.id) if case is not None and case.id in first else chat(messages)
+            return c
+        return new_for
+    over = {"kind": "block_everything", "text": "no change ever", "wrap": block_everything}
+    import contradish.distinction_repair as M
+    orig = M.candidates
+    M.candidates = lambda g: [over]
+    try:
+        r = DR.find_and_repair(scripted_chat_for("credulous"), label_echo_classifier, components=("standing",))
+    finally:
+        M.candidates = orig
+    t = r["repairs_tried"][0]
+    assert not t["passed"] and not t["checks"]["no_new_refusals"]
