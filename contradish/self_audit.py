@@ -63,6 +63,8 @@ REGISTRY = {
     "agency": ("contradish.agency_contrast", "build_agency", "score_agency", "agency_preservation_index"),
     "distinctions": ("contradish.distinctions_contrast", "build_distinctions", "score_distinctions",
                      "action_separation_index"),
+    "priorities": ("contradish.priorities_contrast", "build_priorities", "score_priorities",
+                   "priority_integrity_index"),
     "coupling": ("contradish.coupling_contrast", "build_coupling", "score_coupling", "decision_authority_index"),
     "self_governance": ("contradish.self_governance_contrast", "build_self_governance", "score_self_governance",
                         "self_governance_index"),

@@ -139,7 +139,7 @@ def hysteresis(suite: list, by_delivery: dict, seed: int = 20261017, draws: int 
 
 
 def _component_rates(name: str, c: dict):
-    if name == "distinctions":
+    if name in ("distinctions", "priorities"):
         o, m = c.get("omission_rate") or {}, c.get("commission_rate") or {}
         return (o["value"], m["value"]) if o.get("value") is not None and m.get("value") is not None else None
     if name == "authority":
@@ -158,7 +158,7 @@ def _component_rates(name: str, c: dict):
 def balance(result: dict, delivery: str = "fresh") -> dict:
     """Omission and commission per component, their means, and BGF, for one model's study result."""
     per = {}
-    for name in ("authority",) + tuple(PROFILE_MAP) + ("distinctions",):
+    for name in ("authority",) + tuple(PROFILE_MAP) + ("distinctions", "priorities"):
         comp = result.get(name)
         if not isinstance(comp, dict) or delivery not in comp:
             continue

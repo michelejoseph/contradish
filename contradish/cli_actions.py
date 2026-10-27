@@ -65,6 +65,8 @@ EXHIBITS_DIR = os.path.join(_HERE, "exhibits")
 
 
 def register(sub) -> None:
+    from contradish import cli_integrity as _ci
+    _ci.register(sub)
     ab = sub.add_parser("about", help="What contradish is, who introduced it, and how to cite it.")
     ab.add_argument("--json", action="store_true", default=False)
 
@@ -308,6 +310,9 @@ COMMANDS = ("about", "actions", "counterexample", "evidence", "exhibits", "cai-b
 
 
 def dispatch(args) -> bool:
+    from contradish import cli_integrity as _ci
+    if _ci.dispatch(args):
+        return True
     if args.command not in COMMANDS:
         return False
     {"about": cmd_about, "actions": cmd_actions, "counterexample": cmd_counterexample,

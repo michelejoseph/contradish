@@ -251,6 +251,7 @@ from .agency import (AgencyCase, ActionOption as AgencyOption, Effect as AgencyE
                      evaluate_agency, warranted_choice as agency_warranted_choice)
 from .agency_contrast import build_agency, score_agency, run_agency
 from .distinctions_contrast import build_distinctions, score_distinctions, run_distinctions
+from .priorities_contrast import build_priorities, score_priorities, run_priorities
 from .coupling_contrast import build_coupling, score_coupling, run_coupling
 from .self_governance_contrast import build_self_governance, score_self_governance, run_self_governance
 from .standing_contrast import build_standing, score_standing, run_standing
@@ -379,9 +380,19 @@ from .charter import legitimacy_certificate, approve_pin, derive_effects
 __version__ = "1.64.0"
 # The product surface: one call before an agent's tool calls run (see docs/INTEGRATE.md).
 from contradish.guard import Guard, Decision, calls_from, evidence_from  # noqa: E402
+from contradish.integrity import (compile_change, verify_change, IntegrityLedger, verify_ledger,  # noqa: E402
+                                  ChangePlan, Release)
+from contradish.gateway import Gateway  # noqa: E402
+from contradish.sufficiency import (compression_license, check_note, future_equivalent,  # noqa: E402
+                                    evaluate_notes)
+from contradish.memory_compiler import compile_memory, revalidate, render_memory  # noqa: E402
+from contradish.transform import check_transform, repair, compress, MemoryGuard  # noqa: E402
 
 __all__ = [
     "Guard", "Decision", "calls_from", "evidence_from",
+    "compile_change", "verify_change", "IntegrityLedger", "verify_ledger", "ChangePlan", "Release", "Gateway",
+    "compression_license", "check_note", "future_equivalent", "evaluate_notes",
+    "compile_memory", "revalidate", "render_memory", "check_transform", "repair", "compress", "MemoryGuard",
     "PolicyProgram", "ProgramUpdate", "Edit", "Call", "load_builtin_program",
     "derive_action_frontier", "verify_trajectories", "run_agent", "witness_agent", "llm_tool_agent",
     "ActionFrontier", "ActionTransitionResult", "minimize_unauthorized_change",
@@ -577,7 +588,7 @@ __all__ = [
     "build_agency",
     "score_agency",
     "run_agency",
-    "build_distinctions",
+    "build_distinctions", "build_priorities", "score_priorities", "run_priorities",
     "score_distinctions",
     "run_distinctions",
     "build_coupling",

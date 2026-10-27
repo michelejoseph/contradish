@@ -2,6 +2,18 @@
 
 > *The quality of an intelligence is not measured solely by what it can accomplish, but also by what it knows it must not change, claim, control, or exploit.*
 
+## Safe internal state transformations
+
+Agent frameworks rewrite memory constantly: summaries, consolidation, forgetting, merges. contradish decides whether a rewrite is **authorization-preserving**: on every future the policy permits (each day, each scheduled policy change, any legitimate revocation, with cascade), the agent must still be required, permitted and forbidden to do exactly what it was before.
+
+```python
+from contradish.transform import MemoryGuard
+guard = MemoryGuard("policy.json", memory, as_of=today, mode="enforce")
+receipt = guard.propose(summarized_memory, reason="nightly consolidation")   # commits only what is safe
+```
+
+Each verdict is SAFE, or UNSAFE with a counterexample. For example: "if Dana revokes G2 today, the original memory hands the refill to the pharmacist; the summary dispenses it". Each verdict is also a receipt that a standalone checker re-derives. `contradish transform demo` shows four ordinary rewrites, of which three are unsafe; `contradish transform serve` exposes the check over HTTP. See **[docs/TRANSFORM.md](docs/TRANSFORM.md)**.
+
 ## Integrate in a day: the guard
 
 ```python
@@ -23,6 +35,25 @@ contradish guard report decisions.jsonl
 Day one, verification and the first month: **[docs/INTEGRATE.md](docs/INTEGRATE.md)**.
 
 Already have the policy written down? `contradish guard draft policy.md --model provider:model` drafts the encoding with a source quote for every rule. It checks every quote and number against your text, has a second reading that never sees the draft test it, and asks plain questions at every boundary where the decision changes. The guard will not enforce the result until a named person approves it: `contradish guard approve`. Offline: `contradish guard draft --demo`. See **[docs/DRAFTING.md](docs/DRAFTING.md)**.
+
+## One policy file, every model: the decision-integrity layer
+
+```bash
+contradish integrity demo                                                    # all four layers offline, ~1 s
+contradish integrity plan policy.json --since 2026-09-30 --as-of 2026-10-10  # what must change, stay, resist, wait
+contradish integrity release policy.json --since 2026-09-30 --as-of 2026-10-10 \
+    --models openai:gpt-4.1,anthropic:claude-sonnet-4-5 --ledger audit.jsonl --key release.key.json
+contradish gateway policy.json --upstream https://api.openai.com --mode enforce --ledger audit.jsonl
+contradish integrity ledger verify audit.jsonl --trust <public key>
+```
+
+The **compiler** derives from the policy file exactly which agent actions a release's updates must change, which must stay, which must be resisted (no authority) and which must wait (not yet in force). **Differential verification** runs any number of models against that plan and ships or holds each one on four properties: complete, minimal, authorized, timely. The **gateway** puts the guard in front of any OpenAI- or Anthropic-format endpoint; you change only the base URL. The **ledger** keeps plans, release verdicts and every runtime decision in one hash-chained, signed log that anyone can re-derive. See **[docs/INTEGRITY.md](docs/INTEGRITY.md)**.
+
+**What must a memory or summary keep?** Two systems can agree on every fact about today and still need different representations to decide safely tomorrow. `contradish license policy.json --as-of DATE` computes, for each fact, the distinctions today's decisions depend on and those that announced future changes add, each with the update that makes it load-bearing. `contradish license check` tells whether a note is sufficient now and for every future version, with a counterexample when it is not. `contradish license notes --model provider:model` measures how often a model's own case notes are sufficient today but blind to a change already announced. See [docs/SUFFICIENCY.md](docs/SUFFICIENCY.md).
+
+**The memory compiler.** `contradish memory compile` takes an agent's full history (records, claims, delegations, revocations) and its policy, and derives the smallest memory that decides every future action the policy permits exactly as the full history would. The futures it covers are the days to come with their clock facts advancing, scheduled policy changes, and revocation by anyone with standing, with cascade. It certifies the compression with a witness for every distinction kept. `contradish/memory_check.py`, a standalone standard-library checker, re-derives the certificate. `contradish memory revalidate` updates it as authorization evolves, reusing what is unaffected. It **invalidates** the memory, naming the update and the day, when a newly announced change makes a dropped distinction load-bearing. See [docs/MEMORY.md](docs/MEMORY.md).
+
+**Priorities.** The `priorities` study component tests whether a different consideration can take over without what the system believes, what the person values, or what it still owes changing with it, and whether a rewording, a rumor or pushback changes nothing. Priority Integrity Index = the minimum of five paired contrasts. See `contradish/priorities_contrast.py`; the companion CAI-Bench split is `priorities`.
 
 ---
 

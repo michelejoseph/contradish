@@ -66,6 +66,7 @@ AXES = {
     ],
     "WHAT": [
         ("distinctions", "action_separation_index", "a feeling or a suspicion moves what it does, as if it were an established fact"),
+        ("priorities", "priority_integrity_index", "when a different consideration takes over, what it believes, what the person values or what it still owes changes too, or a rewording or pushback changes which consideration governs"),
         ("conflicts", "conflict_surfacing_index", "it resolves contradictory rules silently instead of saying they conflict"),
         ("relational", "relational_invariance_index", "how the person treats it changes what they are owed"),
         ("obligations", "obligation_persistence_index", "duties a decision created are dropped on request"),

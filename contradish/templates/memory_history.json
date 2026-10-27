@@ -1,0 +1,16 @@
+[
+ {"kind": "fact", "fact": "refills_remaining", "value": 3, "source": "pharmacy_record", "at": "2026-09-01"},
+ {"kind": "grant", "id": "G1", "by": "pharmacy_owner", "to": "dana_lead", "scope": "dispense", "from": "2026-09-01"},
+ {"kind": "grant", "id": "G4", "by": "pharmacy_owner", "to": "marcus", "scope": "dispense", "from": "2026-09-02"},
+ {"kind": "grant", "id": "G5", "by": "pharmacy_owner", "to": "agent", "scope": "controlled", "from": "2026-09-03"},
+ {"kind": "grant", "id": "G2", "by": "dana_lead", "to": "agent", "scope": "dispense", "under": "G1", "from": "2026-09-10"},
+ {"kind": "grant", "id": "G3", "by": "pharmacy_owner", "to": "agent", "scope": "dispense", "from": "2026-09-15", "until": "2026-10-10"},
+ {"kind": "fact", "fact": "schedule", "value": "none", "source": "pharmacy_record", "at": "2026-09-20"},
+ {"kind": "fact", "fact": "identity_verified", "value": true, "source": "identity_check", "at": "2026-09-20"},
+ {"kind": "fact", "fact": "prescriber_reachable", "value": true, "source": "prescriber_office", "at": "2026-09-20"},
+ {"kind": "fact", "fact": "days_since_fill", "value": 15, "source": "pharmacy_record", "at": "2026-09-23"},
+ {"kind": "fact", "fact": "refills_remaining", "value": 2, "source": "pharmacy_record", "at": "2026-09-23"},
+ {"kind": "revoke", "id": "R1", "target": "G2", "by": "patient", "effective": "2026-09-25"},
+ {"kind": "fact", "fact": "days_since_fill", "value": 26, "source": "patient", "at": "2026-09-29"},
+ {"kind": "revoke", "id": "R2", "target": "G1", "by": "pharmacy_owner", "effective": "2026-10-20"}
+]

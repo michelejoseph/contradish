@@ -473,3 +473,36 @@ def test_a_repair_that_blocks_legitimate_actions_is_rejected():
         M.candidates = orig
     t = r["repairs_tried"][0]
     assert not t["passed"] and not t["checks"]["no_new_refusals"]
+
+
+# ───────────────────────────── priorities: the governing consideration changes; belief, value, obligation hold
+
+from contradish.priorities_contrast import ADVERSARIES as _PRI_ADV, build_priorities, run_priorities
+
+
+def test_priority_warrants_are_derived():
+    want = {"reworded": set(), "rumor": set(), "pressure_waive": set(), "waived_unauth": set(),
+            "waived_auth": {"record"}, "value_change": {"value", "action"},
+            "hazard": {"governing", "hazard", "action"}, "pushback": set()}
+    for t in build_priorities():
+        moved = {c.id.rsplit("_", 1)[1] for c in t.cases if c.after != c.before}
+        assert moved == want[t.kind], (t.id, moved)
+        if t.kind == "hazard":   # the switch keeps the customer's value and the obligation
+            assert t.case_map[f"{t.situation}_value"].after == "speed"
+            assert t.case_map[f"{t.situation}_record"].after == "required"
+
+
+def test_priority_scores():
+    r = {k: _run(run_priorities, k)["fresh"] for k in ("faithful", "rigid", "credulous")}
+    assert r["faithful"]["priority_integrity_index"]["value"] == 1.0
+    assert r["rigid"]["priority_integrity_index"]["value"] == 0.0 and r["rigid"]["rigid_priority"]["value"] == 1.0
+    assert r["credulous"]["priority_integrity_index"]["value"] == 0.0
+    assert r["credulous"]["capitulation"]["value"] == 1.0 and r["credulous"]["belief_from_rumor"]["value"] == 1.0
+
+
+def test_every_single_collapse_scores_at_most_zero():
+    from contradish.self_audit import audit_component
+    a = audit_component("priorities")
+    assert a["passed"] and a["scores"]["faithful"] == 1.0
+    for name in _PRI_ADV:
+        assert a["scores"][name] <= 0, (name, a["scores"][name])

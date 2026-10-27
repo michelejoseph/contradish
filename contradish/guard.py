@@ -187,10 +187,12 @@ class Guard:
              establish which facts), `irreversible_tools` and `benefit_steps`.
     log      a JSONL path: every decision's certificate is appended (the input to `contradish report` and to the
              independent checker).
+    ledger   an IntegrityLedger (contradish.integrity): every certificate is also appended to the hash-chained,
+             signed audit ledger that holds the change plans and release verdicts.
     """
 
     def __init__(self, policy: Any, mode: str = "shadow", log: Optional[str] = None,
-                 updates: Optional[list] = None, require_approval: bool = False):
+                 updates: Optional[list] = None, require_approval: bool = False, ledger: Any = None):
         if mode not in ("shadow", "enforce"):
             raise ValueError("mode must be 'shadow' or 'enforce'")
         if isinstance(policy, dict):
@@ -217,6 +219,7 @@ class Guard:
         self.updates = [dict(u) for u in raw]
         self.mode = mode
         self.log = log
+        self.ledger = ledger              # an IntegrityLedger: decisions join the hash-chained, signed audit log
         missing = [f for f in self.base_spec.get("facts", {}) if f not in (self.base_spec.get("fact_authority") or {})]
         if self.base_spec["id"] != "returns" and missing:
             raise ValueError(f"policy has no fact_authority for {missing}: say which sources establish each fact")
@@ -286,6 +289,8 @@ class Guard:
         if self.log:
             with open(self.log, "a", encoding="utf-8") as fh:
                 fh.write(_canon(cert) + "\n")
+        if self.ledger is not None:
+            self.ledger.record_decision(cert)
         return d
 
     def wrap(self, agent: Callable, evidence: Callable, as_of: Optional[Callable] = None) -> Callable:

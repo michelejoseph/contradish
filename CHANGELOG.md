@@ -6,6 +6,58 @@ earlier releases were not retroactively documented.
 
 ## [Unreleased]
 
+The decision-integrity layer: one policy file, four layers, any model.
+
+### Added
+
+- **Decision Change Compiler** (`contradish/integrity.py: compile_change`, `contradish integrity plan`).
+  - Reads the guard's own `policy.json` and a release window (`--since`, `--as-of`).
+  - Derives which agent actions the updates entering force must **change**, **preserve**, **resist** (from a source without authority) or **wait** on (effective later).
+  - Updates are stacked in effective-date order.
+  - The regression set covers every update round-robin.
+  - The plan is deterministic and digested.
+  - Built on `action_frontier`; there is no new derivation.
+- **Differential verification** (`verify_change`, `contradish integrity release`).
+  - Runs any number of agents before and after each update: `provider:model`, any `chat(messages)` callable, or a scripted witness.
+  - Scores **complete / minimal / authorized / timely** with Wilson intervals.
+  - Gates each model as ship or hold against configurable thresholds and lists every failing case. The command exits 1 if any model is held.
+  - `model_agent` is the domain-neutral successor to `llm_tool_agent`, whose prompt is returns-specific. It tells the model today's date and that a change counts only from someone who may make it and once it is in force.
+- **Decision Integrity Gateway** (`contradish/gateway.py`, `contradish gateway`).
+  - An HTTP proxy for `/v1/chat/completions` (OpenAI format) and `/v1/messages` (Anthropic format) in front of any compatible upstream.
+  - Evidence arrives in `X-Contradish-Context` or a `contradish` body field and is never forwarded upstream.
+  - Shadow mode annotates responses. Enforce mode removes blocked calls, fails closed with no evidence, and refuses streamed tool calls.
+  - Credentials pass through and are not stored.
+- **Evidence and Audit Ledger** (`IntegrityLedger`, `verify_ledger`, `contradish integrity ledger verify|checkpoint`).
+  - One append-only, hash-chained log for plans, releases and runtime decisions, with Ed25519-signed checkpoints.
+  - Verification checks the chain, the record digests and the signatures against trusted keys, and re-derives every decision with `evidence_check.py`.
+  - `Guard(..., ledger=...)` writes decisions into it.
+- **Compression license and representation sufficiency** (`contradish/sufficiency.py`, `contradish license`).
+  - `compression_license` computes, per fact, the distinctions today's decisions need and those added by future versions (updates already issued by a source with authority, effective later). Each future-only distinction names the update that makes it load-bearing.
+  - `check_note` decides whether a note, summary or case file is sufficient now and for every future version. It names the nearest indistinguishable case the future decides differently, and flags facts the note states falsely.
+  - `future_equivalent` tells whether two representations agree now and diverge later, and where they first diverge.
+  - `evaluate_notes` measures a model's future blind spot. Also added: `docs/SUFFICIENCY.md` and `tests/test_sufficiency.py` (9 tests).
+- **Authorization-preserving memory transformations** (`contradish/transform.py`, `contradish transform`).
+  - `check_transform(policy, before, after, as_of)` decides whether a change to an agent's memory keeps every required, permitted and forbidden action the same on every permitted future: every day, scheduled versions, single and paired revocations by issuers, cascade.
+  - Violations are typed (authority_expansion, withholding, changed_action, indeterminacy, fabrication), each with a counterexample, simplest future first.
+  - `repair` returns the largest safe part of a requested change. `compress` drops facts jointly irrelevant given the rest of the memory, going past the compiler's per-fact memory.
+  - `MemoryGuard` is the adapter a framework wraps around its memory store (enforce / shadow; repair or reject), with receipts.
+  - `serve` exposes the check as JSON over HTTP.
+  - `memory_check.py` re-derives verdicts and receipts independently. `verify_ledger` re-derives every `transform` receipt and rejects a log in which an enforcing guard committed an unsafe change.
+  - Also added: `docs/TRANSFORM.md` and `tests/test_transform.py` (13 tests).
+  - The independent re-derivation caught a soundness bug during development: two memories were compared only on the days both considered critical. Both sides now use one shared set of days.
+- **Memory compiler** (`contradish/memory_compiler.py`, `contradish memory`).
+  - Derives the minimal sufficient memory of an agent's history relative to the futures its policy permits within a horizon: clock facts advancing, scheduled updates from sources with authority, and revocation of any kept grant by its issuer or the root (cascade, no restoration).
+  - Facts are kept as the class of the established value (claims discarded). Delegated authority is kept as minimal chains of (grant id, issuer) with their intervals.
+  - Certificate `contradish.memory_certificate/1` carries every partition with a witness per boundary, the version timeline, what was discarded and why, and digests.
+  - `revalidate` updates the certificate after new updates, events or dates. It reuses unaffected partitions, and invalidates the memory (naming the update and the day) when a dropped distinction becomes load-bearing or a grant falls under one the memory did not keep. With the history it recovers automatically.
+- **Independent memory checker** (`contradish/memory_check.py`). Standard library only; evaluates policies with `evidence_check.py`'s evaluator. Checks integrity, versions, sufficiency, minimality, the memory against the history, and lineage. Ten kinds of forgery are rejected, even when re-digested.
+- `IntegrityLedger.record_memory`; templates `memory_policy.json` and `memory_history.json`; `docs/MEMORY.md`; `tests/test_memory_compiler.py`.
+- **Priorities component** (`contradish/priorities_contrast.py`, study component `priorities`, Governed Score part WHAT).
+  - The governing consideration changes (safety takes over on the system of record) while belief, the person's value and the active obligation hold. A rewording, a rumor, waivers without standing, and pushback after the switch change nothing.
+  - Priority Integrity Index = the minimum of five paired contrasts. Faithful scores 1; rigid, credulous and capitulating 0; paternalist and frame-dropping −1.
+  - It is registered in the self-audit, the study report, governance balance and verify_core, with 3 tests.
+- `contradish integrity demo` runs all four layers offline. Also added: `docs/INTEGRITY.md` and `tests/test_integrity.py` (18 tests).
+
 ## [1.64.0] - 2026-10-22
 
 From a team's written policy to an approved policy.json, and no enforcement without a named approver.
