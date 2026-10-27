@@ -20,6 +20,9 @@ quotient, relative to the policy). The compiler computes it:
             agent holds its delegation that day. The memory keeps the class of the established value (the latest
             from a source with authority over the fact); claims from anyone else are discarded. A clock fact is
             kept as a class of values on an anchor date, so the memory stays exact as days pass.
+  OBLIGATIONS Open obligations (from sources the policy accepts for their type), each with every parameter its
+            fulfilment needs kept EXACTLY, even though no decision depends on them: which card a refund goes to
+            changes no decision and is still what paying it requires (contradish.fulfillment).
   AUTHORITY For a delegated fact, the minimal chains of grants from the root to the agent that are in force at
             some point in the horizon, each kept as [(grant id, issuer)] and the interval it is in force. Holders
             of intermediate grants, sibling delegations, expired and revoked grants, and revocations by people with
@@ -486,6 +489,10 @@ def compile_memory(policy: Any, history: list, agent: str, as_of: str, horizon: 
             continue
         memory["authority"][f] = {"root": d["root"], "scope": d["scope"], "chains": chains}
         discarded += disc
+    from contradish.fulfillment import open_obligations
+    obs, ob_disc = open_obligations(history, cfg, as_of)
+    memory["obligations"] = obs                    # kept with every fulfilment parameter exact
+    discarded += ob_disc
     body = {"schema": CERT_SCHEMA, "agent": agent, "as_of": as_of, "horizon_days": H,
             "policy": {"base": PolicyProgram(spec).spec,
                        "base_digest": PolicyProgram(spec).digest(), "updates": updates,
@@ -500,6 +507,7 @@ def compile_memory(policy: Any, history: list, agent: str, as_of: str, horizon: 
     body["size"] = {"history_events": len(history), "kept_facts": sum(1 for v in memory["facts"].values() if not v.get("drop")),
                     "kept_grants": len({l["id"] for a in memory["authority"].values() for c in a.get("chains", [])
                                         for l in c["links"]}),
+                    "open_obligations": len(memory.get("obligations") or []),
                     "discarded_events": len({x["event"] for x in discarded})}
     body["digest"] = _digest(body)
     return body
@@ -630,6 +638,15 @@ def revalidate(cert: dict, policy: Any, new_updates: Optional[list] = None, new_
         new["memory"]["authority"][f] = {"root": a["root"], "scope": a["scope"], "chains": chains}
     new["memory"]["facts"] = {**new["memory"]["facts"], **{f: k for f, k in mem["facts"].items() if k.get("drop")
                                                           and f not in new["memory"]["facts"]}}
+    obs = {o["id"]: o for o in cert["memory"].get("obligations") or []}
+    from contradish.fulfillment import open_obligations
+    fresh_obs, _ = open_obligations([e for e in (new_events or []) if e.get("kind") == "obligation"], cfg, as_of)
+    for o in fresh_obs:
+        obs[o["id"]] = o
+    for e in new_events or []:
+        if e.get("kind") == "discharged" and (e.get("at") or as_of) <= as_of:
+            obs.pop(e["id"], None)
+    new["memory"]["obligations"] = [obs[k] for k in sorted(obs)]
     new.update(status="invalidated" if issues else "valid", supersedes=cert["digest"], issues=issues,
                recovered_from_history=False, history_digest=cert["history_digest"],
                note="revalidated from the kept memory; the history was not consulted")
@@ -663,6 +680,9 @@ def render_memory(cert: dict) -> str:
         for c in a["chains"]:
             path = " -> ".join(f"{l['id']} (issued by {l['issuer']})" for l in c["links"])
             L.append(f"- {f}: via {path}, in force from {c['from']}" + (f" until {c['until']}" if c["until"] else ""))
+    for o in m.get("obligations") or []:
+        L.append(f"- OWES {o.get('owed_to') or ''} {o['type']} {o['id']} by {o['due']}: "
+                 + ", ".join(f"{k}={v}" for k, v in sorted((o.get("params") or {}).items())))
     if m["unknown"]:
         L.append("- not established: " + ", ".join(m["unknown"]))
     return "\n".join(L)

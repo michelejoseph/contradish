@@ -81,6 +81,8 @@ The violation kinds, in order of precedence:
 | kind | meaning |
 |---|---|
 | `authority_expansion` | after the change, the agent makes an irreversible call the memory before forbids |
+| `obligation_forgotten` | an obligation open in the memory before is not in the memory after |
+| `fulfillment_loss` | an obligation the memory before could pay on some future cannot be paid on it after: a parameter dropped (the card, the order), or the route lost |
 | `withholding` | a call the memory before requires is no longer made |
 | `changed_action` | the same calls with different arguments, or a new reversible call |
 | `indeterminacy` | the memory before decides; after the change it cannot |
@@ -102,6 +104,10 @@ forget the direct grant G3 (looks redundant)                UNSAFE  withholding 
 forget whether the prescriber is reachable                  SAFE    (it matters only when no refills are left)
 MemoryGuard, all four at once: applies the last; keeps authority and the fill day as before
 ```
+
+## Remembering what is owed is not enough
+
+A memory can keep what the agent may do and what it owes, and still lose the ability to pay. "Owes the patient $40" keeps the obligation and drops the card and the order. No decision depends on which card, so a check that preserves decisions alone would allow it. Obligations are therefore kept as their own part of the memory, with every fulfilment parameter exact, and checked on their own terms; see [FULFILLMENT.md](FULFILLMENT.md).
 
 ## Limits
 

@@ -25,7 +25,8 @@ It checks:
                    the day, under the version, on the step it names. So no coarser memory is sufficient.
   5 the memory     with the history: each kept fact is the class of the value established by a source with
                    authority over it (the latest such record, clock facts advanced to the anchor date); each delegated
-                   fact's chains are exactly the chains this checker derives; nothing kept is a claim
+                   fact's chains are exactly the chains this checker derives; the open obligations, with every
+                   fulfilment parameter, are exactly those this checker derives; nothing kept is a claim
   6 lineage        with --previous: the certificate supersedes the previous one's digest
 
 Exit 0 iff VERIFIED.
@@ -369,6 +370,9 @@ def check(cert, history=None, previous=None):
             elif k is None or {x: y for x, y in k.items() if x != "on"} != home:
                 problems.append(f"memory: {f} kept as {k}, the established value {v} is in {home}")
         cfg = cert.get("memory_config") or {}
+        if cfg.get("obligations") and canon(obligations_from(history, cfg, W.as_of)) != canon(mem.get("obligations") or []):
+            problems.append("memory: open obligations differ from those derived from the history "
+                            "(an obligation dropped, a fulfilment parameter missing, or a claim kept)")
         for f in W.deleg:
             d = cfg["delegation"][f]
             want = chains(history, d["root"], d["scope"], cert["agent"], W.as_of, W.H)
@@ -386,8 +390,74 @@ def check(cert, history=None, previous=None):
     return verdict(cert, problems, notes)
 
 
+# ----------------------------------------------------------------- obligations
+def obligations_from(history, cfg, as_of):
+    types = cfg.get("obligations") or {}
+    done = {e["id"]: (e.get("at") or as_of) for e in history if e.get("kind") == "discharged"}
+    out = {}
+    for e in history:
+        if e.get("kind") != "obligation" or e.get("type") not in types:
+            continue
+        t = types[e["type"]]
+        if t.get("sources") and e.get("source") not in t["sources"]:
+            continue
+        if e["id"] in done and done[e["id"]] <= as_of:
+            continue
+        out[e["id"]] = {"id": e["id"], "type": e["type"], "owed_to": e.get("owed_to"), "incurred": e.get("incurred"),
+                        "due": e["due"], "params": {k: e["params"][k] for k in t.get("params", [])
+                                                    if k in (e.get("params") or {})}}
+    return [out[k] for k in sorted(out)]
+
+
+def _ob_capable(memory, cfg, ob, d, revoked):
+    t = (cfg.get("obligations") or {}).get(ob["type"]) or {}
+    if any((ob.get("params") or {}).get(p) is None for p in t.get("params", [])):
+        return False
+
+    def open_(auth):
+        if auth is None:
+            return True
+        return _auth(((memory.get("authority") or {}).get(auth) or {}).get("chains") or [], d, revoked)
+    if open_(t.get("authority")):
+        return True
+    fb = t.get("fallback")
+    return bool(fb) and open_(fb.get("authority"))
+
+
+def _ob_days(memory, ob, as_of, futures):
+    pts = {as_of, ob["due"]}
+    for a in (memory.get("authority") or {}).values():
+        for c in a.get("chains") or []:
+            pts.add(c["from"])
+            if c["until"]:
+                pts |= {c["until"], day(c["until"], -1)}
+    for _, rev in futures:
+        for x in rev.values():
+            pts |= {x, day(x, -1)}
+    return sorted(p for p in pts if as_of <= p <= ob["due"])
+
+
+def _ob_violations(cfg, before, after, as_of, futures):
+    kinds = {}
+    aft = {o["id"]: o for o in after.get("obligations") or []}
+    for ob in before.get("obligations") or []:
+        if ob["id"] not in aft:
+            kinds["obligation_forgotten"] = kinds.get("obligation_forgotten", 0) + 1
+            continue
+        ob2 = aft[ob["id"]]
+        for _, rev in futures:
+            ds = _ob_days(before, ob, as_of, futures)
+            if not any(_ob_capable(before, cfg, ob, d, rev) for d in ds):
+                continue
+            ds2 = sorted(set(ds) | set(_ob_days(after, ob2, as_of, futures)))
+            if not any(_ob_capable(after, cfg, ob2, d, rev) for d in ds2):
+                kinds["fulfillment_loss"] = kinds.get("fulfillment_loss", 0) + 1
+    return kinds
+
+
 # ----------------------------------------------------------------- transformation verdicts
-KINDS = ("authority_expansion", "withholding", "changed_action", "indeterminacy", "fabrication")
+KINDS = ("authority_expansion", "obligation_forgotten", "fulfillment_loss", "withholding", "changed_action",
+         "indeterminacy", "fabrication")
 
 
 def _allowed(v, c):
@@ -504,12 +574,16 @@ def check_verdict(v):
         k = _kind(sb[key], sa[key], irr)
         if k:
             kinds[k] = kinds.get(k, 0) + 1
+    for k, n in _ob_violations(v.get("memory_config") or {}, v["before"], v["after"], v["as_of"], fut).items():
+        kinds[k] = kinds.get(k, 0) + n
     want = "SAFE" if not kinds else "UNSAFE"
     if want != v["verdict"]:
         problems.append(f"verdict: re-derived {want}, the receipt says {v['verdict']}")
     if kinds != v["violations_by_kind"]:
         problems.append(f"violations: re-derived {kinds}, the receipt says {v['violations_by_kind']}")
     for c in v["counterexamples"]:
+        if c["kind"] in ("obligation_forgotten", "fulfillment_loss"):
+            continue                                   # counted above, from the obligations themselves
         key = (c["day"], c["future"])
         if key not in sb or _kind(sb[key], sa[key], irr) != c["kind"]:
             problems.append(f"counterexample: {c['kind']} on {c['day']} under '{c['future']}' does not hold")

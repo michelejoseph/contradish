@@ -387,12 +387,13 @@ from contradish.sufficiency import (compression_license, check_note, future_equi
                                     evaluate_notes)
 from contradish.memory_compiler import compile_memory, revalidate, render_memory  # noqa: E402
 from contradish.transform import check_transform, repair, compress, MemoryGuard  # noqa: E402
+from contradish.fulfillment import assess as assess_obligations  # noqa: E402
 
 __all__ = [
     "Guard", "Decision", "calls_from", "evidence_from",
     "compile_change", "verify_change", "IntegrityLedger", "verify_ledger", "ChangePlan", "Release", "Gateway",
     "compression_license", "check_note", "future_equivalent", "evaluate_notes",
-    "compile_memory", "revalidate", "render_memory", "check_transform", "repair", "compress", "MemoryGuard",
+    "compile_memory", "revalidate", "render_memory", "check_transform", "repair", "compress", "MemoryGuard", "assess_obligations",
     "PolicyProgram", "ProgramUpdate", "Edit", "Call", "load_builtin_program",
     "derive_action_frontier", "verify_trajectories", "run_agent", "witness_agent", "llm_tool_agent",
     "ActionFrontier", "ActionTransitionResult", "minimize_unauthorized_change",

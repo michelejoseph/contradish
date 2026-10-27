@@ -286,6 +286,31 @@
       }
     },
     "horizon_days": 45,
-    "note": "days_since_fill advances by one each day; agent_may_dispense is derived from the delegation chain on each day."
+    "note": "days_since_fill advances by one each day; agent_may_dispense is derived from the delegation chain on each day.",
+    "obligations": {
+      "refund": {
+        "tool": "issue_refund",
+        "params": [
+          "order_id",
+          "card_token",
+          "amount"
+        ],
+        "authority": "agent_may_dispense",
+        "sources": [
+          "pharmacy_record"
+        ],
+        "note": "refunds are issued under the same delegation as dispensing"
+      },
+      "recall_notice": {
+        "tool": "send_recall_notice",
+        "params": [
+          "contact"
+        ],
+        "authority": null,
+        "sources": [
+          "pharmacy_record"
+        ]
+      }
+    }
   }
 }

@@ -80,7 +80,8 @@ def register(sub) -> None:
             "  contradish memory check CERT.json [--history H.json] [--previous OLD.json]   (independent checker)\n"
             "  contradish memory revalidate CERT.json POLICY [--events E.json] [--updates U.json] [--as-of D]\n"
             "                    [--history H.json] --out NEW.json     exit 0 valid, 1 invalidated\n"
-            "  contradish memory show CERT.json                              the memory as the agent carries it\n\n"
+            "  contradish memory show CERT.json                              the memory as the agent carries it\n"
+            "  contradish memory obligations CERT.json POLICY [--as-of D]    can it still pay what it owes? exit 1 if not\n\n"
             "Add --ledger L --key K to record certificates in the signed audit ledger. See docs/MEMORY.md."
         ),
     )
@@ -260,6 +261,18 @@ def cmd_memory(args) -> None:
     elif t[0] == "show":
         print(render_memory(_read(t[1])))
         return
+    elif t[0] == "obligations":
+        if len(t) < 3:
+            sys.exit("contradish memory obligations CERT.json POLICY [--as-of D]")
+        from contradish.fulfillment import assess
+        cert = _read(t[1])
+        r = assess(t[2], cert.get("memory", cert), args.as_of or cert.get("as_of"))
+        if args.json:
+            print(json.dumps(r, indent=2))
+        else:
+            _print_obligations(r)
+        sys.exit(1 if any(o["status"] in ("stranded_by_schedule", "params_missing", "overdue") for o in r["obligations"])
+                 else 0)
     else:
         sys.exit("contradish memory demo | compile | check | revalidate | show")
     print(render_memory(c))
@@ -274,6 +287,19 @@ def cmd_memory(args) -> None:
         if led.key:
             led.checkpoint()
     sys.exit(1 if c.get("status") == "invalidated" else 0)
+
+
+def _print_obligations(r):
+    for o in r["obligations"]:
+        head = {"fulfillable": "can be fulfilled", "act_by": f"ACT BY {o.get('act_by')}",
+                "stranded_by_schedule": "STRANDED", "params_missing": "CANNOT BE PAID FROM MEMORY",
+                "overdue": "OVERDUE"}[o["status"]]
+        print(f"  {o['id']} {o['type']} due {o['due']}: {head}" + (f" (via {', '.join(o['routes'])})" if o["routes"] else ""))
+        if o["stranding_futures"]:
+            print(f"     fragile: no route remains if {o['stranding_futures'][0]['future']}"
+                  + (f" (and {len(o['stranding_futures']) - 1} other legitimate revocations)" if len(o["stranding_futures"]) > 1 else ""))
+        for x in o["remedy"]:
+            print(f"     -> {x}")
 
 
 def _memory_demo() -> None:
@@ -298,7 +324,10 @@ def _memory_demo() -> None:
     x["digest"] = MC.sha(x)
     r = MC.check(x, hist)
     print(f"   a forged, coarser memory (re-digested): {r['verdict']}: {r['problems'][0]}")
-    print("\n3. REVALIDATE as authorization evolves (from the kept memory alone)\n")
+    print("\n3. CAN IT STILL PAY WHAT IT OWES? (contradish memory obligations)\n")
+    from contradish.fulfillment import assess
+    _print_obligations(assess(pol, c["memory"], "2026-09-30"))
+    print("\n4. REVALIDATE as authorization evolves (from the kept memory alone)\n")
     steps = [("the owner revokes G3 early, effective 2026-10-05",
               dict(new_events=[{"kind": "revoke", "id": "R3", "target": "G3", "by": "pharmacy_owner",
                                 "effective": "2026-10-05"}])),
@@ -332,7 +361,11 @@ def _print_verdict(v):
     print(f"{v['verdict']}  ({v['checked']['days_x_futures']} day x future combinations; "
           f"{len(v['futures_checked'])} futures)" + (f"  {v['violations_by_kind']}" if v["violations_by_kind"] else ""))
     for c in v["counterexamples"]:
-        if "after_does" in c:
+        if c["kind"] in ("obligation_forgotten", "fulfillment_loss"):
+            print(f"  {c['kind']}: obligation {c['obligation']} due {c['due']}"
+                  + (f", if {c['future']}" if c.get("future") and c["future"] != "no revocation" else "")
+                  + (f": {c['detail']}" if c.get("detail") else ""))
+        elif "after_does" in c:
             print(f"  {c['kind']}: on {c['day']}, if {c['future']}: before {c['before_does']}, after {c['after_does']}")
         else:
             print(f"  {c['kind']}: on {c['day']}, if {c['future']}: {c['before_outcomes']} possible outcome(s) before,"
@@ -404,7 +437,7 @@ def _transform_demo() -> None:
     M = compile_memory(pol, hist, "agent", day)["memory"]
     print("The agent's certified memory (contradish memory compile):\n")
     print(render_memory({"memory": M, "agent": "agent", "digest": "-" * 19, "as_of": day, "horizon_days": 45}))
-    print("\nFour changes a framework might make to it, each checked against every permitted future:\n")
+    print("\nChanges a framework might make to it, each checked against every permitted future:\n")
     cases = []
     a = copy.deepcopy(M)
     a["authority"]["agent_may_dispense"]["chains"] = [{"links": [], "from": day, "until": "2026-10-20"}]
@@ -418,6 +451,11 @@ def _transform_demo() -> None:
     a = copy.deepcopy(M)
     a["facts"]["prescriber_reachable"] = {"drop": True}
     cases.append(("forget whether the prescriber is reachable", a))
+    a = copy.deepcopy(M)
+    for o in a["obligations"]:
+        if o["type"] == "refund":
+            o["params"].pop("card_token", None)
+    cases.append(("summarize the refund owed as 'owes the patient $40' (card dropped)", a))
     for label, after in cases:
         v = check_transform(pol, M, after, day, reason=label)
         print(f"- {label}")
@@ -434,8 +472,10 @@ def _transform_demo() -> None:
             for k, val in after[part].items():
                 if val != M[part][k]:
                     allin[part][k] = val
+        if after.get("obligations") != M.get("obligations"):
+            allin["obligations"] = copy.deepcopy(after["obligations"])
     r = g.propose(allin, reason="nightly consolidation: all four at once")
-    print(f"\nMemoryGuard (enforce) given all four at once: {r['action']}")
+    print(f"\nMemoryGuard (enforce) given all {len(cases)} at once: {r['action']}")
 
 
 def _read(path):

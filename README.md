@@ -12,7 +12,7 @@ guard = MemoryGuard("policy.json", memory, as_of=today, mode="enforce")
 receipt = guard.propose(summarized_memory, reason="nightly consolidation")   # commits only what is safe
 ```
 
-Each verdict is SAFE, or UNSAFE with a counterexample. For example: "if Dana revokes G2 today, the original memory hands the refill to the pharmacist; the summary dispenses it". Each verdict is also a receipt that a standalone checker re-derives. `contradish transform demo` shows four ordinary rewrites, of which three are unsafe; `contradish transform serve` exposes the check over HTTP. See **[docs/TRANSFORM.md](docs/TRANSFORM.md)**.
+Obligations are checked too. A memory that keeps "owes the patient $40" but drops the card and the order cannot pay what it owes. `contradish memory obligations` says when an obligation must be paid by, before its route to fulfilment closes, and which legitimate revocations would strand it ([docs/FULFILLMENT.md](docs/FULFILLMENT.md)). Each verdict is SAFE, or UNSAFE with a counterexample. For example: "if Dana revokes G2 today, the original memory hands the refill to the pharmacist; the summary dispenses it". Each verdict is also a receipt that a standalone checker re-derives. `contradish transform demo` shows four ordinary rewrites, of which three are unsafe; `contradish transform serve` exposes the check over HTTP. See **[docs/TRANSFORM.md](docs/TRANSFORM.md)**.
 
 ## Integrate in a day: the guard
 

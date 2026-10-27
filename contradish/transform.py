@@ -27,6 +27,9 @@ the memory decides. More: it cannot.
           indeterminacy         the memory before decides; after the change it cannot
           fabrication           the memory before cannot decide; after the change it decides (certainty the
                                 history never supported)
+          obligation_forgotten  an obligation open in the memory before is not in the memory after
+          fulfillment_loss      an obligation the memory before could fulfil on some future cannot be fulfilled on
+                                it after the change: a parameter dropped (the card, the order), or the route lost
         and a counterexample: the day, the future (which grant was revoked, if any), the step, what the agent does
         before and after.
 
@@ -55,7 +58,8 @@ __all__ = ["check_transform", "repair", "compress", "MemoryGuard", "serve", "beh
 
 VERDICT_SCHEMA = "contradish.transform_verdict/1"
 MEMORY_SCHEMA = "contradish.memory/1"
-KINDS = ("authority_expansion", "withholding", "changed_action", "indeterminacy", "fabrication")
+KINDS = ("authority_expansion", "obligation_forgotten", "fulfillment_loss", "withholding", "changed_action",
+         "indeterminacy", "fabrication")
 
 
 def _allowed(v, c) -> bool:
@@ -214,6 +218,8 @@ def check_transform(policy: Any, before: dict, after: dict, as_of: str, horizon:
         kind = _classify(b, a, irreversible)
         if kind:
             violations.append({"kind": kind, "day": key[0], "future": key[1], **_diff(b, a)})
+    from contradish.fulfillment import fulfillment_violations
+    violations += fulfillment_violations(cfg, before, after, as_of, futures)
     first = {}
     for v in violations:
         first.setdefault(v["kind"], v)
@@ -236,42 +242,49 @@ def check_transform(policy: Any, before: dict, after: dict, as_of: str, horizon:
 
 
 def _components(m: dict) -> list:
-    return [("facts", f) for f in (m.get("facts") or {})] + [("authority", f) for f in (m.get("authority") or {})]
+    return [("facts", f) for f in (m.get("facts") or {})] + [("authority", f) for f in (m.get("authority") or {})] + \
+        [("obligations", o["id"]) for o in (m.get("obligations") or [])]
+
+
+def _get(m: dict, part: str, key: str):
+    if part == "obligations":
+        return next((o for o in m.get("obligations") or [] if o["id"] == key), None)
+    return (m.get(part) or {}).get(key)
+
+
+def _set(m: dict, part: str, key: str, val) -> None:
+    if part == "obligations":
+        obs = [o for o in m.get("obligations") or [] if o["id"] != key]
+        if val is not None:
+            obs.append(copy.deepcopy(val))
+        m["obligations"] = sorted(obs, key=lambda o: o["id"])
+        return
+    m.setdefault(part, {})
+    if val is None:
+        m[part].pop(key, None)
+    else:
+        m[part][key] = copy.deepcopy(val)
 
 
 def repair(policy: Any, before: dict, after: dict, as_of: str, horizon: Optional[int] = None) -> dict:
     """The largest part of the requested change that is safe: try each changed component (a fact, a delegated
     fact) alone; keep those that are safe alone; then check them together, reverting the last kept until safe."""
-    changed = []
-    for part, f in sorted(set(_components(before)) | set(_components(after))):
-        if (before.get(part) or {}).get(f) != (after.get(part) or {}).get(f):
-            changed.append((part, f))
+    changed = [(p, f) for p, f in sorted(set(_components(before)) | set(_components(after)))
+               if _get(before, p, f) != _get(after, p, f)]
     accepted, refused = [], []
     for part, f in changed:
         trial = copy.deepcopy(before)
-        trial.setdefault(part, {})
-        if f in (after.get(part) or {}):
-            trial[part][f] = copy.deepcopy(after[part][f])
-        else:
-            trial[part].pop(f, None)
+        _set(trial, part, f, _get(after, part, f))
         v = check_transform(policy, before, trial, as_of, horizon)
         (accepted if v["verdict"] == "SAFE" else refused).append(((part, f), v))
     result = copy.deepcopy(before)
     for (part, f), _ in accepted:
-        result.setdefault(part, {})
-        if f in (after.get(part) or {}):
-            result[part][f] = copy.deepcopy(after[part][f])
-        else:
-            result[part].pop(f, None)
+        _set(result, part, f, _get(after, part, f))
     v = check_transform(policy, before, result, as_of, horizon, reason="repair")
     while v["verdict"] != "SAFE" and accepted:
         (part, f), _ = accepted.pop()
         refused.append(((part, f), v))
-        result.setdefault(part, {})
-        if f in (before.get(part) or {}):
-            result[part][f] = copy.deepcopy(before[part][f])
-        else:
-            result[part].pop(f, None)
+        _set(result, part, f, _get(before, part, f))
         v = check_transform(policy, before, result, as_of, horizon, reason="repair")
     return {"memory": result, "verdict": v,
             "applied": [f"{p}.{f}" for (p, f), _ in accepted],

@@ -1,16 +1,166 @@
 [
- {"kind": "fact", "fact": "refills_remaining", "value": 3, "source": "pharmacy_record", "at": "2026-09-01"},
- {"kind": "grant", "id": "G1", "by": "pharmacy_owner", "to": "dana_lead", "scope": "dispense", "from": "2026-09-01"},
- {"kind": "grant", "id": "G4", "by": "pharmacy_owner", "to": "marcus", "scope": "dispense", "from": "2026-09-02"},
- {"kind": "grant", "id": "G5", "by": "pharmacy_owner", "to": "agent", "scope": "controlled", "from": "2026-09-03"},
- {"kind": "grant", "id": "G2", "by": "dana_lead", "to": "agent", "scope": "dispense", "under": "G1", "from": "2026-09-10"},
- {"kind": "grant", "id": "G3", "by": "pharmacy_owner", "to": "agent", "scope": "dispense", "from": "2026-09-15", "until": "2026-10-10"},
- {"kind": "fact", "fact": "schedule", "value": "none", "source": "pharmacy_record", "at": "2026-09-20"},
- {"kind": "fact", "fact": "identity_verified", "value": true, "source": "identity_check", "at": "2026-09-20"},
- {"kind": "fact", "fact": "prescriber_reachable", "value": true, "source": "prescriber_office", "at": "2026-09-20"},
- {"kind": "fact", "fact": "days_since_fill", "value": 15, "source": "pharmacy_record", "at": "2026-09-23"},
- {"kind": "fact", "fact": "refills_remaining", "value": 2, "source": "pharmacy_record", "at": "2026-09-23"},
- {"kind": "revoke", "id": "R1", "target": "G2", "by": "patient", "effective": "2026-09-25"},
- {"kind": "fact", "fact": "days_since_fill", "value": 26, "source": "patient", "at": "2026-09-29"},
- {"kind": "revoke", "id": "R2", "target": "G1", "by": "pharmacy_owner", "effective": "2026-10-20"}
+ {
+  "kind": "fact",
+  "fact": "refills_remaining",
+  "value": 3,
+  "source": "pharmacy_record",
+  "at": "2026-09-01"
+ },
+ {
+  "kind": "grant",
+  "id": "G1",
+  "by": "pharmacy_owner",
+  "to": "dana_lead",
+  "scope": "dispense",
+  "from": "2026-09-01"
+ },
+ {
+  "kind": "grant",
+  "id": "G4",
+  "by": "pharmacy_owner",
+  "to": "marcus",
+  "scope": "dispense",
+  "from": "2026-09-02"
+ },
+ {
+  "kind": "grant",
+  "id": "G5",
+  "by": "pharmacy_owner",
+  "to": "agent",
+  "scope": "controlled",
+  "from": "2026-09-03"
+ },
+ {
+  "kind": "grant",
+  "id": "G2",
+  "by": "dana_lead",
+  "to": "agent",
+  "scope": "dispense",
+  "under": "G1",
+  "from": "2026-09-10"
+ },
+ {
+  "kind": "grant",
+  "id": "G3",
+  "by": "pharmacy_owner",
+  "to": "agent",
+  "scope": "dispense",
+  "from": "2026-09-15",
+  "until": "2026-10-10"
+ },
+ {
+  "kind": "fact",
+  "fact": "schedule",
+  "value": "none",
+  "source": "pharmacy_record",
+  "at": "2026-09-20"
+ },
+ {
+  "kind": "fact",
+  "fact": "identity_verified",
+  "value": true,
+  "source": "identity_check",
+  "at": "2026-09-20"
+ },
+ {
+  "kind": "fact",
+  "fact": "prescriber_reachable",
+  "value": true,
+  "source": "prescriber_office",
+  "at": "2026-09-20"
+ },
+ {
+  "kind": "fact",
+  "fact": "days_since_fill",
+  "value": 15,
+  "source": "pharmacy_record",
+  "at": "2026-09-23"
+ },
+ {
+  "kind": "fact",
+  "fact": "refills_remaining",
+  "value": 2,
+  "source": "pharmacy_record",
+  "at": "2026-09-23"
+ },
+ {
+  "kind": "revoke",
+  "id": "R1",
+  "target": "G2",
+  "by": "patient",
+  "effective": "2026-09-25"
+ },
+ {
+  "kind": "fact",
+  "fact": "days_since_fill",
+  "value": 26,
+  "source": "patient",
+  "at": "2026-09-29"
+ },
+ {
+  "kind": "revoke",
+  "id": "R2",
+  "target": "G1",
+  "by": "pharmacy_owner",
+  "effective": "2026-10-20"
+ },
+ {
+  "kind": "obligation",
+  "id": "O1",
+  "type": "refund",
+  "owed_to": "patient",
+  "incurred": "2026-09-28",
+  "due": "2026-10-25",
+  "params": {
+   "order_id": "A-1043",
+   "card_token": "tok_4242",
+   "amount": 40
+  },
+  "source": "pharmacy_record"
+ },
+ {
+  "kind": "obligation",
+  "id": "O2",
+  "type": "recall_notice",
+  "owed_to": "patient",
+  "incurred": "2026-09-29",
+  "due": "2026-10-05",
+  "params": {
+   "contact": "+1-555-0100"
+  },
+  "source": "pharmacy_record"
+ },
+ {
+  "kind": "obligation",
+  "id": "O3",
+  "type": "refund",
+  "owed_to": "patient",
+  "incurred": "2026-09-29",
+  "due": "2026-10-30",
+  "params": {
+   "order_id": "A-0999",
+   "card_token": "tok_9999",
+   "amount": 400
+  },
+  "source": "patient"
+ },
+ {
+  "kind": "obligation",
+  "id": "O0",
+  "type": "refund",
+  "owed_to": "patient",
+  "incurred": "2026-09-05",
+  "due": "2026-09-20",
+  "params": {
+   "order_id": "A-0871",
+   "card_token": "tok_4242",
+   "amount": 12
+  },
+  "source": "pharmacy_record"
+ },
+ {
+  "kind": "discharged",
+  "id": "O0",
+  "at": "2026-09-12"
+ }
 ]

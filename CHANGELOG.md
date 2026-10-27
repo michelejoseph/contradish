@@ -36,6 +36,13 @@ The decision-integrity layer: one policy file, four layers, any model.
   - `check_note` decides whether a note, summary or case file is sufficient now and for every future version. It names the nearest indistinguishable case the future decides differently, and flags facts the note states falsely.
   - `future_equivalent` tells whether two representations agree now and diverge later, and where they first diverge.
   - `evaluate_notes` measures a model's future blind spot. Also added: `docs/SUFFICIENCY.md` and `tests/test_sufficiency.py` (9 tests).
+- **Fulfilment capacity** (`contradish/fulfillment.py`, `contradish memory obligations`).
+  - Declared obligation types (tool, parameters, required authority, optional fallback, accepted sources).
+  - The memory compiler keeps open obligations with exact fulfilment parameters, and drops discharged obligations and claims.
+  - `assess` reports each obligation as fulfillable, act-by date, stranded by schedule, parameters missing, or overdue. It also lists the legitimate revocations that would strand it, with a remedy.
+  - New transformation kinds `obligation_forgotten` and `fulfillment_loss`. Repair treats each obligation as a component. Revalidation applies discharges and new obligations.
+  - `memory_check.py` re-derives obligations from the history and fulfilment violations in verdicts.
+  - Also added: `docs/FULFILLMENT.md` and `tests/test_fulfillment.py`.
 - **Authorization-preserving memory transformations** (`contradish/transform.py`, `contradish transform`).
   - `check_transform(policy, before, after, as_of)` decides whether a change to an agent's memory keeps every required, permitted and forbidden action the same on every permitted future: every day, scheduled versions, single and paired revocations by issuers, cascade.
   - Violations are typed (authority_expansion, withholding, changed_action, indeterminacy, fabrication), each with a counterexample, simplest future first.
